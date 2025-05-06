@@ -1,0 +1,421 @@
+<div class="container mx-auto p-6" *ngIf="patient">
+  <!-- Back button and page title -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center">
+      <button (click)="goBackToPatientList()" class="flex items-center text-primary hover:text-primary-dark mr-4">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 mr-1">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Back to Patient List
+      </button>
+      <h1 class="text-dashboard-title text-text">PATIENT RECORD</h1>
+    </div>
+    
+    <!-- Action buttons -->
+    <div class="flex space-x-3">
+      <button (click)="toggleQuickNoteForm()" class="flex items-center text-primary hover:text-primary-dark bg-primary/10 px-3 py-2 rounded-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 mr-2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Quick Note
+      </button>
+      <button (click)="togglePrintOptions()" class="flex items-center text-primary hover:text-primary-dark bg-primary/10 px-3 py-2 rounded-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 mr-2">
+          <path d="M6 9V2h12v7"></path>
+          <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path>
+          <path d="M6 14h12v8H6z"></path>
+        </svg>
+        Print/Export
+      </button>
+    </div>
+  </div>
+  
+  <!-- Print Options Dropdown -->
+  <div *ngIf="showPrintOptions" class="absolute right-8 mt-2 bg-white rounded-lg shadow-md p-4 border border-border z-10">
+    <h3 class="text-sm font-semibold mb-2">Print/Export Options</h3>
+    <ul class="space-y-2">
+      <li><button (click)="printSection('complete')" class="text-primary hover:text-primary-dark">Complete Record</button></li>
+      <li><button (click)="printSection('summary')" class="text-primary hover:text-primary-dark">Summary</button></li>
+      <li><button (click)="printSection('medications')" class="text-primary hover:text-primary-dark">Medications Only</button></li>
+      <li><button (click)="printSection('labs')" class="text-primary hover:text-primary-dark">Lab Results Only</button></li>
+    </ul>
+  </div>
+  
+  <!-- Quick Note Form -->
+  <div *ngIf="showQuickNoteForm" class="bg-white rounded-card shadow-card p-4 mb-6 border-l-4 border-primary">
+    <h3 class="text-card-title text-primary mb-2">Add Quick Note</h3>
+    <textarea [(ngModel)]="quickNote" rows="3" class="w-full border border-border rounded-input p-2 mb-3" placeholder="Enter your note here..."></textarea>
+    <div class="flex justify-end space-x-2">
+      <button (click)="toggleQuickNoteForm()" class="px-3 py-1 rounded-button border border-border text-text-light">Cancel</button>
+      <button (click)="saveQuickNote()" class="px-3 py-1 rounded-button bg-primary text-white">Save Note</button>
+    </div>
+  </div>
+
+  <!-- Alert Banners -->
+  <div *ngIf="patient.allergies && patient.allergies.length > 0" class="bg-status-urgent/10 border-l-4 border-status-urgent p-4 rounded-md mb-6">
+    <div class="flex">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-urgent mr-3 flex-shrink-0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <div>
+        <h3 class="font-semibold text-status-urgent">Allergies</h3>
+        <ul class="mt-1">
+          <li *ngFor="let allergy of patient.allergies" class="text-text">• {{ allergy }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="patient.alerts && patient.alerts.length > 0" class="space-y-3 mb-6">
+    <div *ngFor="let alert of patient.alerts" class="p-4 rounded-md"
+      [ngClass]="{
+        'bg-status-urgent/10 border-l-4 border-status-urgent': alert.type === 'danger',
+        'bg-status-warning/10 border-l-4 border-status-warning': alert.type === 'warning',
+        'bg-status-info/10 border-l-4 border-status-info': alert.type === 'info'
+      }">
+      <div class="flex">
+        <svg *ngIf="alert.type === 'danger'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-urgent mr-3 flex-shrink-0">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <svg *ngIf="alert.type === 'warning'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-warning mr-3 flex-shrink-0">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <svg *ngIf="alert.type === 'info'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-info mr-3 flex-shrink-0">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          <p class="font-medium text-text">{{ alert.message }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Patient info header -->
+  <div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+    <div class="flex flex-wrap items-center justify-between mb-4">
+      <div class="text-xl font-semibold text-text">
+        {{ patient.name }} | ID: {{ patient.id }} | DOB: {{ patient.dob }} | ☎ {{ patient.phone }}
+      </div>
+      
+      <div class="mt-4 md:mt-0">
+        <div class="text-sm font-medium mb-2">QUICK ACTIONS:</div>
+        <div class="flex space-x-3">
+          <button (click)="newPrescription()" class="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-button text-sm transition-colors">
+            New Prescription
+          </button>
+          <button (click)="scheduleAppointment()" class="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-button text-sm transition-colors">
+            Schedule Appointment
+          </button>
+          <button (click)="sendMessage()" class="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-button text-sm transition-colors">
+            Send Message
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Patient Record Tabs -->
+  <div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+    <div class="flex flex-wrap gap-2 mb-2">
+      <button 
+        *ngFor="let tab of ['Summary', 'Timeline', 'History', 'Lab Results', 'Imaging', 'Prescriptions']" 
+        [class.bg-primary]="activeTab === tab.toLowerCase().replace(' ', '-')"
+        [class.text-white]="activeTab === tab.toLowerCase().replace(' ', '-')"
+        [class.bg-hover]="activeTab !== tab.toLowerCase().replace(' ', '-')"
+        [class.text-text]="activeTab !== tab.toLowerCase().replace(' ', '-')"
+        (click)="setActiveTab(tab.toLowerCase().replace(' ', '-'))"
+        class="px-4 py-2 rounded-button text-sm font-medium transition-colors"
+      >
+        {{ tab }}
+      </button>
+    </div>
+    
+    <div class="flex flex-wrap gap-2">
+      <button 
+        *ngFor="let tab of ['Documents', 'Notes', 'Appointments', 'Insurance', 'Billing']" 
+        [class.bg-primary]="activeTab === tab.toLowerCase()"
+        [class.text-white]="activeTab === tab.toLowerCase()"
+        [class.bg-hover]="activeTab !== tab.toLowerCase()"
+        [class.text-text]="activeTab !== tab.toLowerCase()"
+        (click)="setActiveTab(tab.toLowerCase())"
+        class="px-4 py-2 rounded-button text-sm font-medium transition-colors"
+      >
+        {{ tab }}
+      </button>
+    </div>
+  </div>
+  
+  <!-- Tab Content -->
+  <div class="bg-white rounded-card shadow-card p-card-padding">
+    <!-- Summary Tab (default) -->
+    <div *ngIf="activeTab === 'summary'" class="tab-content-summary">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Vital Signs -->
+        <div class="border border-border rounded-lg p-5 hover-card">
+          <h3 class="text-card-title text-primary mb-4">VITAL SIGNS</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-text-light">BP:</span>
+              <span class="text-text font-medium">{{ patient.vitalSigns.bp }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-light">HR:</span>
+              <span class="text-text font-medium">{{ patient.vitalSigns.hr }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-light">Temp:</span>
+              <span class="text-text font-medium">{{ patient.vitalSigns.temp }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-light">Weight:</span>
+              <span class="text-text font-medium">{{ patient.vitalSigns.weight }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-light">Height:</span>
+              <span class="text-text font-medium">{{ patient.vitalSigns.height }}</span>
+            </div>
+          </div>
+          
+          <!-- Blood Pressure History Chart -->
+          <div *ngIf="patient.vitalSigns.history && patient.vitalSigns.history.length > 0" class="mt-4 pt-4 border-t border-border">
+            <h4 class="text-sm font-medium mb-2">Blood Pressure Trend</h4>
+            <div class="h-32 flex items-end space-x-1">
+              <div *ngFor="let item of patient.vitalSigns.history" class="flex flex-col items-center">
+                <div class="flex flex-col items-center">
+                  <div class="w-8 bg-primary-light rounded-t-sm" 
+                      [style.height.px]="getNumericValue(item.value)"></div>
+                </div>
+                <div class="text-xs mt-1 rotate-45 origin-left text-text-muted whitespace-nowrap">{{ item.date }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6 pt-2 border-t border-border text-text-light text-sm">
+            Last Updated: {{ patient.vitalSigns.lastUpdated }}
+          </div>
+        </div>
+
+        <!-- Current Medications -->
+        <div class="border border-border rounded-lg p-5 hover-card">
+          <h3 class="text-card-title text-primary mb-4">CURRENT MEDICATIONS</h3>
+          <div class="space-y-4">
+            <div *ngFor="let med of patient.medications" class="space-y-1">
+              <div class="text-text font-medium flex items-start">
+                <span class="mr-2">•</span>
+                <div>
+                  <div>{{ med.name }}</div>
+                  <div class="text-text-light text-sm">{{ med.instructions }}</div>
+                  <div *ngIf="med.startDate" class="text-text-light text-xs">Started: {{ med.startDate }}</div>
+                  <div *ngIf="med.interactions && med.interactions.length > 0" class="text-status-warning text-xs mt-1 bg-status-warning/10 p-1 rounded">
+                    <span class="font-medium">Interactions: </span>{{ med.interactions.join(', ') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-2 border-t border-border">
+            <button class="text-primary hover:text-primary-dark font-medium text-sm">Manage Prescriptions</button>
+          </div>
+        </div>
+
+        <!-- Medical History -->
+        <div class="border border-border rounded-lg p-5 hover-card">
+          <h3 class="text-card-title text-primary mb-4">MEDICAL HISTORY</h3>
+          <div class="space-y-2">
+            <div *ngFor="let history of patient.medicalHistory">
+              <div class="text-text">• {{ history.condition }} ({{ history.details }})</div>
+            </div>
+          </div>
+          <div class="mt-6 pt-2 border-t border-border">
+            <button class="text-primary hover:text-primary-dark font-medium text-sm">View Full History</button>
+          </div>
+        </div>
+
+        <!-- Recent Labs -->
+        <div class="border border-border rounded-lg p-5 hover-card">
+          <h3 class="text-card-title text-primary mb-4">RECENT LABS</h3>
+          <div class="space-y-4">
+            <div *ngFor="let lab of patient.labs" class="space-y-1">
+              <div *ngIf="!lab.details && !lab.history" class="text-text">• {{ lab.test }}: {{ lab.result }} ({{ lab.date }})</div>
+              
+              <div *ngIf="lab.details || lab.history" class="text-text">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium">{{ lab.test }}</span>
+                  <span [ngClass]="{'text-status-warning': lab.test === 'HbA1c' && parseFloat(lab.result)! > 5.6}">{{ lab.result }}</span>
+                </div>
+                <div class="flex justify-between text-xs text-text-light">
+                  <span>{{ lab.date }}</span>
+                  <span *ngIf="lab.referenceRange">Ref: {{ lab.referenceRange }}</span>
+                </div>
+                
+                <!-- Lab Trend Chart -->
+                <div *ngIf="lab.history && lab.history.length > 0" class="mt-3 h-24">
+                  <div class="h-full flex items-end space-x-1">
+                    <div *ngFor="let item of lab.history" class="flex flex-col items-center flex-1">
+                      <div class="w-full bg-primary rounded-t-sm" 
+                          [style.height.%]="calculateLabPercentage(item.value)"
+                          [ngClass]="{
+                            'bg-status-success': isNormalLabValue(item.value),
+                            'bg-status-warning': isWarningLabValue(item.value),
+                            'bg-status-urgent': isDangerLabValue(item.value)
+                          }">
+                      </div>
+                      <div class="text-xs mt-1 text-text-muted">{{ item.date.split('/')[1] + '/' + item.date.split('/')[2] }}</div>
+                      <div class="text-xs text-text-muted">{{ item.value }}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div *ngIf="lab.details" class="mt-2">
+                  <button class="text-primary hover:text-primary-dark text-sm">(View Details)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-2 border-t border-border">
+            <button (click)="orderNewTests()" class="text-primary hover:text-primary-dark font-medium text-sm">Order New Tests</button>
+          </div>
+        </div>
+
+        <!-- Doctor Notes -->
+        <div *ngIf="patient.notes && patient.notes.length > 0" class="border border-border rounded-lg p-5 hover-card">
+          <h3 class="text-card-title text-primary mb-4">DOCTOR NOTES</h3>
+          <div class="space-y-4">
+            <div *ngFor="let note of patient.notes; let i = index" class="p-3 bg-hover rounded-lg">
+              <p class="text-text">{{ note }}</p>
+              <p class="text-xs text-text-light mt-1">
+                {{ i === 0 ? 'Today' : i === 1 ? 'Previous visit' : 'Older note' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointment History -->
+        <div class="border border-border rounded-lg p-5 hover-card">
+          <h3 class="text-card-title text-primary mb-4">APPOINTMENT HISTORY</h3>
+          <div class="space-y-2">
+            <div *ngFor="let appointment of patient.appointments">
+              <div class="text-text">• {{ appointment.date }} - {{ appointment.reason }}</div>
+            </div>
+          </div>
+          <div class="mt-6 pt-2 border-t border-border">
+            <button (click)="scheduleAppointment()" class="text-primary hover:text-primary-dark font-medium text-sm">Schedule Appointment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Timeline Tab -->
+    <div *ngIf="activeTab === 'timeline'" class="tab-content-timeline">
+      <h3 class="text-xl font-semibold text-text mb-6">Patient Timeline</h3>
+      
+      <div *ngIf="patient.timeline && patient.timeline.length > 0" class="relative">
+        <!-- Timeline line -->
+        <div class="absolute top-0 bottom-0 left-16 w-0.5 bg-border"></div>
+        
+        <div *ngFor="let event of patient.timeline" class="relative flex items-start mb-8">
+          <!-- Timeline icon -->
+          <div class="absolute left-16 -ml-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-light text-white ring-4 ring-white z-10">
+            <svg *ngIf="getTimelineIcon(event.type) === 'calendar'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <svg *ngIf="getTimelineIcon(event.type) === 'pill'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+              <path d="M10.5 20H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v7.5"></path>
+              <path d="M15.818 15.657a3 3 0 1 0 4.243 4.243l-4.243-4.243zm4.243 4.243L24 24m-4.243-8.343L15.818 15.657"></path>
+            </svg>
+            <svg *ngIf="getTimelineIcon(event.type) === 'flask'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+              <path d="M9 3h6v1H9zM9 4h6l2 5.5V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-10.5L9 4z"></path>
+              <path d="M6 10h12"></path>
+            </svg>
+            <svg *ngIf="getTimelineIcon(event.type) === 'stethoscope'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+              <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"></path>
+              <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-1"></path>
+              <circle cx="20" cy="10" r="2"></circle>
+            </svg>
+            <svg *ngIf="getTimelineIcon(event.type) === 'scalpel'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+              <path d="M18 6 2 22"></path>
+              <rect x="8" y="2" width="14" height="6" rx="2"></rect>
+            </svg>
+            <svg *ngIf="getTimelineIcon(event.type) === 'circle'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+          </div>
+          
+          <!-- Event date -->
+          <div class="mr-8 text-right text-text-light w-16 pt-0.5">
+            {{ event.date }}
+          </div>
+          
+          <!-- Event content -->
+          <div class="bg-white rounded-lg border border-border p-4 ml-8 hover-card flex-1">
+            <h4 class="font-medium text-text">{{ event.event }}</h4>
+            <p *ngIf="event.details" class="text-text-light text-sm mt-1">{{ event.details }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Other tabs would go here with *ngIf for each tab -->
+    <div *ngIf="activeTab === 'history'" class="tab-content-history">
+      <h3 class="text-xl font-semibold text-text mb-6">Medical History</h3>
+      <!-- Detailed medical history content would go here -->
+      <p class="text-text-light">Detailed medical history view is under development.</p>
+    </div>
+    
+    <div *ngIf="activeTab === 'lab-results'" class="tab-content-lab-results">
+      <h3 class="text-xl font-semibold text-text mb-6">Lab Results</h3>
+      <!-- Comprehensive lab results would go here -->
+      <p class="text-text-light">Comprehensive lab results view is under development.</p>
+    </div>
+    
+    <div *ngIf="activeTab === 'notes'" class="tab-content-notes">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold text-text">Doctor Notes</h3>
+        <button (click)="toggleQuickNoteForm()" class="flex items-center bg-primary text-white px-3 py-2 rounded-button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 mr-2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Note
+        </button>
+      </div>
+      
+      <div *ngIf="patient.notes && patient.notes.length > 0" class="space-y-4">
+        <div *ngFor="let note of patient.notes; let i = index" class="bg-white border border-border rounded-lg p-5 hover-card">
+          <p class="text-text">{{ note }}</p>
+          <p class="text-sm text-text-light mt-3">
+            {{ i === 0 ? 'Added today - Dr. Sefanos B.' : i === 1 ? 'Previous visit - Dr. Sefanos B.' : 'Older note - Dr. Sefanos B.' }}
+          </p>
+        </div>
+      </div>
+      
+      <div *ngIf="!patient.notes || patient.notes.length === 0" class="text-center py-8">
+        <p class="text-text-light mb-4">No notes recorded for this patient</p>
+        <button (click)="toggleQuickNoteForm()" class="text-primary hover:text-primary-dark">Add your first note</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No patient found message -->
+<div *ngIf="!patient" class="container mx-auto p-6">
+  <div class="bg-white rounded-card shadow-card p-card-padding text-center">
+    <h2 class="text-section-header text-text mb-4">Patient Not Found</h2>
+    <p class="mb-6">Could not find patient with ID: {{ patientId }}</p>
+    <button (click)="goBackToPatientList()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-button">
+      Back to Patient List
+    </button>
+  </div>
+</div>

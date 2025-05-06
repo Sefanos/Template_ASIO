@@ -1,0 +1,151 @@
+<div class="container mx-auto p-6">
+  <h1 class="text-dashboard-title text-text mb-6">PATIENT MANAGEMENT</h1>
+  
+  <!-- Search and Filter Section -->
+  <div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+    <div class="flex items-center mb-4">
+      <label class="mr-2 text-text">Search:</label>
+      <div class="relative flex-1">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Search by name or ID"
+        >
+        <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-light">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <div class="flex items-center">
+      <span class="mr-2 text-text">Filters:</span>
+      <div class="flex space-x-4">
+        <label class="inline-flex items-center">
+          <input type="checkbox" [(ngModel)]="filters.recent" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">Recent</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" [(ngModel)]="filters.critical" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">Critical</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" [(ngModel)]="filters.followUp" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">Follow-up</span>
+        </label>
+        <button 
+          (click)="showMoreFilters()" 
+          class="text-primary hover:text-primary-dark transition-colors"
+        >
+          More Filters
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Patient List Table -->
+  <div class="bg-white rounded-card shadow-card p-card-padding">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-section-header text-text">PATIENT LIST</h2>
+      <button 
+        (click)="exportPatientData()" 
+        class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-button transition-colors"
+      >
+        Export
+      </button>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full">
+        <thead>
+          <tr class="border-b border-border">
+            <th class="px-4 py-3 text-left text-text font-semibold">ID</th>
+            <th class="px-4 py-3 text-left text-text font-semibold">Patient Name</th>
+            <th class="px-4 py-3 text-left text-text font-semibold">Last Visit</th>
+            <th class="px-4 py-3 text-left text-text font-semibold">Status</th>
+            <th class="px-4 py-3 text-left text-text font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let patient of paginatedPatients" 
+            class="border-b border-border hover:bg-hover transition-colors cursor-pointer"
+            (click)="goToPatientRecord(patient.id)">
+            <td class="px-4 py-3">{{ patient.id }}</td>
+            <td class="px-4 py-3">{{ patient.name }}</td>
+            <td class="px-4 py-3">{{ patient.lastVisit }}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium status-badge" 
+                [ngClass]="{
+                  'bg-status-success bg-opacity-10 text-status-success': patient.status === 'Active',
+                  'bg-status-warning bg-opacity-10 text-status-warning': patient.status === 'Follow up',
+                  'bg-status-urgent bg-opacity-10 text-status-urgent': patient.status === 'Critical',
+                  'bg-status-info bg-opacity-10 text-status-info': patient.status === 'Lab Results'
+                }">
+                {{ patient.status }}
+              </span>
+            </td>
+            <td class="px-4 py-3" (click)="$event.stopPropagation()">
+              <div class="flex space-x-2">
+                <button 
+                  (click)="viewPatient(patient.id)" 
+                  class="text-primary hover:text-primary-dark transition-colors"
+                  title="View patient"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+                <button 
+                  (click)="messagePatient(patient.id)" 
+                  class="text-primary hover:text-primary-dark transition-colors"
+                  title="Message patient"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="flex justify-center mt-6" *ngIf="totalPages > 1">
+      <nav class="flex items-center space-x-1">
+        <button 
+          (click)="changePage(currentPage - 1)" 
+          [disabled]="currentPage === 1"
+          class="px-3 py-1 rounded-button border border-border text-text disabled:opacity-50"
+        >
+          Prev
+        </button>
+        
+        <ng-container *ngFor="let page of [].constructor(totalPages); let i = index">
+          <button 
+            (click)="changePage(i + 1)" 
+            [class.bg-primary]="currentPage === i + 1"
+            [class.text-white]="currentPage === i + 1"
+            class="px-3 py-1 rounded-button border border-border"
+          >
+            {{ i + 1 }}
+          </button>
+        </ng-container>
+        
+        <button 
+          (click)="changePage(currentPage + 1)" 
+          [disabled]="currentPage === totalPages"
+          class="px-3 py-1 rounded-button border border-border text-text disabled:opacity-50"
+        >
+          Next
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>

@@ -1,1 +1,86 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-background text-text font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display text-text;
+  }
+  
+  h1 {
+    @apply text-dashboard-title;
+  }
+  
+  h2 {
+    @apply text-section-header;
+  }
+  
+  h3 {
+    @apply text-card-title;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-button transition duration-200 font-medium;
+  }
+  
+  .btn-secondary {
+    @apply bg-white border border-primary text-primary hover:bg-hover py-2 px-4 rounded-button transition duration-200 font-medium;
+  }
+  
+  .btn-accent {
+    @apply bg-accent hover:bg-accent-dark text-white py-2 px-4 rounded-button transition duration-200 font-medium;
+  }
+  
+  .btn-urgent {
+    @apply bg-status-urgent hover:bg-status-urgent/90 text-white py-2 px-4 rounded-button transition duration-200 font-medium;
+  }
+  
+  .card {
+    @apply bg-card rounded-card shadow-card border border-border p-card-padding hover:shadow-card-hover transition duration-200;
+  }
+  
+  .status-badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-urgent {
+    @apply bg-status-urgent/10 text-status-urgent status-badge;
+  }
+  
+  .status-warning {
+    @apply bg-status-warning/10 text-status-warning status-badge;
+  }
+  
+  .status-success {
+    @apply bg-status-success/10 text-status-success status-badge;
+  }
+  
+  .status-info {
+    @apply bg-status-info/10 text-status-info status-badge;
+  }
+  
+  .sidebar-link {
+    @apply block px-4 py-3 text-sidebar hover:bg-hover transition duration-200;
+  }
+  
+  .sidebar-link-active {
+    @apply block px-4 py-3 bg-primary text-white text-sidebar;
+  }
+  
+  .form-input {
+    @apply w-full border border-border rounded-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary;
+  }
+  
+  .card-title {
+    @apply text-card-title text-primary mb-4 font-display;
+  }
+}
