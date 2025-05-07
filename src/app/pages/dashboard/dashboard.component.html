@@ -1,57 +1,60 @@
 <!-- Dashboard Header -->
-<app-dashboard-header [title]="'DOCTOR DASHBOARD'" [date]="currentDate"></app-dashboard-header>
+<div class="max-w-full px-2 sm:px-4 lg:px-6">
+  <app-dashboard-header [title]="'DOCTOR DASHBOARD'" [date]="currentDate"></app-dashboard-header>
 
-<!-- Top Statistics Cards -->
-<section class="mb-8">
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <app-stat-card 
-      title="TODAY'S APPOINTMENTS" 
-      badge="8 Total" 
-      badgeType="primary" 
-      [items]="appointmentStats" 
-      linkText="View All" 
-      linkUrl="/appointments">
-    </app-stat-card>
-    
-    <app-stat-card 
-      title="PATIENT QUEUE" 
-      badge="1 Emergency" 
-      badgeType="urgent" 
-      [items]="queueStats" 
-      linkText="Manage" 
-      linkUrl="/queue">
-    </app-stat-card>
-    
-    <app-stat-card 
-      title="PENDING TASKS" 
-      badge="7 Tasks" 
-      badgeType="warning" 
-      [items]="taskStats" 
-      linkText="Review All" 
-      linkUrl="/tasks">
-    </app-stat-card>
-  </div>
-</section>
+  <!-- Top Statistics Cards -->
+  <section class="mb-4 sm:mb-6 lg:mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+      <app-stat-card 
+        title="TODAY'S APPOINTMENTS" 
+        badge="8 Total" 
+        badgeType="primary" 
+        [items]="appointmentStats" 
+        linkText="View All" 
+        linkUrl="/appointments">
+      </app-stat-card>
+      
+      <app-stat-card 
+        title="PATIENT QUEUE" 
+        badge="1 Emergency" 
+        badgeType="urgent" 
+        [items]="queueStats" 
+        linkText="Manage" 
+        linkUrl="/queue">
+      </app-stat-card>
+      
+      <app-stat-card 
+        title="PENDING TASKS" 
+        badge="7 Tasks" 
+        badgeType="warning" 
+        [items]="taskStats" 
+        linkText="Review All" 
+        linkUrl="/tasks"
+        class="sm:col-span-2 lg:col-span-1">
+      </app-stat-card>
+    </div>
+  </section>
 
-<!-- Patient Demographics Section -->
-<section class="mb-8">
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <app-patient-demographics></app-patient-demographics>
-    <app-age-distribution></app-age-distribution>
-    <app-new-patients></app-new-patients>
-  </div>
-</section>
+  <!-- Patient Demographics Section -->
+  <section class="mb-4 sm:mb-6 lg:mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+      <app-patient-demographics></app-patient-demographics>
+      <app-age-distribution></app-age-distribution>
+      <app-new-patients class="sm:col-span-2 lg:col-span-1"></app-new-patients>
+    </div>
+  </section>
 
-<!-- Upcoming Appointments & Notifications Section -->
-<section class="mb-8">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <app-upcoming-appointments></app-upcoming-appointments>
-    <app-notifications></app-notifications>
-  </div>
-</section>
+  <!-- Upcoming Appointments & Notifications Section -->
+  <section class="mb-4 sm:mb-6 lg:mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+      <app-upcoming-appointments></app-upcoming-appointments>
+      <app-notifications></app-notifications>
+    </div>
+  </section>
 
-<!-- Weekly Overview Section -->
-<app-weekly-overview class="mb-8"></app-weekly-overview>
+  <!-- Weekly Overview Section -->
+  <app-weekly-overview class="mb-4 sm:mb-6 lg:mb-8 block"></app-weekly-overview>
 
-<!-- AI Diagnostic Assistant Section -->
-<app-ai-assistant></app-ai-assistant>
+  <!-- AI Diagnostic Assistant Section -->
+  <app-ai-assistant></app-ai-assistant>
+</div>

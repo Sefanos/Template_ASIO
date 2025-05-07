@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 
@@ -50,8 +50,19 @@ export class WeeklyOverviewComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  // Re-render chart on window resize
+  @HostListener('window:resize')
+  onResize() {
+    if (this.chart) {
+      this.chart.destroy();
+      setTimeout(() => {
+        this.initChart();
+      }, 100);
+    }
+  }
+
   private initChart() {
-    if (!this.appointmentsChartRef) return;
+    if (!this.appointmentsChartRef?.nativeElement) return;
 
     const ctx = this.appointmentsChartRef.nativeElement.getContext('2d');
     
@@ -59,6 +70,11 @@ export class WeeklyOverviewComponent implements AfterViewInit, OnDestroy {
     const primaryColor = '#2C6EAA';
     const urgentColor = '#EF4444';
     const infoColor = '#3B82F6';
+
+    // Get container width to adjust chart elements for different screen sizes
+    const containerWidth = this.appointmentsChartRef.nativeElement.parentElement.clientWidth;
+    const isMobile = containerWidth < 640;
+    const isTablet = containerWidth >= 640 && containerWidth < 1024;
 
     this.chart = new Chart(ctx, {
       type: 'bar',
@@ -78,7 +94,7 @@ export class WeeklyOverviewComponent implements AfterViewInit, OnDestroy {
           ],
           borderColor: 'transparent',
           borderRadius: 4,
-          barThickness: 16
+          barThickness: isMobile ? 12 : (isTablet ? 14 : 16)
         }]
       },
       options: {
@@ -94,7 +110,7 @@ export class WeeklyOverviewComponent implements AfterViewInit, OnDestroy {
             bodyColor: '#333',
             borderColor: '#E5E5E5',
             borderWidth: 1,
-            padding: 12,
+            padding: isMobile ? 8 : 12,
             cornerRadius: 8,
             displayColors: false,
             callbacks: {
@@ -111,7 +127,7 @@ export class WeeklyOverviewComponent implements AfterViewInit, OnDestroy {
             ticks: {
               color: '#9CA3AF',
               font: {
-                size: 11
+                size: isMobile ? 9 : (isTablet ? 10 : 11)
               }
             }
           },
@@ -126,9 +142,16 @@ export class WeeklyOverviewComponent implements AfterViewInit, OnDestroy {
             ticks: {
               color: '#9CA3AF',
               font: {
-                size: 11
+                size: isMobile ? 9 : (isTablet ? 10 : 11)
               },
-              stepSize: 5
+              stepSize: isMobile ? 3 : (isTablet ? 4 : 5),
+              // On small screens, make sure we only show whole numbers
+              callback: function(value) {
+                if (isMobile && !Number.isInteger(Number(value))) {
+                  return '';
+                }
+                return value;
+              }
             }
           }
         }
