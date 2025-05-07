@@ -1,0 +1,36 @@
+<div class="bg-white rounded-card shadow-card h-full">
+  <div class="p-card-padding border-b border-border">
+    <div class="flex items-center justify-between">
+      <h3 class="text-card-title text-primary font-semibold">Doctor Notes</h3>
+      <button class="text-primary hover:text-primary-dark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="19" cy="12" r="1"></circle>
+          <circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <div class="p-card-padding">
+    <div *ngIf="!notes || notes.length === 0" class="text-center py-6 text-text-light">
+      No notes available for this patient.
+    </div>
+    
+    <div *ngIf="notes && notes.length > 0" class="space-y-3">
+      <div *ngFor="let note of notes" class="bg-hover rounded-lg p-3">
+        <div class="mb-2">
+          <div class="text-sm text-text-light">{{ note.date | date:'medium' }}</div>
+          <div class="text-sm text-text-light">{{ note.provider }} | {{ note.type }}</div>
+        </div>
+        <div class="text-text">{{ note.content }}</div>
+      </div>
+    </div>
+    
+    <div class="mt-4">
+      <button class="w-full text-center text-primary hover:text-primary-dark border border-primary hover:border-primary-dark rounded-button py-2 transition-colors">
+        View All Notes
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+<!-- Allergies Alert -->
+<div *ngIf="allergies && allergies.length > 0" class="bg-status-urgent/10 border-l-4 border-status-urgent p-4 rounded-md mb-6">
+  <div class="flex">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-urgent mr-3 flex-shrink-0">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <div>
+      <h3 class="font-semibold text-status-urgent">Allergies</h3>
+      <ul class="mt-1">
+        <li *ngFor="let allergy of allergies" class="text-text">• {{ allergy }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Other Alerts -->
+<div *ngIf="alerts && alerts.length > 0" class="space-y-3 mb-6">
+  <div *ngFor="let alert of alerts" class="p-4 rounded-md"
+    [ngClass]="{
+      'bg-status-urgent/10 border-l-4 border-status-urgent': alert.type === 'danger',
+      'bg-status-warning/10 border-l-4 border-status-warning': alert.type === 'warning',
+      'bg-status-info/10 border-l-4 border-status-info': alert.type === 'info'
+    }">
+    <div class="flex">
+      <svg *ngIf="alert.type === 'danger'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-urgent mr-3 flex-shrink-0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <svg *ngIf="alert.type === 'warning'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-warning mr-3 flex-shrink-0">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <svg *ngIf="alert.type === 'info'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-status-info mr-3 flex-shrink-0">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <div>
+        <p class="font-medium text-text">{{ alert.message }}</p>
+      </div>
+    </div>
+  </div>
+</div>

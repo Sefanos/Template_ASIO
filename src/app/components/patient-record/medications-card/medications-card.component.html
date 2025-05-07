@@ -1,0 +1,64 @@
+<div class="bg-white rounded-card shadow-card h-full">
+  <div class="p-card-padding border-b border-border">
+    <div class="flex items-center justify-between">
+      <h3 class="text-card-title text-primary font-semibold">Medications</h3>
+      <button class="text-primary hover:text-primary-dark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="19" cy="12" r="1"></circle>
+          <circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <div class="p-card-padding">
+    <div *ngIf="!medications || medications.length === 0" class="text-center py-6 text-text-light">
+      No medication data available.
+    </div>
+    
+    <div *ngIf="medications && medications.length > 0">
+      <div class="mb-3 flex items-center justify-between">
+        <div class="text-sm font-medium">
+          Showing: <span class="text-primary">{{ showAll ? 'All Medications' : 'Active Medications' }}</span>
+        </div>
+        <button (click)="toggleShowAll()" class="text-sm text-primary hover:text-primary-dark">
+          {{ showAll ? 'Show Active Only' : 'Show All' }}
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <div *ngFor="let med of displayedMedications" class="bg-hover rounded-lg p-3">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-medium mb-1">{{ med.name }}</div>
+              <div class="text-sm text-text">{{ med.dosage }} - {{ med.frequency }}</div>
+              <div class="text-xs text-text-light mt-1">
+                Started: {{ med.startDate | date:'mediumDate' }}
+                <span *ngIf="med.endDate"> | Ended: {{ med.endDate | date:'mediumDate' }}</span>
+              </div>
+              <div *ngIf="med.notes" class="text-xs text-text-light mt-1">{{ med.notes }}</div>
+            </div>
+            
+            <div>
+              <span class="text-xs px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(med.status)">
+                {{ med.status | titlecase }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-4 flex justify-between">
+        <div class="text-sm text-text-light">
+          <span class="font-medium">Total:</span> {{ medications.length }} medications 
+          ({{ activeMedications.length }} active)
+        </div>
+        
+        <button class="text-primary hover:text-primary-dark text-sm">
+          Prescription History
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

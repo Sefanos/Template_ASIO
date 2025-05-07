@@ -1,416 +1,279 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 
-interface Patient {
-  id: number;
-  name: string;
-  dob: string;
-  phone: string;
-  allergies?: string[];
-  alerts?: {
-    type: 'warning' | 'danger' | 'info';
-    message: string;
-  }[];
-  vitalSigns: {
-    bp: string;
-    hr: string;
-    temp: string;
-    weight: string;
-    height: string;
-    lastUpdated: string;
-    history?: {
-      date: string;
-      value: string;
-    }[];
-  };
-  medications: {
-    name: string;
-    instructions: string;
-    startDate?: string;
-    interactions?: string[];
-  }[];
-  medicalHistory: {
-    condition: string;
-    details: string;
-    date?: string;
-  }[];
-  labs: {
-    test: string;
-    result: string;
-    date: string;
-    details?: boolean;
-    history?: {
-      date: string;
-      value: string;
-    }[];
-    referenceRange?: string;
-  }[];
-  appointments: {
-    date: string;
-    reason: string;
-  }[];
-  timeline?: {
-    date: string;
-    event: string;
-    type: 'appointment' | 'medication' | 'lab' | 'diagnosis' | 'procedure';
-    details?: string;
-  }[];
-  notes?: string[];
-}
+// Import the modular components
+import { PatientRecordHeaderComponent } from '../../components/patient-record/patient-record-header/patient-record-header.component';
+import { PrintOptionsComponent } from '../../components/patient-record/print-options/print-options.component';
+import { QuickNoteFormComponent } from '../../components/patient-record/quick-note-form/quick-note-form.component';
+import { PatientAlertsComponent } from '../../components/patient-record/patient-alerts/patient-alerts.component';
+import { PatientInfoHeaderComponent } from '../../components/patient-record/patient-info-header/patient-info-header.component';
+import { PatientTabsComponent } from '../../components/patient-record/patient-tabs/patient-tabs.component';
+import { TabSummaryComponent } from '../../components/patient-record/tab-summary/tab-summary.component';
+import { TabTimelineComponent } from '../../components/patient-record/tab-timeline/tab-timeline.component';
+import { TabNotesComponent } from '../../components/patient-record/tab-notes/tab-notes.component';
+import { PatientNotFoundComponent } from '../../components/patient-record/patient-not-found/patient-not-found.component';
+
+// Import models and services
+import { Patient } from '../../models/patient.model';
+import {
+  VitalSign,
+  Medication,
+  Condition,
+  LabResult,
+  Appointment,
+  TimelineEvent,
+  Note
+} from '../../models/patient-record.model';
+import { PatientService } from '../../services/patient.service';
+import { PatientDataUtilsService } from '../../services/patient-data-utils.service';
 
 @Component({
   selector: 'app-patient-record',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [
+    CommonModule, 
+    FormsModule,
+    PatientRecordHeaderComponent,
+    PrintOptionsComponent,
+    QuickNoteFormComponent,
+    PatientAlertsComponent,
+    PatientInfoHeaderComponent,
+    PatientTabsComponent,
+    TabSummaryComponent,
+    TabTimelineComponent,
+    TabNotesComponent,
+    PatientNotFoundComponent
+  ],
   templateUrl: './patient-record.component.html',
   styleUrl: './patient-record.component.css'
 })
 export class PatientRecordComponent implements OnInit {
-med: any;
-getMedicationDuration(arg0: string): number {
-  const match = arg0.match(/(\d+)\s*days?/i);
-  if (match) {
-    return parseInt(match[1], 10);
-  }
-  throw new Error(`Unable to extract duration from: "${arg0}"`);
-}
-formatMedicationDate(arg0: string): string {
-  const date = new Date(arg0);
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid date format: "${arg0}"`);
-  }
-
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-parseFloat(arg0: string): number {
-  const result = Number.parseFloat(arg0);
-  if (isNaN(result)) {
-    throw new Error(`Invalid number format: "${arg0}"`);
-  }
-  return result;
-}
+  // Page state
   patientId: number | null = null;
   patient: Patient | null = null;
   activeTab: string = 'summary';
   quickNote: string = '';
   showQuickNoteForm: boolean = false;
   showPrintOptions: boolean = false;
+  loading: boolean = true; 
+
+  // Transformed data for components
+  vitals: VitalSign[] = [];
+  medications: Medication[] = [];
+  conditions: Condition[] = [];
+  labResults: LabResult[] = [];
+  appointments: Appointment[] = [];
+  timelineEvents: TimelineEvent[] = [];
+  patientNotes: Note[] = [];
   
-  // Sample patient data (in a real app, this would come from a service)
-  samplePatients: Patient[] = [
-    {
-      id: 123,
-      name: 'Jean Dupont',
-      dob: '15/07/1975',
-      phone: '+33 6 12 34 56',
-      allergies: ['Penicillin', 'Peanuts'],
-      alerts: [
-        { type: 'danger', message: 'Penicillin allergy - Severe reaction' },
-        { type: 'warning', message: 'Medication interaction risk with current prescriptions' }
-      ],
-      vitalSigns: {
-        bp: '120/80 mmHg',
-        hr: '72 bpm',
-        temp: '36.7°C',
-        weight: '75 kg',
-        height: '176 cm',
-        lastUpdated: 'Today',
-        history: [
-          { date: '04/05/2025', value: '120/80 mmHg' },
-          { date: '03/04/2025', value: '118/78 mmHg' },
-          { date: '02/03/2025', value: '125/82 mmHg' },
-          { date: '01/02/2025', value: '130/85 mmHg' },
-          { date: '01/01/2025', value: '128/84 mmHg' }
-        ]
-      },
-      medications: [
-        { 
-          name: 'Lisinopril 10mg', 
-          instructions: 'Once daily',
-          startDate: '10/01/2022',
-          interactions: ['NSAIDs may decrease effectiveness']
-        },
-        { 
-          name: 'Metformin 500mg', 
-          instructions: 'Twice daily',
-          startDate: '15/02/2019'
-        }
-      ],
-      medicalHistory: [
-        { condition: 'Hypertension', details: 'diagnosed 2020', date: '15/06/2020' },
-        { condition: 'Type 2 Diabetes', details: 'diagnosed 2018', date: '23/11/2018' },
-        { condition: 'Right knee surgery', details: '2015', date: '07/03/2015' }
-      ],
-      labs: [
-        { 
-          test: 'HbA1c', 
-          result: '6.8%', 
-          date: '15/04/2025',
-          referenceRange: '4.0-5.6%',
-          history: [
-            { date: '15/04/2025', value: '6.8%' },
-            { date: '15/01/2025', value: '7.1%' },
-            { date: '15/10/2024', value: '7.3%' },
-            { date: '15/07/2024', value: '7.5%' },
-            { date: '15/04/2024', value: '7.7%' }
-          ]
-        },
-        { 
-          test: 'Cholesterol Panel', 
-          result: '', 
-          date: '15/04/2025', 
-          details: true 
-        }
-      ],
-      appointments: [
-        { date: 'Today', reason: 'Annual checkup' },
-        { date: '18/03/2025', reason: 'Follow-up' },
-        { date: '05/01/2025', reason: 'Urgent care' }
-      ],
-      timeline: [
-        { date: '04/05/2025', event: 'Annual checkup', type: 'appointment' },
-        { date: '15/04/2025', event: 'Lab test: HbA1c', type: 'lab', details: 'Result: 6.8%' },
-        { date: '15/04/2025', event: 'Lab test: Cholesterol Panel', type: 'lab' },
-        { date: '18/03/2025', event: 'Follow-up appointment', type: 'appointment' },
-        { date: '15/01/2025', event: 'Lab test: HbA1c', type: 'lab', details: 'Result: 7.1%' },
-        { date: '05/01/2025', event: 'Urgent care visit', type: 'appointment', details: 'Respiratory infection' },
-        { date: '15/10/2024', event: 'Lab test: HbA1c', type: 'lab', details: 'Result: 7.3%' },
-        { date: '15/07/2024', event: 'Lab test: HbA1c', type: 'lab', details: 'Result: 7.5%' },
-        { date: '15/06/2020', event: 'Diagnosis: Hypertension', type: 'diagnosis' },
-        { date: '23/11/2018', event: 'Diagnosis: Type 2 Diabetes', type: 'diagnosis' },
-        { date: '07/03/2015', event: 'Procedure: Right knee surgery', type: 'procedure' }
-      ],
-      notes: [
-        'Patient reports feeling well overall. Mentions occasional dizziness in the morning.',
-        'Patient is compliant with medication regimen. Discussed importance of regular exercise.'
-      ]
-    },
-    {
-      id: 456,
-      name: 'Marie Laurent',
-      dob: '23/08/1982',
-      phone: '+33 7 23 45 67',
-      vitalSigns: {
-        bp: '118/76 mmHg',
-        hr: '65 bpm',
-        temp: '36.4°C',
-        weight: '62 kg',
-        height: '168 cm',
-        lastUpdated: '5 days ago'
-      },
-      medications: [
-        { name: 'Loratadine 10mg', instructions: 'As needed for allergies' }
-      ],
-      medicalHistory: [
-        { condition: 'Seasonal allergies', details: 'ongoing' },
-        { condition: 'Appendectomy', details: '2010' }
-      ],
-      labs: [
-        { test: 'CBC', result: 'Normal', date: '10/04/2025' },
-        { test: 'Liver Function', result: 'Normal', date: '10/04/2025' }
-      ],
-      appointments: [
-        { date: '5 days ago', reason: 'Follow-up' },
-        { date: '12/02/2025', reason: 'Allergy consultation' }
-      ]
-    }
-  ];
   
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
+  // Inject services using modern Angular DI pattern
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private patientService = inject(PatientService);
+  private dataUtils = inject(PatientDataUtilsService);
+  private cdr = inject(ChangeDetectorRef);
+  
+  constructor() {}
   
   ngOnInit(): void {
+    this.loadPatientData();
+  }
+
+  /**
+   * Load patient data from the route parameters
+   */
+  private loadPatientData(): void {
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       if (idParam) {
         this.patientId = parseInt(idParam, 10);
-        // Find patient in our sample data
-        this.patient = this.samplePatients.find(p => p.id === this.patientId) || null;
+        this.loading = true;
+        
+        // First try to get data from service
+        this.patientService.getPatientById(this.patientId)
+          .subscribe({
+            next: (patient) => {
+              if (patient) {
+                this.patient = patient;
+                this.processPatientData();
+              } else {
+                // Fallback to using sample patient if service returns null
+                console.log('Using sample patient data as fallback');
+        
+              }
+            },
+            error: (err) => {
+              console.error('Error loading patient data:', err);
+            },
+            complete: () => {
+              this.loading = false;
+            }
+          });
+      } else {
+        // Use sample data if no ID in route
+        Error('No patient ID in route parameters');
       }
     });
+    
+    // If no route param is available after 1 second, use sample data
+    setTimeout(() => {
+      if (this.loading && !this.patient) {
+        console.log('No route param or slow response - using sample data');
+      }
+    }, 1000);
   }
   
+  /**
+   * Process patient data using the utility service
+   */
+  private processPatientData(): void {
+    if (!this.patient) {
+      console.error('Cannot process patient data: patient is null');
+      return;
+    }
+    
+    try {
+      // Log the raw patient object to verify data is available
+      console.log('Raw patient data to be processed:', JSON.stringify({
+        id: this.patient.id,
+        name: this.patient.name,
+        dob: this.patient.dob,
+        phone: this.patient.phone
+      }));
+      
+      // Use the data utils service to transform the patient data
+      const transformedData = this.dataUtils.transformPatientData(this.patient);
+      
+      // Assign all transformed data to component properties
+      this.vitals = transformedData.vitals;
+      this.medications = transformedData.medications;
+      this.conditions = transformedData.conditions;
+      this.labResults = transformedData.labResults;
+      this.appointments = transformedData.appointments;
+      this.timelineEvents = transformedData.timelineEvents;
+      this.patientNotes = transformedData.patientNotes;
+      
+      // Force change detection to update the view
+      this.cdr.detectChanges();
+      
+      console.log('Patient data processed successfully:', {
+        patient: {
+          id: this.patient?.id,
+          name: this.patient?.name,
+          hasName: !!this.patient?.name
+        },
+        vitals: this.vitals.length,
+        medications: this.medications.length,
+        conditions: this.conditions.length,
+        labResults: this.labResults.length,
+        appointments: this.appointments.length,
+        notes: this.patientNotes.length
+      });
+      
+      // Additional forced update after a small delay to ensure all child components are updated
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 100);
+    } catch (error) {
+      console.error('Error transforming patient data:', error);
+    }
+  }
+  
+  /**
+   * Set the active tab
+   */
   setActiveTab(tab: string): void {
+    console.log(`Switching to tab: ${tab}`);
     this.activeTab = tab;
+    // Force change detection when tab changes
+    this.cdr.detectChanges();
   }
   
+  /**
+   * Navigate back to patient list
+   */
   goBackToPatientList(): void {
     this.router.navigate(['/patients']);
   }
   
+  /**
+   * Navigate to prescription page
+   */
   newPrescription(): void {
-    this.router.navigate(['/prescription'], { queryParams: { patientId: this.patientId } });
+    this.router.navigate(['/prescription'], { 
+      queryParams: { patientId: this.patientId } 
+    });
   }
   
+  /**
+   * Navigate to appointment calendar
+   */
   scheduleAppointment(): void {
-    this.router.navigate(['/calendar'], { queryParams: { patientId: this.patientId } });
+    this.router.navigate(['/calendar'], { 
+      queryParams: { patientId: this.patientId } 
+    });
   }
   
+  /**
+   * Send a message to the patient
+   */
   sendMessage(): void {
     console.log(`Sending message to patient ${this.patientId}`);
   }
   
+  /**
+   * Order new lab tests
+   */
   orderNewTests(): void {
     console.log(`Ordering new tests for patient ${this.patientId}`);
   }
   
+  /**
+   * Toggle quick note form visibility
+   */
   toggleQuickNoteForm(): void {
     this.showQuickNoteForm = !this.showQuickNoteForm;
   }
   
+  /**
+   * Save a quick note to patient record
+   */
   saveQuickNote(): void {
-    if (this.quickNote.trim() && this.patient) {
-      if (!this.patient.notes) {
-        this.patient.notes = [];
-      }
-      this.patient.notes.unshift(this.quickNote);
-      this.quickNote = '';
-      this.showQuickNoteForm = false;
+    if (this.quickNote.trim() && this.patientId) {
+      this.patientService.addPatientNote(this.patientId, this.quickNote)
+        .subscribe({
+          next: (success) => {
+            if (success) {
+              // Refresh patient data to show the new note
+              this.loadPatientData();
+              this.quickNote = '';
+              this.showQuickNoteForm = false;
+            }
+          },
+          error: (err) => {
+            console.error('Error saving note:', err);
+          }
+        });
     }
   }
   
+  /**
+   * Toggle print options visibility
+   */
   togglePrintOptions(): void {
     this.showPrintOptions = !this.showPrintOptions;
   }
   
+  /**
+   * Print a section of the patient record
+   */
   printSection(section: string): void {
     console.log(`Printing ${section} for patient ${this.patientId}`);
     this.showPrintOptions = false;
     // In a real app, this would generate a printable view of the selected section
-  }
-  
-  getTimelineIcon(type: string): string {
-    switch(type) {
-      case 'appointment': return 'calendar';
-      case 'medication': return 'pill';
-      case 'lab': return 'flask';
-      case 'diagnosis': return 'stethoscope';
-      case 'procedure': return 'scalpel';
-      default: return 'circle';
-    }
-  }
-  
-  /**
-   * Extracts a numeric value from the blood pressure string for visualization
-   * Handles strings like "120/80 mmHg" by extracting the systolic pressure (120)
-   */
-  getNumericValue(value: string): number {
-    if (!value) return 0;
-    
-    // For blood pressure values (e.g. "120/80 mmHg")
-    if (value.includes('/')) {
-      const systolic = value.split('/')[0];
-      return Number(systolic);
-    }
-    
-    // For other values, extract numbers
-    const numericValue = value.replace(/[^\d.]/g, '');
-    return Number(numericValue) || 0;
-  }
-  
-  /**
-   * Calculates height percentage for lab value charts
-   */
-  calculateLabPercentage(valueStr: string): number {
-    const value = this.parseLabValue(valueStr);
-    // Scale to reasonable chart height (between 10% and 100%)
-    return Math.min(Math.max((value / 10) * 100, 10), 100);
-  }
-  
-  /**
-   * Safely parses a lab value from string to number
-   */
-  parseLabValue(valueStr: string): number {
-    try {
-      // Extract numeric portion from string like "6.8%"
-      return parseFloat(valueStr.replace(/[^\d.]/g, '')) || 0;
-    } catch (e) {
-      return 0;
-    }
-  }
-  
-  /**
-   * Determines if lab value is in normal range
-   */
-  isNormalLabValue(valueStr: string): boolean {
-    const value = this.parseLabValue(valueStr);
-    // HbA1c normal is < 5.7%
-    return value <= 5.6;
-  }
-  
-  /**
-   * Determines if lab value is in warning range
-   */
-  isWarningLabValue(valueStr: string): boolean {
-    const value = this.parseLabValue(valueStr);
-    // HbA1c prediabetes is 5.7% - 6.9%
-    return value > 5.6 && value < 7.0;
-  }
-  
-  /**
-   * Determines if lab value is in danger range
-   */
-  isDangerLabValue(valueStr: string): boolean {
-    const value = this.parseLabValue(valueStr);
-    // HbA1c diabetes is >= 7.0%
-    return value >= 7.0;
-  }
-  
-  /**
-   * Extracts the systolic value from a blood pressure reading
-   * @param bpValue Blood pressure string like "120/80 mmHg"
-   */
-  getSystolic(bpValue: string): number {
-    if (!bpValue || !bpValue.includes('/')) return 0;
-    return parseInt(bpValue.split('/')[0].trim(), 10);
-  }
-  
-  /**
-   * Extracts the diastolic value from a blood pressure reading
-   * @param bpValue Blood pressure string like "120/80 mmHg"
-   */
-  getDiastolic(bpValue: string): number {
-    if (!bpValue || !bpValue.includes('/')) return 0;
-    const parts = bpValue.split('/');
-    if (parts.length < 2) return 0;
-    return parseInt(parts[1].trim().split(' ')[0], 10);
-  }
-  
-  /**
-   * Calculates the height percentage for BP visualization
-   * @param value BP value (systolic or diastolic)
-   */
-  getBpHeightPercentage(value: number): number {
-    // Map BP values to chart height (0-100%)
-    // Max height (100%) should be around 180mmHg
-    // Min height (10%) should be around 40mmHg
-    
-    const maxBP = 180; // Maximum BP to display at full height
-    const minBP = 40;  // Minimum BP to display
-    const range = maxBP - minBP;
-    
-    // Calculate percentage with bounds checking
-    const percentage = Math.min(100, Math.max(5, ((value - minBP) / range) * 100));
-    return percentage;
-  }
-  
-  /**
-   * Format BP date for display in the chart
-   */
-  formatBpDate(dateStr: string): string {
-    // Return only month and day without the year for cleaner display
-    const parts = dateStr.split('/');
-    if (parts.length >= 2) {
-      return `${parts[1]}/${parts[0]}`;
-    }
-    return dateStr;
   }
 }

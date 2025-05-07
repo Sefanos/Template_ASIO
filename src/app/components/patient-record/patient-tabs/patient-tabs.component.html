@@ -1,0 +1,36 @@
+<div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+  <!-- Debug information -->
+  <div class="p-2 bg-gray-100 rounded mb-2 w-full text-sm">
+    Current active tab: "{{ activeTab }}"
+  </div>
+
+  <!-- Primary tabs -->
+  <div class="flex flex-wrap gap-2 mb-2">
+    <button 
+      *ngFor="let tab of primaryTabs" 
+      [class.bg-primary]="isTabActive(tab)"
+      [class.text-white]="isTabActive(tab)"
+      [class.bg-hover]="!isTabActive(tab)"
+      [class.text-text-dark]="!isTabActive(tab)"
+      (click)="setActiveTab(tab)"
+      class="px-4 py-2 rounded-button text-sm font-medium transition-colors"
+    >
+      {{ tab }}
+    </button>
+  </div>
+  
+  <!-- Secondary tabs -->
+  <div class="flex flex-wrap gap-2">
+    <button 
+      *ngFor="let tab of secondaryTabs" 
+      [class.bg-primary]="isTabActive(tab)"
+      [class.text-white]="isTabActive(tab)"
+      [class.bg-hover]="!isTabActive(tab)"
+      [class.text-text-dark]="!isTabActive(tab)"
+      (click)="setActiveTab(tab)"
+      class="px-4 py-2 rounded-button text-sm font-medium transition-colors"
+    >
+      {{ tab }}
+    </button>
+  </div>
+</div>

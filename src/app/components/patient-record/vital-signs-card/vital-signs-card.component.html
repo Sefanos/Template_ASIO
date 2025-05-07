@@ -1,0 +1,117 @@
+<div class="bg-white rounded-card shadow-card h-full">
+    <div class="p-card-padding border-b border-border">
+      <div class="flex items-center justify-between">
+        <h3 class="text-card-title text-primary font-semibold">Vital Signs</h3>
+        <button class="text-primary hover:text-primary-dark">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="19" cy="12" r="1"></circle>
+            <circle cx="5" cy="12" r="1"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <div class="p-card-padding">
+      <div *ngIf="!latestVitals" class="text-center py-6 text-text-light">
+        No vital signs data available.
+      </div>
+      
+      <div *ngIf="latestVitals">
+        <div class="text-sm text-text-light mb-3">
+          Last recorded: {{ latestVitals.date | date:'MMM d, yyyy' }}
+        </div>
+        
+        <!-- Blood Pressure -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="bg-hover rounded-lg p-3">
+            <div class="text-sm text-text-light mb-1">Blood Pressure</div>
+            <div class="flex items-baseline">
+              <span class="text-xl font-bold"
+                [ngClass]="{
+                  'text-status-urgent': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'crisis' || getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'low',
+                  'text-status-warning': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'high',
+                  'text-status-info': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'elevated',
+                  'text-success': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'normal'
+                }"
+              >
+                {{ latestVitals.systolic }}/{{ latestVitals.diastolic }}
+              </span>
+              <span class="text-sm text-text-light ml-1">mmHg</span>
+            </div>
+          </div>
+          
+          <!-- Pulse -->
+          <div class="bg-hover rounded-lg p-3">
+            <div class="text-sm text-text-light mb-1">Pulse</div>
+            <div class="flex items-baseline">
+              <span class="text-xl font-bold">{{ latestVitals.pulse }}</span>
+              <span class="text-sm text-text-light ml-1">bpm</span>
+            </div>
+          </div>
+        </div>
+        
+      <!-- Temperature and Respiratory Rate -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-hover rounded-lg p-3">
+          <div class="text-sm text-text-light mb-1">Temperature</div>
+          <div class="flex items-baseline">
+            <span class="text-xl font-bold"
+              [ngClass]="{
+                'text-status-warning': getTemperatureStatus(latestVitals.temperature) === 'high',
+                'text-success': getTemperatureStatus(latestVitals.temperature) === 'normal',
+                'text-status-info': getTemperatureStatus(latestVitals.temperature) === 'low'
+              }"
+            >
+              {{ latestVitals.temperature }}
+            </span>
+            <span class="text-sm text-text-light ml-1">°C</span>
+          </div>
+        </div>
+        
+        <!-- Respiratory Rate -->
+        <div class="bg-hover rounded-lg p-3">
+          <div class="text-sm text-text-light mb-1">Respiratory Rate</div>
+          <div class="flex items-baseline">
+            <span class="text-xl font-bold">{{ latestVitals.respiratoryRate }}</span>
+            <span class="text-sm text-text-light ml-1">breaths/min</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- O2 Saturation and Weight/Height -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-hover rounded-lg p-3">
+          <div class="text-sm text-text-light mb-1">O₂ Saturation</div>
+          <div class="flex items-baseline">
+            <span class="text-xl font-bold"
+              [ngClass]="{
+                'text-status-urgent': getO2SatStatus(latestVitals.oxygenSaturation) === 'low',
+                'text-status-warning': getO2SatStatus(latestVitals.oxygenSaturation) === 'borderline',
+                'text-success': getO2SatStatus(latestVitals.oxygenSaturation) === 'normal'
+              }"
+            >
+              {{ latestVitals.oxygenSaturation }}
+            </span>
+            <span class="text-sm text-text-light ml-1">%</span>
+          </div>
+        </div>
+        
+        <!-- Weight and Height -->
+        <div class="bg-hover rounded-lg p-3">
+          <div class="text-sm text-text-light mb-1">Weight / Height</div>
+          <div class="flex items-baseline">
+            <span class="text-xl font-bold">{{ latestVitals.weight }} kg / {{ latestVitals.height }} cm</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- View BP Chart button -->
+      <div class="mt-4">
+        <button class="w-full text-center text-primary hover:text-primary-dark border border-primary hover:border-primary-dark rounded-button py-2 transition-colors">
+          View BP Chart
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

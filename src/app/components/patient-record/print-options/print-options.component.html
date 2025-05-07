@@ -1,0 +1,9 @@
+<div *ngIf="show" class="absolute right-8 mt-2 bg-white rounded-lg shadow-md p-4 border border-border z-10">
+  <h3 class="text-sm font-semibold mb-2">Print/Export Options</h3>
+  <ul class="space-y-2">
+    <li><button (click)="onPrintSection('complete')" class="text-primary hover:text-primary-dark">Complete Record</button></li>
+    <li><button (click)="onPrintSection('summary')" class="text-primary hover:text-primary-dark">Summary</button></li>
+    <li><button (click)="onPrintSection('medications')" class="text-primary hover:text-primary-dark">Medications Only</button></li>
+    <li><button (click)="onPrintSection('labs')" class="text-primary hover:text-primary-dark">Lab Results Only</button></li>
+  </ul>
+</div>

@@ -1,0 +1,57 @@
+<div class="flex">
+  <!-- Date sidebar -->
+  <div class="flex-none w-28 text-sm text-text-light pr-4">
+    {{ event.date | date:'MMM d, yyyy' }}
+  </div>
+  
+  <!-- Event content -->
+  <div class="flex-1">
+    <div class="flex items-start">
+      <!-- Icon -->
+      <div 
+        class="flex-none h-8 w-8 rounded-full flex items-center justify-center mr-3"
+        [ngClass]="{
+          'bg-primary/10 text-primary': getEventColor(event.type) === 'primary',
+          'bg-status-warning/10 text-status-warning': getEventColor(event.type) === 'status-warning',
+          'bg-status-info/10 text-status-info': getEventColor(event.type) === 'status-info',
+          'bg-status-urgent/10 text-status-urgent': getEventColor(event.type) === 'status-urgent',
+          'bg-text/10 text-text': getEventColor(event.type) === 'text'
+        }"
+        [innerHTML]="getEventIcon(event.type)"
+      >
+      </div>
+      
+      <!-- Content -->
+      <div class="flex-1 pb-6 border-l-2 border-dashed border-border pl-4">
+        <div class="bg-white rounded-card shadow-sm p-3 mb-2">
+          <h4 class="font-semibold text-text mb-1">{{ event.title }}</h4>
+          <p class="text-text-light">{{ event.description }}</p>
+          
+          <div *ngIf="event.provider" class="mt-2 text-sm text-text-light flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 mr-1">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            {{ event.provider }}
+          </div>
+          
+          <div *ngIf="event.status" class="mt-1 text-sm">
+            <span 
+              class="px-2 py-0.5 rounded-full"
+              [ngClass]="{
+                'bg-success/10 text-success': event.status === 'completed',
+                'bg-status-info/10 text-status-info': event.status === 'scheduled',
+                'bg-status-warning/10 text-status-warning': event.status === 'pending',
+                'bg-status-urgent/10 text-status-urgent': event.status === 'cancelled'
+              }"
+            >
+              {{ event.status | titlecase }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

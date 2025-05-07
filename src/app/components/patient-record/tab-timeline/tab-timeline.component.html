@@ -1,0 +1,28 @@
+<div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+  <!-- Filter options -->
+  <div class="flex flex-wrap gap-2 mb-6">
+    <button 
+      *ngFor="let filter of filterOptions" 
+      [class.bg-primary]="selectedFilter === filter"
+      [class.text-white]="selectedFilter === filter"
+      [class.bg-hover]="selectedFilter !== filter"
+      [class.text-text]="selectedFilter !== filter"
+      (click)="setFilter(filter)"
+      class="px-3 py-1 rounded-button text-sm font-medium transition-colors"
+    >
+      {{ filter }}
+    </button>
+  </div>
+  
+  <!-- Timeline events -->
+  <div class="space-y-4">
+    <div *ngIf="filteredEvents.length === 0" class="text-center py-6 text-text-light">
+      No events found for this filter.
+    </div>
+    
+    <app-timeline-event 
+      *ngFor="let event of filteredEvents"
+      [event]="event"
+    ></app-timeline-event>
+  </div>
+</div>

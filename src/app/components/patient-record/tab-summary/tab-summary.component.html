@@ -1,0 +1,22 @@
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <!-- Vital Signs Card -->
+  <app-vital-signs-card [vitals]="vitals"></app-vital-signs-card>
+  
+  <!-- Medications Card -->
+  <app-medications-card [medications]="medications"></app-medications-card>
+  
+  <!-- Medical History Card -->
+  <app-medical-history-card [conditions]="conditions"></app-medical-history-card>
+  
+  <!-- Lab Results Card -->
+  <app-lab-results-card [labResults]="labResults"></app-lab-results-card>
+  
+  <!-- Appointment History Card -->
+  <app-appointment-history-card [appointments]="appointments"></app-appointment-history-card>
+  
+  <!-- Doctor Notes Card - Fixed to properly pass notes data -->
+  <app-doctor-notes-card 
+    [patientId]="patient?.id"
+    [notes]="patientNotes"
+  ></app-doctor-notes-card>
+</div>

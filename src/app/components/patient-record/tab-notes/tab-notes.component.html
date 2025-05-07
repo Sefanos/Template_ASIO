@@ -1,0 +1,75 @@
+<div class="space-y-6">
+  <!-- Actions Bar -->
+  <div class="bg-white rounded-card shadow-card p-card-padding flex justify-between items-center">
+    <!-- Category filters -->
+    <div class="flex flex-wrap gap-2">
+      <button 
+        *ngFor="let category of noteCategories" 
+        [class.bg-primary]="selectedCategory === category"
+        [class.text-white]="selectedCategory === category"
+        [class.bg-hover]="selectedCategory !== category"
+        [class.text-text]="selectedCategory !== category"
+        (click)="setCategory(category)"
+        class="px-3 py-1 rounded-button text-sm font-medium transition-colors"
+      >
+        {{ category }}
+      </button>
+    </div>
+    
+    <!-- Add new note button -->
+    <button 
+      (click)="toggleNewNoteForm()" 
+      class="bg-primary text-white px-4 py-2 rounded-button flex items-center"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 mr-2">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Add Note
+    </button>
+  </div>
+  
+  <!-- New Note Form -->
+  <div *ngIf="showNewNoteForm" class="bg-white rounded-card shadow-card p-card-padding">
+    <h3 class="text-card-title text-primary mb-3">New Clinical Note</h3>
+    <textarea 
+      [(ngModel)]="newNote" 
+      rows="5" 
+      class="w-full border border-border rounded-input p-3 mb-4"
+      placeholder="Enter your clinical note here..."
+    ></textarea>
+    <div class="flex justify-end space-x-2">
+      <button 
+        (click)="toggleNewNoteForm()" 
+        class="px-4 py-2 rounded-button border border-border text-text-light"
+      >
+        Cancel
+      </button>
+      <button 
+        (click)="saveNewNote()" 
+        class="px-4 py-2 rounded-button bg-primary text-white"
+      >
+        Save Note
+      </button>
+    </div>
+  </div>
+  
+  <!-- Notes List -->
+  <div *ngIf="filteredNotes.length === 0" class="bg-white rounded-card shadow-card p-8 text-center text-text-light">
+    No notes found in this category.
+  </div>
+  
+  <div *ngFor="let note of filteredNotes" class="bg-white rounded-card shadow-card p-card-padding">
+    <div class="flex justify-between mb-2">
+      <div class="font-medium">{{ note.date | date:'MMM d, yyyy' }}</div>
+      <div class="text-text-light">{{ note.provider }}</div>
+    </div>
+    <div class="bg-hover rounded-lg p-3">
+      {{ note.content }}
+    </div>
+    <div class="mt-2 text-sm text-text-light">
+      <span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+        {{ note.type | titlecase }} Note
+      </span>
+    </div>
+  </div>
+</div>

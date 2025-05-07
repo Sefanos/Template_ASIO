@@ -1,0 +1,79 @@
+<div class="bg-white rounded-card shadow-card h-full">
+  <div class="p-card-padding border-b border-border">
+    <div class="flex items-center justify-between">
+      <h3 class="text-card-title text-primary font-semibold">Lab Results</h3>
+      <button class="text-primary hover:text-primary-dark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="19" cy="12" r="1"></circle>
+          <circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <div class="p-card-padding">
+    <div *ngIf="!recentLabResults || recentLabResults.length === 0" class="text-center py-6 text-text-light">
+      No lab results available.
+    </div>
+    
+    <div *ngIf="recentLabResults && recentLabResults.length > 0">
+      <div class="mb-3">
+        <div class="text-sm font-medium">Most Recent Results</div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr class="text-xs text-text-light border-b border-border">
+              <th class="py-2 text-left">Test</th>
+              <th class="py-2 text-left">Value</th>
+              <th class="py-2 text-left">Date</th>
+              <th class="py-2 text-left">Status</th>
+              <th class="py-2 text-left">Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let result of recentLabResults" class="border-b border-border/50">
+              <td class="py-2">
+                <div class="font-medium">{{ result.name }}</div>
+                <div class="text-xs text-text-light">Ref: {{ result.referenceRange }}</div>
+              </td>
+              <td class="py-2">
+                <span [ngClass]="getStatusClass(result.status)">
+                  {{ result.value }} {{ result.unit }}
+                </span>
+              </td>
+              <td class="py-2 text-sm">
+                {{ result.date | date:'MM/dd/yyyy' }}
+              </td>
+              <td class="py-2">
+                <span 
+                  class="text-xs px-2 py-0.5 rounded-full"
+                  [ngClass]="{
+                    'bg-success/10 text-success': result.status === 'normal',
+                    'bg-status-warning/10 text-status-warning': result.status === 'abnormal',
+                    'bg-status-urgent/10 text-status-urgent': result.status === 'critical'
+                  }"
+                >
+                  {{ result.status | titlecase }}
+                </span>
+              </td>
+              <td class="py-2">
+                <div *ngIf="result.trend" class="flex items-center" [ngClass]="getTrendClass(result.trend)">
+                  <span [innerHTML]="getTrendIcon(result.trend)"></span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="mt-4">
+        <button class="w-full text-center text-primary hover:text-primary-dark border border-primary hover:border-primary-dark rounded-button py-2 transition-colors">
+          View All Lab Results
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

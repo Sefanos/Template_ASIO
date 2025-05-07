@@ -1,63 +1,63 @@
-<div class="container mx-auto p-6">
-  <!-- Loading Indicator (if needed) -->
-  <div *ngIf="patientId && !patient" class="flex justify-center items-center h-64">
+<div class="container mx-auto px-4 py-6">
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="flex justify-center items-center h-64">
     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
   </div>
   
   <!-- Error State - Patient Not Found -->
-  <div *ngIf="patientId && !patient && !loading">
+  <div *ngIf="!loading && error">
     <app-patient-not-found (goBack)="goBackToPatientList()"></app-patient-not-found>
   </div>
   
   <!-- Patient Record Content -->
-  <div *ngIf="patient">
+  <div *ngIf="!loading && !error">
     <!-- Header with back button and actions -->
     <app-patient-record-header 
       (goBack)="goBackToPatientList()"
-      (toggleQuickNote)="toggleQuickNoteForm()"
+      (toggleQuickNote)="toggleQuickNote()"
       (togglePrintOptions)="togglePrintOptions()"
     ></app-patient-record-header>
     
     <!-- Print Options Dropdown -->
     <app-print-options 
       [show]="showPrintOptions"
-      (printSection)="printSection($event)"
+      (printSection)="handlePrintSection($event)"
     ></app-print-options>
     
     <!-- Quick Note Form -->
     <app-quick-note-form
-      [show]="showQuickNoteForm"
+      [show]="showQuickNote"
       [quickNote]="quickNote"
-      (quickNoteChange)="quickNote = $event"
+      (quickNoteChange)="onQuickNoteChange($event)"
       (saveNote)="saveQuickNote()"
-      (cancelNote)="toggleQuickNoteForm()"
+      (cancelNote)="toggleQuickNote()"
     ></app-quick-note-form>
     
     <!-- Patient Alerts -->
     <app-patient-alerts
-      [allergies]="patient.allergies || []"
-      [alerts]="patient.alerts || []"
+      [allergies]="allergies"
+      [alerts]="alerts"
     ></app-patient-alerts>
     
-    <!-- Patient Info Header - Enhanced to ensure name displays with debugging -->
+    <!-- Patient Info Header -->
     <app-patient-info-header
-      [patientId]="patient.id"
-      [name]="patient.name || 'Amine Zeta'"
-      [dob]="patient.dob || 'N/A'"
-      [phone]="patient.phone || 'N/A'"
-      (newPrescription)="newPrescription()"
-      (scheduleAppointment)="scheduleAppointment()"
-      (sendMessage)="sendMessage()"
+      [patientId]="patient?.id"
+      [name]="patient?.name"
+      [dob]="patient?.dob"
+      [phone]="patient?.phone"
+      (newPrescription)="onNewPrescription()"
+      (scheduleAppointment)="onScheduleAppointment()"
+      (sendMessage)="onSendMessage()"
     ></app-patient-info-header>
     
     <!-- Patient Tab Navigation -->
     <app-patient-tabs
       [activeTab]="activeTab"
-      (tabChange)="setActiveTab($event)"
+      (tabChange)="onTabChange($event)"
     ></app-patient-tabs>
     
     <!-- Tab Content -->
-    <div [ngSwitch]="activeTab" class="mt-6">
+    <div [ngSwitch]="activeTab">
       <!-- Summary Tab -->
       <app-tab-summary 
         *ngSwitchCase="'summary'"
@@ -67,7 +67,6 @@
         [conditions]="conditions"
         [labResults]="labResults"
         [appointments]="appointments"
-        [patientNotes]="patientNotes"
       ></app-tab-summary>
       
       <!-- Timeline Tab -->
@@ -79,11 +78,11 @@
       <!-- Notes Tab -->
       <app-tab-notes 
         *ngSwitchCase="'notes'"
-        [notes]="patientNotes"
+        [notes]="notes"
       ></app-tab-notes>
       
       <!-- Other Tabs -->
-      <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">
+      <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding mt-6">
         <div class="text-center py-8 text-text-light">
           This tab is under development.
         </div>
