@@ -14,6 +14,7 @@ import { PatientTabsComponent } from '../../components/patient-record/patient-ta
 import { TabSummaryComponent } from '../../components/patient-record/tab-summary/tab-summary.component';
 import { TabTimelineComponent } from '../../components/patient-record/tab-timeline/tab-timeline.component';
 import { TabNotesComponent } from '../../components/patient-record/tab-notes/tab-notes.component';
+import { TabAppointmentsComponent } from '../../components/patient-record/tab-appointments/tab-appointments.component';
 import { PatientNotFoundComponent } from '../../components/patient-record/patient-not-found/patient-not-found.component';
 
 // Import models and services
@@ -45,6 +46,7 @@ import { PatientDataUtilsService } from '../../services/patient-data-utils.servi
     TabSummaryComponent,
     TabTimelineComponent,
     TabNotesComponent,
+    TabAppointmentsComponent,
     PatientNotFoundComponent
   ],
   templateUrl: './patient-record.component.html',
@@ -159,20 +161,6 @@ export class PatientRecordComponent implements OnInit {
       
       // Force change detection to update the view
       this.cdr.detectChanges();
-      
-      console.log('Patient data processed successfully:', {
-        patient: {
-          id: this.patient?.id,
-          name: this.patient?.name,
-          hasName: !!this.patient?.name
-        },
-        vitals: this.vitals.length,
-        medications: this.medications.length,
-        conditions: this.conditions.length,
-        labResults: this.labResults.length,
-        appointments: this.appointments.length,
-        notes: this.patientNotes.length
-      });
       
       // Additional forced update after a small delay to ensure all child components are updated
       setTimeout(() => {

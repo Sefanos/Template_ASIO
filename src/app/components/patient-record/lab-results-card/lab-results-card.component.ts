@@ -1,16 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface LabResult {
-  id: number;
-  name: string;
-  value: number;
-  unit: string;
-  referenceRange: string;
-  date: string;
-  status: 'normal' | 'abnormal' | 'critical';
-  trend?: 'up' | 'down' | 'stable';
-}
+import {LabResult} from '../../../models/patient-record.model';
 
 @Component({
   selector: 'app-lab-results-card',
@@ -52,7 +42,7 @@ export class LabResultsCardComponent implements OnChanges {
   getStatusClass(status: string): string {
     switch(status) {
       case 'normal':
-        return 'text-success';
+        return 'text-status-success';
       case 'abnormal':
         return 'text-status-warning';
       case 'critical':
@@ -100,7 +90,7 @@ export class LabResultsCardComponent implements OnChanges {
       case 'down':
         return 'text-status-info';
       case 'stable':
-        return 'text-success';
+        return 'text-status-success';
       default:
         return '';
     }

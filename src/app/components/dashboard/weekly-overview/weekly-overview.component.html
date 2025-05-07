@@ -1,0 +1,68 @@
+<div class="bg-white rounded-lg p-5 border border-border shadow-sm hover:shadow-card-hover transition-shadow duration-300">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-card-title text-primary uppercase">WEEKLY OVERVIEW</h3>
+    <div class="text-xs text-text-light">{{ dateRange }}</div>
+  </div>
+  
+  <div class="mb-6">
+    <canvas #appointmentsChart class="w-full h-48" id="appointmentsChart"></canvas>
+  </div>
+  
+  <div class="grid grid-cols-2 gap-4">
+    <div class="p-3 bg-hover rounded-lg">
+      <div class="text-xs text-text-light uppercase mb-1">Total Appointments</div>
+      <div class="flex justify-between items-end">
+        <span class="text-2xl font-bold text-text">{{ stats.totalAppointments }}</span>
+        <span class="text-status-success text-xs font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1">
+            <path d="m5 12 7-7 7 7"></path>
+            <path d="M12 19V5"></path>
+          </svg>
+          {{ stats.totalIncrease }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="p-3 bg-hover rounded-lg">
+      <div class="text-xs text-text-light uppercase mb-1">Open Slots</div>
+      <div class="flex justify-between items-end">
+        <span class="text-2xl font-bold text-text">{{ stats.openSlots }}</span>
+        <span class="text-status-warning text-xs font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1">
+            <path d="m19 12-7 7-7-7"></path>
+            <path d="M12 5v14"></path>
+          </svg>
+          {{ stats.openDecrease }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="p-3 bg-hover rounded-lg">
+      <div class="text-xs text-text-light uppercase mb-1">Follow-ups</div>
+      <div class="flex justify-between items-end">
+        <span class="text-2xl font-bold text-text">{{ stats.followUps }}</span>
+        <span class="text-status-success text-xs font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1">
+            <path d="m5 12 7-7 7 7"></path>
+            <path d="M12 19V5"></path>
+          </svg>
+          {{ stats.followUpsIncrease }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="p-3 bg-hover rounded-lg">
+      <div class="text-xs text-text-light uppercase mb-1">New Patients</div>
+      <div class="flex justify-between items-end">
+        <span class="text-2xl font-bold text-text">{{ stats.newPatients }}</span>
+        <span class="text-status-success text-xs font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1">
+            <path d="m5 12 7-7 7 7"></path>
+            <path d="M12 19V5"></path>
+          </svg>
+          {{ stats.newPatientsIncrease }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

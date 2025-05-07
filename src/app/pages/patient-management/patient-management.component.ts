@@ -58,6 +58,7 @@ export class PatientManagementComponent {
   
   currentPage = 1;
   pageSize = 8;
+  maxPagesToShow = 5; // Maximum number of page buttons to show
   
   constructor(private router: Router) {}
   
@@ -98,6 +99,59 @@ export class PatientManagementComponent {
   
   get totalPages(): number {
     return Math.ceil(this.filteredPatients.length / this.pageSize);
+  }
+  
+  /**
+   * Get the array of page numbers to display in pagination
+   * This implementation shows a limited number of pages with ellipses
+   */
+  get pagesToShow(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    
+    if (this.totalPages <= this.maxPagesToShow) {
+      // If we have fewer pages than the max to show, display all pages
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      // Calculate middle pages to show
+      const middlePoint = Math.floor(this.maxPagesToShow / 2);
+      let startPage = Math.max(2, this.currentPage - middlePoint);
+      let endPage = Math.min(this.totalPages - 1, this.currentPage + middlePoint);
+      
+      // Adjust if we're near the beginning
+      if (startPage === 2) {
+        endPage = Math.min(this.totalPages - 1, startPage + (this.maxPagesToShow - 3));
+      }
+      
+      // Adjust if we're near the end
+      if (endPage === this.totalPages - 1) {
+        startPage = Math.max(2, endPage - (this.maxPagesToShow - 3));
+      }
+      
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pages.push('...');
+      }
+      
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis before last page if needed
+      if (endPage < this.totalPages - 1) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      pages.push(this.totalPages);
+    }
+    
+    return pages;
   }
   
   changePage(page: number): void {

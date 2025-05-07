@@ -1,0 +1,29 @@
+<div class="bg-white rounded-lg p-5 border border-border shadow-sm hover:shadow-card-hover transition-shadow duration-300">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-card-title text-primary uppercase">AI DIAGNOSTIC ASSISTANT</h3>
+    <div class="text-xs font-medium px-2 py-1 bg-status-info/10 text-status-info rounded-full">Beta</div>
+  </div>
+  
+  <div *ngFor="let feature of features" class="p-4 bg-hover rounded-lg mb-4">
+    <div class="flex items-start gap-4">
+      <div class="bg-primary rounded-full p-2 text-white">
+        <svg *ngIf="feature.icon === 'brain'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12a5 5 0 0 0 5 5 8 8 0 0 1 5 2 8 8 0 0 1 5-2 5 5 0 0 0 5-5V7h-5a8 8 0 0 0-5 2 8 8 0 0 0-5-2H2Z"></path>
+        </svg>
+        <svg *ngIf="feature.icon === 'link'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9.5 7.5-2 2a4.95 4.95 0 1 0 7 7l2-2a4.95 4.95 0 1 0-7-7Z"></path>
+          <path d="M14 6.5v10"></path>
+          <path d="M10 7.5v10"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="font-medium mb-1">{{ feature.title }}</div>
+        <div class="text-sm text-text-muted">{{ feature.description }}</div>
+      </div>
+    </div>
+  </div>
+  
+  <button (click)="openAiAssistant()" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded transition-colors">
+    Open AI Assistant
+  </button>
+</div>

@@ -1,0 +1,42 @@
+<div class="bg-white rounded-lg p-5 border border-border shadow-sm hover:shadow-card-hover transition-shadow duration-300">
+  <div class="flex justify-between items-start mb-4">
+    <h3 class="text-card-title text-primary uppercase">{{ title }}</h3>
+    <span class="text-xs font-medium px-2 py-1 rounded-full" 
+          [ngClass]="{
+            'bg-primary/10 text-primary': badgeType === 'primary',
+            'bg-status-warning/10 text-status-warning': badgeType === 'warning',
+            'bg-status-urgent/10 text-status-urgent': badgeType === 'urgent',
+            'bg-status-info/10 text-status-info': badgeType === 'info'
+          }">
+      <ng-container *ngIf="badgeType === 'urgent'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 inline mr-1">
+          <path d="m5 12 7-7 7 7"></path>
+          <path d="M12 19V5"></path>
+        </svg>
+      </ng-container>
+      {{ badge }}
+    </span>
+  </div>
+  
+  <div class="space-y-1 mb-3">
+    <div *ngFor="let item of items" class="flex justify-between items-center">
+      <p class="text-body font-medium">{{ item.label }}</p>
+      <p class="font-medium" 
+         [ngClass]="{
+           'text-body': !item.status || item.status === 'normal',
+           'text-status-warning': item.status === 'warning',
+           'text-status-urgent': item.status === 'urgent',
+           'text-status-info': item.status === 'info'
+         }">{{ item.value }}</p>
+    </div>
+  </div>
+  
+  <div class="pt-2 border-t border-border">
+    <a [routerLink]="linkUrl" class="text-primary hover:text-primary-dark font-medium text-sm inline-flex items-center">
+      {{ linkText }}
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>

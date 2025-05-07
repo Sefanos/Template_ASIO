@@ -1,16 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface Appointment {
-  id: number;
-  date: string;
-  time: string;
-  type: string;
-  provider: string;
-  reason: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
-  notes?: string;
-}
+import { Appointment } from '../../../models/appointment.model'; 
 
 @Component({
   selector: 'app-appointment-history-card',
@@ -25,10 +15,27 @@ export class AppointmentHistoryCardComponent implements OnChanges {
   
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['appointments']) {
-      console.log('Appointment history updated:', this.appointments?.length || 0);
       // Force change detection when appointments change
       setTimeout(() => this.cdr.detectChanges(), 0);
     }
+  }
+  
+  /**
+   * Returns only the 3 most recent appointments sorted by date
+   */
+  get recentAppointments(): Appointment[] {
+    if (!this.appointments || this.appointments.length === 0) {
+      return [];
+    }
+    
+    // Sort appointments by date (most recent first)
+    // Using a new array to avoid modifying the original data
+    return [...this.appointments]
+      .sort((a, b) => {
+        // Convert string dates to Date objects for comparison
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      })
+      .slice(0, 3); // Only take the first 3 (most recent)
   }
   
   getStatusClass(status: string): string {
@@ -36,7 +43,7 @@ export class AppointmentHistoryCardComponent implements OnChanges {
       case 'scheduled':
         return 'bg-status-info/10 text-status-info';
       case 'completed':
-        return 'bg-success/10 text-success';
+        return 'bg-status-success/10 text-status-success';
       case 'cancelled':
         return 'bg-status-urgent/10 text-status-urgent';
       case 'no-show':

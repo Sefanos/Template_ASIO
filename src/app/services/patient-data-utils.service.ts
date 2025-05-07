@@ -43,81 +43,79 @@ export class PatientDataUtilsService {
    * Transform vitals from the patient data
    */
   private transformVitalSigns(patient: Patient): VitalSign[] {
-    return [{
-      id: 1,
-      date: patient.vitalSigns.lastUpdated,
-      systolic: this.getSystolic(patient.vitalSigns.bp),
-      diastolic: this.getDiastolic(patient.vitalSigns.bp),
-      pulse: this.getNumericValue(patient.vitalSigns.hr),
-      temperature: parseFloat(patient.vitalSigns.temp),
-      respiratoryRate: 16, // Default value
-      oxygenSaturation: 98, // Default value
-      weight: parseFloat(patient.vitalSigns.weight),
-      height: parseFloat(patient.vitalSigns.height)
-    }];
+    // If patient already has vitalSigns in the correct format, return them
+    if (patient?.vitalSigns && Array.isArray(patient.vitalSigns)) {
+      return [...patient.vitalSigns];
+    }
+    
+    // Default empty vitals if none exist
+    return [];
   }
 
   /**
    * Transform medications from the patient data
    */
   private transformMedications(patient: Patient): Medication[] {
-    return patient.medications.map((med, index) => ({
-      id: index + 1,
-      name: med.name,
-      dosage: med.instructions.split(' ')[0],
-      frequency: med.instructions,
-      startDate: med.startDate || '',
-      status: 'active',
-      prescribedBy: 'Dr. Sefanos',
-      notes: med.interactions ? med.interactions.join(', ') : undefined
-    }));
+    if (!patient?.medications || !Array.isArray(patient.medications)) {
+      return [];
+    }
+    
+    return patient.medications.map((med, index) => {
+      const medication: Medication = {
+        id: med.id || index + 1,
+        name: med.name,
+        dosage: med.dosage || (med.instructions ? med.instructions.split(' ')[0] : ''),
+        frequency: med.frequency || (med.instructions || ''),
+        startDate: med.startDate || '',
+        status: med.status || 'active',
+        prescribedBy: med.prescribedBy || 'Dr. Sefanos',
+        notes: med.notes || (med.interactions ? med.interactions.join(', ') : '')
+      };
+      return medication;
+    });
   }
 
   /**
    * Transform conditions from the patient data
    */
   private transformConditions(patient: Patient): Condition[] {
-    return patient.medicalHistory.map((condition, index) => ({
-      id: index + 1,
-      name: condition.condition,
-      status: condition.condition.includes('surgery') ? 'resolved' : 'active',
-      onsetDate: condition.date || '',
-      notes: condition.details
-    }));
+    // Use conditions directly if available in correct format
+    if (patient?.conditions && Array.isArray(patient.conditions)) {
+      return [...patient.conditions];
+    }
+    
+    return [];
   }
 
   /**
    * Transform lab results from the patient data
    */
   private transformLabResults(patient: Patient): LabResult[] {
-    return patient.labs.map((lab, index) => ({
-      id: index + 1,
-      name: lab.test,
-      value: parseFloat(lab.result) || 0,
-      unit: lab.result.replace(/[\d.]/g, ''),
-      referenceRange: lab.referenceRange || '',
-      date: lab.date,
-      status: this.isNormalLabValue(lab.result) ? 'normal' : 
-              this.isWarningLabValue(lab.result) ? 'abnormal' : 'critical',
-      trend: lab.history && lab.history.length > 1 ? 
-            (parseFloat(lab.history[0].value) < parseFloat(lab.history[1].value) ? 'down' : 
-             parseFloat(lab.history[0].value) > parseFloat(lab.history[1].value) ? 'up' : 'stable') : undefined
-    }));
+    // Use labResults directly if available in correct format
+    if (patient?.labResults && Array.isArray(patient.labResults)) {
+      return [...patient.labResults];
+    }
+    
+    return [];
   }
 
   /**
    * Transform appointments from the patient data
    */
   private transformAppointments(patient: Patient): Appointment[] {
-    return patient.appointments.map((appt, index) => ({
-      id: index + 1,
+    if (!patient?.appointments || !Array.isArray(patient.appointments)) {
+      return [];
+    }
+    
+    return patient.appointments.map((appt): Appointment => ({
+      id: appt.id,
       date: appt.date,
-      time: '9:00 AM',
-      type: 'Regular checkup',
-      provider: 'Dr. Sefanos',
+      time: appt.time || '9:00 AM',
+      type: appt.type || 'Regular checkup',
+      provider: appt.provider || 'Dr. Sefanos',
       reason: appt.reason,
-      status: appt.date === 'Today' ? 'scheduled' : 
-              appt.date.includes('days ago') ? 'completed' : 'scheduled'
+      status: appt.status || 'scheduled',
+      notes: appt.notes || ''
     }));
   }
 
@@ -125,30 +123,35 @@ export class PatientDataUtilsService {
    * Transform timeline events from the patient data
    */
   private transformTimelineEvents(patient: Patient): TimelineEvent[] {
-    return patient.timeline?.map((event, index) => ({
-      id: index + 1,
-      date: event.date,
-      type: event.type === 'lab' ? 'labResult' : 
-            (event.type as 'appointment' | 'medication' | 'labResult' | 'diagnosis' | 'note'),
-      title: event.event,
-      description: event.details || '',
-      provider: 'Dr. Sefanos',
-      status: event.type === 'appointment' ? 
-              (new Date(event.date) > new Date() ? 'scheduled' : 'completed') : undefined
-    })) || [];
+    // Use timelineEvents directly if available in correct format
+    if (patient?.timelineEvents && Array.isArray(patient.timelineEvents)) {
+      return [...patient.timelineEvents];
+    }
+    
+    return [];
   }
 
   /**
    * Transform notes from the patient data
    */
   private transformNotes(patient: Patient): Note[] {
-    return patient.notes?.map((note, index) => ({
+    if (!patient?.notes || !Array.isArray(patient.notes)) {
+      return [];
+    }
+    
+    // If notes are already in the correct format, return them directly
+    if (patient.notes.length > 0 && typeof patient.notes[0] === 'object' && 'content' in patient.notes[0]) {
+      return [...patient.notes] as Note[];
+    }
+    
+    // Otherwise transform from string format (legacy) to Note objects
+    return (patient.notes as unknown as string[]).map((note, index) => ({
       id: index + 1,
-      date: new Date(2025, 4 - index, 6 - index * 7).toISOString(),
+      date: new Date(2025, 4 - index, 6 - index * 7).toISOString().split('T')[0],
       provider: 'Dr. Sefanos',
       content: note,
       type: index === 0 ? 'quick' : 'progress'
-    })) || [];
+    }));
   }
 
   /**

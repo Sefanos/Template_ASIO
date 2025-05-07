@@ -82,6 +82,13 @@
         [notes]="patientNotes"
       ></app-tab-notes>
       
+      <!-- Appointments Tab -->
+      <app-tab-appointments
+        *ngSwitchCase="'appointments'"
+        [appointments]="appointments"
+        (scheduleNewAppointment)="scheduleAppointment()"
+      ></app-tab-appointments>
+      
       <!-- Other Tabs -->
       <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">
         <div class="text-center py-8 text-text-light">

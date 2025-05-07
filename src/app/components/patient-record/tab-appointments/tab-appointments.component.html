@@ -1,0 +1,130 @@
+<div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-card-title text-primary font-semibold">Appointment History</h2>
+    <button 
+      (click)="onScheduleNewAppointment()" 
+      class="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-button text-sm transition-colors"
+    >
+      Schedule New Appointment
+    </button>
+  </div>
+  
+  <!-- Search and filters -->
+  <div class="flex flex-wrap gap-4 mb-6">
+    <!-- Search bar -->
+    <div class="flex-1 min-w-[200px]">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        placeholder="Search appointments..." 
+        class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+    </div>
+    
+    <!-- Status filter -->
+    <div class="flex flex-wrap gap-2">
+      <button 
+        *ngFor="let filter of statusFilters" 
+        [class.bg-primary]="selectedStatusFilter === filter"
+        [class.text-white]="selectedStatusFilter === filter"
+        [class.bg-hover]="selectedStatusFilter !== filter"
+        [class.text-text]="selectedStatusFilter !== filter"
+        (click)="setStatusFilter(filter)"
+        class="px-3 py-1 rounded-button text-sm font-medium transition-colors"
+      >
+        {{ filter }}
+      </button>
+    </div>
+    
+    <!-- Time frame filter -->
+    <div>
+      <select 
+        [(ngModel)]="selectedTimeFrameFilter" 
+        (change)="setTimeFrameFilter(selectedTimeFrameFilter)"
+        class="border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        <option *ngFor="let filter of timeFrameFilters" [value]="filter">{{ filter }}</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Appointments list -->
+  <div class="divide-y divide-border">
+    <div *ngIf="filteredAppointments.length === 0" class="text-center py-6 text-text-light">
+      No appointments found matching your filters.
+    </div>
+    
+    <div *ngFor="let appointment of paginatedAppointments" class="py-4">
+      <div class="flex flex-wrap md:flex-nowrap justify-between gap-4">
+        <div class="flex items-start gap-4">
+          <!-- Date/Time column -->
+          <div class="w-28 flex-none">
+            <div class="font-medium">{{ formatDate(appointment.date) }}</div>
+            <div class="text-sm text-text-light">{{ appointment.time }}</div>
+          </div>
+          
+          <!-- Appointment details -->
+          <div>
+            <div class="font-medium mb-1">{{ appointment.reason }}</div>
+            <div class="text-sm text-text-light">{{ appointment.type }} with {{ appointment.provider }}</div>
+            <div *ngIf="appointment.notes" class="text-sm text-text mt-1">{{ appointment.notes }}</div>
+          </div>
+        </div>
+        
+        <!-- Status -->
+        <div class="flex flex-col items-end">
+          <span class="px-2 py-0.5 rounded-full text-xs" [ngClass]="getStatusClass(appointment.status)">
+            {{ appointment.status | titlecase }}
+          </span>
+          
+          <!-- Action buttons -->
+          <div class="mt-2 flex gap-2">
+            <button class="text-primary hover:text-primary-dark text-sm">
+              Reschedule
+            </button>
+            <button class="text-status-urgent hover:text-status-urgent/80 text-sm">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Pagination -->
+  <div class="flex justify-center mt-6 space-x-1" *ngIf="totalPages > 1">
+    <button 
+      (click)="changePage(currentPage - 1)" 
+      [disabled]="currentPage === 1"
+      class="px-3 py-1 border border-border rounded-button text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Previous
+    </button>
+    
+    <ng-container *ngFor="let page of pagesToShow">
+      <ng-container *ngIf="page === '...'">
+        <span class="px-3 py-1 text-sm">{{ page }}</span>
+      </ng-container>
+      
+      <ng-container *ngIf="page !== '...'">
+        <button 
+          (click)="changePage(+page)" 
+          [class.bg-primary]="currentPage === page"
+          [class.text-white]="currentPage === page"
+          [class.border-primary]="currentPage === page"
+          class="px-3 py-1 border border-border rounded-button text-sm"
+        >
+          {{ page }}
+        </button>
+      </ng-container>
+    </ng-container>
+    
+    <button 
+      (click)="changePage(currentPage + 1)" 
+      [disabled]="currentPage === totalPages"
+      class="px-3 py-1 border border-border rounded-button text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Next
+    </button>
+  </div>
+</div>

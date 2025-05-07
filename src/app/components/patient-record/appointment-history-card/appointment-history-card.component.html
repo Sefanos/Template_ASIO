@@ -18,7 +18,8 @@
     </div>
     
     <div *ngIf="appointments && appointments.length > 0" class="space-y-3">
-      <div *ngFor="let appointment of appointments" class="bg-hover rounded-lg p-3">
+      <!-- Changed from appointments to recentAppointments to show only the 3 most recent -->
+      <div *ngFor="let appointment of recentAppointments" class="bg-hover rounded-lg p-3">
         <div class="flex items-start justify-between">
           <div>
             <div class="font-medium mb-1">{{ appointment.date }} {{ appointment.time }}</div>
@@ -35,6 +36,11 @@
             </span>
           </div>
         </div>
+      </div>
+      
+      <!-- Added indication of showing limited appointments when there are more than 3 -->
+      <div *ngIf="appointments.length > 3" class="text-center text-sm text-text-light">
+        Showing most recent of {{ appointments.length }} appointments
       </div>
     </div>
     
