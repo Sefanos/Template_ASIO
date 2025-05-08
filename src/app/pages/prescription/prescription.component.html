@@ -1,1 +1,109 @@
-<p>prescription works!</p>
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+  <div class="flex flex-col">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-dashboard-title">PRESCRIPTION MODULE</h1>
+      <p class="text-text-light mt-1">Create and manage patient prescriptions</p>
+    </div>
+    
+    <!-- Patient Search - Only displayed when no patient is selected -->
+    <div *ngIf="!patientId" class="card mb-6">
+      <div class="flex flex-col">
+        <h3 class="card-title mb-4">Search for a patient</h3>
+        
+        <div class="relative">
+          <div class="flex">
+            <input 
+              type="text" 
+              class="form-input flex-grow" 
+              placeholder="Search patients by name or ID..." 
+              [(ngModel)]="searchQuery" 
+              (input)="searchPatients()"
+            />
+            <button 
+              class="btn-primary ml-2" 
+              [disabled]="isSearching"
+              (click)="searchPatients()"
+            >
+              <span *ngIf="!isSearching">Search</span>
+              <span *ngIf="isSearching">Searching...</span>
+            </button>
+          </div>
+          
+          <!-- Search results dropdown -->
+          <div *ngIf="showSearchResults" class="absolute z-10 mt-1 w-full bg-white rounded-card shadow-lg border border-border">
+            <div *ngIf="isSearching" class="p-4 text-center text-text-light">
+              <div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary mr-2"></div>
+              Searching...
+            </div>
+            
+            <div *ngIf="!isSearching && noResultsFound" class="p-4 text-center text-text-light">
+              No patients found matching "{{ searchQuery }}"
+            </div>
+            
+            <ul *ngIf="!isSearching && searchResults.length > 0" class="max-h-60 overflow-y-auto">
+              <li 
+                *ngFor="let patient of searchResults" 
+                class="p-3 hover:bg-hover cursor-pointer border-b border-border last:border-b-0"
+                (click)="selectPatient(patient)"
+              >
+                <div class="font-medium">{{ patient.name }}</div>
+                <div class="text-sm text-text-light">
+                  ID: {{ patient.id }} | DOB: {{ patient.dob }}
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Selected Patient Info and Prescription Management -->
+    <div *ngIf="patientId">
+      <!-- Patient Info Header Component -->
+      <div class="flex items-center justify-between">
+        <app-patient-info-header
+          [patientId]="patientId"
+          [name]="patientName"
+          [dob]="patientDob">
+        </app-patient-info-header>
+        
+        <button 
+          class="btn-secondary ml-2" 
+          title="Select a different patient"
+          (click)="clearPatient()"
+        >
+          Change Patient
+        </button>
+      </div>
+      
+      <!-- Loading indicator -->
+      <div *ngIf="loading" class="flex justify-center my-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+      
+      <!-- Show content only when not loading -->
+      <div *ngIf="!loading" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left column - Prescription Form -->
+        <div class="lg:col-span-7">
+          <app-prescription-form 
+            *ngIf="showPrescriptionForm"
+            [patientId]="patientId"
+            [prescriptionToEdit]="currentPrescriptionToEdit"
+            (prescriptionCreated)="onPrescriptionCreated($event)"
+            (prescriptionUpdated)="onPrescriptionUpdated($event)"
+            (cancelled)="onCancelPrescription()">
+          </app-prescription-form>
+        </div>
+        
+        <!-- Right column - Current Prescriptions -->
+        <div class="lg:col-span-5">
+          <app-current-prescriptions
+            [patientId]="patientId"
+            (editRequested)="onEditPrescription($event)">
+          </app-current-prescriptions>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

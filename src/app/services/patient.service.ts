@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Patient } from '../models/patient.model';
 import { Note } from '../models/note.model';
+import { Prescription } from '../models/prescription.model';
 
 @Injectable({
   providedIn: 'root'
@@ -218,6 +219,71 @@ export class PatientService {
     }
   ];
 
+  // Sample prescriptions data (in a real app, this would be part of the patient data)
+  private prescriptions: Prescription[] = [
+    {
+      id: 1,
+      patientId: 123,
+      medication: 'Lisinopril 10mg',
+      dosage: '10mg',
+      form: 'tablet',
+      instructions: 'Once daily',
+      quantity: 30,
+      refills: 2,
+      startDate: '2025-01-10',
+      status: 'active',
+      prescribedBy: 'Dr. Sefanos B.',
+      prescribedDate: '2025-01-10T10:30:00Z',
+      sendToPharmacy: true
+    },
+    {
+      id: 2,
+      patientId: 123,
+      medication: 'Metformin 500mg',
+      dosage: '500mg',
+      form: 'tablet',
+      instructions: 'Twice daily',
+      quantity: 60,
+      refills: 3,
+      startDate: '2025-01-15',
+      status: 'active',
+      prescribedBy: 'Dr. Sefanos B.',
+      prescribedDate: '2025-01-15T14:15:00Z',
+      sendToPharmacy: true
+    },
+    {
+      id: 3,
+      patientId: 123,
+      medication: 'Ibuprofen 400mg',
+      dosage: '400mg',
+      form: 'tablet',
+      instructions: 'As needed for pain, not to exceed 3 tablets daily',
+      quantity: 30,
+      refills: 0,
+      startDate: '2025-01-01',
+      endDate: '2025-03-01',
+      status: 'completed',
+      prescribedBy: 'Dr. Sefanos B.',
+      prescribedDate: '2025-01-01T11:00:00Z',
+      sendToPharmacy: false
+    },
+    {
+      id: 4,
+      patientId: 456,
+      medication: 'Loratadine 10mg',
+      dosage: '10mg',
+      form: 'tablet',
+      instructions: 'Once daily as needed for allergies',
+      quantity: 30,
+      refills: 1,
+      startDate: '2025-02-15',
+      status: 'active',
+      prescribedBy: 'Dr. Davis',
+      prescribedDate: '2025-02-15T09:45:00Z',
+      sendToPharmacy: true
+    }
+  ];
+
   constructor() {}
 
   /**
@@ -278,6 +344,64 @@ export class PatientService {
         provider, // Added provider
         status: 'scheduled' // New appointments are scheduled
       });
+      return of(true).pipe(delay(300));
+    }
+    return of(false).pipe(delay(300));
+  }
+
+  /**
+   * Get all prescriptions for a patient
+   */
+  getPatientPrescriptions(patientId: number): Observable<Prescription[]> {
+    const patientPrescriptions = this.prescriptions.filter(p => p.patientId === patientId);
+    return of(patientPrescriptions).pipe(delay(300));
+  }
+
+  /**
+   * Get active prescriptions for a patient
+   */
+  getPatientActivePrescriptions(patientId: number): Observable<Prescription[]> {
+    const activePrescriptions = this.prescriptions.filter(p => 
+      p.patientId === patientId && p.status === 'active'
+    );
+    return of(activePrescriptions).pipe(delay(300));
+  }
+
+  /**
+   * Add a new prescription for a patient
+   */
+  addPrescription(prescription: Prescription): Observable<Prescription> {
+    // Create a new ID for the prescription
+    const newId = Math.max(...this.prescriptions.map(p => p.id ?? 0)) + 1;
+    const newPrescription = {
+      ...prescription,
+      id: newId,
+      prescribedDate: new Date().toISOString()
+    };
+    
+    this.prescriptions.push(newPrescription);
+    return of(newPrescription).pipe(delay(300));
+  }
+
+  /**
+   * Update an existing prescription
+   */
+  updatePrescription(prescription: Prescription): Observable<Prescription> {
+    const index = this.prescriptions.findIndex(p => p.id === prescription.id);
+    if (index !== -1) {
+      this.prescriptions[index] = prescription;
+      return of(prescription).pipe(delay(300));
+    }
+    return of(null as any).pipe(delay(300));
+  }
+
+  /**
+   * Cancel a prescription
+   */
+  cancelPrescription(prescriptionId: number): Observable<boolean> {
+    const index = this.prescriptions.findIndex(p => p.id === prescriptionId);
+    if (index !== -1) {
+      this.prescriptions[index].status = 'cancelled';
       return of(true).pipe(delay(300));
     }
     return of(false).pipe(delay(300));

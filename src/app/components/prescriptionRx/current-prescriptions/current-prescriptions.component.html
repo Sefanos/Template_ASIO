@@ -1,0 +1,42 @@
+<div class="card">
+  <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
+    <h3 class="card-title m-0">CURRENT PRESCRIPTIONS</h3>
+    <button type="button" class="text-sm text-primary font-medium hover:underline" (click)="showAllPrescriptions()">
+      {{ showAll ? 'Show Active Only' : 'View Full History' }}
+    </button>
+  </div>
+  
+  <div *ngIf="prescriptions.length === 0" class="py-4 text-center text-text-light">
+    No prescriptions found for this patient.
+  </div>
+  
+  <ul *ngIf="prescriptions.length > 0" class="divide-y divide-border">
+    <li *ngFor="let prescription of displayedPrescriptions" class="py-3 flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-primary">{{ prescription.medication }}</span>
+          <span [ngClass]="getStatusBadgeClass(prescription.status)" class="text-xs px-2 py-0.5 rounded-full">
+            {{ prescription.status | titlecase }}
+          </span>
+        </div>
+        <div class="text-sm text-text-light mt-1">{{ prescription.dosage }} - {{ prescription.instructions }}</div>
+        <div class="text-xs text-text-muted mt-1" *ngIf="prescription.startDate">
+          Started: {{ formatDate(prescription.startDate) }}
+          <span *ngIf="prescription.endDate"> • Ends: {{ formatDate(prescription.endDate) }}</span>
+        </div>
+      </div>
+      <div class="flex space-x-2">
+        <button type="button" class="text-primary hover:text-primary-dark" title="Edit prescription" (click)="editPrescription(prescription)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" />
+          </svg>
+        </button>
+        <button type="button" class="text-status-urgent hover:text-red-700" title="Cancel prescription" (click)="cancelPrescription(prescription)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>
