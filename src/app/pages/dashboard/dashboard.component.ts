@@ -12,6 +12,8 @@ import { UpcomingAppointmentsComponent } from '../../components/dashboard/upcomi
 import { NotificationsComponent } from '../../components/dashboard/notifications/notifications.component';
 import { WeeklyOverviewComponent } from '../../components/dashboard/weekly-overview/weekly-overview.component';
 import { AiAssistantComponent } from '../../components/dashboard/ai-assistant/ai-assistant.component';
+import { UserActivityComponent } from '../../components/dashboard/user-activity/user-activity.component';
+import { ModuleUsageHeatmapComponent } from '../../components/dashboard/module-usage-heatmap/module-usage-heatmap.component';
 
 // Import the StatItem interface from the StatCardComponent to ensure type compatibility
 interface StatItem {
@@ -34,7 +36,9 @@ interface StatItem {
     UpcomingAppointmentsComponent,
     NotificationsComponent,
     WeeklyOverviewComponent,
-    AiAssistantComponent
+    AiAssistantComponent,
+    UserActivityComponent,
+    ModuleUsageHeatmapComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'

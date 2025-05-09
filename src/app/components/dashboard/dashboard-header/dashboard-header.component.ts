@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-dashboard-header',
@@ -9,6 +9,6 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./dashboard-header.component.css']
 })
 export class DashboardHeaderComponent {
-  @Input() title: string = 'DOCTOR DASHBOARD';
+  @Input() title: string = 'ADMIN DASHBOARD';
   @Input() date: Date = new Date();
 }

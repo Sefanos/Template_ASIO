@@ -1,6 +1,6 @@
 <!-- Dashboard Header -->
 <div class="max-w-full px-2 sm:px-4 lg:px-6">
-  <app-dashboard-header [title]="'DOCTOR DASHBOARD'" [date]="currentDate"></app-dashboard-header>
+  <app-dashboard-header [title]="'ADMIN DASHBOARD'" [date]="currentDate"></app-dashboard-header>
 
   <!-- Top Statistics Cards -->
   <section class="mb-4 sm:mb-6 lg:mb-8">
@@ -57,4 +57,10 @@
 
   <!-- AI Diagnostic Assistant Section -->
   <app-ai-assistant></app-ai-assistant>
+
+  <!-- User Activity Seciton-->
+   <app-user-activity></app-user-activity>
+
+   <!-- module usage heatmap-->
+    <app-module-usage-heatmap></app-module-usage-heatmap>
 </div>

@@ -1,0 +1,9 @@
+/* If you need any component-specific styles that can't be handled by Tailwind */
+/* Most styling should be done with Tailwind classes */
+
+.heatmap-legend-box {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin: 0 2px;
+}

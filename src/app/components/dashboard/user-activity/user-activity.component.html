@@ -1,0 +1,66 @@
+<div class="bg-card rounded-card p-3 sm:p-4 lg:p-5 border border-border shadow-card hover:shadow-card-hover transition-shadow duration-300">
+  <!-- Header with title and range selector -->
+  <div class="flex justify-between items-start mb-2 sm:mb-3 lg:mb-4">
+    <h3 class="text-card-title text-primary uppercase font-medium">USER ACTIVITY TIMELINE</h3>
+    
+    <div class="flex space-x-1 bg-background rounded-input p-0.5">
+      <button 
+        *ngFor="let range of ['7d', '30d', '90d']" 
+        (click)="changeTimeRange(range)" 
+        [class.bg-card]="selectedRange === range"
+        [class.shadow-sm]="selectedRange === range"
+        [class.text-primary]="selectedRange === range"
+        [class.text-text-muted]="selectedRange !== range"
+        class="text-xs px-2 py-1 rounded-input transition-all duration-200">
+        {{ range }}
+      </button>
+    </div>
+  </div>
+  
+  <!-- Stats summary -->
+  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
+    <div class="bg-analytics-bg-login rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Total Logins</div>
+      <div class="font-medium text-sm sm:text-base text-primary">{{ totalLogins }}</div>
+    </div>
+    <div class="bg-analytics-bg-session rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Avg Sessions</div>
+      <div class="font-medium text-sm sm:text-base text-status-success">{{ averageSessions }}</div>
+    </div>
+    <div class="bg-status-warning/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Peak Day</div>
+      <div class="font-medium text-sm sm:text-base text-status-warning">{{ getPeakDay() }}</div>
+    </div>
+  </div>
+  
+  <!-- Chart -->
+  <div class="h-48 sm:h-64 lg:h-72">
+    <canvas #activityChart></canvas>
+  </div>
+  
+  <!-- Legend -->
+  <div class="flex items-center justify-center space-x-4 mt-2 sm:mt-3">
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-login"></span>
+      <span class="text-xs sm:text-sm text-text-light">Logins</span>
+    </div>
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-session"></span>
+      <span class="text-xs sm:text-sm text-text-light">Active Sessions</span>
+    </div>
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-logout"></span>
+      <span class="text-xs sm:text-sm text-text-light">Logouts</span>
+    </div>
+  </div>
+  
+  <!-- Footer with link -->
+  <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
+    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center">
+      View Detailed Analytics
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>
