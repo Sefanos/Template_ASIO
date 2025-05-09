@@ -12,6 +12,7 @@ import { PatientTabsComponent } from '../patient-tabs/patient-tabs.component';
 import { TabSummaryComponent } from '../tab-summary/tab-summary.component';
 import { TabTimelineComponent } from '../tab-timeline/tab-timeline.component';
 import { TabNotesComponent } from '../tab-notes/tab-notes.component';
+import { TabPrescriptionsComponent } from '../tab-prescriptions/tab-prescriptions.component';
 import { PatientNotFoundComponent } from '../patient-not-found/patient-not-found.component';
 
 @Component({
@@ -28,6 +29,7 @@ import { PatientNotFoundComponent } from '../patient-not-found/patient-not-found
     TabSummaryComponent,
     TabTimelineComponent,
     TabNotesComponent,
+    TabPrescriptionsComponent,
     PatientNotFoundComponent
   ],
   templateUrl: './patient-record.component.html',

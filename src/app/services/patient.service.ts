@@ -46,7 +46,7 @@ export class PatientService {
           dosage: '10mg',
           frequency: 'Once daily',
           status: 'active',
-          prescribedBy: 'Dr. Smith'
+          prescribedBy: 'Dr. Sefanos B.'
         },
         {
           name: 'Metformin 500mg',
@@ -56,7 +56,18 @@ export class PatientService {
           dosage: '500mg',
           frequency: 'Twice daily',
           status: 'active',
-          prescribedBy: 'Dr. Smith'
+          prescribedBy: 'Dr. Sefanos B.'
+        },
+        {
+          name: 'Ibuprofen 400mg',
+          instructions: 'As needed for pain, not to exceed 3 tablets daily',
+          startDate: '2025-01-01',
+          endDate: '2025-03-01',
+          id: 3, // Assuming IDs for medications
+          dosage: '400mg',
+          frequency: 'As needed',
+          status: 'completed',
+          prescribedBy: 'Dr. Sefanos B.'
         }
       ],
       conditions: [
@@ -380,6 +391,10 @@ export class PatientService {
     };
     
     this.prescriptions.push(newPrescription);
+    
+    // Also update the medications list for the patient
+    this.addMedicationFromPrescription(newPrescription);
+    
     return of(newPrescription).pipe(delay(300));
   }
 
@@ -390,6 +405,10 @@ export class PatientService {
     const index = this.prescriptions.findIndex(p => p.id === prescription.id);
     if (index !== -1) {
       this.prescriptions[index] = prescription;
+      
+      // Also update the corresponding medication
+      this.updateMedicationFromPrescription(prescription);
+      
       return of(prescription).pipe(delay(300));
     }
     return of(null as any).pipe(delay(300));
@@ -402,8 +421,131 @@ export class PatientService {
     const index = this.prescriptions.findIndex(p => p.id === prescriptionId);
     if (index !== -1) {
       this.prescriptions[index].status = 'cancelled';
+      
+      // Also update the corresponding medication
+      const prescription = this.prescriptions[index];
+      this.updateMedicationStatusFromPrescription(prescription);
+      
       return of(true).pipe(delay(300));
     }
     return of(false).pipe(delay(300));
+  }
+
+  /**
+   * Convert a prescription to a medication and add it to the patient's medications
+   */
+  private addMedicationFromPrescription(prescription: Prescription): void {
+    const patient = this.samplePatients.find(p => p.id === prescription.patientId);
+    if (!patient) return;
+
+    if (!patient.medications) {
+      patient.medications = [];
+    }
+
+    // Check if medication already exists (to avoid duplicates)
+    const existingMedication = patient.medications.find(m => 
+      m.name === prescription.medication && 
+      m.dosage === prescription.dosage && 
+      m.prescribedBy === prescription.prescribedBy
+    );
+
+    if (!existingMedication) {
+      // Create new medication from prescription
+      const newMedication: any = {
+        id: prescription.id,
+        name: prescription.medication,
+        dosage: prescription.dosage,
+        frequency: this.extractFrequencyFromInstructions(prescription.instructions),
+        startDate: prescription.startDate,
+        endDate: prescription.endDate,
+        status: this.mapPrescriptionStatusToMedicationStatus(prescription.status),
+        prescribedBy: prescription.prescribedBy,
+        instructions: prescription.instructions,
+        refills: prescription.refills
+      };
+      
+      patient.medications.push(newMedication);
+    }
+  }
+
+  /**
+   * Update an existing medication when a prescription is updated
+   */
+  private updateMedicationFromPrescription(prescription: Prescription): void {
+    const patient = this.samplePatients.find(p => p.id === prescription.patientId);
+    if (!patient || !patient.medications) return;
+
+    const medicationIndex = patient.medications.findIndex(m => m.id === prescription.id);
+    
+    if (medicationIndex !== -1) {
+      // Update existing medication
+      patient.medications[medicationIndex] = {
+        ...patient.medications[medicationIndex],
+        name: prescription.medication,
+        dosage: prescription.dosage,
+        frequency: this.extractFrequencyFromInstructions(prescription.instructions),
+        startDate: prescription.startDate,
+        endDate: prescription.endDate,
+        status: this.mapPrescriptionStatusToMedicationStatus(prescription.status),
+        prescribedBy: prescription.prescribedBy,
+        instructions: prescription.instructions,
+        refills: prescription.refills
+      };
+    } else {
+      // If no matching medication found, add it
+      this.addMedicationFromPrescription(prescription);
+    }
+  }
+
+  /**
+   * Update medication status when a prescription status changes
+   */
+  private updateMedicationStatusFromPrescription(prescription: Prescription): void {
+    const patient = this.samplePatients.find(p => p.id === prescription.patientId);
+    if (!patient || !patient.medications) return;
+
+    const medicationIndex = patient.medications.findIndex(m => m.id === prescription.id);
+    
+    if (medicationIndex !== -1) {
+      // Update medication status
+      patient.medications[medicationIndex].status = 
+        this.mapPrescriptionStatusToMedicationStatus(prescription.status);
+    }
+  }
+
+  /**
+   * Map prescription status to medication status
+   */
+  private mapPrescriptionStatusToMedicationStatus(prescriptionStatus: string): 'active' | 'completed' | 'stopped' | 'on-hold' {
+    switch (prescriptionStatus) {
+      case 'active':
+        return 'active';
+      case 'completed':
+        return 'completed';
+      case 'cancelled':
+        return 'stopped';
+      case 'draft':
+        return 'on-hold';
+      default:
+        return 'active';
+    }
+  }
+
+  /**
+   * Extract frequency information from prescription instructions
+   */
+  private extractFrequencyFromInstructions(instructions: string): string {
+    // Simple extraction of frequency patterns from instructions
+    if (instructions.toLowerCase().includes('once daily')) return 'Once daily';
+    if (instructions.toLowerCase().includes('twice daily')) return 'Twice daily';
+    if (instructions.toLowerCase().includes('three times daily')) return 'Three times daily';
+    if (instructions.toLowerCase().includes('four times daily')) return 'Four times daily';
+    if (instructions.toLowerCase().includes('as needed')) return 'As needed';
+    if (instructions.toLowerCase().includes('every morning')) return 'Every morning';
+    if (instructions.toLowerCase().includes('every evening')) return 'Every evening';
+    if (instructions.toLowerCase().includes('every hour')) return 'Every hour';
+    
+    // Default fallback if no pattern is recognized
+    return instructions;
   }
 }

@@ -15,6 +15,7 @@ import { TabSummaryComponent } from '../../components/patient-record/tab-summary
 import { TabTimelineComponent } from '../../components/patient-record/tab-timeline/tab-timeline.component';
 import { TabNotesComponent } from '../../components/patient-record/tab-notes/tab-notes.component';
 import { TabAppointmentsComponent } from '../../components/patient-record/tab-appointments/tab-appointments.component';
+import { TabPrescriptionsComponent } from '../../components/patient-record/tab-prescriptions/tab-prescriptions.component';
 import { PatientNotFoundComponent } from '../../components/patient-record/patient-not-found/patient-not-found.component';
 
 // Import models and services
@@ -47,6 +48,7 @@ import { PatientDataUtilsService } from '../../services/patient-data-utils.servi
     TabTimelineComponent,
     TabNotesComponent,
     TabAppointmentsComponent,
+    TabPrescriptionsComponent,
     PatientNotFoundComponent
   ],
   templateUrl: './patient-record.component.html',

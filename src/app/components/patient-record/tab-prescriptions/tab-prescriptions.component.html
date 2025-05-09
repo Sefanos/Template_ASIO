@@ -1,0 +1,56 @@
+<div class="space-y-4">
+  <!-- Header with button -->
+  <div class="flex justify-between items-center">
+    <h2 class="text-xl font-semibold text-gray-800">Prescriptions</h2>
+    <button 
+      (click)="createNewPrescription()"
+      class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+    >
+      New Prescription
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="flex justify-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- No prescriptions state -->
+  <div *ngIf="!loading && prescriptions.length === 0" class="py-8 text-center text-gray-500">
+    <p>No prescriptions found for this patient.</p>
+  </div>
+
+  <!-- Prescriptions list -->
+  <div *ngIf="!loading && prescriptions.length > 0" class="overflow-x-auto">
+    <table class="min-w-full rounded-md overflow-hidden">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medication</th>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructions</th>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prescriber</th>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let prescription of prescriptions" class="hover:bg-gray-50 cursor-pointer" (click)="navigateToPrescription(prescription.id || 0)">
+          <td class="py-4 px-4 text-sm font-medium text-gray-900">{{ prescription.medication }}</td>
+          <td class="py-4 px-4 text-sm text-gray-500">{{ prescription.dosage }}</td>
+          <td class="py-4 px-4 text-sm text-gray-500">{{ prescription.instructions }}</td>
+          <td class="py-4 px-4 text-sm text-gray-500">{{ prescription.prescribedDate | date:'short' }}</td>
+          <td class="py-4 px-4 text-sm text-gray-500">{{ prescription.prescribedBy }}</td>
+          <td class="py-4 px-4 text-sm">
+            <span [class]="'px-2 py-1 rounded-full text-xs font-medium ' + getStatusBadgeClass(prescription.status)">
+              {{ prescription.status | titlecase }}
+            </span>
+          </td>
+          <td class="py-4 px-4 text-sm text-gray-500">
+            <button class="text-primary hover:text-primary/80">View Details</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
