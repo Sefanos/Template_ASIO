@@ -22,7 +22,7 @@ export const routes: Routes = [
       { path: 'prescription', component: PrescriptionComponent },
       { path: 'ai-diagnostic', component: AiDiagnosticComponent },
       { path: 'users', component: UsersComponent },
-      { path: 'user-page', component: UserPageComponent },
+      { path: 'user-page/:id', component: UserPageComponent }, 
     ]
   }
 ];
