@@ -94,7 +94,7 @@ export class PatientService {
           id: 1,
           time: '10:00 AM',
           type: 'Routine',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr.BOUFARRA'
         },
         {
           date: '2025-03-18', reason: 'Follow-up',
@@ -102,7 +102,7 @@ export class PatientService {
           id: 2,
           time: '02:30 PM',
           type: 'Follow-up',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr.BOUFARRA'
         },
         {
           date: '2025-01-05', reason: 'Urgent care',
@@ -110,7 +110,7 @@ export class PatientService {
           id: 3,
           time: '09:15 AM',
           type: 'Urgent',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr.BOUFARRA'
         },
         {
           date: '2024-12-01', reason: 'Consultation',
@@ -118,7 +118,7 @@ export class PatientService {
           id: 4,
           time: '11:00 AM',
           type: 'Consultation',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr.BOUFARRA'
         },
         {
           date: '2024-11-15', reason: 'Physical Exam',
@@ -126,26 +126,26 @@ export class PatientService {
           id: 5,
           time: '03:00 PM',
           type: 'Routine',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr.BOUFARRA'
         }
       ],
       timelineEvents: [
-        { id: 1, date: '2025-05-07', type: 'appointment', title: 'Annual checkup', description: 'Completed annual checkup with Dr. Sefanos.' },
+        { id: 1, date: '2025-05-07', type: 'appointment', title: 'Annual checkup', description: 'Completed annual checkup with Dr.BOUFARRA.' },
         { id: 2, date: '2025-04-15', type: 'labResult', title: 'Lab test: HbA1c', description: 'Result: 6.8%' },
-        { id: 3, date: '2025-03-18', type: 'appointment', title: 'Follow-up appointment', description: 'Scheduled follow-up with Dr. Sefanos.' },
+        { id: 3, date: '2025-03-18', type: 'appointment', title: 'Follow-up appointment', description: 'Scheduled follow-up with Dr.BOUFARRA.' },
       ],
       notes: [ // Updated to Note[]
         {
           id: 1,
           date: '2025-05-01',
-          provider: 'Dr. Sefanos',
+          provider: 'Dr.BOUFARRA',
           content: 'Patient reports feeling well overall. Mentions occasional dizziness in the morning.',
           type: 'progress'
         },
         {
           id: 2,
           date: '2025-04-15',
-          provider: 'Dr. Sefanos',
+          provider: 'Dr.BOUFARRA',
           content: 'Patient is compliant with medication regimen. Discussed importance of regular exercise.',
           type: 'progress'
         }
@@ -232,7 +232,7 @@ export class PatientService {
       refills: 2,
       startDate: '2025-01-10',
       status: 'active',
-      prescribedBy: 'Dr. Sefanos B.',
+      prescribedBy: 'Dr.BOUFARRA',
       prescribedDate: '2025-01-10T10:30:00Z',
       sendToPharmacy: true
     },
@@ -247,7 +247,7 @@ export class PatientService {
       refills: 3,
       startDate: '2025-01-15',
       status: 'active',
-      prescribedBy: 'Dr. Sefanos B.',
+      prescribedBy: 'Dr.Dr.BOUFARRA',
       prescribedDate: '2025-01-15T14:15:00Z',
       sendToPharmacy: true
     },
@@ -263,7 +263,7 @@ export class PatientService {
       startDate: '2025-01-01',
       endDate: '2025-03-01',
       status: 'completed',
-      prescribedBy: 'Dr. Sefanos B.',
+      prescribedBy: 'Dr.BOUFARRA',
       prescribedDate: '2025-01-01T11:00:00Z',
       sendToPharmacy: false
     },

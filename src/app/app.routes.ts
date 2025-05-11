@@ -8,6 +8,8 @@ import { AiDiagnosticComponent } from './pages/ai-diagnostic/ai-diagnostic.compo
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { UsersComponent } from './pages/users/users.component';
 import { UserPageComponent } from './pages/user-page/user-page.component';
+import { RolesComponent } from './pages/roles/roles.component';
+import { RolePageComponent } from './pages/role-page/role-page.component';
 
 export const routes: Routes = [
   {
@@ -22,7 +24,9 @@ export const routes: Routes = [
       { path: 'prescription', component: PrescriptionComponent },
       { path: 'ai-diagnostic', component: AiDiagnosticComponent },
       { path: 'users', component: UsersComponent },
-      { path: 'user-page/:id', component: UserPageComponent }, 
+      { path: 'user-page/:id', component: UserPageComponent },
+      { path: 'roles', component: RolesComponent },
+      { path: 'role/:id', component: RolePageComponent },
     ]
   }
 ];

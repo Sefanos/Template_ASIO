@@ -68,7 +68,7 @@ export class PatientDataUtilsService {
         frequency: med.frequency || (med.instructions || ''),
         startDate: med.startDate || '',
         status: med.status || 'active',
-        prescribedBy: med.prescribedBy || 'Dr. Sefanos',
+        prescribedBy: med.prescribedBy || 'Dr.BOUFARRA',
         notes: med.notes || (med.interactions ? med.interactions.join(', ') : '')
       };
       return medication;
@@ -112,7 +112,7 @@ export class PatientDataUtilsService {
       date: appt.date,
       time: appt.time || '9:00 AM',
       type: appt.type || 'Regular checkup',
-      provider: appt.provider || 'Dr. Sefanos',
+      provider: appt.provider || 'Dr.BOUFARRA',
       reason: appt.reason,
       status: appt.status || 'scheduled',
       notes: appt.notes || ''
@@ -148,7 +148,7 @@ export class PatientDataUtilsService {
     return (patient.notes as unknown as string[]).map((note, index) => ({
       id: index + 1,
       date: new Date(2025, 4 - index, 6 - index * 7).toISOString().split('T')[0],
-      provider: 'Dr. Sefanos',
+      provider: 'Dr.BOUFARRA',
       content: note,
       type: index === 0 ? 'quick' : 'progress'
     }));

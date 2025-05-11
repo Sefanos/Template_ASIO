@@ -54,6 +54,23 @@
           Users List
         </a>
       </li>
+      <li>
+        <a 
+          [routerLink]="['/roles']" 
+          [class.bg-primary]="isActive('/roles')"
+          [class.text-white]="isActive('/roles')"
+          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+            <path d="M12 15h.01"></path>
+            <path d="M3 7h3"></path>
+            <path d="M21 7h-3"></path>
+          </svg>
+          Roles & Permissions
+        </a>
+      </li>
       
       <!-- <li>
         <a 

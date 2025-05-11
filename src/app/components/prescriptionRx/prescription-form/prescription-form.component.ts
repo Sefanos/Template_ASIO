@@ -226,7 +226,7 @@ export class PrescriptionFormComponent implements OnInit {
       startDate: formValue.startDate,
       endDate: formValue.endDate,
       status: status,
-      prescribedBy: 'Dr. Sefanos B.', // In a real app, this would come from auth service
+      prescribedBy: 'Dr.BOUFARRA', // In a real app, this would come from auth service
       prescribedDate: new Date().toISOString(),
       sendToPharmacy: formValue.sendToPharmacy,
       pharmacistNotes: formValue.pharmacistNotes
