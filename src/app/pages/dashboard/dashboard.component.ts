@@ -14,7 +14,10 @@ import { WeeklyOverviewComponent } from '../../components/dashboard/weekly-overv
 import { AiAssistantComponent } from '../../components/dashboard/ai-assistant/ai-assistant.component';
 import { UserActivityComponent } from '../../components/dashboard/user-activity/user-activity.component';
 import { ModuleUsageHeatmapComponent } from '../../components/dashboard/module-usage-heatmap/module-usage-heatmap.component';
-
+import { UserStatusOverviewComponent } from '../../components/dashboard/user-status-overview/user-status-overview.component';
+import { UserRegistrationTrendComponent } from '../../components/dashboard/user-registration-trend/user-registration-trend.component';
+import { FailedLoginAttemptsComponent } from '../../components/dashboard/failed-login-attempts/failed-login-attempts.component';
+import { UserRolesOverviewComponent } from '../../components/dashboard/user-roles-overview/user-roles-overview.component';
 // Import the StatItem interface from the StatCardComponent to ensure type compatibility
 interface StatItem {
   label: string;
@@ -39,6 +42,10 @@ interface StatItem {
     AiAssistantComponent,
     UserActivityComponent,
     ModuleUsageHeatmapComponent,
+    UserStatusOverviewComponent,
+    UserRegistrationTrendComponent,
+    FailedLoginAttemptsComponent,
+    UserRolesOverviewComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'

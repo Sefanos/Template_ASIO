@@ -91,6 +91,27 @@ module.exports = {
             low: 'rgba(155, 192, 225, 0.7)',
             medium: 'rgba(74, 138, 194, 0.7)',
             high: 'rgba(44, 110, 170, 0.9)'
+          },
+          // User status colors
+          users: {
+            active: '#5CBA99',     // Same as status-success
+            pending: '#F0B86C',    // Same as status-warning
+            inactive: '#8096A7',   // Same as text-muted
+            bg: {
+              active: 'rgba(92, 186, 153, 0.15)',
+              pending: 'rgba(240, 184, 108, 0.15)',
+              inactive: 'rgba(128, 150, 167, 0.15)'
+            }
+          },
+          // Registration chart
+          registration: {
+            primary: 'rgba(44, 110, 170, 1)',     // Primary color
+            light: 'rgba(44, 110, 170, 0.6)',     // Lighter version
+            fill: 'rgba(44, 110, 170, 0.1)',      // Very light fill
+            growth: {
+              positive: 'rgba(92, 186, 153, 1)',  // Success color
+              negative: 'rgba(224, 92, 92, 1)'    // Urgent color
+            }
           }
         }
       },

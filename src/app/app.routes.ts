@@ -6,6 +6,8 @@ import { PatientRecordComponent } from './pages/patient-record/patient-record.co
 import { PrescriptionComponent } from './pages/prescription/prescription.component';
 import { AiDiagnosticComponent } from './pages/ai-diagnostic/ai-diagnostic.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
+import { UsersComponent } from './pages/users/users.component';
+import { UserPageComponent } from './pages/user-page/user-page.component';
 
 export const routes: Routes = [
   {
@@ -18,7 +20,9 @@ export const routes: Routes = [
       { path: 'calendar', component: AppointmentCalendarComponent },
       { path: 'patient/:id', component: PatientRecordComponent },
       { path: 'prescription', component: PrescriptionComponent },
-      { path: 'ai-diagnostic', component: AiDiagnosticComponent }
+      { path: 'ai-diagnostic', component: AiDiagnosticComponent },
+      { path: 'users', component: UsersComponent },
+      { path: 'user-page', component: UserPageComponent },
     ]
   }
 ];
