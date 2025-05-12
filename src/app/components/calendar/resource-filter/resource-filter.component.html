@@ -1,0 +1,51 @@
+<div class="mb-4 p-4 bg-white rounded-card shadow-sm">
+  <h3 class="text-sm font-semibold text-text-light mb-3">DOCTORS / STAFF</h3>
+  
+  <!-- All/None quick selections -->
+  <div class="flex justify-between mb-3">
+    <button 
+      (click)="selectAll()"
+      class="text-xs text-primary hover:text-primary-dark font-medium"
+    >
+      Select All
+    </button>
+    <button 
+      (click)="selectNone()"
+      class="text-xs text-primary hover:text-primary-dark font-medium"
+    >
+      Clear All
+    </button>
+  </div>
+  
+  <!-- Resource list with checkboxes -->
+  <div class="space-y-2 max-h-48 overflow-y-auto">
+    <div *ngFor="let resource of resources()" class="flex items-center">
+      <label class="flex items-center space-x-2 w-full cursor-pointer hover:bg-hover p-1.5 rounded-lg">
+        <input 
+          type="checkbox"
+          [checked]="isSelected(resource.id)"
+          (change)="toggleResource(resource.id)"
+          class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+        />
+        <div class="flex items-center">
+          <div 
+            class="h-3 w-3 rounded-full mr-2" 
+            [style.backgroundColor]="resource.eventColor || '#9CA3AF'"
+          ></div>
+          <span class="text-sm">{{ resource.title }}</span>
+          <span class="text-xs text-text-light ml-1" *ngIf="resource.extendedProps?.specialty">
+            ({{ resource.extendedProps?.specialty }})
+          </span>
+        </div>
+      </label>
+    </div>
+  </div>
+  
+  <!-- Resource color legend -->
+  <div class="mt-4 pt-3 border-t border-border">
+    <div class="flex items-center">
+      <span class="h-3 w-3 rounded-full bg-[#E67C73] mr-2"></span>
+      <span class="text-xs text-text-light">Blocked Time</span>
+    </div>
+  </div>
+</div>

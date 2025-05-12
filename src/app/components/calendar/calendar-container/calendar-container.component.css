@@ -1,0 +1,60 @@
+:host ::ng-deep .fc-container {
+  .fc-header-toolbar {
+    display: none;
+  }
+  
+  .fc-view {
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .fc-day-today {
+    background-color: rgba(44, 110, 170, 0.05) !important;
+  }
+  
+  .fc-event {
+    border-radius: 3px;
+    border: none;
+    font-size: 0.85rem;
+    
+    &.blocked-time {
+      opacity: 0.9;
+    }
+  }
+  
+  .fc-timegrid-event {
+    padding: 0.4rem;
+  }
+  
+  .fc-timegrid-slot {
+    height: 2.5rem;
+  }
+  
+  .fc-col-header-cell {
+    padding: 0.5rem 0;
+    background-color: #f9fafb;
+    font-weight: 500;
+  }
+  
+  .fc-timegrid-axis {
+    background-color: #f9fafb;
+  }
+  
+  .fc-button-primary {
+    background-color: #2C6EAA;
+    border-color: #2C6EAA;
+    
+    &:hover {
+      background-color: #215584;
+      border-color: #215584;
+    }
+  }
+  
+  .fc-list-event-dot {
+    border-color: #2C6EAA;
+  }
+  
+  .fc-list-day-cushion {
+    background-color: #f9fafb;
+  }
+}

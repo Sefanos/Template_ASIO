@@ -1,0 +1,66 @@
+<div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+  <!-- Left section - view buttons -->
+  <div class="flex space-x-2">
+    <button 
+      *ngFor="let view of views" 
+      (click)="setView(view.value)"
+      [class.bg-primary]="currentView() === view.value"
+      [class.text-white]="currentView() === view.value"
+      [class.bg-hover]="currentView() !== view.value"
+      [class.text-text]="currentView() !== view.value"
+      class="px-3 py-1.5 rounded-button text-sm font-medium transition-colors"
+      [attr.aria-label]="'Switch to ' + view.label + ' view'"
+    >
+      {{ view.label }}
+    </button>
+  </div>
+  
+  <!-- Center section - date navigation -->
+  <div class="flex items-center space-x-3">
+    <button 
+      (click)="today()" 
+      class="px-3 py-1.5 bg-hover text-text rounded-button text-sm font-medium hover:bg-gray-200 transition-colors"
+      aria-label="Jump to today"
+    >
+      {{ getTodayFormatted() }}
+    </button>
+    
+    <div class="flex items-center space-x-1">
+      <button 
+        (click)="prev()" 
+        class="p-1.5 rounded-full hover:bg-hover transition-colors"
+        aria-label="Previous period"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      
+      <h2 class="text-lg font-medium px-2">{{ formatDate() }}</h2>
+      
+      <button 
+        (click)="next()" 
+        class="p-1.5 rounded-full hover:bg-hover transition-colors"
+        aria-label="Next period"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Right section - actions -->
+  <div class="flex space-x-2">
+    <button 
+      (click)="createNewAppointment()"
+      class="px-3 py-1.5 bg-primary text-white rounded-button text-sm font-medium hover:bg-primary-dark transition-colors flex items-center"
+      aria-label="Create new appointment"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      New Appointment
+    </button>
+  </div>
+</div>

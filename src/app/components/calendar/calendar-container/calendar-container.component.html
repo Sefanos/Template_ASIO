@@ -1,0 +1,47 @@
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <!-- Left sidebar -->
+  <div class="lg:col-span-1">
+    <app-mini-calendar></app-mini-calendar>
+    <app-resource-filter></app-resource-filter>
+  </div>
+  
+  <!-- Main calendar area -->
+  <div class="lg:col-span-3">
+    <!-- Calendar toolbar -->
+    <app-calendar-toolbar
+      (createAppointment)="createNewAppointment()"
+    ></app-calendar-toolbar>
+    
+    <!-- Search and block time row -->
+    <div class="flex items-center justify-between mb-4 gap-4">
+      <div class="flex-grow">
+        <app-search-filter></app-search-filter>
+      </div>
+      
+      <button 
+        (click)="showBlockTimeForm()"
+        class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-button text-sm font-medium transition-colors flex items-center whitespace-nowrap"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Block Time
+      </button>
+    </div>
+    
+    <!-- Main calendar -->
+    <div class="bg-white rounded-card shadow-card p-card-padding">
+      <div #calendar class="fc-container min-h-[700px]"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Form Modal - Used for both appointment and time block -->
+<app-time-block-form
+  [show]="showTimeBlockForm()"
+  [blockToEdit]="selectedBlockToEdit()"
+  [isAppointmentForm]="isAppointmentForm()"
+  (close)="closeBlockTimeForm()"
+  (saved)="handleBlockTimeSaved($event)"
+  (deleted)="handleBlockTimeDeleted($event)"
+></app-time-block-form>

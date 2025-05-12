@@ -1,0 +1,60 @@
+<div class="p-4 bg-white rounded-lg shadow-sm">
+  <!-- Calendar Header with Month and Year -->
+  <div class="flex items-center justify-between mb-4">
+    <button 
+      (click)="prevMonth()" 
+      class="flex items-center justify-center h-8 w-8 text-gray-600 hover:text-gray-900 transition-colors"
+      aria-label="Previous month"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+    
+    <h2 class="text-lg font-medium text-gray-800">{{ currentMonthName }} {{ currentYear }}</h2>
+    
+    <button 
+      (click)="nextMonth()" 
+      class="flex items-center justify-center h-8 w-8 text-gray-600 hover:text-gray-900 transition-colors"
+      aria-label="Next month"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+  
+  <!-- Days of Week Header -->
+  <div class="grid grid-cols-7 text-center mb-1">
+    <div *ngFor="let day of dayNames" class="text-xs font-medium text-gray-500 py-2">
+      {{ day }}
+    </div>
+  </div>
+  
+  <!-- Calendar Grid -->
+  <div class="grid grid-cols-7 gap-1">
+    <div 
+      *ngFor="let day of calendarDays" 
+      class="aspect-square flex items-center justify-center text-sm relative cursor-pointer rounded"
+      [ngClass]="{
+        'text-gray-400': !day.currentMonth,
+        'text-gray-900': day.currentMonth && !isSelectedDate(day.date),
+        'bg-blue-500 text-white rounded': isSelectedDate(day.date),
+        'hover:bg-gray-100': !isSelectedDate(day.date)
+      }"
+      (click)="selectDate(day.date)"
+    >
+      <span>{{ day.date.getDate() }}</span>
+      
+      <!-- Event Indicator Dot -->
+      <div *ngIf="day.hasEvents" 
+           class="absolute bottom-1 left-1/2 transform -translate-x-1/2 h-1 w-1 rounded-full"
+           [ngClass]="{
+             'bg-blue-500': !isSelectedDate(day.date) && !day.hasUrgentEvents,
+             'bg-red-500': !isSelectedDate(day.date) && day.hasUrgentEvents,
+             'bg-white': isSelectedDate(day.date)
+           }">
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,273 @@
+<div class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" *ngIf="show">
+  <div class="bg-white rounded-lg shadow-xl max-w-lg w-full m-4 max-h-[90vh] overflow-y-auto">
+    <!-- Header with different colors based on form type -->
+    <div 
+      class="p-5 border-b rounded-t-lg"
+      [ngClass]="{
+        'bg-primary text-white border-primary/30': isAppointmentForm,
+        'bg-status-urgent text-white border-status-urgent/30': !isAppointmentForm
+      }"
+    >
+      <div class="flex items-center">
+        <!-- Icon for appointment -->
+        <svg *ngIf="isAppointmentForm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        
+        <!-- Icon for time block -->
+        <svg *ngIf="!isAppointmentForm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        
+        <h2 class="text-lg font-semibold">
+          <span *ngIf="isAppointmentForm">{{ isEditing ? 'Edit Appointment' : 'New Appointment' }}</span>
+          <span *ngIf="!isAppointmentForm">{{ isEditing ? 'Edit Time Block' : 'Block Time Period' }}</span>
+        </h2>
+      </div>
+    </div>
+    
+    <form [formGroup]="blockForm" (ngSubmit)="saveBlock()" class="p-5">
+      <!-- Title -->
+      <div class="mb-4">
+        <label for="title" class="block text-text-light mb-1 font-medium">
+          <span *ngIf="isAppointmentForm">Appointment Title</span>
+          <span *ngIf="!isAppointmentForm">Block Title</span>
+        </label>
+        <input 
+          type="text" 
+          id="title" 
+          formControlName="title"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+          [ngClass]="{
+            'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+            'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+          }"
+          [placeholder]="isAppointmentForm ? 'e.g., Patient Checkup, Follow-up' : 'e.g., Lunch Break, Meeting, Vacation'"
+        />
+        <div *ngIf="blockForm.get('title')?.invalid && blockForm.get('title')?.touched" class="text-status-urgent text-xs mt-1">
+          Title is required
+        </div>
+      </div>
+      
+      <!-- Patient field (only for appointments) -->
+      <div class="mb-4" *ngIf="isAppointmentForm">
+        <label for="patientName" class="block text-text-light mb-1 font-medium">Patient</label>
+        <input 
+          type="text" 
+          id="patientName" 
+          formControlName="patientName"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          placeholder="Enter patient name"
+        />
+      </div>
+      
+      <!-- Doctor/Resource Select -->
+      <div class="mb-4">
+        <label for="resourceId" class="block text-text-light mb-1 font-medium">Doctor</label>
+        <select 
+          id="resourceId" 
+          formControlName="resourceId"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+          [ngClass]="{
+            'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+            'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+          }"
+        >
+          <option [value]="resource.id" *ngFor="let resource of resources()">{{ resource.title }}</option>
+        </select>
+        <div *ngIf="blockForm.get('resourceId')?.invalid && blockForm.get('resourceId')?.touched" class="text-status-urgent text-xs mt-1">
+          Please select a doctor
+        </div>
+      </div>
+      
+      <!-- Date and Time -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label for="startDate" class="block text-text-light mb-1 font-medium">Start Date</label>
+          <input 
+            type="date" 
+            id="startDate" 
+            formControlName="startDate"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [ngClass]="{
+              'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+              'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+            }"
+          />
+          <div *ngIf="blockForm.get('startDate')?.invalid && blockForm.get('startDate')?.touched" class="text-status-urgent text-xs mt-1">
+            Start date is required
+          </div>
+        </div>
+        <div>
+          <label for="startTime" class="block text-text-light mb-1 font-medium">Start Time</label>
+          <input 
+            type="time" 
+            id="startTime" 
+            formControlName="startTime"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [ngClass]="{
+              'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+              'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+            }"
+          />
+          <div *ngIf="blockForm.get('startTime')?.invalid && blockForm.get('startTime')?.touched" class="text-status-urgent text-xs mt-1">
+            Start time is required
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label for="endDate" class="block text-text-light mb-1 font-medium">End Date</label>
+          <input 
+            type="date" 
+            id="endDate" 
+            formControlName="endDate"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [ngClass]="{
+              'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+              'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+            }"
+          />
+          <div *ngIf="blockForm.get('endDate')?.invalid && blockForm.get('endDate')?.touched" class="text-status-urgent text-xs mt-1">
+            End date is required
+          </div>
+        </div>
+        <div>
+          <label for="endTime" class="block text-text-light mb-1 font-medium">End Time</label>
+          <input 
+            type="time" 
+            id="endTime" 
+            formControlName="endTime"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [ngClass]="{
+              'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+              'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+            }"
+          />
+          <div *ngIf="blockForm.get('endTime')?.invalid && blockForm.get('endTime')?.touched" class="text-status-urgent text-xs mt-1">
+            End time is required
+          </div>
+        </div>
+      </div>
+      
+      <!-- Appointment Type (only for appointments) -->
+      <div class="mb-4" *ngIf="isAppointmentForm">
+        <label for="appointmentType" class="block text-text-light mb-1 font-medium">Appointment Type</label>
+        <select 
+          id="appointmentType" 
+          formControlName="appointmentType"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+        >
+          <option value="checkup">Regular Checkup</option>
+          <option value="followup">Follow-up</option>
+          <option value="consultation">Consultation</option>
+          <option value="emergency">Emergency</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      
+      <!-- Block Category (only for time blocks) -->
+      <div class="mb-4" *ngIf="!isAppointmentForm">
+        <label for="blockCategory" class="block text-text-light mb-1 font-medium">Category</label>
+        <select 
+          id="blockCategory" 
+          formControlName="blockCategory"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-status-urgent focus:border-status-urgent"
+        >
+          <option value="lunch">Lunch</option>
+          <option value="meeting">Meeting</option>
+          <option value="vacation">Vacation</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      
+      <!-- Recurring Options (only for time blocks) -->
+      <div class="mb-4" *ngIf="!isAppointmentForm">
+        <div class="flex items-center mb-2">
+          <input 
+            type="checkbox" 
+            id="isRecurring" 
+            formControlName="isRecurring"
+            class="h-4 w-4 text-status-urgent focus:ring-status-urgent border-gray-300 rounded"
+          />
+          <label for="isRecurring" class="ml-2 block text-text">Recurring time block</label>
+        </div>
+        
+        <div *ngIf="blockForm.get('isRecurring')?.value">
+          <div class="pl-6 space-y-2">
+            <div class="flex flex-wrap gap-2">
+              <label class="inline-flex items-center" *ngFor="let day of weekDays; let i = index">
+                <input 
+                  type="checkbox" 
+                  [formControlName]="'day' + i"
+                  class="h-4 w-4 text-status-urgent focus:ring-status-urgent border-gray-300 rounded"
+                />
+                <span class="ml-2 text-sm">{{ day }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Additional Notes -->
+      <div class="mb-4">
+        <label for="notes" class="block text-text-light mb-1 font-medium">
+          <span *ngIf="isAppointmentForm">Appointment Notes</span>
+          <span *ngIf="!isAppointmentForm">Notes (Optional)</span>
+        </label>
+        <textarea 
+          id="notes" 
+          formControlName="notes"
+          rows="2"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+          [ngClass]="{
+            'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
+            'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
+          }"
+          [placeholder]="isAppointmentForm ? 'Patient details, reason for visit, etc.' : 'Any additional details...'"
+        ></textarea>
+      </div>
+      
+      <div *ngIf="errorMessage" class="p-3 bg-status-urgent/10 text-status-urgent rounded-lg mb-4">
+        {{ errorMessage }}
+      </div>
+    
+      <!-- Form Actions -->
+      <div class="flex justify-between pt-3 border-t border-border">
+        <div>
+          <!-- Delete button only shown when editing -->
+          <button 
+            type="button" 
+            *ngIf="isEditing"
+            (click)="deleteBlock()"
+            class="px-3 py-1.5 bg-status-urgent text-white rounded-button text-sm font-medium hover:bg-status-urgent/90 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+        
+        <div class="flex space-x-2">
+          <button 
+            type="button" 
+            (click)="cancel()"
+            class="px-3 py-1.5 bg-hover text-text rounded-button text-sm font-medium hover:bg-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            [disabled]="blockForm.invalid"
+            [ngClass]="{
+              'bg-primary hover:bg-primary-dark': isAppointmentForm,
+              'bg-status-urgent hover:bg-status-urgent/90': !isAppointmentForm
+            }"
+            class="px-3 py-1.5 text-white rounded-button text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ isEditing ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
