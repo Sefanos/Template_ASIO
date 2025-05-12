@@ -1,23 +1,26 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-
-interface Patient {
-  id: number;
-  name: string;
-  lastVisit: string;
-  status: string;
-}
+import { finalize } from 'rxjs/operators';
+import { PatientService } from '../../services/patient.service';
+import { PatientSearchFilterComponent } from '../../components/patient-management/patient-search-filter/patient-search-filter.component';
+import { PatientListTableComponent, PatientTableRow } from '../../components/patient-management/patient-list-table/patient-list-table.component';
+import { Patient } from '../../models/patient.model';
 
 @Component({
   selector: 'app-patient-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    PatientSearchFilterComponent, 
+    PatientListTableComponent
+  ],
   templateUrl: './patient-management.component.html',
   styleUrl: './patient-management.component.css'
 })
-export class PatientManagementComponent {
+export class PatientManagementComponent implements OnInit {
   searchQuery: string = '';
   filters = {
     recent: false,
@@ -25,44 +28,93 @@ export class PatientManagementComponent {
     followUp: false
   };
   
-  patients: Patient[] = [
-    { id: 123, name: 'Jean Dupont', lastVisit: 'Today', status: 'Active' },
-    { id: 890, name: 'Sophie Bernard', lastVisit: 'Yesterday', status: 'Follow up' },
-    { id: 456, name: 'Marie Laurent', lastVisit: '5 days ago', status: 'Follow up' },
-    { id: 789, name: 'Thomas Moreau', lastVisit: '2 weeks ago', status: 'Lab Results' },
-    { id: 234, name: 'Claire Martin', lastVisit: '1 month ago', status: 'Critical' },
-    { id: 567, name: 'Pierre Dubois', lastVisit: '3 days ago', status: 'Active' },
-    { id: 890, name: 'John Pork', lastVisit: '2 days ago', status: 'Follow up' },
-    { id: 890, name: 'Capucchinu Assassino', lastVisit: 'Yesterday', status: 'Follow up' },
-    { id: 101, name: 'Lucie Petit', lastVisit: 'Today', status: 'Active' },
-    { id: 102, name: 'Émile Garnier', lastVisit: '2 days ago', status: 'Follow up' },
-    { id: 103, name: 'Nathalie Robert', lastVisit: '1 week ago', status: 'Critical' },
-    { id: 104, name: 'Antoine Lefevre', lastVisit: 'Yesterday', status: 'Lab Results' },
-    { id: 105, name: 'Julien Fontaine', lastVisit: '5 days ago', status: 'Active' },
-    { id: 106, name: 'Camille Chevalier', lastVisit: '3 weeks ago', status: 'Follow up' },
-    { id: 107, name: 'Victor Mercier', lastVisit: '1 month ago', status: 'Critical' },
-    { id: 108, name: 'Isabelle Denis', lastVisit: 'Today', status: 'Active' },
-    { id: 109, name: 'Hugo Marchand', lastVisit: 'Yesterday', status: 'Follow up' },
-    { id: 110, name: 'Alice Blanchard', lastVisit: '4 days ago', status: 'Lab Results' },
-    { id: 111, name: 'Louis Caron', lastVisit: '2 months ago', status: 'Critical' },
-    { id: 112, name: 'Sophie Renard', lastVisit: '6 days ago', status: 'Follow up' },
-    { id: 113, name: 'Gabriel Lemaitre', lastVisit: '1 week ago', status: 'Active' },
-    { id: 114, name: 'Emma Roche', lastVisit: '3 days ago', status: 'Follow up' },
-    { id: 115, name: 'Chloé Noël', lastVisit: 'Yesterday', status: 'Critical' },
-    { id: 116, name: 'Mathis Tessier', lastVisit: 'Today', status: 'Lab Results' },
-    { id: 117, name: 'Manon Gilbert', lastVisit: '2 weeks ago', status: 'Active' },
-    { id: 118, name: 'Lucas Roy', lastVisit: '4 weeks ago', status: 'Follow up' },
-    { id: 119, name: 'Léa Dupuis', lastVisit: '3 days ago', status: 'Critical' },
-    { id: 120, name: 'Noah Faure', lastVisit: 'Today', status: 'Active' }
-  ];
+  patients: PatientTableRow[] = [];
+  isLoading: boolean = false;
   
   currentPage = 1;
   pageSize = 8;
-  maxPagesToShow = 5; // Maximum number of page buttons to show
+  maxPagesToShow = 5; 
   
-  constructor(private router: Router) {}
+  constructor(private router: Router, private patientService: PatientService) {}
   
-  get filteredPatients(): Patient[] {
+  ngOnInit(): void {
+    this.loadPatients();
+  }
+
+  loadPatients(): void {
+    this.isLoading = true;
+    
+    this.patientService.getAllPatients()
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe(data => {
+        // Map the patient data to the simplified format needed for the table
+        this.patients = data.map(patient => this.mapPatientToTableRow(patient));
+      });
+  }
+  
+  /**
+   * Maps a Patient object to a simplified PatientTableRow for display in the table
+   */
+  private mapPatientToTableRow(patient: Patient): PatientTableRow {
+    // Determine the last visit date from appointments
+    let lastVisit = 'No visits';
+    let status = 'Active'; // Default status
+    
+    if (patient.appointments && patient.appointments.length > 0) {
+      // Sort appointments by date (most recent first)
+      const sortedAppointments = [...patient.appointments].sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      
+      // Get the most recent appointment
+      const mostRecentAppointment = sortedAppointments[0];
+      
+      // Determine the "days ago" text for the last visit
+      const mostRecentDate = new Date(mostRecentAppointment.date);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - mostRecentDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        lastVisit = 'Today';
+      } else if (diffDays === 1) {
+        lastVisit = 'Yesterday';
+      } else if (diffDays < 7) {
+        lastVisit = `${diffDays} days ago`;
+      } else if (diffDays < 30) {
+        lastVisit = `${Math.floor(diffDays / 7)} weeks ago`;
+      } else {
+        lastVisit = `${Math.floor(diffDays / 30)} months ago`;
+      }
+      
+      // Set the status based on the most recent appointment status
+      if (mostRecentAppointment.status === 'scheduled') {
+        status = 'Follow up';
+      } else if (mostRecentAppointment.status === 'no-show') {
+        status = 'Missed Appointment';
+      }
+    }
+    
+    // Override status if there are other important conditions
+    if (patient.conditions && patient.conditions.some(c => c.severity === 'severe')) {
+      status = 'Critical';
+    } else if (patient.labResults && patient.labResults.some(lr => lr.status === 'abnormal')) {
+      status = 'Lab Results';
+    }
+    
+    return {
+      id: patient.id,
+      name: patient.name,
+      lastVisit: lastVisit,
+      status: status
+    };
+  }
+  
+  get filteredPatients(): PatientTableRow[] {
     let result = this.patients;
     
     if (this.searchQuery.trim() !== '') {
@@ -92,7 +144,7 @@ export class PatientManagementComponent {
     return result;
   }
   
-  get paginatedPatients(): Patient[] {
+  get paginatedPatients(): PatientTableRow[] {
     const startIndex = (this.currentPage - 1) * this.pageSize;
     return this.filteredPatients.slice(startIndex, startIndex + this.pageSize);
   }
@@ -181,5 +233,13 @@ export class PatientManagementComponent {
   showMoreFilters(): void {
     // Show additional filter options
     console.log('Showing more filters');
+  }
+  
+  updateSearchQuery(query: string): void {
+    this.searchQuery = query;
+  }
+  
+  updateFilters(filters: { recent: boolean; critical: boolean; followUp: boolean }): void {
+    this.filters = filters;
   }
 }

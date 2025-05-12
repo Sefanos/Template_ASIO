@@ -1,0 +1,90 @@
+/* Table styles */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+th {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+/* Status badges - Improved visibility */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600; /* Increased font weight */
+  line-height: 1.5;
+  border: 1px solid currentColor; /* Add border using current text color */
+}
+
+/* Specific status colors with better contrast */
+tr .bg-status-success {
+  background-color: rgba(92, 186, 153, 0.15) !important;
+  color: #2e7d67 !important; /* Darker green for better readability */
+}
+
+tr .bg-status-warning {
+  background-color: rgba(240, 184, 108, 0.15) !important;
+  color: #b17422 !important; /* Darker amber for better readability */
+}
+
+tr .bg-status-urgent {
+  background-color: rgba(224, 92, 92, 0.15) !important;
+  color: #c93a3a !important; /* Darker red for better readability */
+}
+
+tr .bg-status-info {
+  background-color: rgba(96, 152, 211, 0.15) !important;
+  color: #3470b8 !important; /* Darker blue for better readability */
+}
+
+/* Fixed hover effects for row hover */
+tr:hover td {
+  background-color: rgba(74, 138, 194, 0.1);
+  color: inherit;
+}
+
+/* Keep status text visible when row is hovered */
+tr:hover .status-badge {
+  color: inherit !important;
+}
+
+/* Action buttons */
+tr:hover button {
+  color: #2C6EAA;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.action-button:hover {
+  background-color: rgba(74, 138, 194, 0.1);
+}
+
+/* Loading Spinner Animation */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2C6EAA;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

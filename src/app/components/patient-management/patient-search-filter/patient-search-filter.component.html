@@ -1,0 +1,45 @@
+<!-- Search and Filter Section -->
+<div class="bg-white rounded-card shadow-card p-card-padding mb-6">
+  <div class="flex items-center mb-4">
+    <label class="mr-2 text-text">Search:</label>
+    <div class="relative flex-1">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange($event)"
+        class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        placeholder="Search by name or ID"
+      >
+      <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-light">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <div class="flex items-center">
+    <span class="mr-2 text-text">Filters:</span>
+    <div class="flex space-x-4">
+      <label class="inline-flex items-center">
+        <input type="checkbox" [(ngModel)]="filters.recent" (ngModelChange)="onFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+        <span class="ml-2 text-text">Recent</span>
+      </label>
+      <label class="inline-flex items-center">
+        <input type="checkbox" [(ngModel)]="filters.critical" (ngModelChange)="onFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+        <span class="ml-2 text-text">Critical</span>
+      </label>
+      <label class="inline-flex items-center">
+        <input type="checkbox" [(ngModel)]="filters.followUp" (ngModelChange)="onFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+        <span class="ml-2 text-text">Follow-up</span>
+      </label>
+      <button 
+        (click)="showMoreFilters()" 
+        class="text-primary hover:text-primary-dark transition-colors"
+      >
+        More Filters
+      </button>
+    </div>
+  </div>
+</div>
