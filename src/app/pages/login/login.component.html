@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-page flex flex-col justify-center items-center p-4">
+  <div class="w-full max-w-md">
+    <div class="flex justify-center mb-8">
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-primary mr-3">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+        <span class="text-2xl font-bold text-primary">Medical Practice Management</span>
+      </div>
+    </div>
+    
+    <div class="bg-white shadow-card rounded-card p-8">
+      <h2 class="text-xl font-semibold mb-6 text-text-dark">Log in to your account</h2>
+      
+      <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        {{ error }}
+      </div>
+      
+      <form (ngSubmit)="login()" class="space-y-4">
+        <div>
+          <label for="username" class="block text-sm font-medium text-text-dark mb-1">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            [(ngModel)]="username"
+            class="w-full px-3 py-2 border border-border rounded-input focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Enter your username"
+          >
+          <div class="mt-1 text-xs text-text-light">Try "doctor" or "admin" for demo</div>
+        </div>
+        
+        <div>
+          <label for="password" class="block text-sm font-medium text-text-dark mb-1">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            [(ngModel)]="password"
+            class="w-full px-3 py-2 border border-border rounded-input focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Enter your password"
+          >
+          <div class="mt-1 text-xs text-text-light">Use "password" for both users</div>
+        </div>
+          <button 
+          type="button" 
+          (click)="login()" 
+          [disabled]="loading" 
+          class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-button transition-colors"
+        >
+          <span *ngIf="!loading">Login</span>
+          <span *ngIf="loading" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Logging in...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

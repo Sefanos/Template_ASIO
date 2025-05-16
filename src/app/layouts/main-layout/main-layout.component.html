@@ -1,8 +1,8 @@
-<div class="min-h-screen bg-background">
+<div class="min-h-screen bg-background overflow-hidden">
   <app-header></app-header>
-  <div class="flex min-h-[calc(100vh-64px)]">
-    <app-sidebar></app-sidebar>
-    <main class="flex-1 p-6">
+  <div class="flex min-h-[calc(100vh-64px)] overflow-hidden">
+    <app-sidebar [role]="userRole" (collapsedChange)="sidebarCollapsed = $event"></app-sidebar>
+    <main class="flex-1 p-6 transition-all duration-300 overflow-x-hidden">
       <router-outlet></router-outlet>
     </main>
   </div>

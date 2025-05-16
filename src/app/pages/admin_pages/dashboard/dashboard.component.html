@@ -1,0 +1,24 @@
+<!-- Dashboard Header -->
+<div class="max-w-full px-2 sm:px-4 lg:px-6">
+  <app-dashboard-header [title]="'ADMIN DASHBOARD'" [date]="currentDate"></app-dashboard-header>
+
+  <!-- User Activity Section -->
+  <app-user-activity class="mb-4 sm:mb-6 lg:mb-8"></app-user-activity>
+
+  <!-- User Status & Roles Overview Section -->
+  <section class="mb-4 sm:mb-6 lg:mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+      <app-user-status-overview></app-user-status-overview>
+      <app-user-roles-overview></app-user-roles-overview>
+    </div>
+  </section>
+
+  <!-- Module Usage Heatmap Section -->
+  <app-module-usage-heatmap class="mb-4 sm:mb-6 lg:mb-8"></app-module-usage-heatmap>
+
+  <!-- User Registration Trend Section -->
+  <app-user-registration-trend class="mb-4 sm:mb-6 lg:mb-8"></app-user-registration-trend>
+
+  <!-- Failed Login Attempts Section -->
+  <app-failed-login-attempts class="mb-4 sm:mb-6 lg:mb-8"></app-failed-login-attempts>
+</div>

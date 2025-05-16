@@ -1,0 +1,78 @@
+<div class="bg-card rounded-card p-3 sm:p-4 lg:p-5 border border-border shadow-card hover:shadow-card-hover transition-shadow duration-300">
+  <!-- Header with title and range selector -->
+  <div class="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2 sm:mb-3 lg:mb-4">
+    <h3 class="text-card-title text-primary uppercase font-medium">MODULE USAGE HEATMAP</h3>
+    
+    <div class="flex gap-2 items-center">
+      <div class="flex space-x-1 bg-background rounded-input p-0.5">
+        <button 
+          *ngFor="let range of ['7d', '30d', '90d']" 
+          (click)="changeTimeRange(range)" 
+          [class.bg-card]="selectedRange === range"
+          [class.shadow-sm]="selectedRange === range"
+          [class.text-primary]="selectedRange === range"
+          [class.text-text-muted]="selectedRange !== range"
+          class="text-xs px-2 py-1 rounded-input transition-all duration-200">
+          {{ range }}
+        </button>
+      </div>
+      
+      <select 
+        [(ngModel)]="selectedModuleFilter"
+        (change)="changeModuleFilter(selectedModuleFilter)"
+        class="text-xs border border-border rounded-input px-2 py-1 bg-card focus:outline-none focus:ring-1 focus:ring-primary">
+        <option *ngFor="let category of moduleCategories" [value]="category.id">{{ category.name }}</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Date range display -->
+  <div class="text-xs text-text-muted mb-4">
+    {{ getDateRangeDisplay() }}
+  </div>
+  
+  <!-- Stats summary -->
+  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
+    <div class="bg-primary/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Most Active Module</div>
+      <div class="font-medium text-sm sm:text-base text-primary">{{ mostActiveModule }}</div>
+    </div>
+    <div class="bg-status-success/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Busiest Day</div>
+      <div class="font-medium text-sm sm:text-base text-status-success">{{ busiestDay }}</div>
+    </div>
+    <div class="bg-status-info/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Total Activities</div>
+      <div class="font-medium text-sm sm:text-base text-status-info">{{ totalActivities | number }}</div>
+    </div>
+  </div>
+  
+  <!-- Chart -->
+  <div class="h-64 sm:h-80 lg:h-96">
+    <canvas #heatmapCanvas></canvas>
+  </div>
+  
+  <!-- Legend -->
+  <div class="flex items-center justify-center mt-3 space-x-1.5">
+    <span class="text-xs text-text-muted">Activity Level:</span>
+    <div class="flex h-4 items-center">
+      <div class="w-5 h-4 rounded-l bg-analytics-heatmap-lowest"></div>
+      <div class="w-5 h-4 bg-analytics-heatmap-low"></div>
+      <div class="w-5 h-4 bg-analytics-heatmap-medium"></div>
+      <div class="w-5 h-4 rounded-r bg-analytics-heatmap-high"></div>
+    </div>
+    <span class="text-xs text-text-muted">Low</span>
+    <span class="text-xs text-text-muted mx-1">-</span>
+    <span class="text-xs text-text-muted">High</span>
+  </div>
+  
+  <!-- Footer with link -->
+  <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
+    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center">
+      View Complete Usage Analytics
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>

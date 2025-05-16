@@ -1,0 +1,75 @@
+<div class="bg-card rounded-card p-3 sm:p-4 lg:p-5 border border-border shadow-card hover:shadow-card-hover transition-shadow duration-300">
+  <!-- Header with title and status badge -->
+  <div class="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2 sm:mb-3 lg:mb-4">
+    <div class="flex items-center gap-2">
+      <h3 class="text-card-title text-primary uppercase font-medium">FAILED LOGIN ATTEMPTS</h3>
+      <span [class]="getAlertLevelClasses() + ' text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full capitalize'">
+        {{ alertLevel }}
+      </span>
+    </div>
+    
+    <div class="flex space-x-1 bg-background rounded-input p-0.5">
+      <button 
+        *ngFor="let range of ['24h', '7d', '30d']" 
+        (click)="changeTimeRange(range)" 
+        [class.bg-card]="selectedRange === range"
+        [class.shadow-sm]="selectedRange === range"
+        [class.text-primary]="selectedRange === range"
+        [class.text-text-muted]="selectedRange !== range"
+        class="text-xs px-2 py-1 rounded-input transition-all duration-200">
+        {{ range }}
+      </button>
+    </div>
+  </div>
+  
+  <!-- Date range display -->
+  <div class="text-xs text-text-muted mb-4">
+    {{ getRangeDisplay() }}
+  </div>
+  
+  <!-- Stats summary -->
+  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-5">
+    <div class="bg-status-urgent/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Total Failed</div>
+      <div class="font-medium text-sm sm:text-base text-status-urgent">{{ totalFailedAttempts }}</div>
+    </div>
+    <div class="bg-primary/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Unique IPs</div>
+      <div class="font-medium text-sm sm:text-base text-primary">{{ uniqueIPCount }}</div>
+    </div>
+    <div class="bg-status-info/10 rounded-input p-2 sm:p-3">
+      <div class="text-xs text-text-light">Most Targeted</div>
+      <div class="font-medium text-sm sm:text-base text-status-info truncate" title="{{ mostTargetedUser }}">{{ mostTargetedUser }}</div>
+    </div>
+  </div>
+  
+  <!-- Chart -->
+  <div class="h-52 sm:h-60 lg:h-64">
+    <canvas #failedLoginsChart></canvas>
+  </div>
+  
+  <!-- Common IPs -->
+  <div class="mt-4 pt-3 border-t border-border">
+    <h4 class="text-sm font-medium text-text-light mb-2">Common Source IPs:</h4>
+    <div class="space-y-2">
+      <div *ngFor="let item of commonIPs" class="flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+          <div class="w-1.5 h-1.5 rounded-full bg-status-urgent"></div>
+          <span class="font-mono">{{ item.ip }}</span>
+          <span class="text-text-muted">({{ item.country }})</span>
+        </div>
+        <span class="font-medium">{{ item.count }} attempts</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer with link -->
+  <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
+    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center">
+      View Security Log
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>

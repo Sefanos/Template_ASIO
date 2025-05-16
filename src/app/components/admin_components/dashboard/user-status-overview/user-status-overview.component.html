@@ -1,0 +1,56 @@
+<div class="bg-card rounded-card p-3 sm:p-4 lg:p-5 border border-border shadow-card hover:shadow-card-hover transition-shadow duration-300">
+  <div class="flex justify-between items-start mb-2 sm:mb-3 lg:mb-4">
+    <h3 class="text-card-title text-primary uppercase font-medium">USER STATUS OVERVIEW</h3>
+    <span class="text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 bg-primary/10 text-primary rounded-full">
+      {{ totalUsers }} Total
+    </span>
+  </div>
+
+  <!-- Chart container -->
+  <div class="flex justify-center mb-4 sm:mb-5 relative">
+    <div class="w-36 h-36 sm:w-44 sm:h-44">
+      <canvas #statusChart></canvas>
+    </div>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="text-center">
+        <div class="text-lg sm:text-xl font-bold text-primary">{{ totalUsers }}</div>
+        <div class="text-xs text-text-muted">Total Users</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status legend and counts -->
+  <div class="space-y-2 sm:space-y-3">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-users-active"></span>
+        <span class="text-xs sm:text-sm">Active</span>
+      </div>
+      <span class="text-xs sm:text-sm font-medium">{{ activePercentage }}% ({{ userData.active }})</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-users-pending"></span>
+        <span class="text-xs sm:text-sm">Pending</span>
+      </div>
+      <span class="text-xs sm:text-sm font-medium">{{ pendingPercentage }}% ({{ userData.pending }})</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-users-inactive"></span>
+        <span class="text-xs sm:text-sm">Inactive</span>
+      </div>
+      <span class="text-xs sm:text-sm font-medium">{{ inactivePercentage }}% ({{ userData.inactive }})</span>
+    </div>
+  </div>
+  
+  <!-- Footer with link -->
+  <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
+    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center">
+      View User Management
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>

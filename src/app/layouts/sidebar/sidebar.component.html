@@ -1,98 +1,53 @@
-<div class="h-screen bg-white border-r border-border shadow-sm w-64 py-8 flex flex-col">
-  <div class="px-6 mb-8">
-    <h2 class="text-text text-xs font-bold tracking-wider uppercase">Main Menu</h2>
+<div class="h-full sidebar-container">
+  <div [class.w-64]="!isCollapsed" [class.w-16]="isCollapsed" class="h-full bg-white border-r border-border shadow-sm py-8 flex flex-col sidebar-inner">
+    <!-- Simplified sidebar header -->    <div class="px-6 mb-6 flex items-center" [class.justify-between]="!isCollapsed" [class.justify-center]="isCollapsed">
+      <h2 *ngIf="!isCollapsed" class="text-text text-xs font-bold tracking-wider uppercase">{{ menuTitle }}</h2>
+      <button 
+        (click)="toggleSidebar()" 
+        class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 focus:outline-none"
+      >
+        <span [innerHTML]="getSanitizedSvgIcon(isCollapsed ? 'chevron-right' : 'chevron-left')" class="icon-container"></span>
+      </button>
+    </div><!-- Simplified Navigation section -->
+    <nav class="flex-1 overflow-y-auto">
+      <ul class="space-y-1 px-3">
+        <li *ngFor="let item of menuItems">          <a 
+            [routerLink]="[item.route]" 
+            routerLinkActive="bg-primary text-white"
+            class="flex items-center justify-between px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+            [class.justify-center]="isCollapsed"
+          >
+            <div class="flex items-center" [class.justify-center]="isCollapsed" [class.w-full]="isCollapsed">
+              <span [innerHTML]="getSanitizedSvgIcon(item.icon)" [class.mr-3]="!isCollapsed" class="icon-container"></span>
+              <span *ngIf="!isCollapsed">{{ item.label }}</span>
+            </div>
+            
+            <!-- Simplified badge -->
+            <span 
+              *ngIf="!isCollapsed && item.badge" 
+              [ngClass]="{
+                'bg-primary text-white': item.badgeColor === 'primary',
+                'bg-green-500 text-white': item.badgeColor === 'success',
+                'bg-yellow-500 text-white': item.badgeColor === 'warning',
+                'bg-red-500 text-white': item.badgeColor === 'danger',
+                'bg-blue-500 text-white': item.badgeColor === 'info',
+                'bg-gray-200 text-gray-800': !item.badgeColor
+              }"
+              class="ml-2 px-2 py-0.5 text-xs rounded-full">
+              {{ item.badge }}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </nav>      <!-- Simplified logout section -->
+    <div class="px-6 mt-auto pt-6">      <button 
+        (click)="logout()" 
+        class="w-full flex items-center px-3 py-3 text-text-light rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors"
+        [class.justify-center]="isCollapsed"
+      >
+        <span [innerHTML]="getSanitizedSvgIcon('log-out')" [class.mr-3]="!isCollapsed" class="icon-container"></span>
+        <span *ngIf="!isCollapsed">Logout</span>
+      </button>
+    </div>
   </div>
-  
-  <nav class="flex-1">
-    <ul class="space-y-1 px-3">
-      <li>
-        <a 
-          [routerLink]="['/dashboard']" 
-          [class.bg-primary]="isActive('/dashboard')"
-          [class.text-white]="isActive('/dashboard')"
-          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          Dashboard
-        </a>
-      </li>
-      <li>
-        <a 
-          [routerLink]="['/patients']" 
-          [class.bg-primary]="isActive('/patients')"
-          [class.text-white]="isActive('/patients')"
-          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          Patients
-        </a>
-      </li>
-      <li>
-        <a 
-          [routerLink]="['/calendar']" 
-          [class.bg-primary]="isActive('/calendar')"
-          [class.text-white]="isActive('/calendar')"
-          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          Calendar
-        </a>
-      </li>
-      <li>
-        <a 
-          href="#" 
-          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-            <polyline points="22,6 12,13 2,6"></polyline>
-          </svg>
-          Messages
-        </a>
-      </li>
-      <li>
-        <a 
-          [routerLink]="['/prescription']" 
-          [class.bg-primary]="isActive('/prescription')"
-          [class.text-white]="isActive('/prescription')"
-          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-          </svg>
-          Rx
-        </a>
-      </li>
-      <li>
-        <a 
-          [routerLink]="['/ai-diagnostic']" 
-          [class.bg-primary]="isActive('/ai-diagnostic')"
-          [class.text-white]="isActive('/ai-diagnostic')"
-          class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          AI Assistant
-        </a>
-      </li>
-    </ul>
-  </nav>
 </div>

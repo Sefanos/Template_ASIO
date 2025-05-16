@@ -25,7 +25,10 @@
     "@fullcalendar/list": "^6.1.17",
     "@fullcalendar/resource-timegrid": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
+    "chart.heatmap.js": "^0.0.1-alpha",
     "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

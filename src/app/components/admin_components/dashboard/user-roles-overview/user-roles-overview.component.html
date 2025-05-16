@@ -1,0 +1,39 @@
+<div class="bg-card rounded-card p-3 sm:p-4 lg:p-5 border border-border shadow-card hover:shadow-card-hover transition-shadow duration-300 h-full flex flex-col">
+  <div class="flex justify-between items-start mb-2">
+    <h3 class="text-card-title text-primary uppercase font-medium">USER ROLES</h3>
+    <span class="text-xs font-medium px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">
+      {{ totalUsers }} Total
+    </span>
+  </div>
+  
+  <!-- Roles list -->
+  <div class="space-y-2 flex-grow">
+    <div *ngFor="let role of roles" class="group">
+      <div class="flex items-center gap-4 mb-1">
+        <div class="flex items-center gap-1.5">
+          <div class="flex items-center justify-center w-5 h-5 rounded-full" [style.background-color]="role.bgColor">
+            <i [class]="getIconClass(role.icon)" [style.color]="role.color"></i>
+          </div>
+          <span class="text-xs font-medium capitalize">{{ role.type }}s</span>
+        </div>
+        <div class="flex-grow h-1.5 bg-background rounded-full overflow-hidden">
+          <div class="h-full rounded-full" 
+              [style.background-color]="role.color" 
+              [style.width]="getPercentage(role.count) + '%'">
+          </div>
+        </div>
+        <span class="text-xs font-medium min-w-[40px] text-right">{{ role.count }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer with link -->
+  <div class="pt-2 mt-2 border-t border-border">
+    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs inline-flex items-center">
+      Manage User Roles
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+</div>

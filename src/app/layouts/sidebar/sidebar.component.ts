@@ -1,17 +1,100 @@
-import { Component } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SidebarService, SidebarItem } from '../../shared/services/sidebar.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule],
+  providers: [SidebarService],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
-export class SidebarComponent {
-  constructor(private router: Router) {}
-
-  isActive(route: string): boolean {
-    return this.router.url.includes(route);
+export class SidebarComponent implements OnInit {
+  @Input() role: string = '';
+  @Output() collapsedChange = new EventEmitter<boolean>();
+  
+  menuItems: SidebarItem[] = [];
+  menuTitle: string = 'Navigation';
+  isCollapsed: boolean = false;
+  
+  // Icon map for SVG content - predefined to avoid recalculating during render
+  private iconMap: { [key: string]: string } = {
+    'grid': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`,
+    'users': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+    'calendar': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+    'heart': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>`,
+    'help-circle': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+    'shield': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
+    'log-out': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`,
+    'chevron-left': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><polyline points="15 18 9 12 15 6"></polyline></svg>`,
+    'chevron-right': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><polyline points="9 18 15 12 9 6"></polyline></svg>`
+  };
+  
+  // Pre-sanitize SVG icons to improve performance
+  private sanitizedIcons: { [key: string]: SafeHtml } = {};
+  
+  constructor(
+    private sidebarService: SidebarService,
+    private authService: AuthService,
+    private sanitizer: DomSanitizer
+  ) {}
+  ngOnInit(): void {
+    // Pre-sanitize all icons on component initialization to avoid doing it on render
+    for (const [key, value] of Object.entries(this.iconMap)) {
+      this.sanitizedIcons[key] = this.sanitizer.bypassSecurityTrustHtml(value);
+    }
+    
+    if (this.role) {
+      this.loadMenu();
+    } else {
+      const currentRole = this.authService.getUserRole();
+      if (currentRole) {
+        this.role = currentRole;
+        this.loadMenu();
+      }
+    }
+  }
+  
+  loadMenu(): void {
+    try {
+      if (!this.role) {
+        this.menuItems = [];
+        return;
+      }
+      
+      this.menuItems = this.sidebarService.getMenuByRole(this.role);
+      this.menuTitle = this.sidebarService.getMenuTitle(this.role);
+    } catch (error) {
+      this.menuItems = [];
+      this.menuTitle = 'Navigation';
+    }
+  }
+    getSanitizedSvgIcon(iconName: string): SafeHtml {
+    // Return pre-sanitized icon from cache instead of sanitizing on each render
+    if (!iconName || !this.sanitizedIcons[iconName]) {
+      return this.sanitizedIcons['placeholder'] || 
+        (this.sanitizedIcons['placeholder'] = 
+          this.sanitizer.bypassSecurityTrustHtml('<svg class="h-5 w-5" viewBox="0 0 24 24"></svg>'));
+    }
+    
+    return this.sanitizedIcons[iconName];
+  }  toggleSidebar(): void {
+    // Add a small delay to allow CSS transitions to complete properly
+    document.body.classList.add('sidebar-transitioning');
+    this.isCollapsed = !this.isCollapsed;
+    this.collapsedChange.emit(this.isCollapsed);
+    
+    // Remove transitioning class after animation completes
+    setTimeout(() => {
+      document.body.classList.remove('sidebar-transitioning');
+    }, 300);
+  }
+  
+  logout(): void {
+    this.authService.logout();
   }
 }

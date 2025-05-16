@@ -1,0 +1,89 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Icon styling */
+svg {
+  height: 20px;
+  width: 20px;
+  transition: color 0.2s ease;
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Improved hovering for collapsed mode */
+a:hover svg, button:hover svg {
+  color: white;
+}
+
+/* Center icons when collapsed */
+.w-16 a,
+.w-16 button {
+  justify-content: center !important;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Fix for menu items during transition */
+.w-16 li a {
+  justify-content: center;
+}
+
+/* Prevent text from wrapping during transition */
+span {
+  white-space: nowrap;
+}
+
+/* Custom scrollbar styling - simplified */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.4);
+  border-radius: 10px;
+}
+
+/* Prevent horizontal scrollbar during transition */
+.sidebar-container {
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  width: auto;
+}
+
+.sidebar-inner {
+  transition: width 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  overflow: hidden;
+  will-change: width;
+  white-space: nowrap;
+}
+
+/* Fix for horizontal scrollbar flicker */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-horizontal {
+  display: none;
+}
+
+/* Prevent flickering during transitions */
+:host-context(.sidebar-transitioning) .sidebar-inner {
+  overflow-x: clip;
+}
+
+/* Hide scrollbars during transition */
+:host-context(.sidebar-transitioning) ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
