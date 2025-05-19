@@ -1,0 +1,8 @@
+<div class="appointment-summary">
+    <h2>Prochains rendez-vous</h2>
+    <ul>
+      <li *ngFor="let appointment of appointments">
+        {{ appointment.date }} à {{ appointment.time }} - {{ appointment.reason }}
+      </li>
+    </ul>
+  </div>

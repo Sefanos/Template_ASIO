@@ -1,0 +1,55 @@
+<div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+  <div class="text-sm text-text-light mb-2 sm:mb-0">
+    Total: <span class="font-semibold text-text">{{ totalPrescriptionCount }}</span> médicament{{ totalPrescriptionCount === 1 ? '' : 's' }} 
+    (<span class="font-semibold text-status-success">{{ activePrescriptionCount }}</span> actif{{ activePrescriptionCount === 1 ? '' : 's' }})
+  </div>
+  <button 
+    (click)="toggleShowAllPrescriptions()" 
+    class="btn-secondary py-2 px-4 rounded-button text-sm self-end sm:self-auto">
+    {{ showAllPrescriptions ? 'Afficher Actifs Seulement' : 'Afficher Toutes les Prescriptions' }}
+  </button>
+</div>
+
+<div *ngIf="displayedRecords.length > 0; else noRecords" class="records-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Utilisation de trackBy pour améliorer les performances de *ngFor -->
+  <div class="record-card bg-card rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-150 flex flex-col overflow-hidden" 
+       *ngFor="let record of displayedRecords; trackBy: trackByRecordId">
+    <div class="card-header p-card-padding border-b border-border flex justify-between items-start">
+      <h4 class="record-title text-card-title font-display text-text">{{ record.title }}</h4>
+      <div class="flex items-center">
+        <!-- Utilisation de tagText et tagClass fournis par le backend -->
+        <span *ngIf="record.tagText" 
+              class="text-xs font-semibold px-2 py-1 rounded-full capitalize"
+              [ngClass]="record.tagClass"> 
+          {{ record.tagText }}
+        </span>
+      </div>
+    </div>
+    <div class="p-card-padding flex-grow">
+      <p class="record-date text-xs text-text-muted mb-2 flex items-center">
+        <i class="far fa-calendar-alt mr-2"></i> 
+        {{ record.recordDate | date:'mediumDate' }} <!-- recordDate est startDate -->
+      </p>
+      <p class="record-doctor text-sm text-text-light mb-2 flex items-center" *ngIf="record.doctor">
+        <i class="fas fa-user-md mr-2 text-primary"></i> 
+        {{ record.doctor }}
+      </p>
+      <p class="record-summary text-body text-text-light leading-comfortable line-clamp-3">{{ record.summary }}</p>
+    </div>
+    <div class="p-card-padding border-t border-border mt-auto">
+      <button class="btn-view-details w-full bg-accent hover:bg-accent-dark text-white font-medium py-2.5 px-4 rounded-button transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent/50" (click)="onViewDetails(record)">
+          Voir Détails
+      </button>
+    </div>
+  </div>
+</div>
+
+<ng-template #noRecords>
+  <div class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+    <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+    <p class="text-section-header text-text-light">
+      {{ showAllPrescriptions ? 'Aucune prescription trouvée.' : 'Aucune prescription active trouvée.' }}
+    </p>
+    <p class="text-body text-text-muted">Essayez d'ajuster vos filtres ou cliquez sur "Afficher Toutes les Prescriptions".</p>
+  </div>
+</ng-template>

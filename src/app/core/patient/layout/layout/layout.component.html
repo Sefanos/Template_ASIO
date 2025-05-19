@@ -1,0 +1,158 @@
+
+  <div class="min-h-screen bg-background">
+    <header class="bg-white border-b border-border shadow-sm flex items-center justify-between px-6 py-4">
+      <div class="flex items-center">
+        <div class="flex items-center mr-12">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-primary mr-3">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          <span class="text-lg font-semibold text-text-dark">Medical Practice Management System</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-5">
+        <div class="text-sm text-text-light">
+          Ms. Barkouch.
+        </div>
+        <button class="text-text-light hover:text-primary transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+    
+    <div class="flex min-h-[calc(100vh-64px)]">
+      <div class="h-screen bg-white border-r border-border shadow-sm w-64 py-8 flex flex-col">
+        <div class="px-6 mb-8">
+          <h2 class="text-text text-xs font-bold tracking-wider uppercase">Main Menu</h2>
+        </div>
+        
+        <nav class="flex-1" [class.collapsed]="isSidenavCollapsed">
+            <button class="toggle-button" (click)="toggleSidenav()" *ngIf="false">
+              <i class="fas" [ngClass]="isSidenavCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+            </button>
+            <ul class="space-y-1 px-3">
+                <li><a
+                  [routerLink]="['/dashboard']" 
+              [class.bg-primary]="isActive('/dashboard')"
+              [class.text-white]="isActive('/dashboard')"
+              class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+      <rect x="3" y="3" width="7" height="7"></rect>
+      <rect x="14" y="3" width="7" height="7"></rect>
+      <rect x="14" y="14" width="7" height="7"></rect>
+      <rect x="3" y="14" width="7" height="7"></rect>
+    </svg>
+    Dashboard
+    </a>
+    </li>
+     <li><a
+                  [routerLink]="['/profile']" 
+                  [class.bg-primary]="isActive('/profile')"
+                  [class.text-white]="isActive('/profile')"
+                  class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+        
+                   
+                   >
+                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                        
+                   Profile 
+    </a></li>
+    <!-- <li><a
+                  
+    [routerLink]="['/medical-history']" 
+    [class.bg-primary]="isActive('/medical-history')"
+    [class.text-white]="isActive('/medical-history')"
+    class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+    
+     > 
+     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>  
+      <path d="M13 12h2"></path>
+      <path d="M13 15h2"></path>
+    </svg>          
+                  
+                  Medical History</a></li> -->
+               
+                <li><a  [routerLink]="['/appointments']" 
+                  [class.bg-primary]="isActive('/appointments')"
+                  [class.text-white]="isActive('/appointments')"
+                  class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg> Appointments </a></li>
+                  <!-- <li>
+                    <a 
+                      [routerLink]="['prescriptions']" 
+                      [class.bg-primary]="isActive('prescriptions')"
+                      [class.text-white]="isActive('prescriptions')"
+                      class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                      </svg>
+                      Prescriptions
+                    </a>
+                  </li> -->
+                  <li>
+                <li><a      
+              [routerLink]="['/medical-record']" 
+              [class.bg-primary]="isActive('/medical-record')"
+              [class.text-white]="isActive('/medical-record')"
+              class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+    
+                  > 
+                  
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <line x1="10" y1="9" x2="8" y2="9"></line>
+                  </svg>
+                  Medical Record </a></li>
+                           <li><a routerLink="/bills" routerLinkActive="active"
+                            [routerLink]="['/bills']" 
+                            [class.bg-primary]="isActive('/bills')"
+                            [class.text-white]="isActive('/bills')"
+                            class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+                             
+                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            Bills</a></li>
+                            <li>
+                              <a 
+                                href="#" 
+                                class="flex items-center px-3 py-3 text-text rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 mr-3">
+                                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                  <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                Messages
+                              </a>
+                            </li>
+              </ul>
+          </nav>
+      </div>
+      
+      <main class="flex-1 p-6">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>

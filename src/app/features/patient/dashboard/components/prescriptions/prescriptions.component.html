@@ -1,0 +1,8 @@
+<div class="prescriptions">
+    <h2>Dernières prescriptions</h2>
+    <ul>
+      <li *ngFor="let prescription of prescriptions">
+        {{ prescription.medication }} - {{ prescription.dosage }} ({{ prescription.frequency }})
+      </li>
+    </ul>
+  </div>

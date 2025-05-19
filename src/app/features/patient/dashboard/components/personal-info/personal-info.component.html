@@ -1,0 +1,197 @@
+
+
+  <div class="personal-info-container">
+    <div class="personal-info-header">
+      <!-- Photo du patient -->
+      <img [src]="personalInfo.photoUrl || 'assets/default-avatar.png'" alt="Photo du patient" class="patient-photo" />
+  
+      <!-- Informations principales -->
+      <div class="personal-info-details">
+        <h3>{{ personalInfo.name }} {{ personalInfo.surname }}</h3>
+        <div class="personal-info-meta">
+          <span><i class="fa fa-calendar"></i> {{ personalInfo.birthDate }}</span>
+          <span><i class="fa fa-tint"></i> Blood Type: {{ personalInfo.bloodType }}</span>
+        </div>
+      </div>
+  
+      <!-- Contact d'urgence -->
+      <div class="emergency-contact">
+        <strong>
+          <i class="fa fa-bell" ></i> 
+          Emergency Contact</strong>
+        <p>{{ personalInfo.emergencyContact }}</p>
+      </div>
+    </div>
+
+
+     <!-- NOUVELLE SECTION: Notifications -->
+     <div class="notifications-section card-style-container">
+      <div class="section-header">
+        <h3><i class="fa fa-bell"></i> Notifications</h3>
+        <button class="link-button">Mark All Read</button>
+      </div>
+      <div class="notification-list">
+        <div class="notification-item">
+          <div class="notification-icon-container">
+            <i class="fa fa-calendar-check notification-icon appointment-icon"></i>
+          </div>
+          <div class="notification-content">
+            <h4>Appointment Reminder</h4>
+            <p>You have an appointment with Dr. Sarah Johnson tomorrow at 10:30 AM.</p>
+            <div class="notification-actions">
+              <button class="btn btn-sm btn-primary">Confirm</button>
+              <button class="btn btn-sm btn-secondary">Reschedule</button>
+            </div>
+          </div>
+          <span class="notification-time">1 hour ago</span>
+        </div>
+        <div class="notification-item">
+          <div class="notification-icon-container">
+            <i class="fa fa-file-medical-alt notification-icon results-icon"></i>
+          </div>
+          <div class="notification-content">
+            <h4>Test Results Available</h4>
+            <p>Your recent blood test results are ready to view.</p>
+            <div class="notification-actions">
+              <button class="btn btn-sm btn-primary">View Results</button>
+            </div>
+          </div>
+          <span class="notification-time">2 days ago</span>
+        </div>
+      </div>
+    </div>
+
+     <!-- Section des cartes -->
+  <div class="info-cards">
+    <div class="info-card">
+      <h4>Blood Pressure</h4>
+      <p>{{ personalInfo.bloodPressure }}</p>
+      <i class="fa fa-heart"></i>
+    </div>
+    <div class="info-card">
+      <h4>Last Appointment</h4>
+      <p>{{ personalInfo.lastAppointment }}</p>
+      <i class="fa fa-calendar"></i>
+    </div>
+    <div class="info-card">
+      <h4>Next Appointment</h4>
+      <p>{{ personalInfo.nextAppointment }}</p>
+      <i class="fa fa-line-chart"></i>
+    </div>
+    <div class="info-card">
+      <h4>Prescriptions</h4>
+      <p>{{ personalInfo.activePrescriptions }} active</p>
+      <i class="fa fa-line-chart"></i>
+    </div>
+  </div>
+<!-- NOUVELLE SECTION: Rangée de cartes améliorées -->
+<div class="enhanced-cards-row">
+  <!-- Upcoming Appointment Card -->
+  <div class="enhanced-card upcoming-appointment-card card-style-container">
+    <div class="section-header">
+      <h4><i class="fa fa-calendar-alt"></i> Upcoming Appointment</h4>
+      <a href="#" class="view-all-link">View All</a>
+    </div>
+    <div class="appointment-details">
+      <h5>Regular Checkup</h5>
+      <p class="doctor-name"><i class="fa fa-user-md"></i> Dr. Sarah Johnson</p>
+      <p class="appointment-time"><i class="fa fa-clock"></i> May 15, 2025 &nbsp;&nbsp; <i class="fa fa-calendar-day"></i> 10:30 AM</p>
+      <span class="status-tag upcoming-tag">Upcoming</span>
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-secondary">Reschedule</button>
+      <button class="btn btn-danger">Cancel</button>
+    </div>
+  </div>
+   <!-- Recent Records Card -->
+   <div class="enhanced-card recent-records-card card-style-container">
+    <div class="section-header">
+      <h4><i class="fa fa-folder-open"></i> Recent Records</h4>
+      <a href="#" class="view-all-link">View All</a>
+    </div>
+    <ul class="records-list">
+      <li>
+        <div class="record-info">
+          <p class="record-title">Blood Test Results</p>
+          <p class="record-date"><i class="fa fa-calendar-alt"></i> April 20, 2025</p>
+        </div>
+        <span class="record-tag lab-result-tag">Lab Result</span>
+      </li>
+      <li>
+        <div class="record-info">
+          <p class="record-title">Annual Physical Examination</p>
+          <p class="record-date"><i class="fa fa-calendar-alt"></i> March 15, 2025</p>
+        </div>
+        <span class="record-tag examination-tag">Examination</span>
+      </li>
+    </ul>
+  </div>
+ <!-- Current Medications Card -->
+ <div class="enhanced-card current-medications-card card-style-container">
+  <div class="section-header">
+    <h4><i class="fa fa-pills"></i> Current Medications</h4>
+    <a href="#" class="view-all-link">View History</a>
+  </div>
+  <ul class="medications-list">
+    <li>
+      <div class="medication-info">
+        <p class="medication-name">Amoxicillin</p>
+        <p class="medication-dosage">500mg, 3 times daily</p>
+        <p class="medication-prescribed-by">Prescribed by: Dr. Emily Carter</p>
+      </div>
+      <span class="duration-tag">4 days</span>
+    </li>
+    <li>
+      <div class="medication-info">
+        <p class="medication-name">Lisinopril</p>
+        <p class="medication-dosage">10mg, Once daily</p>
+        <p class="medication-prescribed-by">Prescribed by: Dr. John Smith</p>
+      </div>
+      <span class="duration-tag">12 days</span>
+    </li>
+  </ul>
+</div>
+</div>
+
+ <!-- NOUVELLE SECTION: Health Stats -->
+ <div class="health-stats-section card-style-container">
+  <div class="section-header">
+    <h3><i class="fa fa-chart-line"></i> Health Stats</h3>
+    <p class="section-subtitle">Your recent health metrics</p>
+  </div>
+  <div class="stats-list">
+    <div class="stat-item">
+      <div class="stat-info">
+        <span class="stat-label">Blood Pressure</span>
+        <span class="stat-value">120/80 mmHg</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar blood-pressure-bar" style="width: 75%;"></div>
+      </div>
+      <span class="last-measured">Last measured: May 5, 2025</span>
+    </div>
+    <div class="stat-item">
+      <div class="stat-info">
+        <span class="stat-label">Heart Rate</span>
+        <span class="stat-value">72 BPM</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar heart-rate-bar" style="width: 60%;"></div>
+      </div>
+      <span class="last-measured">Last measured: May 5, 2025</span>
+    </div>
+    <div class="stat-item">
+      <div class="stat-info">
+        <span class="stat-label">Weight</span>
+        <span class="stat-value">165 lbs</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar weight-bar" style="width: 50%;"></div>
+      </div>
+      <span class="last-measured">Last measured: May 2, 2025</span>
+    </div>
+  </div>
+</div>
+   
+  </div>
+  

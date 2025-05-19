@@ -1,0 +1,169 @@
+/* .bill-list-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+    overflow: hidden;  
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background-color: #f8f9fa;  
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .card-header .icon {
+    font-size: 22px;
+    color: #007bff;  
+    margin-right: 15px;
+    background-color: #e7f3ff;
+    padding: 8px;
+    border-radius: 6px;
+  }
+  
+  .card-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0 0 3px 0;
+  }
+  
+  .card-header p {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+  }
+  
+  .card-content {
+    padding: 0;  
+  }
+  
+  .bill-table {
+    width: 100%;
+    border-collapse: collapse; 
+  }
+  
+  .bill-table th,
+  .bill-table td {
+    padding: 14px 18px;  
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid #e9ecef;  
+    color: #495057;
+  }
+  
+  .bill-table th {
+    background-color: #f8f9fa;  
+    font-weight: 500;  
+    color: #495057;
+    font-size: 13px;  
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .bill-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .bill-table tbody tr:hover {
+    background-color: #f1f3f5;  
+  }
+  .bill-table tbody tr.selected-row {
+    background-color: #e7f3ff;  
+     
+  }
+  .bill-table tbody tr.selected-row td {
+      font-weight: 500;
+  }
+  
+  
+  .bill-table td:last-child {
+    text-align: center;
+  }
+  .bill-table tbody tr:last-child td {
+    border-bottom: none;  
+  }
+  
+  
+  .status-badge {
+    padding: 5px 10px;
+    border-radius: 12px;  
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
+  }
+  
+  .status-paid {
+    background-color: #28a745;  
+  }
+  .status-paid.selected-row, .bill-table tbody tr.selected-row .status-paid {
+    background-color: #1e7e34;
+  }
+  
+  
+  .status-unpaid {
+    background-color: #6c757d;  
+  }
+  .status-unpaid.selected-row, .bill-table tbody tr.selected-row .status-unpaid {
+    background-color: #545b62;
+  }
+  
+  .status-overdue {
+    background-color: #dc3545;  
+  }
+  .status-overdue.selected-row, .bill-table tbody tr.selected-row .status-overdue {
+    background-color: #b02a37;
+  }
+  
+  .status-pending {
+    background-color: #ffc107; 
+    color: #212529;  
+  }
+  .status-pending.selected-row, .bill-table tbody tr.selected-row .status-pending {
+    background-color: #d39e00;
+  }
+  
+  
+  .details-button {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #495057;
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  
+  .details-button:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+  }
+  
+  .bill-table tbody tr.selected-row .details-button {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  .bill-table tbody tr.selected-row .details-button:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  
+  
+  .no-bills-message {
+      text-align: center;
+      padding: 20px;
+      color: #6c757d;
+      font-style: italic;
+  } */
+
+
+
+  

@@ -31,7 +31,8 @@ export class RoleGuard implements CanActivate {
     // This prevents potential infinite redirects
     const currentUrl = this.router.url;
     if ((userRole === 'admin' && currentUrl.startsWith('/admin')) || 
-        (userRole === 'doctor' && currentUrl.startsWith('/doctor'))) {
+        (userRole === 'doctor' && currentUrl.startsWith('/doctor')) ||
+        (userRole === 'patient' && currentUrl.startsWith('/patient'))) {
       console.log('RoleGuard: Already in correct section, allowing access');
       return true;
     }
@@ -43,6 +44,9 @@ export class RoleGuard implements CanActivate {
       } else if (userRole === 'doctor') {
         console.log('RoleGuard: Redirecting to doctor dashboard');
         return this.router.createUrlTree(['/doctor/dashboard']);
+      } else if (userRole === 'patient') {
+        console.log('RoleGuard: Redirecting to patient dashboard');
+        return this.router.createUrlTree(['/patient/dashboard']);
       } else {
         console.log('RoleGuard: Unknown role, redirecting to login');
         return this.router.createUrlTree(['/login']);

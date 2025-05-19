@@ -1,0 +1,135 @@
+
+
+<div class="appointment-history-container bg-card p-card-padding rounded-card shadow-card font-sans">
+  <div class="mb-6">
+    <h2 id="appointmentHistoryTitle" class="text-section-header font-display text-text">Your Appointment History</h2>
+    <p class="text-body text-text-light">Track all your past and upcoming appointments with {{ doctorName }}</p>
+  </div>
+
+  <div class="controls-bar flex flex-col sm:flex-row justify-between items-center mb-card-margin gap-4">
+    <div class="relative w-full sm:flex-grow">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <i class="fas fa-search text-text-muted text-sm"></i>
+      </div>
+      <input
+        type="text"
+        placeholder="Search by reason..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchTermChange()"
+        class="search-input w-full pl-10 pr-4 py-2.5 border border-border rounded-input text-body text-text bg-card focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"
+        aria-label="Search appointments by reason"
+      />
+    </div>
+    <div class="buttons flex space-x-3 w-full sm:w-auto">
+      <button type="button" class="btn-filter flex-grow sm:flex-grow-0 flex items-center justify-center text-sm font-medium py-2 px-4 rounded-button border border-border text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-card transition-colors duration-150" (click)="openFilterModal()" aria-label="Filter appointments">
+        <i class="fas fa-filter mr-2"></i>Filter
+      </button>
+      <button type="button" class="btn-export flex-grow sm:flex-grow-0 flex items-center justify-center text-sm font-medium py-2 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-card transition-colors duration-150" (click)="exportData()" aria-label="Export appointment data">
+        <i class="fas fa-upload mr-2"></i>Export
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-indicator flex flex-col items-center justify-center py-12 text-text-light">
+    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mb-3"></div>
+    <p class="text-body">Loading appointment history...</p>
+  </div>
+
+  <div *ngIf="errorMessage && !isLoading" class="error-message p-3.5 rounded-button text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30 flex items-center my-4">
+    <i class="fas fa-exclamation-circle mr-2"></i>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage" class="overflow-x-auto">
+    <table class="appointments-table w-full min-w-[600px] text-left border-collapse" aria-live="polite" aria-labelledby="appointmentHistoryTitle">
+      <thead class="bg-hover">
+        <tr>
+          <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Date</th>
+          <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Time</th>
+          <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Reason</th>
+          <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <ng-container *ngIf="paginatedAppointments.length > 0; else noAppointments">
+          <tr *ngFor="let appointment of paginatedAppointments; trackBy: trackByAppointmentId" class="hover:bg-hover transition-colors duration-150">
+            <td class="p-3 text-body text-text-light whitespace-nowrap">
+              <i class="far fa-calendar-alt mr-2 text-primary" aria-hidden="true"></i> {{ appointment.date | date:'mediumDate' }}
+            </td>
+            <td class="p-3 text-body text-text-light whitespace-nowrap">
+              <i class="far fa-clock mr-2 text-primary" aria-hidden="true"></i> {{ appointment.time }}
+            </td>
+            <td class="p-3 text-body text-text break-words min-w-[200px]">{{ appointment.reason || 'N/A' }}</td>
+            <td class="p-3 text-body text-text-light whitespace-nowrap">
+              <span
+                class="status-badge inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
+                [ngClass]="{
+                  'bg-status-success/20 text-status-success': appointment.status === 'Confirmed' || appointment.status === 'Completed',
+                  'bg-status-warning/20 text-status-warning': appointment.status === 'Pending',
+                  'bg-status-urgent/20 text-status-urgent': appointment.status === 'Cancelled',
+                  'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(appointment.status ?? '')
+                }"
+              >
+                {{ appointment.status }}
+              </span>
+            </td>
+          </tr>
+        </ng-container>
+        <ng-template #noAppointments>
+          <tr>
+            <td colspan="4" class="no-results text-center py-12 text-text-muted">
+              <div class="flex flex-col items-center">
+                <i class="fas fa-folder-open text-4xl mb-3"></i>
+                <span *ngIf="allAppointments.length > 0 && searchTerm.trim() !== ''" class="text-body">No appointments match your search criteria.</span>
+                <span *ngIf="allAppointments.length === 0 && !searchTerm.trim()" class="text-body">No appointment history found.</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </tbody>
+    </table>
+
+    <div class="pagination-controls flex justify-center items-center space-x-1 sm:space-x-2 mt-6 py-4" *ngIf="totalPages() > 1" role="navigation" aria-label="Pagination">
+      <button
+        type="button"
+        class="btn-pagination py-2 px-3 rounded-button border border-border text-sm text-text-light hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+        (click)="previousPage()"
+        [disabled]="currentPage === 1"
+        aria-label="Go to previous page"
+      >
+        <i class="fas fa-chevron-left text-xs"></i>
+        <span class="hidden sm:inline ml-1">Previous</span>
+      </button>
+      <span
+        *ngFor="let page of totalPagesArray()"
+        class="page-number py-2 px-3.5 rounded-button text-sm cursor-pointer hover:bg-hover transition-colors duration-150"
+        [class.bg-primary]="currentPage === page"
+        [class.text-white]="currentPage === page"
+        [class.text-text-light]="currentPage !== page"
+        [class.font-medium]="currentPage === page"
+        (click)="goToPage(page)"
+        role="button"
+        tabindex="0"
+        (keydown.enter)="goToPage(page)" (keydown.space)="goToPage(page)"
+        [attr.aria-current]="currentPage === page ? 'page' : null"
+        [attr.aria-label]="'Go to page ' + page"
+      >
+        {{ page }}
+      </span>
+      <button
+        type="button"
+        class="btn-pagination py-2 px-3 rounded-button border border-border text-sm text-text-light hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages()"
+        aria-label="Go to next page"
+      >
+        <span class="hidden sm:inline mr-1">Next</span>
+        <i class="fas fa-chevron-right text-xs"></i>
+      </button>
+    </div>
+  </div>
+
+  <footer class="history-footer mt-card-margin pt-4 border-t border-border text-sm text-text-muted text-center">
+    Your appointment history with {{ doctorName }}
+  </footer>
+</div>

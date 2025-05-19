@@ -1,0 +1,58 @@
+/* Conteneur principal */
+.lab-results {
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Titre */
+  .lab-results h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #0078d4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .lab-results h2 i {
+    font-size: 20px;
+  }
+  
+  /* Liste des résultats */
+  .lab-results ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Élément individuel de la liste */
+  .lab-results li {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .lab-results li:hover {
+    background-color: #e6f7ff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Texte principal */
+  .lab-results li span {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  /* Texte important */
+  .lab-results li strong {
+    color: #0078d4;
+    font-weight: bold;
+  }

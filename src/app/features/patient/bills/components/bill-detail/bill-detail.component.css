@@ -1,0 +1,188 @@
+/* .bill-detail-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .card-header .icon {
+    font-size: 22px;
+    color: #17a2b8; 
+    margin-right: 15px;
+    background-color: #e3f2fd;  
+    padding: 8px;
+    border-radius: 6px;
+  }
+  
+  .card-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0 0 3px 0;
+  }
+  
+  .card-header p {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+  }
+  
+  .card-content {
+    padding: 25px;
+  }
+  
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed #e0e0e0;  
+    font-size: 15px;
+  }
+  .detail-item:last-of-type {
+    border-bottom: none; 
+  }
+  .notes-section {
+      border-bottom: none;
+      padding-bottom: 0;
+  }
+  
+  
+  .detail-label {
+    color: #555;  
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+  }
+  .detail-label .far, .detail-label .fas {
+    margin-right: 8px;
+    color: #888;
+    width: 16px;  
+  }
+  
+  .detail-value {
+    color: #333;  
+    text-align: right;
+  }
+  
+  .amount-highlight {
+    background-color: #f8f9fa;
+    margin-left: -25px;
+    margin-right: -25px;
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+  .amount-highlight .amount-value {
+    font-size: 20px;  
+    font-weight: 600;
+    color: #2c3e50;  
+  }
+  
+  .status-badge-detail {
+    padding: 4px 10px;
+    border-radius: 4px;  
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    display: inline-block;
+  }
+  
+  .status-paid {
+    background-color: #28a745;
+  }
+  .status-unpaid {
+    background-color: #6c757d;
+  }
+  .status-overdue {
+    background-color: #dc3545;
+  }
+  .status-pending {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .notes-section .detail-label {
+    align-self: flex-start;  
+    margin-bottom: 5px;  
+  }
+  .notes-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .notes-value {
+    color: #495057;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: left;
+    width: 100%;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+  
+  .action-area {
+    margin-top: 25px;
+    text-align: center;
+  }
+  
+  .pay-now-button {
+    background-color: #343a40;  
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%; 
+  }
+  
+  .pay-now-button:hover {
+    background-color: #23272b;  
+  }
+  
+  .payment-completed-message {
+    margin-top: 25px;
+    padding: 12px;
+    background-color: #e6ffed;  
+    color: #006422;  
+    border: 1px solid #c3e6cb;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .payment-completed-message .fas {
+    margin-right: 8px;
+    color: #28a745;  
+  }
+  
+  
+  .no-bill-placeholder {
+    text-align: center;
+    padding: 40px 20px;
+    color: #868e96; 
+  }
+  
+  .placeholder-icon {
+    font-size: 48px;  
+    margin-bottom: 20px;
+    color: #ced4da;  
+  }
+  
+  .no-bill-placeholder p {
+    font-size: 15px;
+    line-height: 1.6;
+  } */
+
+  

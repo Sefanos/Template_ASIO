@@ -1,0 +1,70 @@
+<div class="profile-security-container font-sans">
+    <div class="security-content bg-card p-card-padding rounded-card shadow-card">
+      <h2 class="text-section-header font-display text-text mb-2">Sécurité</h2>
+      <p class="text-body text-text-light mb-6 pb-4 border-b border-border">
+        Gérez votre mot de passe et les paramètres de sécurité de votre compte.
+      </p>
+  
+      <!-- Success and Error Messages -->
+      <div *ngIf="updateSuccessMessage" class="p-3.5 rounded-button mb-5 text-sm bg-status-success/10 text-status-success border border-status-success/30 flex items-center">
+        <i class="fas fa-check-circle mr-2"></i> {{ updateSuccessMessage }}
+      </div>
+      <div *ngIf="updateErrorMessage" class="p-3.5 rounded-button mb-5 text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30 flex items-center">
+        <i class="fas fa-exclamation-circle mr-2"></i> {{ updateErrorMessage }}
+      </div>
+  
+      <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="space-y-6">
+        <div class="form-group">
+          <label for="currentPassword" class="block text-sm font-medium text-text-light mb-1.5">Mot de passe actuel</label>
+          <input type="password" id="currentPassword" formControlName="currentPassword"
+                 class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
+                 [ngClass]="{'border-border focus:border-primary focus:ring-primary': !passwordForm.get('currentPassword')?.invalid || !passwordForm.get('currentPassword')?.touched,
+                             'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched}">
+          <div *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched" class="text-xs text-status-urgent mt-1">
+            <span *ngIf="passwordForm.get('currentPassword')?.errors?.['required']">Le mot de passe actuel est requis.</span>
+          </div>
+        </div>
+  
+        <div class="form-group">
+          <label for="newPassword" class="block text-sm font-medium text-text-light mb-1.5">Nouveau mot de passe</label>
+          <input type="password" id="newPassword" formControlName="newPassword"
+                 class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
+                 [ngClass]="{'border-border focus:border-primary focus:ring-primary': !passwordForm.get('newPassword')?.invalid || !passwordForm.get('newPassword')?.touched,
+                             'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched}">
+          <p class="text-xs text-text-muted mt-1">Le mot de passe doit contenir au moins 8 caractères.</p>
+          <div *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="text-xs text-status-urgent mt-1">
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">Le nouveau mot de passe est requis.</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Le mot de passe doit contenir au moins 8 caractères.</span>
+          </div>
+        </div>
+  
+        <div class="form-group">
+          <label for="confirmPassword" class="block text-sm font-medium text-text-light mb-1.5">Confirmer le mot de passe</label>
+          <input type="password" id="confirmPassword" formControlName="confirmPassword"
+                 class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
+                 [ngClass]="{'border-border focus:border-primary focus:ring-primary': !passwordForm.get('confirmPassword')?.invalid || !passwordForm.get('confirmPassword')?.touched || !passwordForm.errors?.['passwordMismatch'],
+                             'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': (passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) || passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched}">
+          <div *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched" class="text-xs text-status-urgent mt-1">
+            <span *ngIf="passwordForm.get('confirmPassword')?.errors?.['required']">La confirmation du mot de passe est requise.</span>
+          </div>
+           <div *ngIf="passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched" class="text-xs text-status-urgent mt-1">
+            Les mots de passe ne correspondent pas.
+          </div>
+        </div>
+  
+        <div class="form-actions flex justify-start mt-8 pt-6 border-t border-border">
+          <button type="submit" class="text-sm font-medium py-2.5 px-6 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
+                  [disabled]="isSubmitting || passwordForm.invalid">
+            <span *ngIf="isSubmitting" class="flex items-center justify-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Sauvegarde...
+            </span>
+            <span *ngIf="!isSubmitting">Changer le mot de passe</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>

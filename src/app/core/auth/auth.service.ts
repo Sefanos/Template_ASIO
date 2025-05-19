@@ -73,6 +73,21 @@ export class AuthService {
           this.currentUserSubject.next(user);
           console.log('AuthService: admin login successful');
           resolve(true);
+        } else if (username === 'patient' && password === 'password') { // Added patient login
+          const user: User = {
+            id: 3,
+            username: 'patient',
+            email: 'patient@example.com',
+            firstName: 'Patient',
+            lastName: 'User',
+            role: 'patient',
+            status: 'active'
+          };
+          
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          this.currentUserSubject.next(user);
+          console.log('AuthService: patient login successful');
+          resolve(true);
         } else {
           console.log('AuthService: login failed - invalid credentials');
           resolve(false);

@@ -52,4 +52,11 @@ export const routes: Routes = [
       { path: 'role/:id', component: RolePageComponent }
     ]
   },
+  {
+    path: 'patient',
+    component: MainLayoutComponent,
+    loadChildren: () => import('./features/patient/patient-main.module').then(m => m.PatientMainModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['patient'] }
+  }
 ];

@@ -1,0 +1,8 @@
+<div class="lab-results">
+    <h2>Derniers résultats d'analyse</h2>
+    <ul>
+      <li *ngFor="let result of labResults">
+        {{ result.test }} : {{ result.result }} ({{ result.date }})
+      </li>
+    </ul>
+  </div>
