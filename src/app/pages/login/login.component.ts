@@ -56,6 +56,14 @@ export class LoginComponent {
             this.error = 'Navigation error';
             this.loading = false;
           });
+        } else if (role === 'patient') {
+          console.log('Navigating to patient dashboard');
+          this.loading = false;
+          this.router.navigate(['/patient/dashboard']).catch(err => {
+            console.error('Navigation error:', err);
+            this.error = 'Navigation error';
+            this.loading = false;
+          });
         } else {
           console.warn('Unknown role, defaulting to login page');
           this.error = 'Invalid role detected';

@@ -73,6 +73,44 @@ export class SidebarService {
     }
   ];
 
+  private readonly patientMenu: SidebarItem[] = [
+    {
+      label: 'Dashboard',
+      route: '/patient/dashboard',
+      icon: 'grid'
+    },
+    {
+      label: 'Appointments',
+      route: '/patient/appointments',
+      icon: 'calendar'
+    },
+    {
+      label: 'Medical Record',
+      route: '/patient/medical-record',
+      icon: 'heart' // Consider a different icon if 'heart' is too doctor-specific
+    },
+    {
+      label: 'Bills',
+      route: '/patient/bills',
+      icon: 'file-text' // Example: using a file-text icon for bills
+    },
+    {
+      label: 'Chat',
+      route: '/patient/chat',
+      icon: 'message-square' // Example: using a message-square icon for chat
+    },
+    {
+      label: 'Profile',
+      route: '/patient/profile',
+      icon: 'user' // Example: using a user icon for profile
+    },
+    {
+      label: 'Reminders',
+      route: '/patient/reminders',
+      icon: 'bell' // Example: using a bell icon for reminders
+    }
+  ];
+
   constructor() { }
 
   getMenuByRole(role: string): SidebarItem[] {
@@ -81,9 +119,11 @@ export class SidebarService {
         return this.adminMenu;
       case 'doctor':
         return this.doctorMenu;
+      case 'patient':
+        return this.patientMenu;
       default:
-        console.warn(`No menu defined for role: ${role}, defaulting to doctor menu`);
-        return this.doctorMenu;
+        console.warn(`No menu defined for role: ${role}, defaulting to empty menu`);
+        return []; // Return empty array for unknown roles
     }
   }
 
@@ -93,6 +133,8 @@ export class SidebarService {
         return 'Admin Menu';
       case 'doctor':
         return 'Doctor Menu';
+      case 'patient':
+        return 'Patient Menu';
       default:
         return 'Navigation';
     }

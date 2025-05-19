@@ -1,0 +1,277 @@
+/* 
+
+
+
+.tab-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.title-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.title-section p {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.date-box {
+  display: flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.date-box .fa-calendar {
+  margin-right: 8px;
+  color: #4b5563;
+}
+
+.tab-buttons {
+  display: flex;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #e5e7eb;  
+}
+
+.tab-buttons button {
+  flex-grow: 1;  
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #6b7280;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;  
+  cursor: pointer;
+  transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  margin-bottom: -2px;  
+  outline: none;
+}
+
+.tab-buttons button:hover {
+  color: #3b82f6;
+}
+
+.tab-buttons button.active {
+  color: #3b82f6;  
+  border-bottom-color: #3b82f6;
+  font-weight: 600;
+}
+
+.tab-buttons button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px; 
+}
+
+
+.tab-content {
+  padding-top: 10px; 
+}
+
+ 
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .date-box {
+    margin-top: 15px;
+    align-self: flex-start;
+  }
+  .tab-buttons {
+    flex-direction: column; 
+    border-bottom: none;
+  }
+  .tab-buttons button {
+    border-bottom: 1px solid #e5e7eb;  
+    margin-bottom: 0;
+  }
+  .tab-buttons button.active {
+    border-bottom-color: #3b82f6; 
+  }
+  .tab-buttons button:last-child {
+    border-bottom: none;
+  }
+} */
+
+
+
+
+.tab-container {
+  width: 100%; /* Prend toute la largeur disponible */
+  max-width: none; /* Supprime la limite de largeur maximale */
+  margin: 30px 0; /* Conserve les marges verticales, supprime les marges horizontales automatiques */
+  padding: 25px;
+  background-color: #ffffff;
+  border-radius: 0; /* Optionnel: supprimer le radius si c'est en pleine largeur contre les bords */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box; /* S'assurer que le padding est inclus dans la largeur totale */
+
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e9ecef; /* Lighter border */
+}
+
+.title-section h2 {
+  font-size: 26px; /* Slightly larger */
+  font-weight: 600;
+  color: #2c3e50; /* Darker, more professional blue/gray */
+  margin: 0 0 5px 0;
+}
+
+.title-section p {
+  font-size: 15px;
+  color: #7f8c8d; /* Softer gray */
+  margin: 0;
+}
+
+.date-box {
+  display: flex;
+  align-items: center;
+  background-color: #ecf0f1; /* Lighter, neutral background */
+  padding: 10px 18px; /* More padding */
+  border-radius: 6px;
+  font-size: 14px;
+  color: #34495e; /* Darker text for better contrast */
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.date-box .fa-calendar {
+  margin-right: 10px;
+  color: #3498db; /* A pleasant blue */
+  font-size: 16px; /* Slightly larger icon */
+}
+
+.tab-buttons {
+  display: flex;
+  margin-bottom: 25px;
+  /* Removed bottom border here, active state will handle it */
+}
+
+.tab-buttons button {
+  flex-grow: 1;
+  padding: 14px 20px; /* More padding for a larger click area */
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #7f8c8d; /* Softer gray for inactive tabs */
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent; /* Thicker border for active state */
+  cursor: pointer;
+  transition: color 0.25s ease-in-out, border-color 0.25s ease-in-out;
+  outline: none;
+  margin-right: 10px; /* Spacing between buttons */
+}
+.tab-buttons button:last-child {
+  margin-right: 0;
+}
+
+.tab-buttons button:hover {
+  color: #3498db; /* Blue on hover */
+}
+
+.tab-buttons button.active {
+  color: #3498db; /* Blue for active tab text */
+  border-bottom-color: #3498db; /* Blue underline for active tab */
+  font-weight: 600;
+}
+
+.tab-buttons button:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tab-content {
+  padding-top: 15px;
+  /* Add animations if desired for tab switching */
+  /* animation: fadeIn 0.5s; */
+}
+
+/* Optional: Add a subtle animation for tab content */
+/* @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+} */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tab-container {
+    margin: 0; /* Supprime les marges sur les très petits écrans pour un vrai plein écran */
+    padding: 20px;
+    border-radius: 0; /* Assure l'absence de radius sur mobile aussi */
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: center; /* Center text on smaller screens */
+  }
+  .title-section {
+    margin-bottom: 15px;
+    width: 100%;
+  }
+  .date-box {
+    align-self: center; /* Center date box */
+    margin-top: 0;
+  }
+  .tab-buttons {
+    flex-direction: column;
+  }
+  .tab-buttons button {
+    margin-right: 0;
+    margin-bottom: 8px; /* Space between stacked buttons */
+    border-bottom-width: 2px; /* Slightly thinner border for stacked buttons */
+  }
+  .tab-buttons button:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-container {
+    margin: 20px 15px; /* Less margin on very small screens */
+    padding: 20px;
+  }
+  .title-section h2 {
+    font-size: 22px;
+  }
+  .title-section p {
+    font-size: 14px;
+  }
+  .tab-buttons button {
+    font-size: 15px;
+    padding: 12px 15px;
+  }
+}

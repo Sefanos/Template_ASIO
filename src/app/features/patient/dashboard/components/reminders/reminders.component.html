@@ -1,0 +1,8 @@
+<div class="reminders">
+    <h2>Rappels</h2>
+    <ul>
+      <li *ngFor="let reminder of reminders">
+        {{ reminder.message }} ({{ reminder.date }})
+      </li>
+    </ul>
+  </div>

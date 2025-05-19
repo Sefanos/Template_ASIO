@@ -1,0 +1,135 @@
+<div class="medical-history-container mb-6 md:mb-8">
+
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-10 text-center bg-card rounded-card shadow-card">
+    <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mb-4"></div>
+    <p class="text-text-light">Loading medical history...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative mb-6 shadow-card" role="alert">
+      <strong class="font-bold">Error!</strong>
+      <span class="block sm:inline">{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && medicalHistory" class="card bg-card rounded-card shadow-card">
+    <div class="card-header bg-hover p-card-padding border-b border-border">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-primary">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+            <path d="M8 7h6" />
+            <path d="M8 11h8" />
+            <path d="M8 15h6" />
+          </svg>
+          <span class="font-display text-section-header text-text">Medical History Details</span>
+        </div>
+        <!-- Affichage de lastUpdated si disponible -->
+        <span class="text-body text-text-muted" *ngIf="medicalHistory.lastUpdated">
+          Last updated: {{ medicalHistory.lastUpdated | date:'mediumDate' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="p-card-padding">
+      <div class="space-y-6">
+        <!-- Vital Signs Section -->
+        <div *ngIf="medicalHistory.vitalSigns" class="mb-6">
+          <div class="flex justify-between items-center mb-3">
+              <h3 class="font-display text-xl text-text"> Vital Signs</h3>
+              <span class="text-xs text-text-muted" *ngIf="medicalHistory.vitalSigns.lastRecorded">
+                Recorded: {{ medicalHistory.vitalSigns.lastRecorded | date:'short' }}
+              </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Utilisation de l'opérateur ?. pour un accès sécurisé -->
+            <div *ngIf="medicalHistory.vitalSigns?.bloodPressure as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+            <div *ngIf="medicalHistory.vitalSigns?.pulse as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+            <div *ngIf="medicalHistory.vitalSigns?.temperature as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+            <div *ngIf="medicalHistory.vitalSigns?.respiratoryRate as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+            <div *ngIf="medicalHistory.vitalSigns?.oxygenSaturation as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+            <div *ngIf="medicalHistory.vitalSigns?.weight as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+            <div *ngIf="medicalHistory.vitalSigns?.height as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between sm:col-span-1">
+              <div>
+                <p class="text-sm text-text-light">{{ vital.label }}</p>
+                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
+              </div>
+              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+            </div>
+          </div>
+          <!-- Message si aucun signe vital spécifique n'est présent -->
+          <div *ngIf="!(medicalHistory.vitalSigns?.bloodPressure || medicalHistory.vitalSigns?.pulse || medicalHistory.vitalSigns?.temperature || medicalHistory.vitalSigns?.respiratoryRate || medicalHistory.vitalSigns?.oxygenSaturation || medicalHistory.vitalSigns?.weight || medicalHistory.vitalSigns?.height)" class="text-text-muted italic text-center py-4">
+              No specific vital signs data available.
+          </div>
+        </div>
+        <!-- Message si l'objet vitalSigns lui-même est absent -->
+        <div *ngIf="!medicalHistory.vitalSigns && !isLoading && !errorMessage" class="text-text-muted italic text-center py-4">
+          Vital signs data is not available.
+        </div>
+
+        <hr class="border-t border-border" *ngIf="medicalHistory.vitalSigns && medicalHistorySections.length > 0" />
+
+        <!-- Dynamic Medical History Sections -->
+        <ng-container *ngFor="let section of medicalHistorySections; let i = index">
+          <div>
+            <h3 class="font-display text-card-title text-primary mb-2">{{ section.title }}</h3>
+            <div class="bg-hover p-3 rounded-lg">
+              <div *ngIf="section.data && section.data.length > 0; else noDataForSection" class="flex flex-wrap gap-2">
+                <span *ngFor="let item of section.data" class="px-3 py-1 text-sm rounded-full border"
+                      [ngClass]="'border-' + section.color + ' text-' + section.color + ' bg-' + section.color + '/10'">
+                  {{ item }}
+                </span>
+              </div>
+              <ng-template #noDataForSection>
+                <p class="text-sm text-text-muted italic">{{ section.emptyText }}</p>
+              </ng-template>
+            </div>
+          </div>
+          <!-- Séparateur conditionnel entre les sections d'historique -->
+          <hr *ngIf="i < medicalHistorySections.length - 1 && medicalHistorySections.length > 1" class="my-4 border-t border-border" />
+        </ng-container>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Message si medicalHistory est complètement null après le chargement et sans erreur -->
+  <div *ngIf="!isLoading && !errorMessage && !medicalHistory" class="text-center text-text-muted italic p-10 bg-card rounded-card shadow-card">
+    No medical history available for this patient.
+  </div>
+</div>

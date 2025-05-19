@@ -1,0 +1,26 @@
+<div *ngIf="records.length > 0; else noRecords" class="records-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="record-card bg-card rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-150 flex flex-col overflow-hidden" *ngFor="let record of records">
+    <div class="card-header p-card-padding border-b border-border flex justify-between items-start">
+      <h4 class="record-title text-card-title font-display text-text">{{ record.title }}</h4>
+      <span class="record-tag text-xs font-semibold px-2 py-1 rounded-full" [ngClass]="record.tagClass">{{ record.tagText }}</span>
+    </div>
+    <div class="p-card-padding flex-grow">
+      <p class="record-date text-xs text-text-muted mb-2 flex items-center"><i class="far fa-calendar-alt mr-2"></i> {{ record.recordDate | date:'mediumDate' }}</p>
+      <p class="record-doctor text-sm text-text-light mb-2 flex items-center" *ngIf="record.doctor"><i class="fas fa-user-md mr-2 text-primary"></i> {{ record.doctor }}</p>
+      <p class="record-summary text-body text-text-light leading-comfortable line-clamp-3">{{ record.summary }}</p>
+    </div>
+    <div class="p-card-padding border-t border-border mt-auto">
+      <button class="btn-view-details w-full bg-accent hover:bg-accent-dark text-white font-medium py-2.5 px-4 rounded-button transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent/50" (click)="onViewDetails(record)">
+          View Details
+      </button>
+    </div>
+  </div>
+</div>
+
+<ng-template #noRecords>
+  <div class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+    <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+    <p class="text-section-header text-text-light">No lab results found.</p>
+    <p class="text-body text-text-muted">Try adjusting your search or filter criteria.</p>
+  </div>
+</ng-template>

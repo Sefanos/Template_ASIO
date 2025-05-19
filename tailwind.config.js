@@ -2,6 +2,7 @@
 module.exports = {
   content: [
     "./src/**/*.{html,ts}",
+    "./src/app/features/patient/**/*.{html,ts}", // Added for patient UI components
   ],
   theme: {
     extend: {
@@ -9,33 +10,33 @@ module.exports = {
         // Primary colors
         primary: {
           DEFAULT: '#2C6EAA', // Medium blue - main UI elements
-          light: '#4A8AC2',
-          dark: '#1F5A8F',
+          light: '#4A8AC2',   // Patient UI
+          dark: '#1F5A8F',    // Patient UI
         },
         accent: {
           DEFAULT: '#3EB5BD', // Teal/turquoise - buttons and interactive elements
-          light: '#62C8CF',
-          dark: '#2A999F',
+          light: '#62C8CF',   // Patient UI
+          dark: '#2A999F',    // Patient UI
         },
         // Secondary colors
-        background: '#F7F9FC', // Light gray for main content areas
-        card: '#FFFFFF',      // White for information cards
+        background: '#F7F9FC', // Patient UI - Light gray for main content areas
+        card: '#FFFFFF',      // Patient UI - White for information cards
         text: {
-          DEFAULT: '#253746', // Dark blue-gray for main text
-          light: '#546A7B',
-          muted: '#8096A7',
+          DEFAULT: '#253746', // Patient UI - Dark blue-gray for main text
+          light: '#546A7B',   // Patient UI
+          muted: '#8096A7',   // Patient UI
         },
         // Status/Alert colors
         status: {
-          urgent: '#E05C5C',  // Soft red - urgent/emergency
-          success: '#5CBA99', // Mint green - new items/success
-          warning: '#F0B86C', // Amber - warning/pending
-          info: '#6098D3',    // Light blue - informational
+          urgent: '#E05C5C',  // Patient UI - Soft red
+          success: '#5CBA99', // Patient UI - Mint green
+          warning: '#F0B86C', // Patient UI - Amber
+          info: '#6098D3',    // Patient UI - Light blue
         },
         // Additional colors
-        border: '#E2E8F0',    // Light gray for borders
-        hover: '#EDF2F7',     // Very light blue for hover states
-        focus: '#CBE1FF',     // Light blue for focus states
+        border: '#E2E8F0',    // Patient UI - Light gray for borders
+        hover: '#EDF2F7',     // Patient UI - Very light blue for hover states
+        focus: '#CBE1FF',     // Patient UI - Light blue for focus states
         // Analytics color palette
         analytics: {
           login: '#4A8AC2',    // Same as primary-light
@@ -116,32 +117,32 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Montserrat', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'], // Patient UI
+        display: ['Montserrat', 'system-ui', 'sans-serif'], // Patient UI
       },
       fontSize: {
-        'dashboard-title': ['22px', { lineHeight: '28px', fontWeight: '600' }],
-        'section-header': ['18px', { lineHeight: '24px', fontWeight: '600' }],
-        'card-title': ['16px', { lineHeight: '22px', fontWeight: '500' }],
-        'body': ['14px', { lineHeight: '20px', fontWeight: '400' }],
-        'sidebar': ['15px', { lineHeight: '20px', fontWeight: '500' }],
+        'dashboard-title': ['22px', { lineHeight: '28px', fontWeight: '600' }], // Patient UI
+        'section-header': ['18px', { lineHeight: '24px', fontWeight: '600' }], // Patient UI
+        'card-title': ['16px', { lineHeight: '22px', fontWeight: '500' }],    // Patient UI
+        'body': ['14px', { lineHeight: '20px', fontWeight: '400' }],          // Patient UI
+        'sidebar': ['15px', { lineHeight: '20px', fontWeight: '500' }],       // Patient UI
       },
       boxShadow: {
-        'card': '0 2px 4px rgba(0, 0, 0, 0.1)',
-        'card-hover': '0 4px 6px rgba(0, 0, 0, 0.1)',
-        'dropdown': '0 2px 10px rgba(0, 0, 0, 0.15)',
+        'card': '0 2px 4px rgba(0, 0, 0, 0.1)',             // Patient UI
+        'card-hover': '0 4px 6px rgba(0, 0, 0, 0.1)',       // Patient UI
+        'dropdown': '0 2px 10px rgba(0, 0, 0, 0.15)',       // Patient UI
       },
       borderRadius: {
-        'card': '8px',
-        'button': '6px',
-        'input': '6px',
+        'card': '8px',    // Patient UI
+        'button': '6px',  // Patient UI
+        'input': '6px',   // Patient UI
       },
       spacing: {
-        'card-padding': '20px',
-        'card-margin': '24px',
+        'card-padding': '20px', // Patient UI
+        'card-margin': '24px',  // Patient UI
       },
       lineHeight: {
-        'comfortable': '1.5',
+        'comfortable': '1.5', // Patient UI
       },
     },
   },

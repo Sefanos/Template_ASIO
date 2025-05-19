@@ -1,0 +1,197 @@
+<div class="bg-card shadow-card rounded-card p-card-padding font-sans">
+  <!-- Section des Filtres -->
+  <div class="mb-card-margin p-card-padding border border-border rounded-card bg-background shadow-sm">
+    <h2 class="text-section-header text-text mb-6">Filtrer les Factures</h2>
+    <form (ngSubmit)="applyFilters()" #filterForm="ngForm">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+        <div>
+          <label for="dateFrom" class="block text-body font-medium text-text-light mb-1">Date d'émission (De)</label>
+          <input type="date" id="dateFrom" name="dateFrom" [(ngModel)]="filters.date_from"
+                 class="mt-1 block w-full px-3 py-2 border border-border rounded-input shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-body text-text transition-colors duration-150">
+        </div>
+        <div>
+          <label for="dateTo" class="block text-body font-medium text-text-light mb-1">Date d'émission (À)</label>
+          <input type="date" id="dateTo" name="dateTo" [(ngModel)]="filters.date_to"
+                 class="mt-1 block w-full px-3 py-2 border border-border rounded-input shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-body text-text transition-colors duration-150">
+        </div>
+        <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 gap-3 md:col-span-2 lg:col-span-1 lg:mt-0 mt-4">
+          <button type="submit"
+                  class="flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2.5 px-5 rounded-button shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light transition-all duration-150 ease-in-out text-body">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L10 12.414l-5.707-5.707A1 1 0 014 6V3z" clip-rule="evenodd" /><path d="M3 10a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-3z" /></svg>
+            Appliquer
+          </button>
+
+          <button type="button" (click)="resetFilters()"
+                  class="flex items-center justify-center bg-background hover:bg-hover text-text-light border border-border font-semibold py-2.5 px-5 rounded-button shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light transition-all duration-150 ease-in-out text-body">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div *ngIf="isLoading" class="text-center py-12">
+    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary mx-auto"></div>
+    <p class="mt-4 text-lg text-text-light">Chargement des factures...</p>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="errorMessage && !isLoading"
+       class="bg-status-urgent/10 border-l-4 border-status-urgent text-status-urgent/90 px-6 py-4 rounded-md relative mb-card-margin shadow-md" role="alert">
+    <div class="flex">
+      <div class="py-1"><svg class="fill-current h-6 w-6 text-status-urgent mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM11.414 10l2.829-2.828a1 1 0 1 0-1.414-1.414L10 8.586 7.172 5.757a1 1 0 0 0-1.414 1.414L8.586 10l-2.829 2.828a1 1 0 1 0 1.414 1.414L10 11.414l2.829 2.829a1 1 0 0 0 1.414-1.414L11.414 10z"/></svg></div>
+      <div>
+        <p class="font-bold text-status-urgent">Une erreur est survenue</p>
+        <p class="text-body">{{ errorMessage }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des factures -->
+  <div *ngIf="!isLoading && billsResponse && billsResponse.data.length > 0" class="overflow-x-auto shadow-card rounded-card">
+    <table class="min-w-full divide-y divide-border bg-card">
+      <thead class="bg-background">
+        <tr>
+          <th *ngFor="let col of sortableColumns" scope="col" (click)="onSortChange(col.key)"
+              class="px-6 py-4 text-left text-xs font-medium text-text-muted uppercase tracking-wider cursor-pointer hover:bg-hover transition-colors duration-150">
+            {{ col.label }}
+            <span *ngIf="filters.sort_by === col.key" class="ml-1">
+              {{ filters.sort_direction === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+            Date d'Échéance
+          </th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+            Notes
+          </th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+            Statut
+          </th>
+          <!-- NOUVELLE COLONNE ACTIONS -->
+          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-card divide-y divide-border text-body">
+        <tr *ngFor="let bill of billsResponse.data; trackBy: trackByBillId"
+            (click)="selectBill(bill)"
+            class="cursor-pointer transition-colors duration-150"
+            [ngClass]="{'bg-primary/10 hover:bg-primary/20': bill.id === selectedBillId, 'hover:bg-hover': bill.id !== selectedBillId}">
+          <td class="px-6 py-4 whitespace-nowrap text-text">{{ bill.issue_date | date:'dd/MM/yyyy' }}</td>
+          <!-- MONTANT PLUS VISIBLE -->
+          <td class="px-6 py-4 whitespace-nowrap text-text font-semibold">{{ bill.amount }} MAD</td>
+          <td class="px-6 py-4 whitespace-nowrap text-text">{{ bill.due_date | date:'dd/MM/yyyy' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-text-light max-w-xs truncate" [title]="bill.notes || ''">
+            {{ bill.notes || '-' }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                  [ngClass]="{'bg-status-success/20 text-status-success': bill.status.toLowerCase() === 'paid',
+                              'bg-status-warning/20 text-status-warning': bill.status.toLowerCase() === 'pending',
+                              'bg-status-urgent/20 text-status-urgent': bill.status.toLowerCase() === 'overdue'}">
+              {{ bill.status | titlecase }}
+            </span>
+          </td>
+          <!-- CELLULE POUR LES ACTIONS -->
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <a *ngIf="bill.pdf_link" [href]="bill.pdf_link" target="_blank"
+               class="inline-flex items-center justify-center p-2 rounded-button text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-light transition-colors duration-150"
+               title="Télécharger PDF">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+              </svg>
+              <span class="sr-only">Télécharger PDF</span>
+            </a>
+            <span *ngIf="!bill.pdf_link" class="text-text-muted text-xs italic">-</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Message si aucune facture -->
+  <div *ngIf="!isLoading && (!billsResponse || billsResponse.data.length === 0) && !errorMessage"
+       class="text-center py-12">
+    <svg class="mx-auto h-16 w-16 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 13.125C3 12.504 3.504 12 4.125 12h15.75c.621 0 1.125.504 1.125 1.125v6.75c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 013 19.875v-6.75zM12 12.375v4.5m0-13.5C12 3.22 10.88 3 9.75 3S7.5 3.22 7.5 3.375m4.5 0c0 .155.02.31.059.456M12 3.375a17.244 17.244 0 006.941 1.044M7.5 3.375a17.244 17.244 0 01-4.441 1.044M12 12.375c0 .155-.02.31-.059.456M12 12.375a17.244 17.244 0 016.941 1.044M12 12.375a17.244 17.244 0 00-4.441 1.044" />
+    </svg>
+    <h3 class="mt-3 text-xl font-semibold text-text">Aucune facture payée trouvée</h3>
+    <p class="mt-2 text-md text-text-light">Il semble qu'il n'y ait aucune facture correspondant à vos critères actuels.</p>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="billsResponse && billsResponse.data.length > 0 && billsResponse.last_page > 1"
+       class="mt-8 flex items-center justify-between border-t border-border pt-6 text-body">
+    <div class="flex-1 flex justify-between sm:hidden">
+      <button (click)="goToPage(billsResponse.current_page - 1)" [disabled]="!billsResponse.prev_page_url"
+              class="relative inline-flex items-center px-4 py-2 border border-border font-medium rounded-button text-text bg-card hover:bg-hover disabled:opacity-50 transition-colors duration-150">
+        Précédent
+      </button>
+      <button (click)="goToPage(billsResponse.current_page + 1)" [disabled]="!billsResponse.next_page_url"
+              class="ml-3 relative inline-flex items-center px-4 py-2 border border-border font-medium rounded-button text-text bg-card hover:bg-hover disabled:opacity-50 transition-colors duration-150">
+        Suivant
+      </button>
+    </div>
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+      <div>
+        <p class="text-text-light">
+          Affichage de
+          <span class="font-medium text-text">{{ billsResponse.from || 0 }}</span>
+          à
+          <span class="font-medium text-text">{{ billsResponse.to || 0 }}</span>
+          sur
+          <span class="font-medium text-text">{{ billsResponse.total || 0 }}</span>
+          résultats
+        </p>
+      </div>
+      <div>
+        <nav class="relative z-0 inline-flex rounded-button shadow-sm -space-x-px" aria-label="Pagination">
+          <button (click)="goToPage(billsResponse.current_page - 1)" [disabled]="!billsResponse.prev_page_url"
+                  class="relative inline-flex items-center px-3 py-2 rounded-l-button border border-border bg-card font-medium text-text-light hover:bg-hover disabled:opacity-50 transition-colors duration-150">
+            <span class="sr-only">Précédent</span>
+            &laquo;
+          </button>
+          <ng-container *ngIf="billsResponse.last_page > 1">
+            <button *ngIf="getPaginationArray()[0] > 1" (click)="goToPage(1)"
+                    class="relative inline-flex items-center px-4 py-2 border border-border bg-card font-medium text-text hover:bg-hover transition-colors duration-150">
+              1
+            </button>
+            <span *ngIf="getPaginationArray()[0] > 2"
+                  class="relative inline-flex items-center px-4 py-2 border border-border bg-card font-medium text-text-light">
+              ...
+            </span>
+          </ng-container>
+
+          <button *ngFor="let pageNum of getPaginationArray()" (click)="goToPage(pageNum)"
+                  [ngClass]="{'z-10 bg-primary/10 border-primary text-primary': pageNum === billsResponse.current_page,
+                              'bg-card border-border text-text hover:bg-hover': pageNum !== billsResponse.current_page}"
+                  class="relative inline-flex items-center px-4 py-2 border font-medium transition-colors duration-150">
+            {{ pageNum }}
+          </button>
+
+          <ng-container *ngIf="billsResponse.last_page > 1">
+            <span *ngIf="getPaginationArray()[getPaginationArray().length - 1] < billsResponse.last_page - 1"
+                  class="relative inline-flex items-center px-4 py-2 border border-border bg-card font-medium text-text-light">
+              ...
+            </span>
+            <button *ngIf="getPaginationArray()[getPaginationArray().length - 1] < billsResponse.last_page" (click)="goToPage(billsResponse.last_page)"
+                    class="relative inline-flex items-center px-4 py-2 border border-border bg-card font-medium text-text hover:bg-hover transition-colors duration-150">
+              {{ billsResponse.last_page }}
+            </button>
+          </ng-container>
+
+          <button (click)="goToPage(billsResponse.current_page + 1)" [disabled]="!billsResponse.next_page_url"
+                  class="relative inline-flex items-center px-3 py-2 rounded-r-button border border-border bg-card font-medium text-text-light hover:bg-hover disabled:opacity-50 transition-colors duration-150">
+            <span class="sr-only">Suivant</span>
+            &raquo;
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <!-- Le bloc de pagination dupliqué a été supprimé d'ici -->
+</div>

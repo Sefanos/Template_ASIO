@@ -1,0 +1,202 @@
+<div class="page-container font-sans text-text bg-background min-h-screen p-4 md:p-6 lg:p-8">
+  <div class="page-header mb-card-margin p-card-padding bg-card rounded-card shadow-card">
+    <h2 class="text-section-header font-display text-text mb-1">Schedule a New Appointment</h2>
+    <p class="text-body text-text-light">Choose an available time slot with {{ doctorName }}</p>
+  </div>
+
+  <div class="calendar-layout-container flex flex-col lg:flex-row gap-card-margin">
+    <!-- Colonne de gauche (Sidebar) -->
+    <div class="calendar-sidebar lg:w-[300px] xl:w-[320px] shrink-0 bg-card p-card-padding rounded-card shadow-card space-y-6">
+      <button class="today-button w-full flex items-center justify-center py-2.5 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-colors duration-150 text-sm font-medium" (click)="goToToday()">
+        <i class="far fa-calendar-check mr-2"></i> Today
+      </button>
+
+      <div class="mini-calendar">
+        <div class="mini-calendar-header flex justify-between items-center mb-3 text-sm font-medium text-text">
+          <button (click)="previousMiniMonth()" aria-label="Previous month" class="p-1.5 rounded-full hover:bg-hover focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-light hover:text-primary transition-colors"><i class="fas fa-chevron-left text-xs"></i></button>
+          <span class="font-semibold text-card-title">{{ miniCalendarViewDate | date:'MMMM yyyy' }}</span>
+          <button (click)="nextMiniMonth()" aria-label="Next month" class="p-1.5 rounded-full hover:bg-hover focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-light hover:text-primary transition-colors"><i class="fas fa-chevron-right text-xs"></i></button>
+        </div>
+        <div class="mini-calendar-grid grid grid-cols-7 gap-1 text-center text-xs">
+          <div *ngFor="let dayName of miniCalendarWeekDaysHeader" class="font-medium text-text-muted py-1">{{ dayName }}</div>
+          <div *ngFor="let day of miniCalendarDays"
+               class="mini-day-cell p-1.5 rounded-full cursor-pointer transition-colors duration-150 text-body"
+               [ngClass]="{
+                 'text-text-muted/60': !day.isCurrentMonth,
+                 'bg-primary': day.isSelected,
+                 'text-white': day.isSelected,
+                 'font-semibold': day.isSelected,
+                 'hover:bg-primary/80': day.isSelected && day.isCurrentMonth,
+                 'hover:bg-hover': !day.isSelected && day.isCurrentMonth,
+                 'hover:bg-hover text-text-muted/60': !day.isSelected && !day.isCurrentMonth
+               }"
+               (click)="selectMiniCalendarDate(day.date)"
+               role="button"
+               [attr.aria-label]="day.date | date:'longDate'">
+            {{ day.dayOfMonth }}
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section legends-filters pt-4 border-t border-border">
+        <h4 class="text-card-title font-display text-text mb-3">Your schedule</h4>  
+        <div class="space-y-2">
+          <div class="legend-item flex items-center" *ngFor="let resource of resources">
+            <label class="flex items-center space-x-2 text-sm text-text-light cursor-pointer group">
+              <input
+                type="checkbox"
+                class="form-checkbox h-4 w-4 text-primary rounded border-border focus:ring-primary focus:ring-offset-0 group-hover:border-primary/70 transition-colors"
+                [checked]="selectedResources.includes(resource.id)"
+                (change)="toggleResource(resource.id)"
+              />
+              <span class="legend-color-box w-3.5 h-3.5 rounded-sm inline-block" [style.backgroundColor]="resource.eventColor"></span>
+              <span class="group-hover:text-text transition-colors">{{ resource.title }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne de droite (Calendrier Principal) -->
+    <div class="calendar-main-area flex-grow bg-card p-card-padding rounded-card shadow-card">
+      <div class="main-calendar-toolbar flex flex-col md:flex-row justify-between items-center mb-5 gap-3 md:gap-4">
+        <div class="toolbar-left flex items-center space-x-1">
+          <button (click)="mainCalendarPrev()" title="Previous period" aria-label="Previous period" class="p-2 rounded-button hover:bg-hover text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50 focus:text-primary transition-colors"><i class="fas fa-chevron-left"></i></button>
+          <button (click)="mainCalendarNext()" title="Next period" aria-label="Next period" class="p-2 rounded-button hover:bg-hover text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50 focus:text-primary transition-colors"><i class="fas fa-chevron-right"></i></button>
+          <span class="calendar-title text-card-title font-display text-text ml-2" aria-live="polite">{{ customToolbarTitle }}</span>
+        </div>
+        <div class="toolbar-center w-full md:w-auto md:flex-grow md:max-w-xs relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-text-muted text-sm"></i>
+            </div>
+            <input
+            type="text"
+            class="search-appointments-input w-full pl-10 pr-4 py-2 border border-border rounded-input text-sm text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"
+            placeholder="Search appointments"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchTermChange()"
+            aria-label="Search appointments"
+          />
+        </div>
+        <div class="toolbar-right flex items-center space-x-1 bg-hover p-0.5 rounded-button">
+          <button (click)="changeMainCalendarView('timeGridDay')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridDay' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridDay'">Day</button>
+          <button (click)="changeMainCalendarView('timeGridWeek')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridWeek' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridWeek'">Week</button>
+          <button (click)="changeMainCalendarView('dayGridMonth')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'dayGridMonth' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'dayGridMonth'">Month</button>
+        </div>
+         <button (click)="printCalendar()" class="print-button-toolbar flex items-center py-2 px-3 rounded-button bg-accent text-white hover:bg-accent-dark text-xs font-medium focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-card transition-colors duration-150" title="Print calendar" aria-label="Print calendar">
+            <i class="fas fa-print mr-1.5"></i> PRINT
+          </button>
+      </div>
+      <div class="fc-theme-standard"> <!-- Wrapper for FullCalendar theme compatibility -->
+        <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal pour afficher les détails de l'événement -->
+  <div class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 transition-opacity duration-300" *ngIf="isEventModalOpen" (click)="closeEventModal()">
+    <div class="modal-content event-details-modal bg-card rounded-card shadow-xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" (click)="$event.stopPropagation()">
+      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
+        <h3 class="text-section-header font-display text-text">Event Details</h3>
+        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeEventModal()" aria-label="Close event details"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body p-card-padding overflow-y-auto space-y-3 text-body leading-comfortable" *ngIf="selectedEventDetails">
+        <h4 class="text-card-title font-semibold" [style.color]="selectedEventDetails.backgroundColor || 'inherit'">{{ selectedEventDetails.title }}</h4>
+        <p>
+          <strong class="text-text-light">Start:</strong> <span class="text-text">{{ selectedEventDetails.start | date:'medium' }}</span> <br />
+          <strong class="text-text-light" *ngIf="selectedEventDetails.end">End:</strong> <span class="text-text" *ngIf="selectedEventDetails.end">{{ selectedEventDetails.end | date:'medium' }}</span>
+        </p>
+        <p *ngIf="selectedEventDetails.extendedProps?.description">
+          <strong class="text-text-light">Description:</strong> <span class="text-text whitespace-pre-line">{{ selectedEventDetails.extendedProps?.description }}</span>
+        </p>
+         <p *ngIf="selectedEventDetails.extendedProps?.patientEmail">
+          <strong class="text-text-light">Patient Email:</strong> <span class="text-text">{{ selectedEventDetails.extendedProps?.patientEmail }}</span>
+        </p>
+         <p *ngIf="selectedEventDetails.extendedProps?.patientPhone">
+          <strong class="text-text-light">Patient Phone:</strong> <span class="text-text">{{ selectedEventDetails.extendedProps?.patientPhone }}</span>
+        </p>
+        <p *ngIf="selectedEventDetails.extendedProps?.status">
+          <strong class="text-text-light">Status:</strong>
+          <span class="status-badge inline-block px-2.5 py-1 ml-1.5 text-xs font-semibold rounded-full align-middle"
+                [ngClass]="{
+                  'bg-status-success/20 text-status-success': selectedEventDetails.extendedProps?.status === 'Confirmed' || selectedEventDetails.extendedProps?.status === 'Completed',
+                  'bg-status-warning/20 text-status-warning': selectedEventDetails.extendedProps?.status === 'Pending',
+                  'bg-status-urgent/20 text-status-urgent': selectedEventDetails.extendedProps?.status === 'Cancelled',
+                  'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(selectedEventDetails.extendedProps?.status ?? '')
+                }">
+            {{ selectedEventDetails.extendedProps?.status }}
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal/Formulaire de Réservation -->
+  <div class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 transition-opacity duration-300" *ngIf="isBookingFormOpen" (click)="closeBookingForm()">
+    <div class="modal-content booking-form-modal bg-card rounded-card shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" (click)="$event.stopPropagation()">
+      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
+        <h3 class="text-section-header font-display text-text">Book Appointment</h3>
+        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeBookingForm()" aria-label="Close booking form"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body p-card-padding overflow-y-auto">
+        <div class="appointment-time-info mb-5 p-3 bg-hover rounded-md text-sm text-text" *ngIf="selectedDateForBooking && selectedTimeForBooking">
+          <p><strong class="font-medium text-text-light">Date:</strong> {{ selectedDateForBooking | date:'MMMM d, yyyy' }}</p>
+          <p><strong class="font-medium text-text-light">Time:</strong> {{ selectedTimeForBooking }} - {{ selectedEndTimeForBooking }}</p>
+        </div>
+
+        <form [formGroup]="bookingForm" (ngSubmit)="submitNewAppointment()" class="space-y-4">
+          <div class="form-group">
+            <label for="fullName" class="block text-sm font-medium text-text-light mb-1.5">Full Name <span class="text-status-urgent">*</span></label>
+            <input type="text" id="fullName" formControlName="fullName" placeholder="John Doe" required
+                   class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
+                   [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('fullName')?.invalid || !bookingForm.get('fullName')?.touched,
+                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('fullName')?.invalid && (bookingForm.get('fullName')?.dirty || bookingForm.get('fullName')?.touched)}">
+            <div *ngIf="bookingForm.get('fullName')?.invalid && (bookingForm.get('fullName')?.dirty || bookingForm.get('fullName')?.touched)" class="text-xs text-status-urgent mt-1">
+              Full name is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="block text-sm font-medium text-text-light mb-1.5">Email</label>
+            <input type="email" id="email" formControlName="email" placeholder="john.doe@example.com"
+                   class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
+                   [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('email')?.errors?.['email'] || !bookingForm.get('email')?.touched,
+                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('email')?.errors?.['email'] && (bookingForm.get('email')?.dirty || bookingForm.get('email')?.touched)}">
+            <div *ngIf="bookingForm.get('email')?.errors?.['email'] && (bookingForm.get('email')?.dirty || bookingForm.get('email')?.touched)" class="text-xs text-status-urgent mt-1">
+              Please enter a valid email address.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="phoneNumber" class="block text-sm font-medium text-text-light mb-1.5">Phone Number</label>
+            <input type="tel" id="phoneNumber" formControlName="phoneNumber" placeholder="+1234567890"
+                   class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70">
+          </div>
+
+          <div class="form-group">
+            <label for="notes" class="block text-sm font-medium text-text-light mb-1.5">Notes (Optional)</label>
+            <textarea id="notes" formControlName="notes" rows="3" placeholder="Additional information about your appointment"
+                      class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70 min-h-[80px]"></textarea>
+          </div>
+
+          <div class="modal-actions flex justify-end mt-6 pt-4 border-t border-border space-x-3">
+            <button type="button" (click)="closeBookingForm()" class="text-sm font-medium py-2.5 px-5 rounded-button border border-border text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-colors duration-150">
+              Cancel
+            </button>
+            <button type="submit" class="text-sm font-medium py-2.5 px-5 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150" [disabled]="bookingForm.invalid || isSubmitting">
+              <span *ngIf="!isSubmitting">Book Appointment</span>
+              <span *ngIf="isSubmitting" class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Booking...
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

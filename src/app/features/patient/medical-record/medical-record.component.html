@@ -1,0 +1,620 @@
+<!-- <div class="medical-records-page bg-background min-h-screen p-4 md:p-6 lg:p-8">
+    
+  <div class="page-main-header flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 p-6 bg-white rounded-2xl shadow-md border border-gray-200">
+    <div class="header-title-section mb-4 md:mb-0">
+      <h1 class="text-dashboard-title font-display text-text">Medical Records</h1>
+      <p class="text-body text-text-light">Complete access to your medical record</p>
+    </div>
+    <div class="header-actions flex space-x-3">
+      <button (click)="exportRecords()" class="btn-secondary flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150">
+        <i class="fas fa-upload mr-2"></i> Export
+      </button>
+      <button (click)="requestRecords()" class="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-5 rounded-lg shadow transition duration-150 flex items-center gap-2">
+        <i class="fas fa-plus-circle mr-2"></i> Request Records
+      </button>
+    </div>
+  </div>
+    
+  
+  <div class="tabs-container flex space-x-2 mb-8 p-2 bg-gray-100 rounded-xl shadow-sm">
+    <button 
+      *ngFor="let tab of tabs"
+      [class.bg-primary]="activeTab === tab"
+      [class.text-white]="activeTab === tab"
+      [class.text-text-light]="activeTab !== tab"
+      [class.hover:bg-primary-light]="activeTab !== tab"
+      [class.hover:text-white]="activeTab !== tab"
+      (click)="setActiveTab(tab)"
+      class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/50">
+      {{ tab === 'MedicalHistory' ? 'Medical History' : (tab === 'LabResult' ? 'Lab Results' : tab + 's') }}
+    </button>
+  </div>
+
+   
+  <div *ngIf="activeTab === 'MedicalHistory'" class="medical-history-container mb-6 md:mb-8">
+    
+    <div *ngIf="isLoadingMedicalHistory" class="flex flex-col items-center justify-center p-10 text-center bg-card rounded-card shadow-card">
+      <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mb-4"></div>
+      <p class="text-text-light">Loading medical history...</p>
+    </div>
+  
+ 
+    <div *ngIf="!isLoadingMedicalHistory && medicalHistoryErrorMessage" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative mb-6 shadow-card" role="alert">
+        <strong class="font-bold">Error!</strong>
+        <span class="block sm:inline">{{ medicalHistoryErrorMessage }}</span>
+    </div>
+
+   
+    <div *ngIf="!isLoadingMedicalHistory && !medicalHistoryErrorMessage && medicalHistory" class="card bg-card rounded-card shadow-card">
+      <div class="card-header bg-hover p-card-padding border-b border-border">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-6 w-6 text-primary"
+            >
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              <path d="M8 7h6" />
+              <path d="M8 11h8" />
+              <path d="M8 15h6" />
+            </svg>
+            <span class="font-display text-section-header text-text">Medical History Details</span>
+          </div>
+          <span class="text-body text-text-muted" *ngIf="medicalHistory.lastUpdated">
+            Last updated: {{ medicalHistory.lastUpdated | date:'mediumDate' }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="p-card-padding">
+        
+        <div class="space-y-6"> 
+
+          <div *ngIf="medicalHistory.vitalSigns" class="mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-display text-xl text-text">Vital Signs</h3>
+                <button class="text-text-muted hover:text-primary">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div *ngIf="medicalHistory.vitalSigns.bloodPressure as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+              <div *ngIf="medicalHistory.vitalSigns.pulse as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+              <div *ngIf="medicalHistory.vitalSigns.temperature as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+              <div *ngIf="medicalHistory.vitalSigns.respiratoryRate as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+              <div *ngIf="medicalHistory.vitalSigns.oxygenSaturation as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+              <div *ngIf="medicalHistory.vitalSigns.weight as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+              <div *ngIf="medicalHistory.vitalSigns.height as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between sm:col-span-1">
+                <div>
+                  <p class="text-sm text-text-light">{{ vital.label }}</p>
+                  <p class="text-2xl font-bold text-primary">
+                    {{ vital.value }} <span class="text-lg font-normal text-text-muted">{{ vital.unit }}</span>
+                  </p>
+                </div>
+                <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
+              </div>
+            </div>
+            <div *ngIf="!medicalHistory.vitalSigns.bloodPressure && !medicalHistory.vitalSigns.pulse && !medicalHistory.vitalSigns.temperature" class="text-text-muted italic text-center py-4">
+                No vital signs data available.
+            </div>
+          </div>
+          <hr class="border-t border-border" *ngIf="medicalHistory.vitalSigns" />
+          
+
+          <div>
+            <h3 class="font-display text-card-title text-primary mb-2">
+              Current Medical Conditions
+            </h3>
+            <div class="bg-hover p-3 rounded-lg">
+              <div *ngIf="(medicalHistory?.currentMedicalConditions?.length ?? 0) > 0; else noCurrentConditions" class="flex flex-wrap gap-2">
+                <span *ngFor="let condition of medicalHistory.currentMedicalConditions" class="bg-status-info/10 text-status-info text-sm font-medium px-2.5 py-1 rounded-full">
+                  {{ condition }}
+                </span>
+              </div>
+              <ng-template #noCurrentConditions>
+                <p class="text-text-muted italic">No current medical conditions</p>
+              </ng-template>
+            </div>
+          </div>
+  
+          <hr class="border-t border-border" />
+  
+          <div>
+            <h3 class="font-display text-card-title text-primary mb-2">Past Surgeries</h3>
+            <div class="bg-hover p-3 rounded-lg">
+              <div *ngIf="(medicalHistory?.pastSurgeries?.length ?? 0) > 0; else noPastSurgeries" class="flex flex-wrap gap-2">
+                <span *ngFor="let surgery of medicalHistory.pastSurgeries" class="bg-status-success/10 text-status-success text-sm font-medium px-2.5 py-1 rounded-full">
+                  {{ surgery }}
+                </span>
+              </div>
+              <ng-template #noPastSurgeries>
+                <p class="text-text-muted italic">No past surgeries</p>
+              </ng-template>
+            </div>
+          </div>
+  
+          <hr class="border-t border-border" />
+          
+          <div>
+            <h3 class="font-display text-card-title text-primary mb-2">Chronic Diseases</h3>
+            <div class="bg-hover p-3 rounded-lg">
+              <div *ngIf="(medicalHistory?.chronicDiseases?.length ?? 0) > 0; else noChronicDiseases" class="flex flex-wrap gap-2">
+                <span *ngFor="let disease of medicalHistory.chronicDiseases" class="bg-status-warning/10 text-status-warning text-sm font-medium px-2.5 py-1 rounded-full">
+                  {{ disease }}
+                </span>
+              </div>
+              <ng-template #noChronicDiseases>
+                <p class="text-text-muted italic">No chronic diseases</p>
+              </ng-template>
+            </div>
+          </div>
+  
+          <hr class="border-t border-border" />
+           
+          <div>
+            <h3 class="font-display text-card-title text-primary mb-2">Current Medications</h3>
+            <div class="bg-hover p-3 rounded-lg">
+              <div *ngIf="(medicalHistory?.currentMedications?.length ?? 0) > 0; else noCurrentMedications" class="flex flex-wrap gap-2">
+                <span *ngFor="let medication of medicalHistory.currentMedications" class="bg-accent/10 text-accent text-sm font-medium px-2.5 py-1 rounded-full">
+                  {{ medication }}
+                </span>
+              </div>
+              <ng-template #noCurrentMedications>
+                <p class="text-text-muted italic">No current medications</p>
+              </ng-template>
+            </div>
+          </div>
+  
+          <hr class="border-t border-border" />
+           
+          <div>
+            <h3 class="font-display text-card-title text-primary mb-2">Allergies</h3>
+            <div class="bg-hover p-3 rounded-lg">
+              <div *ngIf="(medicalHistory?.allergies?.length ?? 0) > 0; else noAllergies" class="flex flex-wrap gap-2">
+                <span *ngFor="let allergy of medicalHistory.allergies" class="bg-status-urgent/10 text-status-urgent text-sm font-medium px-2.5 py-1 rounded-full">
+                  {{ allergy }}
+                </span>
+              </div>
+              <ng-template #noAllergies>
+                <p class="text-text-muted italic">No allergies</p>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div *ngIf="!isLoadingMedicalHistory && !medicalHistoryErrorMessage && !medicalHistory && activeTab === 'MedicalHistory'" class="text-center text-text-muted italic p-10 bg-card rounded-card shadow-card">
+      No medical history available.
+    </div>
+  </div>
+  
+  <ng-container *ngIf="activeTab !== 'MedicalHistory'">
+    <div class="filter-bar flex flex-col md:flex-row justify-between items-center mb-6 p-4 bg-card rounded-card shadow-card">
+      <div class="search-input-container relative w-full md:w-2/3 mb-4 md:mb-0">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></i>
+        <input type="text" placeholder="Search records by title, doctor, or description..."
+              [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
+              class="w-full pl-10 pr-4 py-2.5 border border-border rounded-input text-body text-text focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow">
+      </div>
+      <div class="filter-actions flex space-x-3 w-full md:w-auto justify-end">
+        <button (click)="toggleDateFilter($event)" class="btn-filter btn-filter-date flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150 relative">
+          <i class="fas fa-calendar-alt mr-2"></i> Date
+          
+          <div *ngIf="isDateFilterOpen" (click)="$event.stopPropagation()" class="date-filter-dropdown absolute top-full right-0 mt-2 w-72 bg-card border border-border rounded-card shadow-lg z-20 p-4 space-y-3">
+            <div>
+              <label for="dateFrom" class="block text-sm font-medium text-text-light">From:</label>
+              <input type="date" id="dateFrom" [(ngModel)]="dateFrom" class="mt-1 block w-full border-border rounded-input shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2">
+            </div>
+            <div>
+              <label for="dateTo" class="block text-sm font-medium text-text-light">To:</label>
+              <input type="date" id="dateTo" [(ngModel)]="dateTo" class="mt-1 block w-full border-border rounded-input shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+              <button (click)="clearDateFilter()" class="btn-secondary text-sm">Clear</button>
+              <button (click)="applyDateFilter()" class="btn-primary text-sm">Apply</button>
+            </div>
+          </div>
+        </button>
+        
+        <button (click)="toggleAdvancedFilter($event)" class="btn-filter btn-filter-advanced flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150 relative">
+          <i class="fas fa-filter mr-2"></i> Filters
+          
+          <div *ngIf="isAdvancedFilterOpen" (click)="$event.stopPropagation()" class="advanced-filter-dropdown absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-card shadow-lg z-20 p-4 space-y-4">
+            <div>
+              <h4 class="text-sm font-semibold text-text mb-2">Record Type</h4>
+              <div class="space-y-1">
+                <label *ngFor="let type of availableRecordTypes" class="flex items-center space-x-2 text-sm text-text-light hover:bg-hover p-1 rounded-md cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="selectedRecordTypes[type]" class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                  <span>{{ type === 'LabResult' ? 'Lab Results' : type + 's' }}</span>
+                </label>
+              </div>
+            </div>
+            <hr class="border-border">
+            <div>
+              <h4 class="text-sm font-semibold text-text mb-2">Doctor</h4>
+              <div class="space-y-1 max-h-32 overflow-y-auto">
+                <label *ngFor="let doc of availableDoctors" class="flex items-center space-x-2 text-sm text-text-light hover:bg-hover p-1 rounded-md cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="selectedDoctors[doc]" class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                  <span>{{ doc }}</span>
+                </label>
+              </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+              <button (click)="clearAdvancedFilters()" class="btn-secondary text-sm">Clear All</button>
+              <button (click)="applyAdvancedFilters()" class="btn-primary text-sm">Apply Filters</button>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+    
+    <div class="records-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="filteredRecords.length > 0; else noRecords">
+      <div class="record-card bg-card rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-150 flex flex-col overflow-hidden" *ngFor="let record of filteredRecords">
+        <div class="card-header p-card-padding border-b border-border flex justify-between items-start">
+          <h4 class="record-title text-card-title font-display text-text">{{ record.title }}</h4>
+          <span class="record-tag text-xs font-semibold px-2 py-1 rounded-full" [ngClass]="record.tagClass">{{ record.tagText }}</span>
+        </div>
+        <div class="p-card-padding flex-grow">
+          <p class="record-date text-xs text-text-muted mb-2 flex items-center"><i class="far fa-calendar-alt mr-2"></i> {{ record.recordDate | date:'mediumDate' }}</p>
+          <p class="record-doctor text-sm text-text-light mb-2 flex items-center" *ngIf="record.doctor"><i class="fas fa-user-md mr-2 text-primary"></i> {{ record.doctor }}</p>
+          <p class="record-summary text-body text-text-light leading-comfortable line-clamp-3">{{ record.summary }}</p>
+        </div>
+        <div class="p-card-padding border-t border-border mt-auto">
+          <button class="btn-view-details w-full bg-accent hover:bg-accent-dark text-white font-medium py-2.5 px-4 rounded-button transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent/50" (click)="openModal(record)">
+              View Details
+          </button>
+        </div>
+      </div>
+    </div>
+    <ng-template #noRecords>
+      <div class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+        <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+        <p class="text-section-header text-text-light">No medical records found for this category.</p>
+        <p class="text-body text-text-muted">Try adjusting your search or filter criteria, or select a different record type.</p>
+      </div>
+    </ng-template>
+  </ng-container>
+
+
+  <div class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-opacity duration-300" *ngIf="isModalOpen" (click)="closeModal()">
+    <div class="modal-content bg-card rounded-card shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" 
+        [class.scale-100]="isModalOpen" [class.opacity-100]="isModalOpen" 
+        [class.scale-95]="!isModalOpen" [class.opacity-0]="!isModalOpen" 
+        (click)="$event.stopPropagation()">
+      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
+        <div>
+          <h3 class="modal-title-main text-section-header font-display text-text">Medical Record Details</h3>
+          <p class="modal-subtitle text-body text-text-light">View detailed information about this medical record</p>
+        </div>
+        <button class="btn-close-modal text-text-muted hover:text-text transition-colors" (click)="closeModal()"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="modal-body p-card-padding overflow-y-auto space-y-5" *ngIf="selectedRecord">
+        <div class="record-main-info flex items-start space-x-4 p-4 bg-hover rounded-md">
+          <i [class]="getRecordIconClass(selectedRecord.type)" class="text-3xl text-primary mt-1"></i>  
+          <div class="flex-grow">
+            <h4 class="record-title-modal text-card-title font-display text-text">{{ selectedRecord.title }}</h4>
+            <p class="record-date-modal text-sm text-text-light">{{ selectedRecord.recordDate | date:'fullDate' }}</p>
+          </div>
+        </div>
+
+        <div class="info-section" *ngIf="selectedRecord.doctor">
+          <label class="block text-sm font-medium text-text-light mb-1">Doctor</label>
+          <p class="text-body text-text flex items-center"><i class="fas fa-user-md mr-2 text-primary"></i> {{ selectedRecord.doctor }}</p>
+        </div>
+
+        <div class="info-section">
+          <label class="block text-sm font-medium text-text-light mb-1">Details</label>
+          <p class="details-text-box text-body text-text bg-gray-50 p-3 rounded-md border border-border leading-comfortable whitespace-pre-wrap">{{ selectedRecord.details }}</p>
+        </div>
+        
+        <ng-container [ngSwitch]="selectedRecord.type">
+          <ng-template [ngSwitchCase]="'LabResult'">
+            <div class="info-section" *ngIf="selectedRecord.resultDate">
+              <label class="block text-sm font-medium text-text-light mb-1">Result Date</label>
+              <p class="text-body text-text flex items-center"><i class="far fa-calendar-check mr-2 text-status-success"></i> {{ selectedRecord.resultDate | date:'mediumDate' }}</p>
+            </div>
+            <div class="info-section" *ngIf="selectedRecord.performedBy">
+              <label class="block text-sm font-medium text-text-light mb-1">Performed By</label>
+              <p class="text-body text-text flex items-center"><i class="fas fa-flask mr-2 text-accent"></i> {{ selectedRecord.performedBy }}</p>
+            </div>
+          </ng-template>
+
+          <ng-template [ngSwitchCase]="'Image'">
+            <div class="info-section" *ngIf="selectedRecord.imageDetails">
+              <label class="block text-sm font-medium text-text-light mb-1">Image Details</label>
+              <p class="text-body text-text">{{ selectedRecord.imageDetails }}</p>
+            </div>
+            <div class="info-section" *ngIf="selectedRecord.takenBy">
+              <label class="block text-sm font-medium text-text-light mb-1">Taken By</label>
+              <p class="text-body text-text flex items-center"><i class="fas fa-camera-retro mr-2 text-accent"></i> {{ selectedRecord.takenBy }}</p>
+            </div>
+            <div class="image-preview-container mt-3" *ngIf="selectedRecord.imageUrl">
+              <label class="block text-sm font-medium text-text-light mb-1">Image Preview</label>
+            <div class="image-placeholder w-full h-64 bg-gray-100 border border-border rounded-md flex items-center justify-center text-text-muted overflow-hidden">
+                <img *ngIf="selectedRecord.imageUrl && selectedRecord.imageUrl !== 'assets/images/xray-chest-placeholder.png' && selectedRecord.imageUrl !== 'assets/images/mri-knee-placeholder.png'" 
+                    [src]="selectedRecord.imageUrl" 
+                    alt="Medical Image for {{ selectedRecord.title }}" 
+                    class="max-w-full max-h-full object-contain rounded-md">
+                <div *ngIf="!selectedRecord.imageUrl || selectedRecord.imageUrl === 'assets/images/xray-chest-placeholder.png' || selectedRecord.imageUrl === 'assets/images/mri-knee-placeholder.png'" class="text-center">
+                    <i class="fas fa-image text-4xl mb-2"></i>
+                    <span class="block text-sm">Image Preview Unavailable</span>
+                </div>
+              </div>
+            </div>
+          </ng-template>
+        </ng-container>
+      </div>
+      <div class="modal-footer flex justify-end space-x-3 p-card-padding border-t border-border">
+        <button class="btn-secondary bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150" (click)="closeModal()">Cancel</button>
+        <button class="btn-primary flex items-center bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-button shadow-sm hover:shadow-md transition-all duration-150" (click)="downloadRecord(selectedRecord)">
+          <i class="fas fa-download mr-2"></i>
+          {{ selectedRecord?.type === 'LabResult' ? 'Download Lab Report' : 'Download Record' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+ 
+ -->
+
+ <div class="medical-records-page bg-background min-h-screen p-4 md:p-6 lg:p-8">
+    
+  <div class="page-main-header flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 p-6 bg-white rounded-2xl shadow-md border border-gray-200">
+    <div class="header-title-section mb-4 md:mb-0">
+      <h1 class="text-dashboard-title font-display text-text">Medical Records</h1>
+      <p class="text-body text-text-light">Complete access to your medical record</p>
+    </div>
+    <div class="header-actions flex space-x-3">
+      <button (click)="exportRecords()" class="btn-secondary flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150">
+        <i class="fas fa-upload mr-2"></i> Export
+      </button>
+      <button (click)="requestRecords()" class="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-5 rounded-lg shadow transition duration-150 flex items-center gap-2">
+        <i class="fas fa-plus-circle mr-2"></i> Request Records
+      </button>
+    </div>
+  </div>
+    
+  
+  <div class="tabs-container flex space-x-2 mb-8 p-2 bg-gray-100 rounded-xl shadow-sm">
+    <button 
+      *ngFor="let tab of tabs"
+      [class.bg-primary]="activeTab === tab"
+      [class.text-white]="activeTab === tab"
+      [class.text-text-light]="activeTab !== tab"
+      [class.hover:bg-primary-light]="activeTab !== tab"
+      [class.hover:text-white]="activeTab !== tab"
+      (click)="setActiveTab(tab)"
+      class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/50">
+      {{ tab === 'MedicalHistory' ? 'Medical History' : (tab === 'LabResult' ? 'Lab Results' : (tab === 'Prescription' ? 'Prescriptions' : tab + 's')) }}
+    </button>
+  </div>
+
+  <!-- Medical History Section -->
+  <app-medical-history 
+    *ngIf="activeTab === 'MedicalHistory'"
+    [medicalHistory]="medicalHistory"
+    [isLoading]="isLoadingMedicalHistory"
+    [errorMessage]="medicalHistoryErrorMessage">
+  </app-medical-history>
+  
+  <!-- Record Lists Section (Lab Results, Images, Prescriptions) -->
+  <ng-container *ngIf="activeTab !== 'MedicalHistory'">
+    <div class="filter-bar flex flex-col md:flex-row justify-between items-center mb-6 p-4 bg-card rounded-card shadow-card">
+      <div class="search-input-container relative w-full md:w-2/3 mb-4 md:mb-0">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></i>
+        <input type="text" placeholder="Search records by title, doctor, or description..."
+              [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
+              class="w-full pl-10 pr-4 py-2.5 border border-border rounded-input text-body text-text focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow">
+      </div>
+      <div class="filter-actions flex space-x-3 w-full md:w-auto justify-end">
+        <button (click)="toggleDateFilter($event)" class="btn-filter btn-filter-date flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150 relative">
+          <i class="fas fa-calendar-alt mr-2"></i> Date
+          <div *ngIf="isDateFilterOpen" (click)="$event.stopPropagation()" class="date-filter-dropdown absolute top-full right-0 mt-2 w-72 bg-card border border-border rounded-card shadow-lg z-20 p-4 space-y-3">
+            <div>
+              <label for="dateFrom" class="block text-sm font-medium text-text-light">From:</label>
+              <input type="date" id="dateFrom" [(ngModel)]="dateFrom" class="mt-1 block w-full border-border rounded-input shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2">
+            </div>
+            <div>
+              <label for="dateTo" class="block text-sm font-medium text-text-light">To:</label>
+              <input type="date" id="dateTo" [(ngModel)]="dateTo" class="mt-1 block w-full border-border rounded-input shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+              <button (click)="clearDateFilter()" class="btn-secondary text-sm">Clear</button>
+              <button (click)="applyDateFilter()" class="btn-primary text-sm">Apply</button>
+            </div>
+          </div>
+        </button>
+        
+        <button (click)="toggleAdvancedFilter($event)" class="btn-filter btn-filter-advanced flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150 relative">
+          <i class="fas fa-filter mr-2"></i> Filters
+          <div *ngIf="isAdvancedFilterOpen" (click)="$event.stopPropagation()" class="advanced-filter-dropdown absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-card shadow-lg z-20 p-4 space-y-4">
+            <!-- Le filtre de type est maintenant implicitement géré par l'onglet actif -->
+            <!-- Si vous voulez toujours un filtre de type ici, il faudrait ajuster la logique -->
+            <!-- Pour l'instant, nous le laissons pour les docteurs -->
+            <!-- <div>
+              <h4 class="text-sm font-semibold text-text mb-2">Record Type</h4>
+              <div class="space-y-1">
+                <label *ngFor="let type of availableRecordTypes" class="flex items-center space-x-2 p-1 hover:bg-hover rounded-md cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="selectedRecordTypes[type]" class="form-checkbox h-4 w-4 text-primary rounded border-border focus:ring-primary/50">
+                  <span class="text-sm text-text-light">{{ type === 'LabResult' ? 'Lab Results' : (type === 'Prescription' ? 'Prescriptions' : type + 's') }}</span>
+                </label>
+              </div>
+            </div>
+            <hr class="border-border"> -->
+            <div>
+              <h4 class="text-sm font-semibold text-text mb-2">Doctor</h4>
+              <div class="space-y-1 max-h-32 overflow-y-auto">
+                <label *ngFor="let doctor of availableDoctors" class="flex items-center space-x-2 p-1 hover:bg-hover rounded-md cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="selectedDoctors[doctor]" class="form-checkbox h-4 w-4 text-primary rounded border-border focus:ring-primary/50">
+                  <span class="text-sm text-text-light">{{ doctor }}</span>
+                </label>
+              </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+              <button (click)="clearAdvancedFilters()" class="btn-secondary text-sm">Clear All</button>
+              <button (click)="applyAdvancedFilters()" class="btn-primary text-sm">Apply Filters</button>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+    
+    <div *ngIf="isLoadingRecords" class="flex items-center justify-center p-10 text-center">
+        <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mb-4 mr-4"></div>
+        <p class="text-text-light text-lg">Loading {{ activeTab }}s...</p>
+    </div>
+
+    <div *ngIf="!isLoadingRecords && recordsError" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative mb-6 shadow-card" role="alert">
+        <strong class="font-bold">Error!</strong>
+        <span class="block sm:inline">{{ recordsError }}</span>
+    </div>
+    
+    <ng-container *ngIf="!isLoadingRecords && !recordsError">
+        <app-lab-results *ngIf="activeTab === 'LabResult'" [records]="filteredRecords" (viewRecordDetails)="openModal($event)"></app-lab-results>
+        <app-medical-images *ngIf="activeTab === 'Image'" [records]="filteredRecords" (viewRecordDetails)="openModal($event)"></app-medical-images>
+        <app-prescription-list *ngIf="activeTab === 'Prescription'" [records]="filteredRecords" (viewRecordDetails)="openModal($event)"></app-prescription-list>
+
+        <div *ngIf="filteredRecords.length === 0 && activeTab !== 'MedicalHistory'" class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+            <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+            <p class="text-section-header text-text-light">No {{ activeTab.toLowerCase() }}s found.</p>
+            <p class="text-body text-text-muted">Try adjusting your search or filter criteria.</p>
+        </div>
+    </ng-container>
+
+  </ng-container>
+
+  <!-- Modal remains in the parent component -->
+  <div class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-opacity duration-300" *ngIf="isModalOpen" (click)="closeModal()">
+    <div class="modal-content bg-card rounded-card shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" 
+        [class.scale-100]="isModalOpen" [class.opacity-100]="isModalOpen" 
+        [class.scale-95]="!isModalOpen" [class.opacity-0]="!isModalOpen" 
+        (click)="$event.stopPropagation()">
+      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
+        <div>
+          <h3 class="modal-title-main text-section-header font-display text-text">Medical Record Details</h3>
+          <p class="modal-subtitle text-body text-text-light">View detailed information about this medical record</p>
+        </div>
+        <button class="btn-close-modal text-text-muted hover:text-text transition-colors" (click)="closeModal()"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div class="modal-body p-card-padding overflow-y-auto space-y-5" *ngIf="selectedRecord">
+        <div class="record-main-info flex items-start space-x-4 p-4 bg-hover rounded-md">
+          <i [class]="getRecordIconClass(selectedRecord.type)" class="text-3xl text-primary mt-1"></i>  
+          <div class="flex-grow">
+            <h4 class="record-title-modal text-card-title font-display text-text">{{ selectedRecord.title }}</h4>
+            <p class="record-date-modal text-sm text-text-light">{{ selectedRecord.recordDate | date:'fullDate' }}</p>
+          </div>
+        </div>
+
+        <div class="info-section" *ngIf="selectedRecord.doctor">
+          <label class="block text-sm font-medium text-text-light mb-1">Doctor</label>
+          <p class="text-body text-text flex items-center"><i class="fas fa-user-md mr-2 text-primary"></i> {{ selectedRecord.doctor }}</p>
+        </div>
+
+        <div class="info-section">
+          <label class="block text-sm font-medium text-text-light mb-1">Details</label>
+          <p class="details-text-box text-body text-text bg-gray-50 p-3 rounded-md border border-border leading-comfortable whitespace-pre-wrap">{{ selectedRecord.details }}</p>
+        </div>
+       
+        <ng-container [ngSwitch]="selectedRecord.type">
+          <ng-template [ngSwitchCase]="'LabResult'">
+            <div class="info-section" *ngIf="selectedRecord.resultDate">
+              <label class="block text-sm font-medium text-text-light mb-1">Result Date</label>
+              <p class="text-body text-text flex items-center"><i class="far fa-calendar-check mr-2 text-status-success"></i> {{ selectedRecord.resultDate | date:'mediumDate' }}</p>
+            </div>
+            <div class="info-section" *ngIf="selectedRecord.performedBy">
+              <label class="block text-sm font-medium text-text-light mb-1">Performed By</label>
+              <p class="text-body text-text flex items-center"><i class="fas fa-flask mr-2 text-accent"></i> {{ selectedRecord.performedBy }}</p>
+            </div>
+          </ng-template>
+
+          <ng-template [ngSwitchCase]="'Image'">
+            <div class="info-section" *ngIf="selectedRecord.imageDetails">
+              <label class="block text-sm font-medium text-text-light mb-1">Image Details</label>
+              <p class="text-body text-text">{{ selectedRecord.imageDetails }}</p>
+            </div>
+            <div class="info-section" *ngIf="selectedRecord.takenBy">
+              <label class="block text-sm font-medium text-text-light mb-1">Taken By</label>
+              <p class="text-body text-text flex items-center"><i class="fas fa-camera-retro mr-2 text-accent"></i> {{ selectedRecord.takenBy }}</p>
+            </div>
+            <div class="image-preview-container mt-3" *ngIf="selectedRecord.imageUrl">
+              <label class="block text-sm font-medium text-text-light mb-1">Image Preview</label>
+              <div class="image-placeholder w-full h-64 bg-gray-100 border border-border rounded-md flex items-center justify-center text-text-muted overflow-hidden">
+                  <img [src]="selectedRecord.imageUrl" *ngIf="selectedRecord.imageUrl && selectedRecord.imageUrl !== 'assets/images/xray-chest-placeholder.png' && selectedRecord.imageUrl !== 'assets/images/mri-knee-placeholder.png'" 
+                      alt="Record image for {{ selectedRecord.title }}" class="max-w-full max-h-full object-contain rounded-md">
+                  <div *ngIf="!selectedRecord.imageUrl || selectedRecord.imageUrl === 'assets/images/xray-chest-placeholder.png' || selectedRecord.imageUrl === 'assets/images/mri-knee-placeholder.png'" class="text-center">
+                    <i class="fas fa-image text-4xl text-gray-400"></i>
+                    <p>No preview available</p>
+                  </div>
+                </div>
+            </div>
+          </ng-template>
+          <!-- Vous pouvez ajouter un ngSwitchCase pour 'Prescription' ici si des champs spécifiques au modal sont nécessaires -->
+        </ng-container>
+      </div>
+      <div class="modal-footer flex justify-end space-x-3 p-card-padding border-t border-border">
+        <button class="btn-secondary bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-button border border-border shadow-sm transition-colors duration-150" (click)="closeModal()">Cancel</button>
+        <button class="btn-primary flex items-center bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-button shadow-sm hover:shadow-md transition-all duration-150" (click)="downloadRecord(selectedRecord)">
+          <i class="fas fa-download mr-2"></i>
+          {{ selectedRecord?.type === 'LabResult' ? 'Download Lab Report' : (selectedRecord?.type === 'Image' ? 'Download Image' : (selectedRecord?.type === 'Prescription' ? 'Download Prescription' : 'Download Record')) }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
