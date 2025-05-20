@@ -21,6 +21,9 @@ export class UserPageComponent implements OnInit {
   showPassword = false;
   showConfirmPassword = false;
   formSubmitted = false;
+  loading = false;
+  errorMessage: string | null = null;
+  validationErrors: { [key: string]: string[] } = {};
   
   constructor(
     private fb: FormBuilder,
@@ -32,14 +35,19 @@ export class UserPageComponent implements OnInit {
   }
   
   ngOnInit(): void {
+    this.loading = true;
+    
     // Load available roles and statuses
     this.userService.getRoles().subscribe({
       next: (roles) => {
         this.roles = roles;
+        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading roles:', error);
         this.roles = [];
+        this.loading = false;
+        this.errorMessage = 'Failed to load roles. Please try again.';
       }
     });
     
@@ -53,6 +61,7 @@ export class UserPageComponent implements OnInit {
         this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
         this.userForm.get('confirmPassword')?.setValidators([Validators.required, Validators.minLength(8)]);
         this.userForm.updateValueAndValidity();
+        this.loading = false;
       } else if (idParam) {
         this.userId = +idParam;
         this.loadUserData(+idParam);
@@ -84,7 +93,8 @@ export class UserPageComponent implements OnInit {
     const password = fg.get('password')?.value;
     const confirmPassword = fg.get('confirmPassword')?.value;
     
-    if (changePassword && password !== confirmPassword) {
+    if ((changePassword || fg.get('password')?.hasValidator(Validators.required)) && 
+         password !== confirmPassword) {
       fg.get('confirmPassword')?.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     } else {
@@ -93,6 +103,7 @@ export class UserPageComponent implements OnInit {
   }
   
   loadUserData(userId: number): void {
+    this.loading = true;
     this.userService.getUser(userId).subscribe({
       next: (user) => {
         if (user) {
@@ -101,7 +112,7 @@ export class UserPageComponent implements OnInit {
             email: user.email,
             firstName: user.firstName || '',
             lastName: user.lastName || '',
-            roles: user.roles,
+            roles: user.roles.map(role => role.id), // Just select role IDs
             status: user.status,
             phoneNumber: user.phoneNumber || '',
             changePassword: false
@@ -109,22 +120,30 @@ export class UserPageComponent implements OnInit {
         } else {
           this.router.navigate(['/admin/users']);
         }
+        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading user:', error);
         this.router.navigate(['/admin/users']);
+        this.loading = false;
       }
     });
   }
   
   onSubmit(): void {
     this.formSubmitted = true;
+    this.errorMessage = null;
+    this.validationErrors = {};
     
     if (this.userForm.invalid) {
       return;
     }
     
+    this.loading = true;
     const formValues = this.userForm.value;
+    
+    // Get selected role IDs
+    const roleIds = Array.isArray(formValues.roles) ? formValues.roles : [formValues.roles];
     
     if (this.isNewUser) {
       const newUserData: UserCreationDto = {
@@ -133,7 +152,7 @@ export class UserPageComponent implements OnInit {
         email: formValues.email,
         firstName: formValues.firstName,
         lastName: formValues.lastName,
-        roles: formValues.roles,
+        roles: roleIds,
         status: formValues.status,
         phoneNumber: formValues.phoneNumber,
         password: formValues.password
@@ -145,6 +164,14 @@ export class UserPageComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creating user:', error);
+          this.loading = false;
+          
+          if (error.error && error.error.errors) {
+            this.validationErrors = error.error.errors;
+            this.errorMessage = error.error.message || 'Failed to create user. Please check the form for errors.';
+          } else {
+            this.errorMessage = 'Failed to create user. Please try again.';
+          }
         }
       });
     } else {
@@ -155,10 +182,16 @@ export class UserPageComponent implements OnInit {
         email: formValues.email,
         firstName: formValues.firstName,
         lastName: formValues.lastName,
-        roles: formValues.roles,
+        roles: roleIds,
         status: formValues.status,
         phoneNumber: formValues.phoneNumber
       };
+      
+      // If changing password, add it to the request
+      if (formValues.changePassword && formValues.password) {
+        (userData as any).password = formValues.password;
+        (userData as any).password_confirmation = formValues.password;
+      }
       
       this.userService.updateUser(userData).subscribe({
         next: () => {
@@ -166,6 +199,14 @@ export class UserPageComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error updating user:', error);
+          this.loading = false;
+          
+          if (error.error && error.error.errors) {
+            this.validationErrors = error.error.errors;
+            this.errorMessage = error.error.message || 'Failed to update user. Please check the form for errors.';
+          } else {
+            this.errorMessage = 'Failed to update user. Please try again.';
+          }
         }
       });
     }
@@ -198,5 +239,31 @@ export class UserPageComponent implements OnInit {
   
   cancel(): void {
     this.router.navigate(['/admin/users']);
+  }
+  
+  // Field error display helper method
+  hasError(fieldName: string): boolean {
+    return this.formSubmitted && 
+           (!!this.userForm.get(fieldName)?.errors || 
+            !!this.validationErrors[fieldName]);
+  }
+  
+  getErrorMessage(fieldName: string): string {
+    if (this.validationErrors[fieldName]) {
+      return this.validationErrors[fieldName][0];
+    }
+    
+    const field = this.userForm.get(fieldName);
+    if (field?.hasError('required')) {
+      return 'This field is required';
+    } else if (field?.hasError('email')) {
+      return 'Please enter a valid email address';
+    } else if (field?.hasError('minlength')) {
+      return `Minimum length is ${field.getError('minlength').requiredLength} characters`;
+    } else if (field?.hasError('passwordMismatch')) {
+      return 'Passwords do not match';
+    }
+    
+    return 'Invalid value';
   }
 }

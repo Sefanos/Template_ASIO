@@ -11,6 +11,23 @@
   
   <div class="bg-white rounded-card shadow-card p-card-padding">
     <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+      <div *ngIf="errorMessage" class="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9V7a1 1 0 112 0v2a1 1 0 11-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium">{{ errorMessage }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="flex justify-center mb-6">
+        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+      </div>
+
       <!-- User Information Section -->
       <div class="mb-6">
         <h2 class="text-section-header text-text mb-4">USER INFORMATION</h2>
@@ -72,19 +89,20 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label for="role" class="block text-text-light mb-1 font-medium">Role: <span class="text-status-urgent">*</span></label>
+            <label for="roles" class="block text-text-light mb-1 font-medium">Roles: <span class="text-status-urgent">*</span></label>
             <select 
-              id="role" 
-              formControlName="role"
+              id="roles" 
+              formControlName="roles"
+              multiple
               class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-              [class.border-status-urgent]="formSubmitted && userForm.get('role')?.invalid"
+              [class.border-status-urgent]="hasError('roles')"
             >
-              <option value="" disabled>Select a role</option>
-              <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+              <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
             </select>
-            <div *ngIf="formSubmitted && userForm.get('role')?.errors" class="text-status-urgent text-sm mt-1">
-              Role is required.
+            <div *ngIf="hasError('roles')" class="text-status-urgent text-sm mt-1">
+              {{ getErrorMessage('roles') }}
             </div>
+            <small class="text-text-light mt-1 block">Hold Ctrl (or Cmd on Mac) to select multiple roles</small>
           </div>
           
           <div>
