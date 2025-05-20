@@ -116,7 +116,10 @@ export class RolePageComponent implements OnInit {
           // Initialize all permissions controls first
           const permissionGroup = this.roleForm.get('permissions') as FormGroup;
           this.permissions.forEach(permission => {
-            const isChecked = this.currentRole?.permissionIds.includes(permission.id) || false;
+            // Add null check for permissionIds
+            const isChecked = this.currentRole?.permissionIds ? 
+              this.currentRole.permissionIds.includes(permission.id) : 
+              false;
             permissionGroup.addControl(permission.id.toString(), this.fb.control(isChecked));
           });
           
@@ -151,9 +154,14 @@ export class RolePageComponent implements OnInit {
       .filter(key => permissionsObj[key])
       .map(key => parseInt(key, 10));
     
+    // Generate a code from the name (lowercase, no spaces)
+    // You might want to implement a more sophisticated code generation logic
+    const roleCode = formValues.name.toLowerCase().replace(/\s+/g, '_');
+    
     const roleData: Role = {
       id: this.roleId || 0,
       name: formValues.name,
+      code: this.currentRole?.code || roleCode, // Use existing code or generate new one
       description: formValues.description,
       permissionIds: permissionIds,
       createdAt: this.currentRole?.createdAt || new Date().toISOString(),
