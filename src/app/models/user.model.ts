@@ -4,10 +4,10 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  roles: (Role | number)[] | Role[] | number[];
   status: string;
-  phoneNumber?: string;
-  phone?: string; 
-  roles: Role[] | number[];
+  phone?: string;
+  phoneNumber?: string; // Keep for backward compatibility, but use phone
   created_at?: string;
   updated_at?: string;
 }
@@ -16,7 +16,7 @@ export interface UserCreationDto {
   name: string;
   email: string;
   status: string;
-  phoneNumber?: string;
+  phone?: string; // This matches what your Laravel backend expects
   roles: number[];
   password: string;
   password_confirmation: string;

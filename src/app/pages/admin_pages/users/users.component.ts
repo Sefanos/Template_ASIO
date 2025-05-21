@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { isRoleObject } from '../../../models/role-utils';
 import { User } from '../../../models/user.model';
 import { PaginatedResponse, UserFilters, UserService } from '../../../services/admin-service/user.service';
 
@@ -159,9 +160,8 @@ export class UsersComponent implements OnInit {
     }
     
     const firstRole = user.roles[0];
-    // Check if role is an object with name property
-    if (typeof firstRole === 'object' && firstRole !== null && 'name' in firstRole) {
-      return (firstRole as any).name;
+    if (isRoleObject(firstRole)) {
+      return firstRole.name;
     }
     
     // If we only have role IDs

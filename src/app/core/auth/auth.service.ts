@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { getRoleCode } from '../../models/role-utils';
 import { AuthResponse, User } from '../../models/user.model';
 
 @Injectable({
@@ -84,7 +85,7 @@ export class AuthService {
     // Return the code of the first role
     const role = this.currentUserSubject.value.roles[0];
     if (typeof role === 'object' && role !== null && 'code' in role) {
-      return role.code;
+      return getRoleCode(role);
     } 
     return 'unknown'; // or some default value when role is just an ID
   }

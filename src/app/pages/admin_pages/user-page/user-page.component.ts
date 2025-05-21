@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { isRoleObject } from '../../../models/role-utils';
 import { Role } from '../../../models/role.model';
 import { User, UserCreationDto } from '../../../models/user.model';
 import { UserService } from '../../../services/admin-service/user.service';
@@ -115,21 +116,13 @@ export class UserPageComponent implements OnInit {
     this.userService.getUser(userId).subscribe({
       next: (user) => {
         if (user) {
-          console.log('Loaded user data:', user); // For debugging
-          
           // Handle both role objects and role IDs
           let roleIds: number[] = [];
           if (user.roles && user.roles.length > 0) {
-            if (typeof user.roles[0] === 'object' && user.roles[0] !== null) {
-              // If roles are objects with an id property
-              roleIds = (user.roles as any[]).map(role => role.id);
-            } else {
-              // If roles are already IDs
-              roleIds = user.roles as number[];
-            }
+            roleIds = user.roles.map(role => isRoleObject(role) ? role.id : role);
           }
           
-          console.log('Selected roles:', roleIds); // For debugging
+          console.log('Selected roles:', roleIds);
           
           this.userForm.patchValue({
             name: user.name || '',
@@ -171,14 +164,34 @@ export class UserPageComponent implements OnInit {
         email: formValues.email,
         roles: formValues.roles,
         status: formValues.status,
-        phoneNumber: formValues.phoneNumber,
+        // Important: Use 'phone' instead of 'phoneNumber'
+        phone: formValues.phoneNumber,
         password: formValues.password,
         password_confirmation: formValues.confirmPassword
       };
       
+      console.log('Creating new user with data:', newUserData);
+      
       this.userService.addUser(newUserData).subscribe({
-        next: () => {
-          this.router.navigate(['/admin/users']);
+        next: (user) => {
+          console.log('User created successfully:', user);
+          
+          // For a new user, we need to explicitly assign roles after creation
+          if (formValues.roles && formValues.roles.length > 0) {
+            this.userService.assignRoles(user.id, formValues.roles).subscribe({
+              next: () => {
+                console.log('Roles assigned to new user');
+                this.router.navigate(['/admin/users']);
+              },
+              error: (roleError) => {
+                console.error('Error assigning roles to new user:', roleError);
+                // Continue anyway since the user was created
+                this.router.navigate(['/admin/users']);
+              }
+            });
+          } else {
+            this.router.navigate(['/admin/users']);
+          }
         },
         error: (error) => {
           console.error('Error creating user:', error);
@@ -193,25 +206,59 @@ export class UserPageComponent implements OnInit {
         }
       });
     } else {
+      // Updating existing user
       const userData: User = {
         id: this.userId || 0,
         name: formValues.name,
         email: formValues.email,
-        roles: formValues.roles,
+        roles: [], // We'll assign roles separately
         status: formValues.status,
-        phoneNumber: formValues.phoneNumber
+        // Important: Use 'phone' instead of 'phoneNumber'
+        phone: formValues.phoneNumber
       };
       
-      // If changing password, use the password reset endpoint instead
-      if (formValues.changePassword && formValues.password) {
-        this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
-      }
+      console.log('Updating user with data:', userData);
       
+      // First update the user's basic info
       this.userService.updateUser(userData).subscribe({
-        next: () => {
-          // Only navigate if we're not also resetting password
-          if (!formValues.changePassword) {
-            this.router.navigate(['/admin/users']);
+        next: (updatedUser) => {
+          console.log('User updated successfully:', updatedUser);
+          
+          // Handle role assignment if roles were selected
+          if (formValues.roles && formValues.roles.length > 0) {
+            this.userService.assignRoles(this.userId as number, formValues.roles).subscribe({
+              next: () => {
+                console.log('Roles assigned successfully');
+                
+                // Handle password reset if needed
+                if (formValues.changePassword && formValues.password) {
+                  this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
+                } else {
+                  this.loading = false;
+                  this.router.navigate(['/admin/users']);
+                }
+              },
+              error: (roleError) => {
+                console.error('Error assigning roles:', roleError);
+                this.loading = false;
+                
+                // Continue anyway as basic user info was updated
+                if (formValues.changePassword && formValues.password) {
+                  this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
+                } else {
+                  this.router.navigate(['/admin/users']);
+                }
+              }
+            });
+          } 
+          else {
+            // No roles to assign, handle password reset if needed
+            if (formValues.changePassword && formValues.password) {
+              this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
+            } else {
+              this.loading = false;
+              this.router.navigate(['/admin/users']);
+            }
           }
         },
         error: (error) => {

@@ -113,15 +113,24 @@ export class UserService {
   }
 
   // Update an existing user
-  updateUser(user: User): Observable<User> {
-    return this.http.put<any>(`${this.apiUrl}/${user.id}`, user).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to update user');
-      })
-    );
+  updateUser(userData: User): Observable<User> {
+    console.log('Updating user with data:', userData);
+    console.log('Roles being sent:', userData.roles);
+    
+    return this.http.put<any>(`${this.apiUrl}/${userData.id}`, userData)
+      .pipe(
+        map(response => {
+          if (response.success && response.data) {
+            console.log('Update response:', response);
+            return response.data;
+          }
+          throw new Error(response.message || 'Failed to update user');
+        }),
+        catchError(error => {
+          console.error('Error updating user:', error);
+          throw error;
+        })
+      );
   }
 
   // Delete a user
@@ -134,13 +143,20 @@ export class UserService {
   }
 
   // Assign roles to a user
-  assignRoles(userId: number, roleIds: number[]): Observable<User> {
-    return this.http.post<any>(`${this.apiUrl}/${userId}/roles`, { roles: roleIds }).pipe(
+  assignRoles(userId: number, roles: number[]): Observable<User> {
+    console.log('Assigning roles:', { userId, roles });
+    
+    return this.http.post<any>(`${this.apiUrl}/${userId}/roles`, { roles }).pipe(
       map(response => {
+        console.log('Role assignment response:', response);
         if (response.success && response.data) {
           return response.data;
         }
         throw new Error(response.message || 'Failed to assign roles');
+      }),
+      catchError(error => {
+        console.error('Error assigning roles:', error);
+        throw error;
       })
     );
   }
