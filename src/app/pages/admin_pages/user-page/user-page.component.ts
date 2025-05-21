@@ -59,7 +59,7 @@ export class UserPageComponent implements OnInit {
       error: (error) => {
         console.error('Error loading statuses:', error);
         // Default fallback statuses
-        this.statuses = ['active', 'pending', 'suspended']; 
+        this.statuses = ['active', 'pending', 'inactive']; 
       }
     });
     

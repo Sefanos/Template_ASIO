@@ -26,7 +26,7 @@ export class UsersComponent implements OnInit {
   statusFilters = {
     active: false,
     pending: false,
-    suspended: false
+    inactive: false
   };
   
   users: User[] = [];
@@ -41,10 +41,10 @@ export class UsersComponent implements OnInit {
   maxPagesToShow = 5;
   
   // Stats
-  userCounts: { active: number; pending: number; suspended: number } = {
+  userCounts: { active: number; pending: number; inactive: number } = {
     active: 0,
     pending: 0,
-    suspended: 0
+    inactive: 0
   };
   
   loading = false;
@@ -81,7 +81,7 @@ export class UsersComponent implements OnInit {
         this.userCounts = {
           active: counts['active'] || 0,
           pending: counts['pending'] || 0,
-          suspended: counts['suspended'] || 0
+          inactive: counts['inactive'] || 0
         };
       },
       error: (error) => {
@@ -93,21 +93,21 @@ export class UsersComponent implements OnInit {
   loadUsers(): void {
     this.loading = true;
     
-    // Apply status filters if any are selected
-    let statusFilter = '';
-    if (this.statusFilters.active && !this.statusFilters.pending && !this.statusFilters.suspended) {
-      statusFilter = 'active';
-    } else if (!this.statusFilters.active && this.statusFilters.pending && !this.statusFilters.suspended) {
-      statusFilter = 'pending';
-    } else if (!this.statusFilters.active && !this.statusFilters.pending && this.statusFilters.suspended) {
-      statusFilter = 'suspended';
-    }
-    // If multiple or none are selected, leave statusFilter empty
+    // Collect selected statuses as an array
+    const selectedStatuses: string[] = [];
+    if (this.statusFilters.active) selectedStatuses.push('active');
+    if (this.statusFilters.pending) selectedStatuses.push('pending');
+    if (this.statusFilters.inactive) selectedStatuses.push('inactive');
+    
+    // Create comma-separated list if any statuses are selected
+    const statusFilter = selectedStatuses.length > 0 ? selectedStatuses.join(',') : undefined;
+    
+    console.log('Selected status filters:', selectedStatuses);
     
     const filters: UserFilters = {
       ...this.filters,
       search: this.searchQuery || undefined,
-      status: statusFilter || undefined
+      status: statusFilter
     };
     
     this.userService.getUsers(filters).subscribe({
@@ -147,7 +147,7 @@ export class UsersComponent implements OnInit {
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
-      case 'suspended':
+      case 'inactive':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';

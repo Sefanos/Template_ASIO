@@ -36,8 +36,8 @@
           <span class="ml-2 text-text">Pending ({{ userCounts.pending }})</span>
         </label>
         <label class="inline-flex items-center">
-          <input type="checkbox" [(ngModel)]="statusFilters.suspended" (change)="onStatusFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
-          <span class="ml-2 text-text">Suspended ({{ userCounts.suspended }})</span>
+          <input type="checkbox" [(ngModel)]="statusFilters.inactive" (change)="onStatusFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">inactive ({{ userCounts.inactive }})</span>
         </label>
         <button 
           (click)="showMoreFilters()" 
