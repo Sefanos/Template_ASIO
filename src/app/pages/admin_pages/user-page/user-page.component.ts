@@ -51,7 +51,16 @@ export class UserPageComponent implements OnInit {
       }
     });
     
-    this.userService.getStatuses().subscribe(statuses => this.statuses = statuses);
+    this.userService.getStatuses().subscribe({
+      next: (statuses) => {
+        this.statuses = statuses;
+      },
+      error: (error) => {
+        console.error('Error loading statuses:', error);
+        // Default fallback statuses
+        this.statuses = ['active', 'pending', 'suspended']; 
+      }
+    });
     
     // Get user ID from route params
     this.route.paramMap.subscribe(params => {
@@ -73,16 +82,15 @@ export class UserPageComponent implements OnInit {
   
   private createForm(): FormGroup {
     return this.fb.group({
-      username: ['', [Validators.required]],
+      name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      firstName: [''],
-      lastName: [''],
       roles: [[], [Validators.required]],
       status: ['active', [Validators.required]],
       phoneNumber: [''],
       password: [''],
       confirmPassword: [''],
-      changePassword: [false]
+      changePassword: [false],
+      forceChange: [true]
     }, {
       validators: this.passwordMatchValidator
     });
@@ -107,15 +115,30 @@ export class UserPageComponent implements OnInit {
     this.userService.getUser(userId).subscribe({
       next: (user) => {
         if (user) {
+          console.log('Loaded user data:', user); // For debugging
+          
+          // Handle both role objects and role IDs
+          let roleIds: number[] = [];
+          if (user.roles && user.roles.length > 0) {
+            if (typeof user.roles[0] === 'object' && user.roles[0] !== null) {
+              // If roles are objects with an id property
+              roleIds = (user.roles as any[]).map(role => role.id);
+            } else {
+              // If roles are already IDs
+              roleIds = user.roles as number[];
+            }
+          }
+          
+          console.log('Selected roles:', roleIds); // For debugging
+          
           this.userForm.patchValue({
-            username: user.username,
+            name: user.name || '',
             email: user.email,
-            firstName: user.firstName || '',
-            lastName: user.lastName || '',
-            roles: user.roles.map(role => role.id), // Just select role IDs
-            status: user.status,
-            phoneNumber: user.phoneNumber || '',
-            changePassword: false
+            roles: roleIds,
+            status: user.status || 'active',
+            phoneNumber: user.phone || user.phoneNumber || '',
+            changePassword: false,
+            forceChange: true
           });
         } else {
           this.router.navigate(['/admin/users']);
@@ -124,7 +147,7 @@ export class UserPageComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading user:', error);
-        this.router.navigate(['/admin/users']);
+        this.errorMessage = 'Failed to load user data. Please try again.';
         this.loading = false;
       }
     });
@@ -139,23 +162,18 @@ export class UserPageComponent implements OnInit {
       return;
     }
     
-    this.loading = true;
     const formValues = this.userForm.value;
-    
-    // Get selected role IDs
-    const roleIds = Array.isArray(formValues.roles) ? formValues.roles : [formValues.roles];
+    this.loading = true;
     
     if (this.isNewUser) {
       const newUserData: UserCreationDto = {
-        name: `${formValues.firstName} ${formValues.lastName}`.trim(),
-        username: formValues.username,
+        name: formValues.name,
         email: formValues.email,
-        firstName: formValues.firstName,
-        lastName: formValues.lastName,
-        roles: roleIds,
+        roles: formValues.roles,
         status: formValues.status,
         phoneNumber: formValues.phoneNumber,
-        password: formValues.password
+        password: formValues.password,
+        password_confirmation: formValues.confirmPassword
       };
       
       this.userService.addUser(newUserData).subscribe({
@@ -177,25 +195,24 @@ export class UserPageComponent implements OnInit {
     } else {
       const userData: User = {
         id: this.userId || 0,
-        name: `${formValues.firstName} ${formValues.lastName}`.trim(),
-        username: formValues.username,
+        name: formValues.name,
         email: formValues.email,
-        firstName: formValues.firstName,
-        lastName: formValues.lastName,
-        roles: roleIds,
+        roles: formValues.roles,
         status: formValues.status,
         phoneNumber: formValues.phoneNumber
       };
       
-      // If changing password, add it to the request
+      // If changing password, use the password reset endpoint instead
       if (formValues.changePassword && formValues.password) {
-        (userData as any).password = formValues.password;
-        (userData as any).password_confirmation = formValues.password;
+        this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
       }
       
       this.userService.updateUser(userData).subscribe({
         next: () => {
-          this.router.navigate(['/admin/users']);
+          // Only navigate if we're not also resetting password
+          if (!formValues.changePassword) {
+            this.router.navigate(['/admin/users']);
+          }
         },
         error: (error) => {
           console.error('Error updating user:', error);
@@ -210,6 +227,29 @@ export class UserPageComponent implements OnInit {
         }
       });
     }
+  }
+
+  resetUserPassword(userId: number, password: string, forceChange: boolean): void {
+    this.userService.resetUserPassword(userId, {
+      password: password,
+      force_change: forceChange
+    }).subscribe({
+      next: (response) => {
+        this.loading = false;
+        this.router.navigate(['/admin/users']);
+      },
+      error: (error) => {
+        console.error('Error resetting password:', error);
+        this.loading = false;
+        
+        if (error.error && error.error.errors) {
+          this.validationErrors = error.error.errors;
+          this.errorMessage = error.error.message || 'Failed to reset password. Please check the form for errors.';
+        } else {
+          this.errorMessage = 'Failed to reset password. Please try again.';
+        }
+      }
+    });
   }
   
   onChangePasswordToggle(): void {
@@ -241,11 +281,11 @@ export class UserPageComponent implements OnInit {
     this.router.navigate(['/admin/users']);
   }
   
-  // Field error display helper method
+  // Helper methods for form validation
   hasError(fieldName: string): boolean {
     return this.formSubmitted && 
-           (!!this.userForm.get(fieldName)?.errors || 
-            !!this.validationErrors[fieldName]);
+           ((!!this.userForm.get(fieldName)?.errors) || 
+           (!!this.validationErrors[fieldName]));
   }
   
   getErrorMessage(fieldName: string): string {
@@ -265,5 +305,25 @@ export class UserPageComponent implements OnInit {
     }
     
     return 'Invalid value';
+  }
+
+  isRoleSelected(roleId: number): boolean {
+    const selectedRoles = this.userForm.get('roles')?.value || [];
+    return selectedRoles.includes(roleId);
+  }
+
+  toggleRole(roleId: number): void {
+    const selectedRoles = [...(this.userForm.get('roles')?.value || [])];
+    const index = selectedRoles.indexOf(roleId);
+    
+    if (index === -1) {
+      selectedRoles.push(roleId);
+    } else {
+      selectedRoles.splice(index, 1);
+    }
+    
+    this.userForm.patchValue({ roles: selectedRoles });
+    this.userForm.get('roles')?.markAsDirty();
+    this.userForm.updateValueAndValidity();
   }
 }

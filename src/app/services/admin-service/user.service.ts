@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Role } from '../../models/role.model';
 import { User, UserCreationDto } from '../../models/user.model';
@@ -102,16 +102,7 @@ export class UserService {
 
   // Create a new user
   addUser(user: UserCreationDto): Observable<User> {
-    // Transform roles from array of role objects to array of role IDs if needed
-    const userData = {
-      ...user,
-      roles: Array.isArray(user.roles) 
-        ? user.roles.map(role => typeof role === 'object' ? role.id : role) 
-        : user.roles,
-      password_confirmation: user.password // Add password confirmation
-    };
-
-    return this.http.post<any>(`${this.apiUrl}`, userData).pipe(
+    return this.http.post<any>(`${this.apiUrl}`, user).pipe(
       map(response => {
         if (response.success && response.data) {
           return response.data;
@@ -123,15 +114,7 @@ export class UserService {
 
   // Update an existing user
   updateUser(user: User): Observable<User> {
-    // Transform roles from array of role objects to array of role IDs if needed
-    const userData = {
-      ...user,
-      roles: Array.isArray(user.roles) 
-        ? user.roles.map(role => typeof role === 'object' ? role.id : role) 
-        : user.roles
-    };
-
-    return this.http.put<any>(`${this.apiUrl}/${user.id}`, userData).pipe(
+    return this.http.put<any>(`${this.apiUrl}/${user.id}`, user).pipe(
       map(response => {
         if (response.success && response.data) {
           return response.data;
@@ -167,18 +150,39 @@ export class UserService {
     return this.http.get<any>(`${environment.apiUrl}/roles`).pipe(
       map(response => {
         if (response.success && response.data) {
-          return response.data;
+          // Handle both array response and paginated response
+          return response.data.items || response.data;
         }
         return [];
+      }),
+      catchError(error => {
+        console.error('Error fetching roles:', error);
+        return of([]);
       })
     );
   }
 
   // Get available statuses
   getStatuses(): Observable<string[]> {
-    return new Observable(subscriber => {
-      subscriber.next(['active', 'pending', 'suspended']);
-      subscriber.complete();
-    });
+    return this.http.get<any>(`${environment.apiUrl}/users/statuses`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return ['active', 'pending', 'suspended']; // Fallback default
+      })
+    );
+  }
+
+  // Reset user password
+  resetUserPassword(userId: number, data: { password?: string, force_change?: boolean }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${userId}/reset-password`, data).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to reset user password');
+      })
+    );
   }
 }

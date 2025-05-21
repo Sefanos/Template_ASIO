@@ -4,21 +4,22 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  status: 'active' | 'pending' | 'suspended';
-  roles: Role[];
-  username?: string; // Keeping for backward compatibility
-  firstName?: string;
-  lastName?: string;
+  status: string;
   phoneNumber?: string;
-  lastLogin?: string;
+  phone?: string; 
+  roles: Role[] | number[];
   created_at?: string;
   updated_at?: string;
 }
 
-// Add this interface to your existing user.model.ts file
-export interface UserCreationDto extends Omit<User, 'id'> {
-  id?: number;
-  password?: string;
+export interface UserCreationDto {
+  name: string;
+  email: string;
+  status: string;
+  phoneNumber?: string;
+  roles: number[];
+  password: string;
+  password_confirmation: string;
 }
 
 // Authentication response from backend

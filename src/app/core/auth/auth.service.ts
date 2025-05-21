@@ -82,7 +82,11 @@ export class AuthService {
       return '';
     }
     // Return the code of the first role
-    return this.currentUserSubject.value.roles[0].code;
+    const role = this.currentUserSubject.value.roles[0];
+    if (typeof role === 'object' && role !== null && 'code' in role) {
+      return role.code;
+    } 
+    return 'unknown'; // or some default value when role is just an ID
   }
 
   public hasRole(allowedRoles: string[]): boolean {

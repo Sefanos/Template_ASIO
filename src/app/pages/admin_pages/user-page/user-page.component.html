@@ -10,217 +10,204 @@
   </div>
   
   <div class="bg-white rounded-card shadow-card p-card-padding">
-    <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
-      <div *ngIf="errorMessage" class="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9V7a1 1 0 112 0v2a1 1 0 11-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium">{{ errorMessage }}</h3>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="loading" class="flex justify-center mb-6">
-        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-      </div>
-
-      <!-- User Information Section -->
-      <div class="mb-6">
-        <h2 class="text-section-header text-text mb-4">USER INFORMATION</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label for="username" class="block text-text-light mb-1 font-medium">Username: <span class="text-status-urgent">*</span></label>
-            <input 
-              type="text" 
-              id="username" 
-              formControlName="username" 
-              class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-              [class.border-status-urgent]="formSubmitted && userForm.get('username')?.invalid"
-            >
-            <div *ngIf="formSubmitted && userForm.get('username')?.errors" class="text-status-urgent text-sm mt-1">
-              Username is required.
-            </div>
-          </div>
-          
-          <div>
-            <label for="email" class="block text-text-light mb-1 font-medium">Email: <span class="text-status-urgent">*</span></label>
-            <input 
-              type="email" 
-              id="email" 
-              formControlName="email" 
-              class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-              [class.border-status-urgent]="formSubmitted && userForm.get('email')?.invalid"
-            >
-            <div *ngIf="formSubmitted && userForm.get('email')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
-              Email is required.
-            </div>
-            <div *ngIf="formSubmitted && userForm.get('email')?.errors?.['email']" class="text-status-urgent text-sm mt-1">
-              Please enter a valid email address.
-            </div>
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 text-red-600">
+      <p class="font-medium">{{ errorMessage }}</p>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div *ngIf="loading" class="flex justify-center my-8">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>
+    
+    <form *ngIf="!loading" [formGroup]="userForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- User Information -->
+      <h2 class="text-section-header text-text mb-4">USER INFORMATION</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Full Name -->
+        <div>
+          <label for="name" class="block text-text-light mb-1 font-medium">Full Name: <span class="text-status-urgent">*</span></label>
+          <input 
+            type="text" 
+            id="name" 
+            formControlName="name" 
+            class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            [class.border-status-urgent]="hasError('name')"
+            placeholder="Enter full name"
+          >
+          <div *ngIf="hasError('name')" class="text-status-urgent text-sm mt-1">
+            {{ getErrorMessage('name') }}
           </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label for="firstName" class="block text-text-light mb-1 font-medium">First Name:</label>
-            <input 
-              type="text" 
-              id="firstName" 
-              formControlName="firstName" 
-              class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-          </div>
-          
-          <div>
-            <label for="lastName" class="block text-text-light mb-1 font-medium">Last Name:</label>
-            <input 
-              type="text" 
-              id="lastName" 
-              formControlName="lastName" 
-              class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
+        <!-- Email Address -->
+        <div>
+          <label for="email" class="block text-text-light mb-1 font-medium">Email Address: <span class="text-status-urgent">*</span></label>
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email" 
+            class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            [class.border-status-urgent]="hasError('email')"
+            placeholder="Enter email address"
+          >
+          <div *ngIf="hasError('email')" class="text-status-urgent text-sm mt-1">
+            {{ getErrorMessage('email') }}
           </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label for="roles" class="block text-text-light mb-1 font-medium">Roles: <span class="text-status-urgent">*</span></label>
-            <select 
-              id="roles" 
-              formControlName="roles"
-              multiple
-              class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-              [class.border-status-urgent]="hasError('roles')"
-            >
-              <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
-            </select>
-            <div *ngIf="hasError('roles')" class="text-status-urgent text-sm mt-1">
-              {{ getErrorMessage('roles') }}
-            </div>
-            <small class="text-text-light mt-1 block">Hold Ctrl (or Cmd on Mac) to select multiple roles</small>
-          </div>
-          
-          <div>
-            <label for="status" class="block text-text-light mb-1 font-medium">Status: <span class="text-status-urgent">*</span></label>
-            <select 
-              id="status" 
-              formControlName="status"
-              class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option *ngFor="let status of statuses" [value]="status">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</option>
-            </select>
-          </div>
-        </div>
-        
+        <!-- Phone Number -->
         <div>
           <label for="phoneNumber" class="block text-text-light mb-1 font-medium">Phone Number:</label>
           <input 
-            type="tel" 
+            type="text" 
             id="phoneNumber" 
             formControlName="phoneNumber" 
             class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            [class.border-status-urgent]="hasError('phoneNumber')"
+            placeholder="Enter phone number"
           >
+          <div *ngIf="hasError('phoneNumber')" class="text-status-urgent text-sm mt-1">
+            {{ getErrorMessage('phoneNumber') }}
+          </div>
+        </div>
+        
+        <!-- Roles -->
+        <div>
+          <label class="block text-text-light mb-1 font-medium">Roles: <span class="text-status-urgent">*</span></label>
+          <div class="border border-border rounded-input p-3 max-h-[200px] overflow-y-auto"
+               [class.border-status-urgent]="hasError('roles')">
+            <div *ngFor="let role of roles" class="flex items-center mb-2">
+              <input 
+                type="checkbox"
+                [id]="'role_' + role.id"
+                [value]="role.id"
+                [checked]="isRoleSelected(role.id)"
+                (change)="toggleRole(role.id)"
+                class="h-4 w-4 text-primary focus:ring-primary border-border rounded mr-2"
+              >
+              <label [for]="'role_' + role.id" class="text-sm">{{ role.name }}</label>
+            </div>
+            <div *ngIf="roles.length === 0" class="text-text-light text-sm">No roles available</div>
+          </div>
+          <div *ngIf="hasError('roles')" class="text-status-urgent text-sm mt-1">
+            {{ getErrorMessage('roles') }}
+          </div>
+        </div>
+        
+        <!-- Status -->
+        <div>
+          <label for="status" class="block text-text-light mb-1 font-medium">Status: <span class="text-status-urgent">*</span></label>
+          <select 
+            id="status" 
+            formControlName="status"
+            class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            [class.border-status-urgent]="hasError('status')"
+          >
+            <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+          </select>
+          <div *ngIf="hasError('status')" class="text-status-urgent text-sm mt-1">
+            {{ getErrorMessage('status') }}
+          </div>
         </div>
       </div>
       
       <!-- Password Section -->
-      <div class="mb-6" *ngIf="!isNewUser">
-        <div class="mb-4">
-          <label class="flex items-center">
+      <div class="mt-8">
+        <h2 class="text-section-header text-text mb-4">{{ isNewUser ? 'SET PASSWORD' : 'PASSWORD MANAGEMENT' }}</h2>
+        
+        <!-- Change Password Toggle (for existing users) -->
+        <div *ngIf="!isNewUser" class="mb-4">
+          <div class="flex items-center">
             <input 
               type="checkbox" 
-              formControlName="changePassword" 
+              id="changePassword" 
+              formControlName="changePassword"
+              class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
               (change)="onChangePasswordToggle()"
-              class="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
             >
-            <span class="text-sm text-text">Change Password</span>
-          </label>
+            <label for="changePassword" class="ml-2 text-text-light">Reset user password</label>
+          </div>
         </div>
-      </div>
-      
-      <div class="mb-6" *ngIf="isNewUser || userForm.get('changePassword')?.value">
-        <h2 class="text-section-header text-text mb-4">{{ isNewUser ? 'SET PASSWORD' : 'CHANGE PASSWORD' }}</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <!-- Password Fields -->
+        <div *ngIf="isNewUser || userForm.get('changePassword')?.value" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Password -->
           <div>
-            <label for="password" class="block text-text-light mb-1 font-medium">Password: <span class="text-status-urgent">*</span></label>
+            <label for="password" class="block text-text-light mb-1 font-medium">New Password: <span class="text-status-urgent" *ngIf="isNewUser || userForm.get('changePassword')?.value">*</span></label>
             <div class="relative">
               <input 
                 [type]="showPassword ? 'text' : 'password'" 
                 id="password" 
                 formControlName="password" 
                 class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                [class.border-status-urgent]="formSubmitted && userForm.get('password')?.invalid"
+                [class.border-status-urgent]="hasError('password')"
+                placeholder="Enter new password"
               >
               <button 
                 type="button" 
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-text-light"
-                (click)="togglePasswordVisibility('password')"
+                (click)="togglePasswordVisibility('password')" 
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-text-light hover:text-text"
               >
-                <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <path *ngIf="showPassword" d="M2 2l20 20"></path>
                 </svg>
               </button>
             </div>
-            <div *ngIf="formSubmitted && userForm.get('password')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
-              Password is required.
-            </div>
-            <div *ngIf="formSubmitted && userForm.get('password')?.errors?.['minlength']" class="text-status-urgent text-sm mt-1">
-              Password must be at least 8 characters.
+            <div *ngIf="hasError('password')" class="text-status-urgent text-sm mt-1">
+              {{ getErrorMessage('password') }}
             </div>
           </div>
           
+          <!-- Confirm Password -->
           <div>
-            <label for="confirmPassword" class="block text-text-light mb-1 font-medium">Confirm Password: <span class="text-status-urgent">*</span></label>
+            <label for="confirmPassword" class="block text-text-light mb-1 font-medium">Confirm Password: <span class="text-status-urgent" *ngIf="isNewUser || userForm.get('changePassword')?.value">*</span></label>
             <div class="relative">
               <input 
                 [type]="showConfirmPassword ? 'text' : 'password'" 
                 id="confirmPassword" 
                 formControlName="confirmPassword" 
                 class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                [class.border-status-urgent]="formSubmitted && (userForm.get('confirmPassword')?.invalid || userForm.errors?.['passwordMismatch'])"
+                [class.border-status-urgent]="hasError('confirmPassword')"
+                placeholder="Confirm new password"
               >
               <button 
                 type="button" 
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-text-light"
-                (click)="togglePasswordVisibility('confirmPassword')"
+                (click)="togglePasswordVisibility('confirmPassword')" 
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-text-light hover:text-text"
               >
-                <svg *ngIf="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg *ngIf="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <circle cx="12" cx="12" r="3"></circle>
+                  <path *ngIf="showConfirmPassword" d="M2 2l20 20"></path>
                 </svg>
               </button>
             </div>
-            <div *ngIf="formSubmitted && userForm.get('confirmPassword')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
-              Confirm Password is required.
-            </div>
-            <div *ngIf="formSubmitted && userForm.errors?.['passwordMismatch']" class="text-status-urgent text-sm mt-1">
-              Passwords do not match.
+            <div *ngIf="hasError('confirmPassword')" class="text-status-urgent text-sm mt-1">
+              {{ getErrorMessage('confirmPassword') }}
             </div>
           </div>
-        </div>
-        
-        <div class="text-sm text-text-light mb-2">
-          Password should be at least 8 characters long and include a combination of letters, numbers, and special characters.
+
+          <!-- Force Password Change option -->
+          <div *ngIf="!isNewUser && userForm.get('changePassword')?.value" class="md:col-span-2">
+            <div class="flex items-center">
+              <input 
+                type="checkbox" 
+                id="forceChange" 
+                formControlName="forceChange"
+                class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+              >
+              <label for="forceChange" class="ml-2 text-text-light">Force user to change password on next login</label>
+            </div>
+          </div>
         </div>
       </div>
       
       <!-- Action Buttons -->
-      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-border">
+      <div class="flex justify-end space-x-3 mt-8 pt-4 border-t border-border">
         <button 
           type="button" 
           class="px-4 py-2 border border-border rounded-button text-text hover:bg-gray-100"
@@ -231,8 +218,16 @@
         <button 
           type="submit" 
           class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark"
+          [disabled]="loading"
         >
-          {{ isNewUser ? 'Create User' : 'Save Changes' }}
+          <span *ngIf="loading" class="flex items-center">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing...
+          </span>
+          <span *ngIf="!loading">{{ isNewUser ? 'Create User' : 'Save Changes' }}</span>
         </button>
       </div>
     </form>

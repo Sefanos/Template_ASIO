@@ -154,7 +154,18 @@ export class UsersComponent implements OnInit {
   }
   
   getUserRoleName(user: User): string {
-    return user.roles && user.roles.length > 0 ? user.roles[0].name : 'No role';
+    if (!user.roles || user.roles.length === 0) {
+      return 'No role';
+    }
+    
+    const firstRole = user.roles[0];
+    // Check if role is an object with name property
+    if (typeof firstRole === 'object' && firstRole !== null && 'name' in firstRole) {
+      return (firstRole as any).name;
+    }
+    
+    // If we only have role IDs
+    return 'Role ID: ' + firstRole;
   }
   
   showMoreFilters(): void {
