@@ -55,7 +55,8 @@ export class UsersComponent implements OnInit {
     if (this.searchQuery?.trim() !== '') {
       const query = this.searchQuery.toLowerCase();
       result = result.filter(user => 
-        user.username.toLowerCase().includes(query) || 
+        // Add null checks for optional properties
+        (user.username?.toLowerCase().includes(query) || '') || 
         user.email.toLowerCase().includes(query) ||
         user.id.toString().includes(query) ||
         (user.firstName && user.firstName.toLowerCase().includes(query)) ||
@@ -87,54 +88,76 @@ export class UsersComponent implements OnInit {
     return Math.ceil(this.filteredUsers.length / this.pageSize);
   }
   
-  get pagesToShow(): (number | string)[] {
-    const pages: (number | string)[] = [];
+  get pagesToShow(): Array<number | string> {
+    const pages: Array<number | string> = [];
     
     if (this.totalPages <= this.maxPagesToShow) {
       for (let i = 1; i <= this.totalPages; i++) {
         pages.push(i);
       }
     } else {
+      // Always show first page
       pages.push(1);
       
-      const middlePoint = Math.floor(this.maxPagesToShow / 2);
-      let startPage = Math.max(2, this.currentPage - middlePoint);
-      let endPage = Math.min(this.totalPages - 1, this.currentPage + middlePoint);
+      // Calculate start and end of pages to show
+      let start = Math.max(2, this.currentPage - Math.floor(this.maxPagesToShow / 2));
+      let end = Math.min(this.totalPages - 1, start + this.maxPagesToShow - 3);
       
-      if (startPage === 2) {
-        endPage = Math.min(this.totalPages - 1, startPage + (this.maxPagesToShow - 3));
+      // Adjust if at the end
+      if (end >= this.totalPages - 1) {
+        start = Math.max(2, this.totalPages - this.maxPagesToShow + 2);
       }
       
-      if (endPage === this.totalPages - 1) {
-        startPage = Math.max(2, endPage - (this.maxPagesToShow - 3));
-      }
-      
-      if (startPage > 2) {
+      // Show ellipsis if needed
+      if (start > 2) {
         pages.push('...');
       }
       
-      for (let i = startPage; i <= endPage; i++) {
+      // Add middle pages
+      for (let i = start; i <= end; i++) {
         pages.push(i);
       }
       
-      if (endPage < this.totalPages - 1) {
+      // Show ellipsis if needed
+      if (end < this.totalPages - 1) {
         pages.push('...');
       }
       
+      // Always show last page
       pages.push(this.totalPages);
     }
     
     return pages;
   }
   
-  changePage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
+  getStatusClasses(status: string): string {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'suspended':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   }
   
+  getUserRoleName(user: User): string {
+    return user.roles && user.roles.length > 0 ? user.roles[0].name : 'No role';
+  }
+  
+  showMoreFilters(): void {
+    // Implement this method based on your requirements
+    console.log('Show more filters clicked');
+  }
+  
+  navigateToNewUser(): void {
+    this.router.navigate(['/admin/users/new']);
+  }
+  
   editUser(id: number): void {
-    this.router.navigate(['/admin/user-page', id]);
+    this.router.navigate([`/admin/users/${id}`]);
   }
   
   confirmDelete(user: User): void {
@@ -148,44 +171,29 @@ export class UsersComponent implements OnInit {
   }
   
   deleteUser(): void {
-    if (this.userToDelete) {
-      this.userService.deleteUser(this.userToDelete.id).subscribe({
-        next: () => {
-          this.loadUsers();
-          this.cancelDelete();
-        },
-        error: (error) => {
-          console.error('Error deleting user:', error);
-          this.cancelDelete();
-        }
-      });
-    }
+    if (!this.userToDelete) return;
+    
+    this.userService.deleteUser(this.userToDelete.id).subscribe({
+      next: () => {
+        this.loadUsers();
+        this.showDeleteConfirmation = false;
+        this.userToDelete = null;
+      },
+      error: (error) => {
+        console.error('Error deleting user:', error);
+        // Could add error handling here
+      }
+    });
   }
   
-  showMoreFilters(): void {
-    // Implement additional filters if needed
-    console.log('Showing more filters');
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
   }
   
   exportUserData(): void {
-    // Export user list functionality
-    console.log('Exporting user data');
-  }
-  
-  navigateToNewUser(): void {
-    this.router.navigate(['/admin/user-page', 'new']);
-  }
-
-  getStatusClasses(status: string): string {
-    switch(status) {
-      case 'active':
-        return 'bg-status-success bg-opacity-10 text-status-success';
-      case 'pending':
-        return 'bg-status-warning bg-opacity-10 text-status-warning';
-      case 'suspended':
-        return 'bg-status-urgent bg-opacity-10 text-status-urgent';
-      default:
-        return 'bg-text-muted bg-opacity-10 text-text-muted';
-    }
+    // Implement export functionality based on your requirements
+    console.log('Export user data clicked');
   }
 }

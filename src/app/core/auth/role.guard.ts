@@ -7,7 +7,10 @@ import { AuthService } from './auth.service';
   providedIn: 'root'
 })
 export class RoleGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}  canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+  constructor(private authService: AuthService, private router: Router) {}
+  
+  canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    // Get the required roles from the route data
     const requiredRoles = route.data['roles'] as Array<string>;
     console.log('RoleGuard: checking roles', requiredRoles);
     
@@ -16,6 +19,7 @@ export class RoleGuard implements CanActivate {
       return this.router.createUrlTree(['/login']);
     }
     
+    // Check if user has the required role
     const hasRole = this.authService.hasRole(requiredRoles);
     console.log('RoleGuard: User has required role?', hasRole);
     
@@ -23,12 +27,11 @@ export class RoleGuard implements CanActivate {
       return true;
     }
     
-    // If user doesn't have the required role, redirect them to the appropriate section
+    // If user doesn't have the required role, redirect based on their actual role
     const userRole = this.authService.getUserRole();
     console.log('RoleGuard: User role is', userRole);
     
-    // Important: Handle special case where we're already at the root level of a role
-    // This prevents potential infinite redirects
+    // Important: Prevent potential infinite redirects
     const currentUrl = this.router.url;
     if ((userRole === 'admin' && currentUrl.startsWith('/admin')) || 
         (userRole === 'doctor' && currentUrl.startsWith('/doctor')) ||
@@ -38,18 +41,20 @@ export class RoleGuard implements CanActivate {
     }
     
     try {
-      if (userRole === 'admin') {
-        console.log('RoleGuard: Redirecting to admin dashboard');
-        return this.router.createUrlTree(['/admin/dashboard']);
-      } else if (userRole === 'doctor') {
-        console.log('RoleGuard: Redirecting to doctor dashboard');
-        return this.router.createUrlTree(['/doctor/dashboard']);
-      } else if (userRole === 'patient') {
-        console.log('RoleGuard: Redirecting to patient dashboard');
-        return this.router.createUrlTree(['/patient/dashboard']);
-      } else {
-        console.log('RoleGuard: Unknown role, redirecting to login');
-        return this.router.createUrlTree(['/login']);
+      // Redirect to appropriate dashboard based on role
+      switch (userRole) {
+        case 'admin':
+          console.log('RoleGuard: Redirecting to admin dashboard');
+          return this.router.createUrlTree(['/admin/dashboard']);
+        case 'doctor':
+          console.log('RoleGuard: Redirecting to doctor dashboard');
+          return this.router.createUrlTree(['/doctor/dashboard']);
+        case 'patient':
+          console.log('RoleGuard: Redirecting to patient dashboard');
+          return this.router.createUrlTree(['/patient/dashboard']);
+        default:
+          console.log('RoleGuard: Unknown role, redirecting to login');
+          return this.router.createUrlTree(['/login']);
       }
     } catch (error) {
       console.error('RoleGuard: Navigation error', error);

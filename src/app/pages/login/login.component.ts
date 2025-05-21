@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  username = '';
+  email = ''; // Changed from username to email to match backend
   password = '';
   error = '';
   loading = false;
@@ -20,63 +20,61 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}  async login() {
+  ) {
+    // Redirect if already logged in
+    if (this.authService.isAuthenticated()) {
+      this.redirectBasedOnRole();
+    }
+  }
+  
+  login() {
     this.error = '';
     this.loading = true;
-    console.log('Login attempt with:', this.username);
-
-    if (!this.username || !this.password) {
-      this.error = 'Username and password are required';
+    
+    if (!this.email || !this.password) {
+      this.error = 'Email and password are required';
       this.loading = false;
       return;
     }
-
-    try {
-      const success = await this.authService.login(this.username, this.password);
-      console.log('Login success:', success);
-      
-      if (success) {
-        const role = this.authService.getUserRole();
-        console.log('Detected user role:', role);
-        
-        // Remove the timeout causing potential issues
-        if (role === 'doctor') {
-          console.log('Navigating to doctor dashboard');
-          this.loading = false;
-          this.router.navigate(['/doctor/dashboard']).catch(err => {
-            console.error('Navigation error:', err);
-            this.error = 'Navigation error';
-            this.loading = false;
-          });
-        } else if (role === 'admin') {
-          console.log('Navigating to admin dashboard');
-          this.loading = false;
-          this.router.navigate(['/admin/dashboard']).catch(err => {
-            console.error('Navigation error:', err);
-            this.error = 'Navigation error';
-            this.loading = false;
-          });
-        } else if (role === 'patient') {
-          console.log('Navigating to patient dashboard');
-          this.loading = false;
-          this.router.navigate(['/patient/dashboard']).catch(err => {
-            console.error('Navigation error:', err);
-            this.error = 'Navigation error';
-            this.loading = false;
-          });
-        } else {
-          console.warn('Unknown role, defaulting to login page');
-          this.error = 'Invalid role detected';
-          this.loading = false;
-        }
-      } else {
-        this.error = 'Invalid username or password';
+    
+    this.authService.login(this.email, this.password).subscribe({
+      next: (user) => {
         this.loading = false;
+        console.log('Login successful for user:', user.email);
+        this.redirectBasedOnRole();
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Login error:', error);
+        this.error = error.message || 'Invalid email or password';
       }
-    } catch (e) {
-      this.error = 'An error occurred during login';
-      console.error('Login error:', e);
-      this.loading = false;
+    });
+  }
+  
+  private redirectBasedOnRole(): void {
+    const role = this.authService.getUserRole();
+    console.log('Redirecting based on role:', role);
+    
+    try {
+      switch (role) {
+        case 'admin':
+          this.router.navigate(['/admin/dashboard']);
+          break;
+        case 'doctor':
+          this.router.navigate(['/doctor/dashboard']);
+          break;
+        case 'patient':
+          this.router.navigate(['/patient/dashboard']);
+          break;
+        default:
+          console.warn('Unknown role:', role);
+          this.error = 'Invalid user role detected';
+          // Force logout if the role is unrecognized
+          this.authService.logout();
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      this.error = 'Error navigating to dashboard';
     }
   }
 }

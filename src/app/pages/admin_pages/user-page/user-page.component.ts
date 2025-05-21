@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { User } from '../../../models/user.model';
+import { Role } from '../../../models/role.model';
+import { User, UserCreationDto } from '../../../models/user.model';
 import { UserService } from '../../../services/admin-service/user.service';
 
 @Component({
@@ -15,7 +16,7 @@ export class UserPageComponent implements OnInit {
   userId: number | null = null;
   isNewUser = false;
   userForm: FormGroup;
-  roles: string[] = [];
+  roles: Role[] = [];
   statuses: string[] = [];
   showPassword = false;
   showConfirmPassword = false;
@@ -32,7 +33,16 @@ export class UserPageComponent implements OnInit {
   
   ngOnInit(): void {
     // Load available roles and statuses
-    this.userService.getRoles().subscribe(roles => this.roles = roles);
+    this.userService.getRoles().subscribe({
+      next: (roles) => {
+        this.roles = roles;
+      },
+      error: (error) => {
+        console.error('Error loading roles:', error);
+        this.roles = [];
+      }
+    });
+    
     this.userService.getStatuses().subscribe(statuses => this.statuses = statuses);
     
     // Get user ID from route params
@@ -58,7 +68,7 @@ export class UserPageComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       firstName: [''],
       lastName: [''],
-      role: ['', [Validators.required]],
+      roles: [[], [Validators.required]],
       status: ['active', [Validators.required]],
       phoneNumber: [''],
       password: [''],
@@ -91,7 +101,7 @@ export class UserPageComponent implements OnInit {
             email: user.email,
             firstName: user.firstName || '',
             lastName: user.lastName || '',
-            role: user.role,
+            roles: user.roles,
             status: user.status,
             phoneNumber: user.phoneNumber || '',
             changePassword: false
@@ -116,22 +126,20 @@ export class UserPageComponent implements OnInit {
     
     const formValues = this.userForm.value;
     
-    const userData: User = {
-      id: this.userId || 0,
-      username: formValues.username,
-      email: formValues.email,
-      firstName: formValues.firstName,
-      lastName: formValues.lastName,
-      role: formValues.role,
-      status: formValues.status,
-      phoneNumber: formValues.phoneNumber
-    };
-    
     if (this.isNewUser) {
-      this.userService.addUser({
-        ...userData,
-        // Include password for new users
-      }).subscribe({
+      const newUserData: UserCreationDto = {
+        name: `${formValues.firstName} ${formValues.lastName}`.trim(),
+        username: formValues.username,
+        email: formValues.email,
+        firstName: formValues.firstName,
+        lastName: formValues.lastName,
+        roles: formValues.roles,
+        status: formValues.status,
+        phoneNumber: formValues.phoneNumber,
+        password: formValues.password
+      };
+      
+      this.userService.addUser(newUserData).subscribe({
         next: () => {
           this.router.navigate(['/admin/users']);
         },
@@ -140,6 +148,18 @@ export class UserPageComponent implements OnInit {
         }
       });
     } else {
+      const userData: User = {
+        id: this.userId || 0,
+        name: `${formValues.firstName} ${formValues.lastName}`.trim(),
+        username: formValues.username,
+        email: formValues.email,
+        firstName: formValues.firstName,
+        lastName: formValues.lastName,
+        roles: formValues.roles,
+        status: formValues.status,
+        phoneNumber: formValues.phoneNumber
+      };
+      
       this.userService.updateUser(userData).subscribe({
         next: () => {
           this.router.navigate(['/admin/users']);
