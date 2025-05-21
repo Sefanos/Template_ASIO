@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { User } from '../../../models/user.model';
 import { PaginatedResponse, UserFilters, UserService } from '../../../services/admin-service/user.service';
 
@@ -45,6 +47,8 @@ export class UsersComponent implements OnInit {
   };
   
   loading = false;
+
+  private searchSubject = new Subject<string>();
   
   constructor(
     private userService: UserService,
@@ -54,6 +58,14 @@ export class UsersComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsers();
     this.loadUserCounts();
+    
+    // Setup search debouncing
+    this.searchSubject.pipe(
+      debounceTime(400), // Wait 400ms after last event before emitting
+      distinctUntilChanged() // Only emit if value changed
+    ).subscribe(() => {
+      this.onSearch();
+    });
   }
   
   // Add a getter for paginatedUsers to fix the template error
@@ -89,6 +101,7 @@ export class UsersComponent implements OnInit {
     } else if (!this.statusFilters.active && !this.statusFilters.pending && this.statusFilters.suspended) {
       statusFilter = 'suspended';
     }
+    // If multiple or none are selected, leave statusFilter empty
     
     const filters: UserFilters = {
       ...this.filters,
@@ -116,6 +129,10 @@ export class UsersComponent implements OnInit {
   onSearch(): void {
     this.filters.page = 1; // Reset to first page when searching
     this.loadUsers();
+  }
+
+  onSearchInput(event: any): void {
+    this.searchSubject.next(event.target.value);
   }
   
   onStatusFilterChange(): void {
@@ -243,5 +260,24 @@ export class UsersComponent implements OnInit {
   exportUserData(): void {
     // Implement export functionality
     console.log('Export user data clicked');
+  }
+
+  sortBy(field: string): void {
+    if (this.filters.sort_by === field) {
+      // Toggle direction if already sorting by this field
+      this.filters.sort_direction = this.filters.sort_direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Default to ascending when changing sort field
+      this.filters.sort_by = field;
+      this.filters.sort_direction = 'asc';
+    }
+    
+    this.filters.page = 1; // Reset to first page
+    this.loadUsers();
+  }
+
+  getSortIndicator(field: string): string {
+    if (this.filters.sort_by !== field) return '';
+    return this.filters.sort_direction === 'asc' ? '↑' : '↓';
   }
 }
