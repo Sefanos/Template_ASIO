@@ -4,21 +4,22 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  status: 'active' | 'pending' | 'suspended';
-  roles: Role[];
-  username?: string; // Keeping for backward compatibility
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  lastLogin?: string;
+  roles: (Role | number)[] | Role[] | number[];
+  status: string;
+  phone?: string;
+  phoneNumber?: string; // Keep for backward compatibility, but use phone
   created_at?: string;
   updated_at?: string;
 }
 
-// Add this interface to your existing user.model.ts file
-export interface UserCreationDto extends Omit<User, 'id'> {
-  id?: number;
-  password?: string;
+export interface UserCreationDto {
+  name: string;
+  email: string;
+  status: string;
+  phone?: string; // This matches what your Laravel backend expects
+  roles: number[];
+  password: string;
+  password_confirmation: string;
 }
 
 // Authentication response from backend

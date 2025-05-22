@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { isRoleObject } from '../../../models/role-utils';
 import { Role } from '../../../models/role.model';
 import { User, UserCreationDto } from '../../../models/user.model';
 import { UserService } from '../../../services/admin-service/user.service';
@@ -21,6 +22,9 @@ export class UserPageComponent implements OnInit {
   showPassword = false;
   showConfirmPassword = false;
   formSubmitted = false;
+  loading = false;
+  errorMessage: string | null = null;
+  validationErrors: { [key: string]: string[] } = {};
   
   constructor(
     private fb: FormBuilder,
@@ -32,18 +36,32 @@ export class UserPageComponent implements OnInit {
   }
   
   ngOnInit(): void {
+    this.loading = true;
+    
     // Load available roles and statuses
     this.userService.getRoles().subscribe({
       next: (roles) => {
         this.roles = roles;
+        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading roles:', error);
         this.roles = [];
+        this.loading = false;
+        this.errorMessage = 'Failed to load roles. Please try again.';
       }
     });
     
-    this.userService.getStatuses().subscribe(statuses => this.statuses = statuses);
+    this.userService.getStatuses().subscribe({
+      next: (statuses) => {
+        this.statuses = statuses;
+      },
+      error: (error) => {
+        console.error('Error loading statuses:', error);
+        // Default fallback statuses
+        this.statuses = ['active', 'pending', 'inactive']; 
+      }
+    });
     
     // Get user ID from route params
     this.route.paramMap.subscribe(params => {
@@ -53,6 +71,7 @@ export class UserPageComponent implements OnInit {
         this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
         this.userForm.get('confirmPassword')?.setValidators([Validators.required, Validators.minLength(8)]);
         this.userForm.updateValueAndValidity();
+        this.loading = false;
       } else if (idParam) {
         this.userId = +idParam;
         this.loadUserData(+idParam);
@@ -64,16 +83,15 @@ export class UserPageComponent implements OnInit {
   
   private createForm(): FormGroup {
     return this.fb.group({
-      username: ['', [Validators.required]],
+      name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      firstName: [''],
-      lastName: [''],
       roles: [[], [Validators.required]],
       status: ['active', [Validators.required]],
       phoneNumber: [''],
       password: [''],
       confirmPassword: [''],
-      changePassword: [false]
+      changePassword: [false],
+      forceChange: [true]
     }, {
       validators: this.passwordMatchValidator
     });
@@ -84,7 +102,8 @@ export class UserPageComponent implements OnInit {
     const password = fg.get('password')?.value;
     const confirmPassword = fg.get('confirmPassword')?.value;
     
-    if (changePassword && password !== confirmPassword) {
+    if ((changePassword || fg.get('password')?.hasValidator(Validators.required)) && 
+         password !== confirmPassword) {
       fg.get('confirmPassword')?.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     } else {
@@ -93,82 +112,191 @@ export class UserPageComponent implements OnInit {
   }
   
   loadUserData(userId: number): void {
+    this.loading = true;
     this.userService.getUser(userId).subscribe({
       next: (user) => {
         if (user) {
+          // Handle both role objects and role IDs
+          let roleIds: number[] = [];
+          if (user.roles && user.roles.length > 0) {
+            roleIds = user.roles.map(role => isRoleObject(role) ? role.id : role);
+          }
+          
+          console.log('Selected roles:', roleIds);
+          
           this.userForm.patchValue({
-            username: user.username,
+            name: user.name || '',
             email: user.email,
-            firstName: user.firstName || '',
-            lastName: user.lastName || '',
-            roles: user.roles,
-            status: user.status,
-            phoneNumber: user.phoneNumber || '',
-            changePassword: false
+            roles: roleIds,
+            status: user.status || 'active',
+            phoneNumber: user.phone || user.phoneNumber || '',
+            changePassword: false,
+            forceChange: true
           });
         } else {
           this.router.navigate(['/admin/users']);
         }
+        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading user:', error);
-        this.router.navigate(['/admin/users']);
+        this.errorMessage = 'Failed to load user data. Please try again.';
+        this.loading = false;
       }
     });
   }
   
   onSubmit(): void {
     this.formSubmitted = true;
+    this.errorMessage = null;
+    this.validationErrors = {};
     
     if (this.userForm.invalid) {
       return;
     }
     
     const formValues = this.userForm.value;
+    this.loading = true;
     
     if (this.isNewUser) {
       const newUserData: UserCreationDto = {
-        name: `${formValues.firstName} ${formValues.lastName}`.trim(),
-        username: formValues.username,
+        name: formValues.name,
         email: formValues.email,
-        firstName: formValues.firstName,
-        lastName: formValues.lastName,
         roles: formValues.roles,
         status: formValues.status,
-        phoneNumber: formValues.phoneNumber,
-        password: formValues.password
+        // Important: Use 'phone' instead of 'phoneNumber'
+        phone: formValues.phoneNumber,
+        password: formValues.password,
+        password_confirmation: formValues.confirmPassword
       };
       
+      console.log('Creating new user with data:', newUserData);
+      
       this.userService.addUser(newUserData).subscribe({
-        next: () => {
-          this.router.navigate(['/admin/users']);
+        next: (user) => {
+          console.log('User created successfully:', user);
+          
+          // For a new user, we need to explicitly assign roles after creation
+          if (formValues.roles && formValues.roles.length > 0) {
+            this.userService.assignRoles(user.id, formValues.roles).subscribe({
+              next: () => {
+                console.log('Roles assigned to new user');
+                this.router.navigate(['/admin/users']);
+              },
+              error: (roleError) => {
+                console.error('Error assigning roles to new user:', roleError);
+                // Continue anyway since the user was created
+                this.router.navigate(['/admin/users']);
+              }
+            });
+          } else {
+            this.router.navigate(['/admin/users']);
+          }
         },
         error: (error) => {
           console.error('Error creating user:', error);
+          this.loading = false;
+          
+          if (error.error && error.error.errors) {
+            this.validationErrors = error.error.errors;
+            this.errorMessage = error.error.message || 'Failed to create user. Please check the form for errors.';
+          } else {
+            this.errorMessage = 'Failed to create user. Please try again.';
+          }
         }
       });
     } else {
+      // Updating existing user
       const userData: User = {
         id: this.userId || 0,
-        name: `${formValues.firstName} ${formValues.lastName}`.trim(),
-        username: formValues.username,
+        name: formValues.name,
         email: formValues.email,
-        firstName: formValues.firstName,
-        lastName: formValues.lastName,
-        roles: formValues.roles,
+        roles: [], // We'll assign roles separately
         status: formValues.status,
-        phoneNumber: formValues.phoneNumber
+        // Important: Use 'phone' instead of 'phoneNumber'
+        phone: formValues.phoneNumber
       };
       
+      console.log('Updating user with data:', userData);
+      
+      // First update the user's basic info
       this.userService.updateUser(userData).subscribe({
-        next: () => {
-          this.router.navigate(['/admin/users']);
+        next: (updatedUser) => {
+          console.log('User updated successfully:', updatedUser);
+          
+          // Handle role assignment if roles were selected
+          if (formValues.roles && formValues.roles.length > 0) {
+            this.userService.assignRoles(this.userId as number, formValues.roles).subscribe({
+              next: () => {
+                console.log('Roles assigned successfully');
+                
+                // Handle password reset if needed
+                if (formValues.changePassword && formValues.password) {
+                  this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
+                } else {
+                  this.loading = false;
+                  this.router.navigate(['/admin/users']);
+                }
+              },
+              error: (roleError) => {
+                console.error('Error assigning roles:', roleError);
+                this.loading = false;
+                
+                // Continue anyway as basic user info was updated
+                if (formValues.changePassword && formValues.password) {
+                  this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
+                } else {
+                  this.router.navigate(['/admin/users']);
+                }
+              }
+            });
+          } 
+          else {
+            // No roles to assign, handle password reset if needed
+            if (formValues.changePassword && formValues.password) {
+              this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
+            } else {
+              this.loading = false;
+              this.router.navigate(['/admin/users']);
+            }
+          }
         },
         error: (error) => {
           console.error('Error updating user:', error);
+          this.loading = false;
+          
+          if (error.error && error.error.errors) {
+            this.validationErrors = error.error.errors;
+            this.errorMessage = error.error.message || 'Failed to update user. Please check the form for errors.';
+          } else {
+            this.errorMessage = 'Failed to update user. Please try again.';
+          }
         }
       });
     }
+  }
+
+  resetUserPassword(userId: number, password: string, forceChange: boolean): void {
+    this.userService.resetUserPassword(userId, {
+      password: password,
+      force_change: forceChange
+    }).subscribe({
+      next: (response) => {
+        this.loading = false;
+        this.router.navigate(['/admin/users']);
+      },
+      error: (error) => {
+        console.error('Error resetting password:', error);
+        this.loading = false;
+        
+        if (error.error && error.error.errors) {
+          this.validationErrors = error.error.errors;
+          this.errorMessage = error.error.message || 'Failed to reset password. Please check the form for errors.';
+        } else {
+          this.errorMessage = 'Failed to reset password. Please try again.';
+        }
+      }
+    });
   }
   
   onChangePasswordToggle(): void {
@@ -198,5 +326,51 @@ export class UserPageComponent implements OnInit {
   
   cancel(): void {
     this.router.navigate(['/admin/users']);
+  }
+  
+  // Helper methods for form validation
+  hasError(fieldName: string): boolean {
+    return this.formSubmitted && 
+           ((!!this.userForm.get(fieldName)?.errors) || 
+           (!!this.validationErrors[fieldName]));
+  }
+  
+  getErrorMessage(fieldName: string): string {
+    if (this.validationErrors[fieldName]) {
+      return this.validationErrors[fieldName][0];
+    }
+    
+    const field = this.userForm.get(fieldName);
+    if (field?.hasError('required')) {
+      return 'This field is required';
+    } else if (field?.hasError('email')) {
+      return 'Please enter a valid email address';
+    } else if (field?.hasError('minlength')) {
+      return `Minimum length is ${field.getError('minlength').requiredLength} characters`;
+    } else if (field?.hasError('passwordMismatch')) {
+      return 'Passwords do not match';
+    }
+    
+    return 'Invalid value';
+  }
+
+  isRoleSelected(roleId: number): boolean {
+    const selectedRoles = this.userForm.get('roles')?.value || [];
+    return selectedRoles.includes(roleId);
+  }
+
+  toggleRole(roleId: number): void {
+    const selectedRoles = [...(this.userForm.get('roles')?.value || [])];
+    const index = selectedRoles.indexOf(roleId);
+    
+    if (index === -1) {
+      selectedRoles.push(roleId);
+    } else {
+      selectedRoles.splice(index, 1);
+    }
+    
+    this.userForm.patchValue({ roles: selectedRoles });
+    this.userForm.get('roles')?.markAsDirty();
+    this.userForm.updateValueAndValidity();
   }
 }

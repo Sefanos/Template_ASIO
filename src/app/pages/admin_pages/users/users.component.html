@@ -9,10 +9,13 @@
         <input 
           type="text" 
           [(ngModel)]="searchQuery" 
+          (input)="onSearchInput($event)"
           class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="Search by username, email or ID"
+          placeholder="Search by name, email or ID"
         >
-        <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-light">
+        <button 
+          (click)="onSearch()"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-light">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -25,16 +28,16 @@
       <span class="mr-2 text-text">Status:</span>
       <div class="flex space-x-4">
         <label class="inline-flex items-center">
-          <input type="checkbox" [(ngModel)]="filters.active" class="form-checkbox h-4 w-4 text-primary rounded">
-          <span class="ml-2 text-text">Active</span>
+          <input type="checkbox" [(ngModel)]="statusFilters.active" (change)="onStatusFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">Active ({{ userCounts.active }})</span>
         </label>
         <label class="inline-flex items-center">
-          <input type="checkbox" [(ngModel)]="filters.pending" class="form-checkbox h-4 w-4 text-primary rounded">
-          <span class="ml-2 text-text">Pending</span>
+          <input type="checkbox" [(ngModel)]="statusFilters.pending" (change)="onStatusFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">Pending ({{ userCounts.pending }})</span>
         </label>
         <label class="inline-flex items-center">
-          <input type="checkbox" [(ngModel)]="filters.suspended" class="form-checkbox h-4 w-4 text-primary rounded">
-          <span class="ml-2 text-text">Suspended</span>
+          <input type="checkbox" [(ngModel)]="statusFilters.inactive" (change)="onStatusFilterChange()" class="form-checkbox h-4 w-4 text-primary rounded">
+          <span class="ml-2 text-text">inactive ({{ userCounts.inactive }})</span>
         </label>
         <button 
           (click)="showMoreFilters()" 
@@ -43,6 +46,11 @@
           More Filters
         </button>
       </div>
+    </div>
+
+    <!-- Add loading indicator -->
+    <div *ngIf="loading" class="mt-4 flex justify-center">
+      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
     </div>
   </div>
   
@@ -73,8 +81,12 @@
       <table class="min-w-full">
         <thead>
           <tr class="border-b border-border">
-            <th class="px-4 py-3 text-left text-text font-semibold">ID</th>
-            <th class="px-4 py-3 text-left text-text font-semibold">Username</th>
+            <th (click)="sortBy('id')" class="px-4 py-3 text-left text-text font-semibold cursor-pointer hover:bg-gray-50">
+              ID {{ getSortIndicator('id') }}
+            </th>
+            <th (click)="sortBy('name')" class="px-4 py-3 text-left text-text font-semibold cursor-pointer hover:bg-gray-50">
+              Name {{ getSortIndicator('name') }}
+            </th>
             <th class="px-4 py-3 text-left text-text font-semibold">Email</th>
             <th class="px-4 py-3 text-left text-text font-semibold">Role</th>
             <th class="px-4 py-3 text-left text-text font-semibold">Status</th>
@@ -82,10 +94,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let user of paginatedUsers" 
+          <tr *ngFor="let user of users" 
             class="border-b border-border hover:bg-hover transition-colors">
             <td class="px-4 py-3">{{ user.id }}</td>
-            <td class="px-4 py-3">{{ user.username }}</td>
+            <td class="px-4 py-3">{{ user.name }}</td>
             <td class="px-4 py-3">{{ user.email }}</td>
             <td class="px-4 py-3">{{ getUserRoleName(user) }}</td>
             <td class="px-4 py-3">
@@ -121,9 +133,15 @@
             </td>
           </tr>
           <!-- Empty state message when no users match filters -->
-          <tr *ngIf="paginatedUsers.length === 0">
+          <tr *ngIf="users.length === 0 && !loading">
             <td colspan="6" class="px-4 py-8 text-center text-text-light">
-              No users found matching the current filters.
+              <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12h18M3 6h18M3 18h12" />
+                </svg>
+                <p class="text-lg font-medium">No users found</p>
+                <p class="text-sm">Try adjusting your search or filter criteria</p>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -131,7 +149,7 @@
     </div>
     
     <!-- Pagination -->
-    <div class="flex justify-center mt-6" *ngIf="totalPages > 1">
+    <div class="flex justify-center mt-6">
       <nav class="flex items-center space-x-1">
         <button 
           (click)="changePage(currentPage - 1)" 
@@ -174,7 +192,7 @@
     <div class="bg-white rounded-card shadow-card p-8 max-w-md w-full">
       <h3 class="text-lg font-medium mb-4">Confirm Deletion</h3>
       <p class="mb-6 text-text">
-        Are you sure you want to delete the user <span class="font-bold">{{ userToDelete?.username }}</span>? This action cannot be undone.
+        Are you sure you want to delete the user <span class="font-bold">{{ userToDelete?.name }}</span>? This action cannot be undone.
       </p>
       <div class="flex justify-end space-x-3">
         <button 

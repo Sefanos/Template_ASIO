@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-header',
@@ -34,7 +34,7 @@ export class HeaderComponent {
     // Get current user details from auth service
     this.authService.getCurrentUser().subscribe(user => {
       if (user) {
-        this.userName = `${user.firstName} ${user.lastName}`;
+        this.userName = user.name || '';
         this.userEmail = user.email;
       }
     });
