@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { isRoleObject } from '../../../models/role-utils';
@@ -20,7 +20,7 @@ export class UsersComponent implements OnInit {
     page: 1,
     per_page: 10,
     sort_by: 'created_at',
-    sort_direction: 'desc'
+    sort_direction: 'asc' 
   };
   
   statusFilters = {
@@ -53,10 +53,25 @@ export class UsersComponent implements OnInit {
   
   constructor(
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
   
   ngOnInit(): void {
+    // Check for query parameters that might have been passed back from user-page
+    this.route.queryParams.subscribe(params => {
+      if (params['page']) {
+        this.filters.page = +params['page'];
+        this.currentPage = +params['page'];
+      }
+      if (params['sort_by']) {
+        this.filters.sort_by = params['sort_by'];
+      }
+      if (params['sort_direction']) {
+        this.filters.sort_direction = params['sort_direction'] as 'asc' | 'desc';
+      }
+    });
+    
     this.loadUsers();
     this.loadUserCounts();
     
@@ -175,19 +190,30 @@ export class UsersComponent implements OnInit {
   
   navigateToNewUser(): void {
     this.loading = true; // Show loading indicator
-    this.router.navigate(['/admin/user-page/new'])
+    this.router.navigate(['/admin/user-page/new'], {
+      queryParams: {
+        returnPage: this.currentPage,
+        sortBy: this.filters.sort_by,
+        sortDirection: this.filters.sort_direction
+      }
+    })
       .then(() => {
         this.loading = false;
       })
       .catch(error => {
         console.error('Navigation error:', error);
         this.loading = false;
-        // You could display an error message here
       });
   }
   
   editUser(id: number): void {
-    this.router.navigate([`/admin/user-page/${id}`]);  // Changed from '/admin/users/${id}'
+    this.router.navigate([`/admin/user-page/${id}`], {
+      queryParams: {
+        returnPage: this.currentPage,
+        sortBy: this.filters.sort_by,
+        sortDirection: this.filters.sort_direction
+      }
+    });
   }
   
   confirmDelete(user: User): void {
@@ -219,7 +245,9 @@ export class UsersComponent implements OnInit {
   
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
+      console.log(`Changing to page ${page} of ${this.totalPages}`);
       this.filters.page = page;
+      this.currentPage = page; 
       this.loadUsers();
     }
   }
@@ -290,5 +318,9 @@ export class UsersComponent implements OnInit {
   getSortIndicator(field: string): string {
     if (this.filters.sort_by !== field) return '';
     return this.filters.sort_direction === 'asc' ? '↑' : '↓';
+  }
+
+  getRowNumber(index: number): number {
+    return (this.currentPage - 1) * this.pageSize + index + 1;
   }
 }
