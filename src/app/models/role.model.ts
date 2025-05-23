@@ -5,6 +5,7 @@ export interface Role {
   description?: string;
   permissions?: Permission[];
   permissionIds?: number[]; // For role creation/updating
+  permissionsCount?: number; // Add this for explicit tracking
   createdAt?: string;
   updatedAt?: string;
 }

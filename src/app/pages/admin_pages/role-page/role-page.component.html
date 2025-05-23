@@ -9,7 +9,36 @@
     <h1 class="text-dashboard-title text-text">{{ isNewRole ? 'ADD NEW ROLE' : 'EDIT ROLE' }}</h1>
   </div>
   
-  <div class="bg-white rounded-card shadow-card p-card-padding">
+  <!-- Error message display -->
+  <div *ngIf="errorMessage" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+    <p>{{ errorMessage }}</p>
+  </div>
+  <div *ngIf="errorMessage" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+    <p>{{ errorMessage }}</p>
+  </div>
+  
+  <!-- Protected role warning -->
+  <div *ngIf="isProtectedRole" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-6 rounded">
+    <div class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <p>This is a system protected role. You can update permissions but name and code cannot be changed.</p>
+    </div>
+  </div>
+  
+  <!-- Loading indicator -->
+  <div *ngIf="loading" class="fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-5 rounded-lg shadow-lg text-center">
+      <svg class="animate-spin h-10 w-10 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p class="mt-2">Processing...</p>
+    </div>
+  </div>
+  
+  <div *ngIf="!loading" class="bg-white rounded-card shadow-card p-card-padding">
     <form [formGroup]="roleForm" (ngSubmit)="onSubmit()">
       <!-- Role Information Section -->
       <div class="mb-6">
@@ -23,12 +52,16 @@
             formControlName="name" 
             class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
             [class.border-status-urgent]="formSubmitted && roleForm.get('name')?.invalid"
+            [placeholder]="isProtectedRole ? 'System role name cannot be changed' : 'Enter role name'"
           >
           <div *ngIf="formSubmitted && roleForm.get('name')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
             Role name is required.
           </div>
           <div *ngIf="roleForm.get('name')?.errors?.['nameExists']" class="text-status-urgent text-sm mt-1">
             This role name already exists.
+          </div>
+          <div *ngIf="roleForm.get('name')?.errors?.['serverError']" class="text-status-urgent text-sm mt-1">
+            {{ roleForm.get('name')?.errors?.['serverError'] }}
           </div>
         </div>
         
@@ -38,6 +71,7 @@
             id="description" 
             formControlName="description" 
             class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
+            placeholder="Enter role description"
           ></textarea>
         </div>
         
@@ -121,7 +155,14 @@
         <button 
           type="submit" 
           class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark"
+          [disabled]="loading"
         >
+          <span *ngIf="loading" class="inline-block mr-2">
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </span>
           {{ isNewRole ? 'Create Role' : 'Save Changes' }}
         </button>
       </div>

@@ -9,6 +9,7 @@
         <input 
           type="text" 
           [(ngModel)]="searchQuery" 
+          (input)="onSearchInput()"
           class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="Search by role name or ID"
         >
@@ -61,14 +62,20 @@
           <tr *ngFor="let role of paginatedRoles" 
             class="border-b border-border hover:bg-hover transition-colors">
             <td class="px-4 py-3">{{ role.id }}</td>
-            <td class="px-4 py-3 font-medium">{{ role.name }}</td>
+            <td class="px-4 py-3">
+              <span [class]="isProtectedRole(role) ? 
+                'font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800' : 
+                'font-medium'">
+                {{ role.name }}
+              </span>
+            </td>
             <td class="px-4 py-3">{{ role.description }}</td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 {{ getPermissionCount(role) }} permissions
               </span>
             </td>
-            <td class="px-4 py-3 text-sm text-text-light">{{ role.updatedAt }}</td>
+            <td class="px-4 py-3 text-sm text-text-light">{{ formatDate(role.updatedAt) }}</td>
             <td class="px-4 py-3">
               <div class="flex space-x-2">
                 <button 
@@ -82,6 +89,7 @@
                   </svg>
                 </button>
                 <button 
+                  *ngIf="!isProtectedRole(role)"
                   (click)="confirmDelete(role)" 
                   class="text-status-urgent hover:text-red-700 transition-colors"
                   title="Delete role"
