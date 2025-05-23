@@ -81,9 +81,7 @@
       <table class="min-w-full">
         <thead>
           <tr class="border-b border-border">
-            <th (click)="sortBy('id')" class="px-4 py-3 text-left text-text font-semibold cursor-pointer hover:bg-gray-50">
-              ID {{ getSortIndicator('id') }}
-            </th>
+            <th class="px-4 py-3 text-left text-text font-semibold">ID</th>
             <th (click)="sortBy('name')" class="px-4 py-3 text-left text-text font-semibold cursor-pointer hover:bg-gray-50">
               Name {{ getSortIndicator('name') }}
             </th>
@@ -94,9 +92,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let user of users" 
+          <tr *ngFor="let user of paginatedUsers; let i = index" 
             class="border-b border-border hover:bg-hover transition-colors">
-            <td class="px-4 py-3">{{ user.id }}</td>
+            <td class="px-4 py-3">{{ getRowNumber(i) }}</td>
             <td class="px-4 py-3">{{ user.name }}</td>
             <td class="px-4 py-3">{{ user.email }}</td>
             <td class="px-4 py-3">{{ getUserRoleName(user) }}</td>

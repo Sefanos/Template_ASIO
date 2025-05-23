@@ -76,7 +76,7 @@ export class UserPageComponent implements OnInit {
         this.userId = +idParam;
         this.loadUserData(+idParam);
       } else {
-        this.router.navigate(['/admin/users']);
+        this.returnToUsersList();
       }
     });
   }
@@ -134,7 +134,7 @@ export class UserPageComponent implements OnInit {
             forceChange: true
           });
         } else {
-          this.router.navigate(['/admin/users']);
+          this.returnToUsersList();
         }
         this.loading = false;
       },
@@ -181,16 +181,16 @@ export class UserPageComponent implements OnInit {
             this.userService.assignRoles(user.id, formValues.roles).subscribe({
               next: () => {
                 console.log('Roles assigned to new user');
-                this.router.navigate(['/admin/users']);
+                this.returnToUsersList();
               },
               error: (roleError) => {
                 console.error('Error assigning roles to new user:', roleError);
                 // Continue anyway since the user was created
-                this.router.navigate(['/admin/users']);
+                this.returnToUsersList();
               }
             });
           } else {
-            this.router.navigate(['/admin/users']);
+            this.returnToUsersList();
           }
         },
         error: (error) => {
@@ -235,7 +235,7 @@ export class UserPageComponent implements OnInit {
                   this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
                 } else {
                   this.loading = false;
-                  this.router.navigate(['/admin/users']);
+                  this.returnToUsersList();
                 }
               },
               error: (roleError) => {
@@ -246,7 +246,7 @@ export class UserPageComponent implements OnInit {
                 if (formValues.changePassword && formValues.password) {
                   this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
                 } else {
-                  this.router.navigate(['/admin/users']);
+                  this.returnToUsersList();
                 }
               }
             });
@@ -257,7 +257,7 @@ export class UserPageComponent implements OnInit {
               this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
             } else {
               this.loading = false;
-              this.router.navigate(['/admin/users']);
+              this.returnToUsersList();
             }
           }
         },
@@ -283,7 +283,7 @@ export class UserPageComponent implements OnInit {
     }).subscribe({
       next: (response) => {
         this.loading = false;
-        this.router.navigate(['/admin/users']);
+        this.returnToUsersList();
       },
       error: (error) => {
         console.error('Error resetting password:', error);
@@ -324,8 +324,25 @@ export class UserPageComponent implements OnInit {
     }
   }
   
+  private returnToUsersList(): void {
+    // Get the return page from query params
+    this.route.queryParams.subscribe(params => {
+      const returnPage = params['returnPage'] || 1;
+      const sortBy = params['sortBy'] || 'created_at';
+      const sortDirection = params['sortDirection'] || 'desc';
+      
+      this.router.navigate(['/admin/users'], {
+        queryParams: {
+          page: returnPage,
+          sort_by: sortBy,
+          sort_direction: sortDirection
+        }
+      });
+    }).unsubscribe(); // Unsubscribe immediately after use
+  }
+
   cancel(): void {
-    this.router.navigate(['/admin/users']);
+    this.returnToUsersList();
   }
   
   // Helper methods for form validation
