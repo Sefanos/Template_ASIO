@@ -1,0 +1,44 @@
+/* Use analytics colors from tailwind config */
+.bg-analytics-login {
+  background-color: #4A8AC2; /* analytics.login from tailwind */
+}
+
+.bg-analytics-session {
+  background-color: #5CBA99; /* analytics.session from tailwind */
+}
+
+.bg-analytics-logout {
+  background-color: #E05C5C; /* analytics.logout from tailwind */
+}
+
+/* Focus styles for keyboard navigation */
+:focus {
+  outline: 2px solid #2C6EAA; /* primary from tailwind */
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .bg-analytics-login,
+  .bg-analytics-session,
+  .bg-analytics-logout {
+    forced-color-adjust: none;
+  }
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.bg-analytics-bg-active {
+    background-color: rgba(74, 138, 194, 0.15);
+  }

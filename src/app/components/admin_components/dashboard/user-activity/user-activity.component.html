@@ -3,7 +3,7 @@
   <div class="flex justify-between items-start mb-2 sm:mb-3 lg:mb-4">
     <h3 class="text-card-title text-primary uppercase font-medium">USER ACTIVITY TIMELINE</h3>
     
-    <div class="flex space-x-1 bg-background rounded-input p-0.5">
+    <div class="flex space-x-1 bg-background rounded-input p-0.5" role="group" attr.aria-label="Time range selection">
       <button 
         *ngFor="let range of ['7d', '30d', '90d']" 
         (click)="changeTimeRange(range)" 
@@ -11,54 +11,123 @@
         [class.shadow-sm]="selectedRange === range"
         [class.text-primary]="selectedRange === range"
         [class.text-text-muted]="selectedRange !== range"
-        class="text-xs px-2 py-1 rounded-input transition-all duration-200">
+        [disabled]="loading"
+        [attr.aria-pressed]="selectedRange === range"
+        [attr.aria-label]="'Show data for ' + getTimeRangeLabel(range)"
+        class="text-xs px-2 py-1 rounded-input transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary">
         {{ range }}
       </button>
     </div>
   </div>
   
-  <!-- Stats summary -->
-  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
-    <div class="bg-analytics-bg-login rounded-input p-2 sm:p-3">
-      <div class="text-xs text-text-light">Total Logins</div>
-      <div class="font-medium text-sm sm:text-base text-primary">{{ totalLogins }}</div>
-    </div>
-    <div class="bg-analytics-bg-session rounded-input p-2 sm:p-3">
-      <div class="text-xs text-text-light">Avg Sessions</div>
-      <div class="font-medium text-sm sm:text-base text-status-success">{{ averageSessions }}</div>
-    </div>
-    <div class="bg-status-warning/10 rounded-input p-2 sm:p-3">
-      <div class="text-xs text-text-light">Peak Day</div>
-      <div class="font-medium text-sm sm:text-base text-status-warning">{{ getPeakDay() }}</div>
+  <!-- Error message -->
+  <div *ngIf="error" class="mb-3 p-2 bg-red-50 text-red-600 rounded text-xs" role="alert">
+    {{ error }}
+  </div>
+
+  <!-- Loading indicator -->
+  <div *ngIf="loading" class="flex justify-center items-center h-48 sm:h-64 lg:h-72" aria-live="polite" aria-busy="true">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-primary border-r-transparent align-[-0.125em]" role="status">
+      <span class="sr-only">Loading activity data...</span>
     </div>
   </div>
   
-  <!-- Chart -->
-  <div class="h-48 sm:h-64 lg:h-72">
-    <canvas #activityChart></canvas>
-  </div>
+  <ng-container *ngIf="!loading">
+    <!-- Stats summary -->
+    <div class="grid grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-4">
+      <!-- Active Sessions Widget -->
+      <div class="bg-analytics-bg-active rounded-input p-2 sm:p-3 relative">
+        <div class="flex justify-between">
+          <div class="text-xs text-text-light">Active Now</div>
+          <button 
+            (click)="refreshActiveSessions()" 
+            [disabled]="loadingActiveSessions"
+            class="text-xs text-text-muted hover:text-primary transition-colors"
+            [attr.aria-label]="'Refresh active sessions data'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex items-end mt-1">
+          <div class="font-medium text-sm sm:text-base text-primary" [attr.aria-label]="'Active users: ' + activeUsers">
+            {{ activeUsers }}
+            <span *ngIf="loadingActiveSessions" class="inline-block w-3 h-3 ml-1">
+              <span class="animate-ping absolute h-2 w-2 rounded-full bg-primary opacity-75"></span>
+              <span class="relative rounded-full h-2 w-2 bg-primary"></span>
+            </span>
+          </div>
+          <div class="text-xs text-text-muted ml-1 mb-0.5">users</div>
+        </div>
+        <div *ngIf="activeSessionsError" class="text-xs text-red-500 mt-1">{{ activeSessionsError }}</div>
+        <div *ngIf="!activeSessionsError && activeSessionsUpdated" class="text-xs text-text-muted mt-1">
+          Updated: {{ formatUpdateTime(activeSessionsUpdated) }}
+        </div>
+      </div>
+      
+      <!-- Original Stat Cards -->
+      <div class="bg-analytics-bg-login rounded-input p-2 sm:p-3">
+        <div class="text-xs text-text-light">Total Logins</div>
+        <div class="font-medium text-sm sm:text-base text-primary" [attr.aria-label]="'Total logins: ' + totalLogins">{{ totalLogins }}</div>
+      </div>
+      <div class="bg-analytics-bg-session rounded-input p-2 sm:p-3">
+        <div class="text-xs text-text-light">Avg Sessions</div>
+        <div class="font-medium text-sm sm:text-base text-status-success" [attr.aria-label]="'Average sessions: ' + averageSessions">{{ averageSessions }}</div>
+      </div>
+      <div class="bg-status-warning/10 rounded-input p-2 sm:p-3">
+        <div class="text-xs text-text-light">Peak Day</div>
+        <div class="font-medium text-sm sm:text-base text-status-warning" [attr.aria-label]="'Peak day: ' + getPeakDay()">{{ getPeakDay() }}</div>
+      </div>
+    </div>
+    
+    <!-- Chart -->
+    <div class="h-48 sm:h-64 lg:h-72" attr.aria-label="Line chart of user activity over time">
+      <canvas #activityChart></canvas>
+    </div>
+    
+    <!-- Chart data table for screen readers -->
+    <table class="sr-only">
+      <caption>User activity data for the past {{selectedRange}}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Logins</th>
+          <th scope="col">Active Sessions</th>
+          <th scope="col">Logouts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let label of activityData.labels; let i = index">
+          <td>{{formatDate(label)}}</td>
+          <td>{{activityData.datasets[0].data[i]}}</td>
+          <td>{{activityData.datasets[1].data[i]}}</td>
+          <td>{{activityData.datasets[2].data[i]}}</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <!-- Legend -->
+    <div class="flex items-center justify-center space-x-4 mt-2 sm:mt-3" role="list" attr.aria-label="Chart legend">
+      <div class="flex items-center gap-1.5 sm:gap-2" role="listitem">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-login" aria-hidden="true"></span>
+        <span class="text-xs sm:text-sm text-text-light">Logins</span>
+      </div>
+      <div class="flex items-center gap-1.5 sm:gap-2" role="listitem">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-session" aria-hidden="true"></span>
+        <span class="text-xs sm:text-sm text-text-light">Active Sessions</span>
+      </div>
+      <div class="flex items-center gap-1.5 sm:gap-2" role="listitem">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-logout" aria-hidden="true"></span>
+        <span class="text-xs sm:text-sm text-text-light">Logouts</span>
+      </div>
+    </div>
+  </ng-container>
   
-  <!-- Legend -->
-  <div class="flex items-center justify-center space-x-4 mt-2 sm:mt-3">
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-login"></span>
-      <span class="text-xs sm:text-sm text-text-light">Logins</span>
-    </div>
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-session"></span>
-      <span class="text-xs sm:text-sm text-text-light">Active Sessions</span>
-    </div>
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-logout"></span>
-      <span class="text-xs sm:text-sm text-text-light">Logouts</span>
-    </div>
-  </div>
-  
-  <!-- Footer with link -->
+  <!-- Footer with link - uncommented and enhanced -->
   <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
-    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center">
+    <a routerLink="/admin/analytics/user-activity" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center focus:outline-none focus:underline">
       View Detailed Analytics
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
       </svg>
     </a>
