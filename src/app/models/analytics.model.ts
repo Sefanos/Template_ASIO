@@ -62,3 +62,44 @@ export interface ActivityChartData {
   labels: string[];
   datasets: ChartDataset[];
 }
+
+export interface UserStatusCounts {
+  active: number;
+  pending: number;
+  inactive: number;
+}
+
+export interface UserStatsData {
+  total_users: number;
+  new_users: number;
+  by_status: UserStatusCounts;
+  timeframe: string;
+}
+
+export interface UserStatsResponse {
+  success: boolean;
+  data: UserStatsData;
+  message?: string;
+  errors?: {[key: string]: string[]};
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  code: string;
+  users_count: number;
+  permissions_count: number;
+}
+
+export interface RoleStats {
+  roles: Role[];
+  total_roles: number;
+  total_assigned: number;
+}
+
+export interface RoleStatsResponse {
+  success: boolean;
+  data: RoleStats;
+  message?: string;
+  errors?: {[key: string]: string[]};
+}

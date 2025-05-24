@@ -1,26 +1,38 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { Chart, ChartData, ChartType, registerables } from 'chart.js';
+import { Subscription } from 'rxjs';
+import { UserStatusCounts } from '../../../../models/analytics.model';
+import { AnalyticsService } from '../../../../services/analytics.service';
 
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-user-status-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './user-status-overview.component.html'
 })
-export class UserStatusOverviewComponent implements OnInit, AfterViewInit {
+export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('statusChart') chartCanvas!: ElementRef<HTMLCanvasElement>;
   
   chart: Chart | null = null;
+  loading = true;
+  error: string | null = null;
   
-  // Dummy data - will be replaced with API data
-  userData = {
-    active: 157,
-    pending: 42,
-    inactive: 23,
+  // User data
+  userData: UserStatusCounts = {
+    active: 0,
+    pending: 0,
+    inactive: 0
   };
+  
+  newUsers: number = 0;
+  timeframe: string = 'month';
+  lastUpdated: Date | null = null;
+  
+  private subscription = new Subscription();
   
   // Calculated metrics
   get totalUsers(): number {
@@ -28,33 +40,84 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit {
   }
   
   get activePercentage(): number {
-    return Math.round((this.userData.active / this.totalUsers) * 100);
+    return this.totalUsers ? Math.round((this.userData.active / this.totalUsers) * 100) : 0;
   }
   
   get pendingPercentage(): number {
-    return Math.round((this.userData.pending / this.totalUsers) * 100);
+    return this.totalUsers ? Math.round((this.userData.pending / this.totalUsers) * 100) : 0;
   }
   
   get inactivePercentage(): number {
-    return Math.round((this.userData.inactive / this.totalUsers) * 100);
+    return this.totalUsers ? Math.round((this.userData.inactive / this.totalUsers) * 100) : 0;
   }
   
-  constructor() {}
+  constructor(private analyticsService: AnalyticsService) {}
   
   ngOnInit(): void {
-    // In real implementation, this would call an API service
-    // this.userService.getUserStatusCounts().subscribe(data => {
-    //   this.userData = data;
-    //   this.updateChart();
-    // });
+    this.loadData();
   }
   
   ngAfterViewInit(): void {
-    this.createChart();
+    if (!this.loading) {
+      this.createChart();
+    }
   }
   
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+    if (this.chart) {
+      this.chart.destroy();
+    }
+  }
+  
+  /**
+   * Load user status data from API
+   */
+  loadData(forceRefresh: boolean = false): void {
+    this.loading = true;
+    this.error = null;
+    
+    this.subscription.add(
+      this.analyticsService.getUserStats(this.timeframe, forceRefresh).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.userData = response.data.by_status;
+            this.newUsers = response.data.new_users;
+            this.timeframe = response.data.timeframe;
+            this.lastUpdated = new Date();
+            
+            if (this.chart) {
+              this.updateChart();
+            } else if (this.chartCanvas) {
+              this.createChart();
+            }
+          } else {
+            this.error = response.message || 'Failed to load user statistics';
+          }
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading user statistics:', error);
+          this.error = error.message || 'Could not load user data. Please try again.';
+          this.loading = false;
+        }
+      })
+    );
+  }
+  
+  /**
+   * Manually refresh data
+   */
+  refreshData(): void {
+    if (this.loading) return;
+    this.loadData(true);
+  }
+  
+  /**
+   * Create chart visualization
+   */
   createChart(): void {
-    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    const ctx = this.chartCanvas?.nativeElement.getContext('2d');
     if (!ctx) return;
     
     const data: ChartData = {
@@ -113,6 +176,9 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit {
     });
   }
   
+  /**
+   * Update chart with new data
+   */
   updateChart(): void {
     if (this.chart) {
       this.chart.data.datasets[0].data = [
@@ -124,22 +190,23 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit {
     }
   }
   
-  // Function to fetch data from API (to be implemented)
-  fetchData(): void {
-    // This would be replaced with actual API call
-    // this.userService.getUserStatusCounts().subscribe(data => {
-    //   this.userData = data;
-    //   this.updateChart();
-    // });
-    
-    // For now, just using dummy data
-    setTimeout(() => {
-      this.userData = {
-        active: Math.floor(Math.random() * 200) + 100,
-        pending: Math.floor(Math.random() * 50) + 20,
-        inactive: Math.floor(Math.random() * 40) + 10,
-      };
-      this.updateChart();
-    }, 2000);
+  /**
+   * Format the last updated time
+   */
+  formatLastUpdated(): string {
+    return this.lastUpdated ? this.lastUpdated.toLocaleTimeString() : 'N/A';
+  }
+  
+  /**
+   * Get timeframe in human-readable format
+   */
+  getTimeframeLabel(): string {
+    switch (this.timeframe) {
+      case 'day': return 'Today';
+      case 'week': return 'This Week';
+      case 'month': return 'This Month';
+      case 'year': return 'This Year';
+      default: return this.timeframe;
+    }
   }
 }

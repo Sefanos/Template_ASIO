@@ -1,20 +1,51 @@
 <div class="bg-card rounded-card p-3 sm:p-4 lg:p-5 border border-border shadow-card hover:shadow-card-hover transition-shadow duration-300 h-full flex flex-col">
   <div class="flex justify-between items-start mb-2">
     <h3 class="text-card-title text-primary uppercase font-medium">USER ROLES</h3>
-    <span class="text-xs font-medium px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">
-      {{ totalUsers }} Total
-    </span>
+    
+    <div class="flex items-center space-x-2">
+      <span *ngIf="!loading && !error" class="text-xs font-medium px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">
+        {{ totalUsers }} Total
+      </span>
+      <button 
+        (click)="refreshData()" 
+        [disabled]="loading"
+        class="text-xs text-text-muted hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 rounded-full p-1"
+        [attr.aria-label]="'Refresh role data'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            [class.animate-spin]="loading">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Error message -->
+  <div *ngIf="error" class="mb-3 p-2 bg-red-50 text-red-600 rounded text-xs" role="alert">
+    {{ error }}
+    <button 
+      (click)="refreshData()" 
+      class="ml-2 text-primary hover:text-primary-dark underline focus:outline-none"
+      aria-label="Try again">
+      Try again
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading && !error" class="flex justify-center items-center flex-grow" aria-live="polite" aria-busy="true">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-primary border-r-transparent align-[-0.125em]" role="status">
+      <span class="sr-only">Loading role data...</span>
+    </div>
   </div>
   
   <!-- Roles list -->
-  <div class="space-y-2 flex-grow">
+  <div *ngIf="!loading && !error" class="space-y-2 flex-grow">
     <div *ngFor="let role of roles" class="group">
       <div class="flex items-center gap-4 mb-1">
         <div class="flex items-center gap-1.5">
           <div class="flex items-center justify-center w-5 h-5 rounded-full" [style.background-color]="role.bgColor">
             <i [class]="getIconClass(role.icon)" [style.color]="role.color"></i>
           </div>
-          <span class="text-xs font-medium capitalize">{{ role.type }}s</span>
+          <span class="text-xs font-medium capitalize">{{ role.type }}</span>
         </div>
         <div class="flex-grow h-1.5 bg-background rounded-full overflow-hidden">
           <div class="h-full rounded-full" 
@@ -24,12 +55,25 @@
         </div>
         <span class="text-xs font-medium min-w-[40px] text-right">{{ role.count }}</span>
       </div>
+      <div *ngIf="role.details" class="text-[10px] text-text-muted ml-6.5 hidden group-hover:block">
+        {{ role.details }}
+      </div>
+    </div>
+    
+    <!-- Empty state -->
+    <div *ngIf="roles.length === 0" class="text-center py-4 text-sm text-text-muted">
+      No roles data available
+    </div>
+    
+    <!-- Last updated timestamp -->
+    <div *ngIf="lastUpdated" class="text-[10px] text-text-muted text-right mt-2">
+      Updated: {{ formatLastUpdated() }}
     </div>
   </div>
   
   <!-- Footer with link -->
   <div class="pt-2 mt-2 border-t border-border">
-    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs inline-flex items-center">
+    <a routerLink="/admin/user-management/roles" class="text-primary hover:text-primary-dark font-medium text-xs inline-flex items-center focus:outline-none focus:underline">
       Manage User Roles
       <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

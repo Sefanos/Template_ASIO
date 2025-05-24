@@ -3,7 +3,7 @@
   <div class="flex justify-between items-start mb-2 sm:mb-3 lg:mb-4">
     <h3 class="text-card-title text-primary uppercase font-medium">USER ACTIVITY TIMELINE</h3>
     
-    <div class="flex space-x-1 bg-background rounded-input p-0.5" role="group" attr.aria-label="Time range selection">
+    <div class="flex space-x-1 bg-background rounded-input p-0.5" role="group" aria-label="Time range selection">
       <button 
         *ngFor="let range of ['7d', '30d', '90d']" 
         (click)="changeTimeRange(range)" 
@@ -81,7 +81,7 @@
     </div>
     
     <!-- Chart -->
-    <div class="h-48 sm:h-64 lg:h-72" attr.aria-label="Line chart of user activity over time">
+    <div class="h-48 sm:h-64 lg:h-72" aria-label="Line chart of user activity over time">
       <canvas #activityChart></canvas>
     </div>
     
@@ -107,7 +107,7 @@
     </table>
     
     <!-- Legend -->
-    <div class="flex items-center justify-center space-x-4 mt-2 sm:mt-3" role="list" attr.aria-label="Chart legend">
+    <div class="flex items-center justify-center space-x-4 mt-2 sm:mt-3" role="list" aria-label="Chart legend">
       <div class="flex items-center gap-1.5 sm:gap-2" role="listitem">
         <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-analytics-login" aria-hidden="true"></span>
         <span class="text-xs sm:text-sm text-text-light">Logins</span>
@@ -122,14 +122,4 @@
       </div>
     </div>
   </ng-container>
-  
-  <!-- Footer with link - uncommented and enhanced -->
-  <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
-    <a routerLink="/admin/analytics/user-activity" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center focus:outline-none focus:underline">
-      View Detailed Analytics
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-      </svg>
-    </a>
-  </div>
 </div>
