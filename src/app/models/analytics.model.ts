@@ -103,3 +103,24 @@ export interface RoleStatsResponse {
   message?: string;
   errors?: {[key: string]: string[]};
 }
+
+export interface RegistrationMetrics {
+  total_registrations: number;
+  growth_rate: number;
+  average_daily: number;
+  peak_day: string;
+}
+
+export interface RegistrationData {
+  dates: string[];
+  counts: number[];
+  metrics: RegistrationMetrics;
+  timeframe: string;
+}
+
+export interface RegistrationResponse {
+  success: boolean;
+  data: RegistrationData;
+  message?: string;
+  errors?: {[key: string]: string[]};
+}

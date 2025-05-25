@@ -116,7 +116,10 @@
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
                 </button>
+                
+                <!-- Only show delete button for non-admin users -->
                 <button 
+                  *ngIf="!isAdminUser(user)"
                   (click)="confirmDelete(user)" 
                   class="text-status-urgent hover:text-red-700 transition-colors"
                   title="Delete user"
@@ -127,6 +130,18 @@
                     <line x1="14" y1="11" x2="14" y2="17"></line>
                   </svg>
                 </button>
+                
+                <!-- Optional: Show disabled indicator for admin users -->
+                <span 
+                  *ngIf="isAdminUser(user)" 
+                  class="text-gray-300 cursor-not-allowed opacity-50" 
+                  title="Admin users cannot be deleted">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </span>
               </div>
             </td>
           </tr>

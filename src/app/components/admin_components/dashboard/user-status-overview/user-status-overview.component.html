@@ -33,7 +33,15 @@
     <!-- Chart container -->
     <div class="flex justify-center mb-4 sm:mb-5 relative">
       <div class="w-36 h-36 sm:w-44 sm:h-44">
-        <canvas #statusChart aria-label="Doughnut chart showing user status distribution"></canvas>
+        <canvas #statusChart style="width: 100%; height: 100%;" aria-label="Doughnut chart showing user status distribution"></canvas>
+        
+        <!-- Fallback button if chart doesn't appear -->
+        <button 
+          *ngIf="totalUsers > 0 && !chart" 
+          (click)="reinitializeChart()"
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-white px-3 py-1.5 rounded-button hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+          Show Chart
+        </button>
       </div>
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="text-center">
@@ -80,4 +88,14 @@
       Updated: {{ formatLastUpdated() }}
     </div>
   </ng-container>
+
+
+  <div class="pt-2 mt-2 border-t border-border">
+    <a routerLink="/admin/roles" class="text-primary hover:text-primary-dark font-medium text-xs inline-flex items-center focus:outline-none focus:underline">
+      Manage User Roles
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
 </div>
