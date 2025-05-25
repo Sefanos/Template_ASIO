@@ -1,0 +1,12 @@
+/* Add these colors to your theme configuration if not already present */
+.bg-analytics-users-active {
+  background-color: #5CBA99;
+}
+
+.bg-analytics-users-pending {
+  background-color: #F0B86C;
+}
+
+.bg-analytics-users-inactive {
+  background-color: #8096A7;
+}
