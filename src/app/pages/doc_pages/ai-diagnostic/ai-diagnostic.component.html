@@ -1,1 +1,271 @@
-<p>ai-diagnostic works!</p>
+<div class="container mx-auto p-6">
+  <h1 class="text-dashboard-title text-primary mb-4">AI DIAGNOSTIC TOOL</h1>
+  <p class="text-text-light mb-6">Upload medical images for AI-powered diagnostic analysis</p>
+  
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Upload Form Section -->
+    <div class="lg:col-span-1">
+      <div class="card bg-white p-5 rounded-lg border border-border shadow">
+        <h2 class="text-section-header text-primary mb-4">Image Upload</h2>
+        
+        <form [formGroup]="uploadForm" (ngSubmit)="analyzeImage()">
+          <!-- Condition Type Selection -->
+          <div class="mb-4">
+            <label class="block text-text-light mb-1 font-medium">Analysis Type:</label>
+            <select formControlName="conditionType" class="form-select w-full">
+              <option *ngFor="let type of conditionTypes" [value]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+          </div>
+          
+          <!-- Patient Selection -->
+          <div class="mb-4">
+            <label class="block text-text-light mb-1 font-medium">Patient (Optional):</label>
+            
+            <div *ngIf="!selectedPatient" class="relative">
+              <input 
+                type="text" 
+                class="form-input w-full"
+                placeholder="Search patient by name or ID..."
+                [(ngModel)]="searchQuery" 
+                [ngModelOptions]="{standalone: true}"
+                (input)="searchPatients()" 
+              />
+              
+              <!-- Search Results Dropdown -->
+              <div *ngIf="searchQuery && filteredPatients.length > 0" class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                <ul class="py-1 max-h-60 overflow-auto">
+                  <li *ngFor="let patient of filteredPatients" 
+                      class="px-3 py-2 hover:bg-hover cursor-pointer" 
+                      (click)="selectPatient(patient)">
+                    {{ patient.name }} (ID: {{ patient.id }})
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <!-- Selected Patient Display -->
+            <div *ngIf="selectedPatient" class="flex items-center justify-between p-2 bg-hover rounded mt-1">
+              <span>{{ selectedPatient.name }}</span>
+              <button type="button" class="text-text-muted hover:text-primary" (click)="clearSelectedPatient()">
+                ✕
+              </button>
+            </div>
+          </div>
+          
+          <!-- Image Upload -->
+          <div class="mb-4">
+            <label class="block text-text-light mb-1 font-medium">Upload Image:</label>
+            <div class="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+              <input 
+                type="file" 
+                id="imageUpload" 
+                class="hidden" 
+                accept="image/jpeg,image/png,image/jpg"
+                (change)="onImageSelected($event)" 
+              />
+              <label for="imageUpload" class="cursor-pointer block">
+                <div class="flex flex-col items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-text-muted mb-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" />
+                    <path d="M9 13h2v5a1 1 0 11-2 0v-5z" />
+                  </svg>
+                  <p class="text-sm text-text-light">Click to upload or drag and drop</p>
+                  <p class="text-xs text-text-muted mt-1">JPG, PNG files (max 10MB)</p>
+                </div>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Summary Mode Toggle -->
+          <div class="mb-4">
+            <div class="flex items-center">
+              <input 
+                type="checkbox" 
+                id="summaryMode"
+                formControlName="summaryMode"
+                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label for="summaryMode" class="ml-2 block text-sm text-text">
+                Include detailed explanation with medical context
+              </label>
+            </div>
+          </div>
+          
+          <!-- Error Message -->
+          <div *ngIf="errorMessage" class="mb-4 p-2 bg-status-error/10 text-status-error text-sm rounded">
+            {{ errorMessage }}
+          </div>
+          
+          <!-- Submit Button -->
+          <div class="flex space-x-2">
+            <button 
+              type="submit" 
+              class="btn-primary flex-grow"
+              [disabled]="uploadForm.invalid || isAnalyzing"
+            >
+              <span *ngIf="!isAnalyzing">Analyze Image</span>
+              <span *ngIf="isAnalyzing" class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Analyzing...
+              </span>
+            </button>
+            
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              (click)="resetForm()" 
+              [disabled]="isAnalyzing"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Results Display Section -->
+    <div class="lg:col-span-2">
+      <div class="card bg-white p-5 rounded-lg border border-border shadow h-full">
+        <!-- Image Preview -->
+        <div *ngIf="!analysisResult && uploadedImage" class="mb-4">
+          <h2 class="text-section-header text-primary mb-2">Image Preview</h2>
+          <div class="h-64 flex items-center justify-center border border-border rounded-lg overflow-hidden">
+            <img [src]="uploadedImage" alt="Upload Preview" class="max-w-full max-h-full object-contain" />
+          </div>
+        </div>
+        
+        <!-- No Content State -->
+        <div *ngIf="!uploadedImage && !analysisResult" class="h-full flex flex-col items-center justify-center text-center p-8">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-text-muted mb-4" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" />
+          </svg>
+          <h3 class="text-lg font-medium text-text-light mb-2">No analysis results yet</h3>
+          <p class="text-text-muted">Upload an image and analyze it to see the AI diagnostic results here.</p>
+        </div>
+        
+        <!-- Replace the current analysis results section with this -->
+
+<!-- Analysis Results -->
+<div *ngIf="analysisResult" class="space-y-6">
+  <h2 class="text-section-header text-primary">Analysis Results</h2>
+  
+  <!-- Image and Primary Prediction -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Image -->
+    <div>
+      <p class="text-sm font-medium text-text-muted mb-1">Analyzed Image</p>
+      <div class="border border-border rounded-lg overflow-hidden h-48">
+        <img [src]="uploadedImage" alt="Analyzed Image" class="w-full h-full object-contain" />
+      </div>
+      <div class="mt-2 text-xs text-text-muted">
+        Analysis timestamp: {{ formatTimestamp(analysisResult.timestamp) }}
+      </div>
+    </div>
+    
+    <!-- Primary Results -->
+    <div class="flex flex-col">
+      <p class="text-sm font-medium text-text-muted mb-1">AI Prediction</p>
+      <div class="border border-border rounded-lg p-4 flex-grow">
+        <div class="mb-3">
+          <p class="text-sm text-text-muted">Analysis Type:</p>
+          <p class="font-medium capitalize">{{ analysisResult.condition_type }} detection</p>
+        </div>
+        
+        <div class="mb-3">
+          <p class="text-sm text-text-muted">Diagnosis:</p>
+          <p class="font-medium text-lg" [ngClass]="getPredictionColorClass(analysisResult.ml_prediction.predicted_class)">
+            {{ analysisResult.ml_prediction.diagnosis }}
+          </p>
+        </div>
+        
+        <div>
+          <p class="text-sm text-text-muted">Confidence:</p>
+          <p class="font-medium" [ngClass]="getConfidenceColorClass(analysisResult.ml_prediction.confidence/100)">
+            {{ analysisResult.ml_prediction.confidence.toFixed(1) }}%
+          </p>
+          <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+            <div class="h-2 rounded-full" 
+                 [ngClass]="getConfidenceColorClass(analysisResult.ml_prediction.confidence/100)"
+                 [style.width.%]="analysisResult.ml_prediction.confidence"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical Context Information -->
+  <div *ngIf="analysisResult.medical_context">
+    <h3 class="text-lg font-medium text-text mb-2">Medical Context</h3>
+    <div class="border border-border rounded-lg p-4 bg-hover/30">
+      <p class="text-text mb-3">{{ analysisResult.medical_context.description }}</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Risk Factors -->
+        <div>
+          <h4 class="text-sm font-medium text-text-muted mb-2">Risk Factors:</h4>
+          <ul class="list-disc pl-5 text-text">
+            <li *ngFor="let factor of analysisResult.medical_context.risk_factors" class="mb-1">
+              {{ factor }}
+            </li>
+          </ul>
+        </div>
+        
+        <!-- Follow-up Tests -->
+        <div>
+          <h4 class="text-sm font-medium text-text-muted mb-2">Recommended Follow-up:</h4>
+          <ul class="list-disc pl-5 text-text">
+            <li *ngFor="let test of analysisResult.medical_context.follow_up_tests" class="mb-1">
+              {{ test }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- LLM Analysis -->
+  <div *ngIf="analysisResult.llm_analysis">
+    <h3 class="text-lg font-medium text-text mb-2">AI-Assisted Interpretation</h3>
+    <div class="border border-border rounded-lg p-5 bg-white">
+      <div class="markdown-content" [innerHTML]="formatMarkdown(analysisResult.llm_analysis)"></div>
+    </div>
+  </div>
+  
+  <!-- Actions -->
+  <div class="flex flex-wrap gap-2">
+    <button class="btn-outline-primary" *ngIf="analysisResult.analysis_id">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+      </svg>
+      Patient History
+    </button>
+    <button class="btn-outline-secondary">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+      </svg>
+      Download Report
+    </button>
+    <button class="btn-outline-secondary" (click)="resetForm()">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+      </svg>
+      New Analysis
+    </button>
+  </div>
+  
+  <!-- Disclaimer -->
+  <div class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-md">
+    <p class="text-amber-800 text-sm flex items-start">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+      </svg>
+      This AI analysis is intended as a diagnostic aid only. Final diagnosis should be made by a qualified healthcare professional.
+    </p>
+  </div>
+</div>
