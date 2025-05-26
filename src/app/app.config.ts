@@ -1,8 +1,8 @@
 import { ApplicationConfig, ErrorHandler } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { httpInterceptorProviders } from './core/interceptors';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './core/interceptors';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 
@@ -20,8 +20,7 @@ class CustomErrorHandler implements ErrorHandler {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
-    provideHttpClient(withInterceptorsFromDi()),
-    httpInterceptorProviders,
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimations(),
     { provide: ErrorHandler, useClass: CustomErrorHandler },
     { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: { hasBackdrop: true } }
