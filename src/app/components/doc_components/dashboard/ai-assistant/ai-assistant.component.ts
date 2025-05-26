@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ai-assistant',
@@ -23,8 +24,10 @@ export class AiAssistantComponent {
     }
   ];
   
+  constructor(private router: Router) {}
+  
   openAiAssistant() {
-    // Logic to open the AI assistant would go here
-    console.log('Opening AI assistant...');
+    // Navigate to the AI diagnostic tool
+    this.router.navigate(['/ai-diagnostic']);
   }
 }
