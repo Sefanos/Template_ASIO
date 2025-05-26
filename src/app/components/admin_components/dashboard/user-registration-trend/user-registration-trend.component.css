@@ -1,0 +1,41 @@
+button:focus-visible {
+  outline: 2px solid #2C6EAA;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .animate-spin {
+    -webkit-animation: none;
+    animation: none;
+  }
+  
+  button[disabled] {
+    opacity: 0.5;
+  }
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+canvas.chartjs-render-monitor {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+  }

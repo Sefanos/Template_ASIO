@@ -10,6 +10,27 @@ import {
   UserStatsResponse
 } from '../models/analytics.model';
 
+export interface RegistrationMetrics {
+  total_registrations: number;
+  growth_rate: number;
+  average_daily: number;
+  peak_day: string;
+}
+
+export interface RegistrationData {
+  dates: string[];
+  counts: number[];
+  metrics: RegistrationMetrics;
+  timeframe: string;
+}
+
+export interface RegistrationResponse {
+  success: boolean;
+  data: RegistrationData;
+  message?: string;
+  errors?: {[key: string]: string[]};
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -179,6 +200,46 @@ export class AnalyticsService {
           }
           
           return throwError(() => new Error('Failed to load role statistics'));
+        })
+      );
+  }
+  
+  /**
+   * Get user registration statistics
+   * @param timeframe - The time range (7d, 30d, 90d)
+   * @returns Observable with registration data
+   */
+  getUserRegistrations(timeframe: string = '30d'): Observable<RegistrationResponse> {
+    const cacheKey = `registrations-${timeframe}`;
+    
+    // If you have a caching mechanism, use it
+    if (this.getCachedData && !this.isCacheExpired) {
+      const cachedData = this.getCachedData<RegistrationResponse>(cacheKey);
+      if (cachedData && !this.isCacheExpired(cacheKey)) {
+        return of(cachedData);
+      }
+    }
+    
+    const params = new HttpParams().set('timeframe', timeframe);
+    
+    return this.http.get<RegistrationResponse>(`${this.apiUrl}/user-registrations`, { params })
+      .pipe(
+        tap(response => {
+          // If you have a caching mechanism, use it
+          if (response.success && this.cacheData) {
+            this.cacheData(cacheKey, response);
+          }
+        }),
+        catchError((error: any) => {
+          console.error('Error fetching user registration data:', error);
+          
+          if (error.status === 403) {
+            return throwError(() => new Error('Permission denied: analytics:view permission required'));
+          } else if (error.status === 401) {
+            return throwError(() => new Error('Authentication expired'));
+          }
+          
+          return throwError(() => new Error('Failed to load registration statistics'));
         })
       );
   }

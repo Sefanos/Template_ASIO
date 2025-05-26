@@ -323,4 +323,31 @@ export class UsersComponent implements OnInit {
   getRowNumber(index: number): number {
     return (this.currentPage - 1) * this.pageSize + index + 1;
   }
+
+  /**
+   * Checks if a user has the admin role
+   * @param user The user to check
+   * @returns True if the user has admin role, false otherwise
+   */
+  isAdminUser(user: User): boolean {
+    if (!user.roles || user.roles.length === 0) {
+      return false;
+    }
+    
+    // Check each role the user has
+    return user.roles.some(role => {
+      if (isRoleObject(role)) {
+        // If it's a role object with name or code
+        const roleName = role.name as string | undefined;
+        const roleCode = role.code as string | undefined;
+        
+        return (roleName?.toLowerCase() === 'admin') || 
+               (roleCode?.toLowerCase() === 'admin');
+      } else if (typeof role === 'string') {
+        // If it's a string representation
+        return (role as string).toLowerCase() === 'admin';
+      }
+      return false;
+    });
+  }
 }

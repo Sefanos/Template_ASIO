@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Chart, ChartData, ChartType, registerables } from 'chart.js';
-import { Subscription } from 'rxjs';
+import { Subscription, fromEvent } from 'rxjs';
 import { UserStatusCounts } from '../../../../models/analytics.model';
 import { AnalyticsService } from '../../../../services/analytics.service';
 
@@ -12,7 +12,15 @@ Chart.register(...registerables);
   selector: 'app-user-status-overview',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './user-status-overview.component.html'
+  templateUrl: './user-status-overview.component.html',
+  styles: [`
+    /* Ensure chart canvas is properly displayed */
+    canvas.chartjs-render-monitor {
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  `]
 })
 export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('statusChart') chartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -33,6 +41,8 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
   lastUpdated: Date | null = null;
   
   private subscription = new Subscription();
+  private resizeObserver: ResizeObserver | null = null;
+  private chartInitialized = false;
   
   // Calculated metrics
   get totalUsers(): number {
@@ -55,18 +65,67 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
   
   ngOnInit(): void {
     this.loadData();
+    
+    // Add visibility change detection to recreate chart when tab becomes visible again
+    this.subscription.add(
+      fromEvent(document, 'visibilitychange').subscribe(() => {
+        if (document.visibilityState === 'visible' && !this.loading) {
+          // When tab becomes visible, check and recreate chart if needed
+          setTimeout(() => {
+            if (!this.chart && this.chartCanvas) {
+              console.log('Tab visible again, recreating chart');
+              this.createChart();
+            }
+          }, 100);
+        }
+      })
+    );
   }
   
   ngAfterViewInit(): void {
-    if (!this.loading) {
-      this.createChart();
+    // Setup ResizeObserver for the chart container
+    if (this.chartCanvas && this.chartCanvas.nativeElement) {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.chart) {
+          console.log('Container resized, updating chart');
+          this.chart.resize();
+        } else if (!this.loading && this.totalUsers > 0) {
+          console.log('Container resized, creating chart');
+          this.createChart();
+        }
+      });
+      
+      this.resizeObserver.observe(this.chartCanvas.nativeElement);
+    }
+    
+    // Add a delay for initial chart creation
+    setTimeout(() => {
+      if (!this.loading && !this.chart && this.totalUsers > 0) {
+        console.log('Initial chart creation after delay');
+        this.createChart();
+      }
+    }, 300);
+  }
+  
+  // Handle window resize events
+  @HostListener('window:resize')
+  onResize() {
+    if (this.chart) {
+      this.chart.resize();
     }
   }
   
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    
     if (this.chart) {
       this.chart.destroy();
+      this.chart = null;
+    }
+    
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
     }
   }
   
@@ -86,11 +145,14 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
             this.timeframe = response.data.timeframe;
             this.lastUpdated = new Date();
             
-            if (this.chart) {
-              this.updateChart();
-            } else if (this.chartCanvas) {
-              this.createChart();
-            }
+            // Use a longer delay to ensure DOM is ready before chart creation/update
+            setTimeout(() => {
+              if (this.chart) {
+                this.updateChart();
+              } else if (this.chartCanvas) {
+                this.createChart();
+              }
+            }, 300);
           } else {
             this.error = response.message || 'Failed to load user statistics';
           }
@@ -117,8 +179,34 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
    * Create chart visualization
    */
   createChart(): void {
-    const ctx = this.chartCanvas?.nativeElement.getContext('2d');
-    if (!ctx) return;
+    console.log('Creating doughnut chart...');
+    
+    if (!this.chartCanvas || !this.chartCanvas.nativeElement) {
+      console.error('Chart canvas element not found');
+      return;
+    }
+    
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get 2D context from canvas element');
+      return;
+    }
+    
+    // Destroy previous chart if it exists
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+    
+    // Wait for the canvas to be properly sized
+    const width = this.chartCanvas.nativeElement.clientWidth;
+    const height = this.chartCanvas.nativeElement.clientHeight;
+    
+    if (width === 0 || height === 0) {
+      console.warn('Canvas has zero width or height, delaying chart creation');
+      setTimeout(() => this.createChart(), 200);
+      return;
+    }
     
     const data: ChartData = {
       labels: ['Active', 'Pending', 'Inactive'],
@@ -165,15 +253,22 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
       animation: {
         animateRotate: true,
         animateScale: true,
-        duration: 1000
+        duration: 800
       }
     };
     
-    this.chart = new Chart(ctx, {
-      type: 'doughnut' as ChartType,
-      data: data,
-      options: options
-    });
+    try {
+      this.chart = new Chart(ctx, {
+        type: 'doughnut' as ChartType,
+        data: data,
+        options: options
+      });
+      console.log('Doughnut chart created successfully');
+      this.chartInitialized = true;
+    } catch (err) {
+      console.error('Error creating chart:', err);
+      this.error = 'Error rendering chart. Click "Show Chart" to try again.';
+    }
   }
   
   /**
@@ -181,6 +276,7 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
    */
   updateChart(): void {
     if (this.chart) {
+      console.log('Updating chart with new data');
       this.chart.data.datasets[0].data = [
         this.userData.active,
         this.userData.pending,
@@ -188,6 +284,14 @@ export class UserStatusOverviewComponent implements OnInit, AfterViewInit, OnDes
       ];
       this.chart.update();
     }
+  }
+  
+  /**
+   * Force re-initialization of the chart - can be called from UI
+   */
+  reinitializeChart(): void {
+    console.log('Manual chart reinitialization requested');
+    this.createChart();
   }
   
   /**
