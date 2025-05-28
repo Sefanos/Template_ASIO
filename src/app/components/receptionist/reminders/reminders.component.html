@@ -1,0 +1,184 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+  <!-- Header unifié avec bouton ajout -->
+  <section class="bg-white border border-gray-200 rounded-xl shadow-md p-6 flex justify-between items-center mb-6">
+    <div class="header-content">
+      <h2 class="text-xl font-bold text-primary">Gestion des Rappels</h2>
+      <p class="text-sm text-text-light mt-1">Suivez les rappels envoyés aux patients en temps réel.</p>
+    </div>
+    <div class="header-actions flex items-center gap-4">
+      <button 
+        (click)="openAddModal()" 
+        class="btn btn-primary px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]">
+        + Nouveau Rappel
+      </button>
+    </div>
+  </section>
+
+  <!-- Liste des rappels -->
+  <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let reminder of reminders"
+         class="reminder-card bg-white border border-gray-200 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">
+      <!-- ID et Statut -->
+      <div class="flex justify-between items-start mb-4">
+        <span class="text-xs font-medium text-gray-500">#{{ reminder.id }}</span>
+        <span class="status-badge capitalize inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+              [ngClass]="getStatusClass(reminder.status)">
+          {{ reminder.status }}
+        </span>
+      </div>
+      <!-- Informations patient -->
+      <div class="patient-info flex items-center mb-3">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               class="w-5 h-5 text-blue-600">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <strong class="text-gray-800">{{ reminder.patientName }}</strong>
+      </div>
+      <!-- Message -->
+      <div class="message text-sm text-gray-700 mb-4 line-clamp-2">
+        <i class="fas fa-envelope mr-2 text-gray-500"></i>
+        {{ reminder.message || 'Aucun message défini' }}
+      </div>
+      <!-- Date -->
+      <div class="date text-xs text-gray-500 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             class="w-4 h-4 mr-2 text-gray-500">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        {{ reminder.date | date:'mediumDate' }}
+      </div>
+      <!-- Actions -->
+      <div class="actions flex justify-end space-x-3 pt-3 border-t border-gray-100">
+        <button (click)="openEditModal(reminder)" title="Modifier" class="btn-action btn-edit text-blue-500 hover:text-blue-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               class="w-5 h-5">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-5 1-1 5L2.3 18.3a2.122 2.122 0 0 1-.3-3.1L11 4z"></path>
+          </svg>
+        </button>
+        <button (click)="deleteReminder(reminder)" title="Supprimer" class="btn-action btn-delete text-red-500 hover:text-red-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               class="w-5 h-5">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="9" y1="10" x2="9" y2="18"></line>
+            <line x1="15" y1="10" x2="15" y2="18"></line>
+          </svg>
+        </button>
+        <button (click)="openViewModal(reminder)" title="Voir" class="btn-action btn-view text-green-500 hover:text-green-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               class="w-5 h-5">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modale d'ajout/édition/visualisation -->
+  <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-fadeIn">
+      <button (click)="closeModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+      <ng-container [ngSwitch]="modalMode">
+        <!-- Ajout -->
+        <form *ngSwitchCase="'add'" (ngSubmit)="saveReminder()" autocomplete="off">
+          <h3 class="text-lg font-bold mb-4 text-indigo-700">Nouveau Rappel</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+              <input type="text" [(ngModel)]="newReminder.patientName" name="patientName" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input type="date" [(ngModel)]="newReminder.date" name="date" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+              <textarea [(ngModel)]="newReminder.message" name="message" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <select [(ngModel)]="newReminder.status" name="status"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="envoyé">Envoyé</option>
+                <option value="en attente">En attente</option>
+                <option value="non lu">Non lu</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-4">
+            <button type="button" (click)="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Annuler</button>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Sauvegarder</button>
+          </div>
+        </form>
+        <!-- Édition -->
+        <form *ngSwitchCase="'edit'" (ngSubmit)="saveReminder()" autocomplete="off">
+          <h3 class="text-lg font-bold mb-4 text-blue-700">Modifier le Rappel</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+              <input type="text" [(ngModel)]="newReminder.patientName" name="patientName" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input type="date" [(ngModel)]="newReminder.date" name="date" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+              <textarea [(ngModel)]="newReminder.message" name="message" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <select [(ngModel)]="newReminder.status" name="status"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="envoyé">Envoyé</option>
+                <option value="en attente">En attente</option>
+                <option value="non lu">Non lu</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-4">
+            <button type="button" (click)="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Annuler</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Mettre à jour</button>
+          </div>
+        </form>
+        <!-- Visualisation -->
+        <div *ngSwitchCase="'view'">
+          <h3 class="text-lg font-bold mb-4 text-green-700">Détails du Rappel</h3>
+          <div class="space-y-2">
+            <p><strong>Patient :</strong> {{ selectedReminder.patientName }}</p>
+            <p><strong>Date :</strong> {{ selectedReminder.date | date:'mediumDate' }}</p>
+            <p><strong>Message :</strong> {{ selectedReminder.message }}</p>
+            <p><strong>Statut :</strong>
+              <span class="inline-flex items-center px-3 py-1 rounded-full border text-xs font-semibold capitalize"
+                    [ngClass]="getStatusClass(selectedReminder.status)">
+                {{ selectedReminder.status }}
+              </span>
+            </p>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button" (click)="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Fermer</button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
