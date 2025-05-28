@@ -1,0 +1,50 @@
+.glass-effect {
+  background: rgba(255, 250, 250, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Pour le style des boutons */
+.view-btn.active {
+  background-color: #3B82F6 !important;
+  color: white !important;
+}
+
+.btn-control:hover svg {
+  transform: translateX(0px);
+  transition: transform 0.3s ease;
+}
+
+.group:hover .btn-control svg {
+  transform: translateX(0px);
+}
+
+/* Icônes animés */
+button svg path,
+button svg polyline {
+  stroke: currentColor;
+}
+
+/* Effets de survol sur les listes */
+.bg-gray-50:hover {
+  background-color: #F0F9FF;
+  transform: translateX(5px);
+  transition: all 0.2s ease;
+}

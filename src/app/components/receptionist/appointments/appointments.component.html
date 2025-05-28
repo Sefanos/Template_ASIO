@@ -1,0 +1,236 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+  <!-- Header -->
+  <section class="bg-white border border-gray-200 rounded-xl shadow-md p-6 mb-6 flex justify-between items-center">
+    <div class="header-content">
+      <h2 class="text-xl font-bold text-primary">Gestion des Rendez-vous</h2>
+      <p class="text-sm text-text-light mt-1">Organisez et suivez vos RDV facilement.</p>
+    </div>
+    <button 
+     (click)="goToPlanning()" 
+     class="btn btn-primary px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]">
+     + Nouveau RDV
+    </button> 
+  </section>
+
+  <!-- Filtres -->
+  <section class="bg-white border border-gray-200 rounded-xl shadow-md p-6 mb-6 glass-effect">
+    <div class="filter-row grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="filter-group">
+        <label for="date-filter" class="block text-sm font-medium text-gray-700 mb-1">Date :</label>
+        <input type="date"
+               id="date-filter"
+               [(ngModel)]="selectedDate"
+               (input)="loadAppointments()"
+               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div class="filter-group">
+        <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Statut :</label>
+        <select id="status-filter"
+                [(ngModel)]="selectedStatus"
+                (change)="loadAppointments()"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Tous</option>
+          <option value="upcoming">À venir</option>
+          <option value="in_progress">En cours</option>
+          <option value="completed">Terminé</option>
+          <option value="canceled">Annulé</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+        <input type="text"
+               id="search"
+               placeholder="Nom du patient..."
+               [(ngModel)]="searchQuery"
+               (input)="loadAppointments()"
+               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Liste des rendez-vous -->
+  <section class="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr class="text-sm text-gray-600 uppercase tracking-wider">
+            <th scope="col" class="px-6 py-3 font-medium text-left">Date & Heure</th>
+            <th scope="col" class="px-6 py-3 font-medium text-left">Patient</th>
+            <th scope="col" class="px-6 py-3 font-medium text-left">Type</th>
+            <th scope="col" class="px-6 py-3 font-medium text-left">Statut</th>
+            <th scope="col" class="px-6 py-3 font-medium text-left">Rappel</th>
+            <th scope="col" class="px-6 py-3 font-medium text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          <tr *ngFor="let app of paginatedAppointments"
+              [class.bg-green-50]="app.status === 'completed'"
+              [class.bg-red-50]="app.status === 'canceled'"
+              [class.bg-blue-50]="app.status === 'upcoming'"
+              [class.bg-yellow-50]="app.status === 'in_progress'"
+              class="hover:bg-gray-50 group transition-colors duration-200 cursor-pointer">
+            <!-- Date & Heure -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ app.time | date:'dd/MM/yyyy HH:mm' }}</td>
+            <!-- Patient -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              {{ app.patient }} {{ app.prenom }}
+            </td>
+            <!-- Type -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ app.type || 'Consultation' }}</td>
+            <!-- Statut -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+                    [class.bg-blue-100.text-blue-700]="app.status === 'upcoming'"
+                    [class.bg-yellow-100.text-yellow-700]="app.status === 'in_progress'"
+                    [class.bg-green-100.text-green-700]="app.status === 'completed'"
+                    [class.bg-red-100.text-red-700]="app.status === 'canceled'">
+                {{ getLabelFromStatus(app.status) }}
+              </span>
+            </td>
+            <!-- Rappel -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ app.reminder || 'Non programmé' }}</td>
+            <!-- Actions -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-right space-x-2">
+              <button title="Modifier" 
+                      (click)="openEditModal(app)"
+                      class="btn-action btn-edit inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-800 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-5 1-1 5L2.3 18.3a2.122 2.122 0 0 1-.3-3.1L11 4z"></path>
+                </svg>
+              </button>
+              <button title="Supprimer" 
+                      (click)="deleteAppointment(app)" 
+                      class="btn-action btn-delete inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-800 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="9" y1="10" x2="9" y2="18"></line>
+                  <line x1="15" y1="10" x2="15" y2="18"></line>
+                </svg>
+              </button>
+              <button title="Détails" 
+                      (click)="viewAppointmentDetails(app)" 
+                      class="btn-action btn-view inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-800 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Pagination -->
+  <section class="mt-6 flex justify-center items-center space-x-2">
+    <button 
+      (click)="currentPage = currentPage > 1 ? currentPage - 1 : currentPage"
+      [disabled]="currentPage === 1"
+      class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50">
+      Précédent
+    </button>
+
+    <!-- Numéros de pages -->
+    <ng-container *ngFor="let _ of getPagesArray(); let i = index">
+      <span 
+        (click)="currentPage = i + 1"
+        class="cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-full"
+        [class]="currentPage === i + 1 ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'">
+        {{ i + 1 }}
+      </span>
+    </ng-container>
+
+    <button 
+      (click)="currentPage = currentPage < totalPages ? currentPage + 1 : currentPage"
+      [disabled]="currentPage === totalPages || totalPages === 0"
+      class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50">
+      Suivant
+    </button>
+  </section>
+
+  <!-- Modale : Détails du RDV -->
+  <div *ngIf="selectedAppointment" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform scale-in">
+      <h3 class="text-lg font-bold mb-4">Détails du Rendez-vous</h3>
+      <div class="space-y-3 text-sm">
+        <p><strong>Patient :</strong> {{ selectedAppointment.patient }} {{ selectedAppointment.prenom }}</p>
+        <p><strong>Date & Heure :</strong> {{ selectedAppointment.time | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p><strong>Type :</strong> {{ selectedAppointment.type || 'Consultation' }}</p>
+        <p><strong>Statut :</strong> 
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize"
+                [class.bg-blue-100.text-blue-700]="selectedAppointment.status === 'upcoming'"
+                [class.bg-yellow-100.text-yellow-700]="selectedAppointment.status === 'in_progress'"
+                [class.bg-green-100.text-green-700]="selectedAppointment.status === 'completed'"
+                [class.bg-red-100.text-red-700]="selectedAppointment.status === 'canceled'">
+            {{ getLabelFromStatus(selectedAppointment.status) }}
+          </span>
+        </p>
+        <p><strong>Rappel :</strong> {{ selectedAppointment.reminder || 'Aucun rappel' }}</p>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button (click)="closeDetailsModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale : Modifier RDV -->
+  <div *ngIf="editingAppointment" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform scale-in">
+      <h3 class="text-lg font-bold mb-4">Modifier le Rendez-vous</h3>
+      <form (ngSubmit)="saveUpdatedAppointment()">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nom du patient</label>
+          <input type="text" [(ngModel)]="editingAppointment.nom_patient" name="nom_patient" required
+                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Prénom du patient</label>
+          <input type="text" [(ngModel)]="editingAppointment.prenom_patient" name="prenom_patient"
+                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date & Heure</label>
+          <input type="datetime-local" [(ngModel)]="editingAppointment.date_heure" name="date_heure" required
+                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <select [(ngModel)]="editingAppointment.type" name="type"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="Consultation">Consultation</option>
+            <option value="Suivi">Suivi</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+          <select [(ngModel)]="editingAppointment.status" name="status"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="upcoming">À venir</option>
+            <option value="in_progress">En cours</option>
+            <option value="completed">Terminé</option>
+            <option value="canceled">Annulé</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rappel</label>
+          <input type="text" [(ngModel)]="editingAppointment.rappel" name="rappel" placeholder="Optionnel..."
+                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="flex justify-end gap-3 mt-4">
+          <button type="button" (click)="closeEditModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+            Annuler
+          </button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
