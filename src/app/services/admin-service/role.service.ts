@@ -199,7 +199,7 @@ export class RoleService {
 
   // Check if a role is a protected system role
   isProtectedRole(roleCode: string): boolean {
-    const protectedRoles = ['admin', 'patient', 'doctor', 'guest'];
+    const protectedRoles = ['admin', 'patient', 'doctor', 'receptionist', 'nurse'];
     return protectedRoles.includes(roleCode);
   }
 
