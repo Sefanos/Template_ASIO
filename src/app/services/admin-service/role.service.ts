@@ -201,7 +201,8 @@ export class RoleService {
   isProtectedRole(roleCode: string): boolean {
     const protectedRoles = ['admin', 'patient', 'doctor', 'receptionist', 'nurse'];
     return protectedRoles.includes(roleCode);
-
+  }
+  
   // Add a method to get the last updated role
   getLastUpdatedRole(): Role | null {
     return this.lastUpdatedRole;
