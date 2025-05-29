@@ -3,21 +3,19 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { ReceptionistLayoutComponent } from './layout/receptionist-layout.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DoctorsPlanningComponent } from './doctors-planning/doctors-planning.component';
-// Remove direct import of MedicalRecordComponent
 import { BillsComponent } from './bills/bills.component';
 import { RemindersComponent } from './reminders/reminders.component';
 import { ProfileComponent } from './profile/profile.component';
+import { LayoutComponent } from './layout/receptionist-layout.component';
 
 @NgModule({
-  declarations: [],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    ReceptionistLayoutComponent,
+    LayoutComponent,
     DashboardComponent,
     DoctorsPlanningComponent,
     BillsComponent,
@@ -26,12 +24,12 @@ import { ProfileComponent } from './profile/profile.component';
     RouterModule.forChild([
       {
         path: '',
-        component: ReceptionistLayoutComponent,
+        component: LayoutComponent,
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent },
+          { path: 'appointments', loadComponent: () => import('./appointments/appointments.component').then(m => m.AppointmentsComponent) },
           { path: 'doctors-planning', component: DoctorsPlanningComponent },
-          // Use lazy loading for medical-record feature module
           { 
             path: 'medical-record', 
             loadChildren: () => import('./medical-record/medical-record.module').then(m => m.MedicalRecordModule) 
