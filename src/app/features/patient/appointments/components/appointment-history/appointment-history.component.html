@@ -1,5 +1,3 @@
-
-
 <div class="appointment-history-container bg-card p-card-padding rounded-card shadow-card font-sans">
   <div class="mb-6">
     <h2 id="appointmentHistoryTitle" class="text-section-header font-display text-text">Your Appointment History</h2>
@@ -48,36 +46,172 @@
           <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Time</th>
           <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Reason</th>
           <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+          <th class="p-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-border">
         <ng-container *ngIf="paginatedAppointments.length > 0; else noAppointments">
-          <tr *ngFor="let appointment of paginatedAppointments; trackBy: trackByAppointmentId" class="hover:bg-hover transition-colors duration-150">
-            <td class="p-3 text-body text-text-light whitespace-nowrap">
-              <i class="far fa-calendar-alt mr-2 text-primary" aria-hidden="true"></i> {{ appointment.date | date:'mediumDate' }}
-            </td>
-            <td class="p-3 text-body text-text-light whitespace-nowrap">
-              <i class="far fa-clock mr-2 text-primary" aria-hidden="true"></i> {{ appointment.time }}
-            </td>
-            <td class="p-3 text-body text-text break-words min-w-[200px]">{{ appointment.reason || 'N/A' }}</td>
-            <td class="p-3 text-body text-text-light whitespace-nowrap">
-              <span
-                class="status-badge inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
-                [ngClass]="{
-                  'bg-status-success/20 text-status-success': appointment.status === 'Confirmed' || appointment.status === 'Completed',
-                  'bg-status-warning/20 text-status-warning': appointment.status === 'Pending',
-                  'bg-status-urgent/20 text-status-urgent': appointment.status === 'Cancelled',
-                  'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(appointment.status ?? '')
-                }"
-              >
-                {{ appointment.status }}
-              </span>
-            </td>
-          </tr>
+          <ng-container *ngFor="let appointment of paginatedAppointments; trackBy: trackByAppointmentId">
+            <!-- Ligne principale -->
+            <tr class="hover:bg-hover transition-colors duration-150">
+              <td class="p-3 text-body text-text-light whitespace-nowrap">
+                <i class="far fa-calendar-alt mr-2 text-primary" aria-hidden="true"></i> {{ appointment.date | date:'mediumDate' }}
+              </td>
+              <td class="p-3 text-body text-text-light whitespace-nowrap">
+                <i class="far fa-clock mr-2 text-primary" aria-hidden="true"></i> {{ appointment.time }}
+              </td>
+              <td class="p-3 text-body text-text break-words min-w-[200px]">{{ appointment.reason || 'N/A' }}</td>
+              <td class="p-3 text-body text-text-light whitespace-nowrap">
+                <span
+                  class="status-badge inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
+                  [ngClass]="{
+                    'bg-status-success/20 text-status-success': appointment.status === 'Confirmed' || appointment.status === 'Completed',
+                    'bg-status-warning/20 text-status-warning': appointment.status === 'Pending',
+                    'bg-status-urgent/20 text-status-urgent': appointment.status === 'Cancelled',
+                    'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(appointment.status || '')
+                  }"
+                >
+                  {{ appointment.status }}
+                </span>
+              </td>
+              <td class="p-3 text-body text-text-light whitespace-nowrap">
+                <button 
+                  (click)="toggleAppointmentDetails(appointment)"
+                  class="text-primary hover:text-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full p-1 transition-colors"
+                  [attr.aria-expanded]="isAppointmentExpanded(appointment.id)"
+                  [attr.aria-label]="isAppointmentExpanded(appointment.id) ? 'Hide details' : 'Show details'"
+                >
+                  <i class="fas" [ngClass]="isAppointmentExpanded(appointment.id) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </button>
+              </td>
+            </tr>
+            
+            <!-- Ligne de détails (expanded) -->
+            <tr *ngIf="isAppointmentExpanded(appointment.id)" class="bg-hover">
+              <td colspan="5" class="p-4">
+                <div class="appointment-details bg-white rounded-lg p-4 shadow-sm border border-border">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Informations sur le rendez-vous -->
+                    <div class="details-section">
+                      <h3 class="font-medium text-text mb-2 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-primary"></i>
+                        Appointment Details
+                      </h3>
+                      <ul class="space-y-2">
+                        <li class="flex items-start">
+                          <span class="text-text-muted w-24">Date:</span>
+                          <span>{{ appointment.date | date:'fullDate' }}</span>
+                        </li>
+                        <li class="flex items-start">
+                          <span class="text-text-muted w-24">Time:</span>
+                          <span>{{ appointment.time }}</span>
+                        </li>
+                        <li class="flex items-start">
+                          <span class="text-text-muted w-24">Status:</span>
+                          <span 
+                            class="status-badge inline-block px-2 py-0.5 text-xs font-semibold rounded-full"
+                            [ngClass]="getStatusClass(appointment.status)"
+                          >
+                            {{ appointment.status }}
+                          </span>
+                        </li>
+                        <li class="flex items-start" *ngIf="appointment.location">
+                          <span class="text-text-muted w-24">Location:</span>
+                          <span>{{ appointment.location }}</span>
+                        </li>
+                        <li class="flex items-start" *ngIf="appointment.followUp">
+                          <span class="text-text-muted w-24">Type:</span>
+                          <span class="bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs">Follow-up visit</span>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <!-- Informations sur le médecin -->
+                    <div class="details-section">
+                      <h3 class="font-medium text-text mb-2 flex items-center">
+                        <i class="fas fa-user-md mr-2 text-primary"></i>
+                        Doctor Information
+                      </h3>
+                      <ul class="space-y-2">
+                        <li class="flex items-start">
+                          <span class="text-text-muted w-24">Doctor:</span>
+                          <span>{{ appointment.doctorName }}</span>
+                        </li>
+                        <li class="flex items-start" *ngIf="appointment.doctorSpecialty">
+                          <span class="text-text-muted w-24">Specialty:</span>
+                          <span>{{ appointment.doctorSpecialty }}</span>
+                        </li>
+                      </ul>
+                      <div class="mt-4" *ngIf="appointment.status === 'Completed'">
+                        <a href="#" class="text-primary hover:underline flex items-center text-sm">
+                          <i class="fas fa-file-medical mr-2"></i>
+                          View doctor's notes
+                        </a>
+                      </div>
+                    </div>
+                    
+                    <!-- Raison de la visite -->
+                    <div class="details-section">
+                      <h3 class="font-medium text-text mb-2 flex items-center">
+                        <i class="fas fa-clipboard-list mr-2 text-primary"></i>
+                        Visit Details
+                      </h3>
+                      <div>
+                        <p class="text-text-muted mb-1">Reason:</p>
+                        <p class="text-text">{{ appointment.reason || 'No reason provided' }}</p>
+                      </div>
+                      <div *ngIf="appointment.notes && appointment.notes.length > 0" class="mt-3">
+                        <p class="text-text-muted mb-1">Notes:</p>
+                        <ul class="list-disc pl-5 text-sm text-text">
+                          <li *ngFor="let note of appointment.notes">{{ note }}</li>
+                        </ul>
+                      </div>
+                      <div *ngIf="appointment.cancelReason" class="mt-3">
+                        <p class="text-text-muted mb-1">Cancellation reason:</p>
+                        <p class="text-status-urgent">{{ appointment.cancelReason }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Actions -->
+                  <div class="actions mt-4 pt-3 border-t border-border flex flex-wrap gap-2 justify-end">
+                    <button 
+                      *ngIf="appointment.status === 'Completed'"
+                      (click)="viewMedicalRecord(appointment.id)"
+                      class="btn-action text-sm py-1.5 px-3 rounded-button bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center"
+                    >
+                      <i class="fas fa-file-medical mr-1.5"></i> View Medical Record
+                    </button>
+                    <button 
+                      *ngIf="canReschedule(appointment)"
+                      (click)="rescheduleAppointment(appointment.id)"
+                      class="btn-action text-sm py-1.5 px-3 rounded-button bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center"
+                    >
+                      <i class="fas fa-calendar-alt mr-1.5"></i> Reschedule
+                    </button>
+                    <button 
+                      *ngIf="appointment.status === 'Confirmed'"
+                      (click)="printConfirmation(appointment.id)"
+                      class="btn-action text-sm py-1.5 px-3 rounded-button bg-hover text-text-light hover:bg-hover/80 transition-colors flex items-center"
+                    >
+                      <i class="fas fa-print mr-1.5"></i> Print
+                    </button>
+                    <button 
+                      *ngIf="canCancel(appointment)"
+                      (click)="cancelAppointment(appointment.id)"
+                      class="btn-action text-sm py-1.5 px-3 rounded-button bg-status-urgent/10 text-status-urgent hover:bg-status-urgent/20 transition-colors flex items-center"
+                    >
+                      <i class="fas fa-times mr-1.5"></i> Cancel
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
         </ng-container>
         <ng-template #noAppointments>
           <tr>
-            <td colspan="4" class="no-results text-center py-12 text-text-muted">
+            <td colspan="5" class="no-results text-center py-12 text-text-muted">
               <div class="flex flex-col items-center">
                 <i class="fas fa-folder-open text-4xl mb-3"></i>
                 <span *ngIf="allAppointments.length > 0 && searchTerm.trim() !== ''" class="text-body">No appointments match your search criteria.</span>
@@ -99,7 +233,7 @@
       >
         <i class="fas fa-chevron-left text-xs"></i>
         <span class="hidden sm:inline ml-1">Previous</span>
-      </button>
+      </button> 
       <span
         *ngFor="let page of totalPagesArray()"
         class="page-number py-2 px-3.5 rounded-button text-sm cursor-pointer hover:bg-hover transition-colors duration-150"
