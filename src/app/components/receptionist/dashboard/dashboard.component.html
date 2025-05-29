@@ -1,0 +1,437 @@
+<div class="p-6 space-y-6 bg-gray-50 min-h-screen">
+  <!-- Hero Section -->
+  <section class="relative bg-white border border-gray-200 rounded-xl shadow-md p-6 flex justify-between items-center transition-all duration-300 hover:shadow-lg">
+    <div class="welcome-message space-y-1">
+      <h1 class="text-xl md:text-2xl font-bold text-blue-600">Bienvenue dans votre Espace Santé</h1>
+      <p class="text-sm text-gray-500">Dashboard de réception - Vue d'ensemble du cabinet</p>
+    </div>
+    <div class="buttons-group flex gap-3">
+      <button (click)="openNewAppointmentModal()"
+              class="px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center shadow-sm hover:shadow">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Nouveau RDV
+      </button>
+      <button (click)="openNewPatientModal()"
+              class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-sm hover:shadow transition-all duration-300 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
+          <circle cx="12" cy="7" r="4"></circle>
+          <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+        </svg>
+        Nouveau Patient
+      </button>
+    </div>
+  </section>
+
+  <!-- Stat Cards INTERACTIVES -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+    <!-- Rendez-vous aujourd'hui -->
+    <div class="bg-white/80 border border-blue-100 rounded-2xl shadow-lg p-6 flex items-center gap-5 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+         (click)="openStatModal('today')">
+      <div class="bg-blue-100 text-blue-600 rounded-full p-4 flex-shrink-0 shadow">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <div class="flex-grow">
+        <p class="text-sm text-blue-500 font-medium">Rendez-vous aujourd'hui</p>
+        <h3 class="text-3xl font-bold text-blue-700">{{ todayAppointments }}</h3>
+        <span class="text-xs font-semibold text-green-500">+8% augmentation</span>
+      </div>
+    </div>
+    <!-- Patients en attente -->
+    <div class="bg-white/80 border border-yellow-100 rounded-2xl shadow-lg p-6 flex items-center gap-5 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+         (click)="openStatModal('pending')">
+      <div class="bg-yellow-100 text-yellow-600 rounded-full p-4 flex-shrink-0 shadow">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="6" x2="12" y2="12"></line>
+          <polyline points="12 12 16 16"></polyline>
+        </svg>
+      </div>
+      <div class="flex-grow">
+        <p class="text-sm text-yellow-600 font-medium">Patients en attente</p>
+        <h3 class="text-3xl font-bold text-yellow-700">{{ pendingPatients }}</h3>
+        <span class="text-xs font-semibold text-red-500">-2% diminution</span>
+      </div>
+    </div>
+    <!-- Patients terminés -->
+    <div class="bg-white/80 border border-emerald-100 rounded-2xl shadow-lg p-6 flex items-center gap-5 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+         (click)="openStatModal('finished')">
+      <div class="bg-emerald-100 text-emerald-600 rounded-full p-4 flex-shrink-0 shadow">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
+      <div class="flex-grow">
+        <p class="text-sm text-emerald-600 font-medium">Patients terminés</p>
+        <h3 class="text-3xl font-bold text-emerald-700">{{ finishedPatients }}</h3>
+        <span class="text-xs font-semibold text-green-500">+5% augmentation</span>
+      </div>
+    </div>
+    <!-- Patients en retard -->
+    <div class="bg-white/80 border border-rose-100 rounded-2xl shadow-lg p-6 flex items-center gap-5 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+         (click)="openStatModal('late')">
+      <div class="bg-rose-100 text-rose-600 rounded-full p-4 flex-shrink-0 shadow">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="6" x2="12" y2="12"></line>
+          <polyline points="12 12 16 16"></polyline>
+        </svg>
+      </div>
+      <div class="flex-grow">
+        <p class="text-sm text-rose-600 font-medium">Patients en retard</p>
+        <h3 class="text-3xl font-bold text-rose-700">{{ latePatients }}</h3>
+        <span class="text-xs font-semibold text-rose-500">+3% augmentation</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODALE WOW -->
+  <div *ngIf="selectedStat" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md animate-fadeInUp relative">
+      <button (click)="closeStatModal()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 text-xl font-bold">&times;</button>
+      <div *ngIf="selectedStat === 'today'">
+        <h2 class="text-2xl font-bold text-blue-600 mb-4">Rendez-vous aujourd'hui</h2>
+        <p class="text-gray-500 mb-4">Liste des rendez-vous du jour :</p>
+        <ul class="space-y-2">
+          <li *ngFor="let rdv of calendarEvents" class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+            <img [src]="rdv.photo" class="w-10 h-10 rounded-full object-cover border border-blue-100" />
+            <div>
+              <span class="block font-medium text-blue-700">{{ rdv.title }}</span>
+              <span class="text-xs text-gray-500">{{ rdv.time }}</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div *ngIf="selectedStat === 'pending'">
+        <h2 class="text-2xl font-bold text-yellow-600 mb-4">Patients en attente</h2>
+        <p class="text-gray-500 mb-4">Nombre de patients en attente aujourd'hui : <span class="font-bold">{{ pendingPatients }}</span></p>
+        <div class="flex justify-center">
+          <svg class="w-16 h-16 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="6" x2="12" y2="12"></line>
+            <polyline points="12 12 16 16"></polyline>
+          </svg>
+        </div>
+      </div>
+      <div *ngIf="selectedStat === 'finished'">
+        <h2 class="text-2xl font-bold text-emerald-600 mb-4">Patients terminés</h2>
+        <p class="text-gray-500 mb-4">Nombre de patients terminés aujourd'hui : <span class="font-bold">{{ finishedPatients }}</span></p>
+        <div class="flex justify-center">
+          <svg class="w-16 h-16 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+      <div *ngIf="selectedStat === 'late'">
+        <h2 class="text-2xl font-bold text-rose-600 mb-4">Patients en retard</h2>
+        <p class="text-gray-500 mb-4">Nombre de patients en retard aujourd'hui : <span class="font-bold">{{ latePatients }}</span></p>
+        <div class="flex justify-center">
+          <svg class="w-16 h-16 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="6" x2="12" y2="12"></line>
+            <polyline points="12 12 16 16"></polyline>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Planning du Jour -->
+  <section class="bg-white border border-gray-200 backdrop-blur-sm bg-opacity-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-section-header font-semibold">Planning du jour - Dr. Kamal Berrada</h3>
+      <button class="btn btn-outline text-xs px-3 py-1 rounded-md hover:bg-primary-light hover:text-white transition-colors duration-200">
+        Voir tout
+      </button>
+    </div>
+    <!-- Liste des rendez-vous scrollable -->
+    <div class="overflow-y-auto max-h-[300px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <ul class="space-y-4">
+        <li *ngFor="let appointment of todayAppointmentsList"
+             class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer">
+          <div class="flex items-center space-x-4">
+            <div class="bg-blue-500 text-white rounded-full p-3">
+              <span class="text-sm font-medium">{{ appointment.initials }}</span>
+            </div>
+            <div>
+              <p class="text-sm font-medium">{{ appointment.name }}</p>
+              <span class="text-xs text-gray-500">{{ appointment.type }} avec {{ appointment.doctor }}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <p class="text-sm font-medium">{{ appointment.time }}</p>
+            <span class="status-badge inline-flex items-center px-2 py-1 rounded-full text-xs capitalize"
+                  [class.bg-green-100.text-green-700]="appointment.status === 'completed'"
+                  [class.bg-blue-100.text-blue-700]="appointment.status === 'upcoming'"
+                  [class.bg-red-100.text-red-700]="appointment.status === 'late'">
+              {{ getStatusLabel(appointment.status) }}
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Main Content Grid -->
+  <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Calendar Section -->
+    <section class="bg-white border border-gray-200 backdrop-blur-sm bg-opacity-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Calendrier des RDV</h3>
+        <button class="text-xs px-3 py-1 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-100 transition-colors duration-200">
+          + Ajouter
+        </button>
+      </div>
+      <div class="calendar-placeholder text-center py-12 text-gray-400">
+        <p>Aucun événement pour cette semaine</p>
+      </div>
+    </section>
+
+    <!-- Appointments List -->
+    <!-- Prochains Rendez-vous - Design moderne -->
+<section class="bg-white border border-gray-200 rounded-xl shadow-md p-6">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-lg font-semibold">Prochains Rendez-vous - Dr. Kamal</h3>
+    <button class="text-xs px-3 py-1 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-100 transition-colors duration-200">
+      Voir tout
+    </button>
+  </div>
+  <ul class="space-y-4 mt-4">
+    <li *ngFor="let appointment of upcomingAppointments"
+        class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-white rounded-xl shadow hover:shadow-lg transition">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg shadow">
+          {{ appointment.initials }}
+        </div>
+        <div>
+          <div class="font-semibold text-gray-800">{{ appointment.name }}</div>
+          <div class="text-xs text-gray-500">{{ appointment.type }} &bull; {{ appointment.time }}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+          {{ getStatusLabel(appointment.status) }}
+        </span>
+        <button class="p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition" title="Appeler le patient">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm0 12a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2zm12-12a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zm0 12a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        </button>
+      </div>
+    </li>
+    <li *ngIf="upcomingAppointments.length === 0" class="text-gray-400 text-center py-4">
+      Aucun rendez-vous à venir.
+    </li>
+  </ul>
+</section>
+
+    <!-- Chart Section -->
+    <section class="bg-white border border-gray-200 backdrop-blur-sm bg-opacity-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6">
+      <h3 class="text-lg font-semibold mb-4">Statistiques des RDV</h3>
+      <canvas id="appointments-chart" class="w-full h-40"></canvas>
+    </section>
+
+    <!-- Weekly Overview -->
+    <section class="bg-white border border-gray-200 backdrop-blur-sm bg-opacity-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">WEEKLY OVERVIEW</h3>
+        <span class="date-range text-xs text-gray-500">May 2 - May 8</span>
+      </div>
+      <div class="chart-container h-40 mb-6 flex items-center justify-center">
+        <canvas id="weekly-overview-chart" class="w-full h-full"></canvas>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-blue-50 transition-colors">
+          <p class="text-xs text-gray-500">TOTAL APPOINTMENTS</p>
+          <h4 class="font-bold text-gray-800">32</h4>
+          <span class="change-indicator up text-green-500 text-xs">↑ 8%</span>
+        </div>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-blue-50 transition-colors">
+          <p class="text-xs text-gray-500">OPEN SLOTS</p>
+          <h4 class="font-bold text-gray-800">5</h4>
+          <span class="change-indicator down text-red-500 text-xs">↓ 2%</span>
+        </div>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-blue-50 transition-colors">
+          <p class="text-xs text-gray-500">FOLLOW-UPS</p>
+          <h4 class="font-bold text-gray-800">7</h4>
+          <span class="change-indicator neutral text-gray-500 text-xs">→ 0%</span>
+        </div>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-blue-50 transition-colors">
+          <p class="text-xs text-gray-500">NEW PATIENTS</p>
+          <h4 class="font-bold text-gray-800">6</h4>
+          <span class="change-indicator up text-green-500 text-xs">↑ 12%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Patient Demographics -->
+    <section class="bg-white border border-gray-200 backdrop-blur-sm bg-opacity-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">PATIENT DEMOGRAPHICS</h3>
+        <span class="badge bg-blue-600 text-white text-xs px-2 py-1 rounded-full">1,248 Total</span>
+      </div>
+      <div class="chart-container h-40 mb-4 flex items-center justify-center">
+        <canvas id="gender-distribution-chart" class="w-full h-full"></canvas>
+      </div>
+      <div class="legend flex flex-wrap gap-3 mb-4">
+        <div class="legend-item flex items-center text-sm">
+          <span class="dot inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+          Women (40%) - 499
+        </div>
+        <div class="legend-item flex items-center text-sm">
+          <span class="dot inline-block w-3 h-3 rounded-full bg-amber-500 mr-2"></span>
+          Men (60%) - 749
+        </div>
+      </div>
+      <a href="#" class="btn btn-outline block text-center text-xs px-3 py-1 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-100 transition-colors duration-200">
+        View Demographics
+      </a>
+    </section>
+
+    <!-- Age Distribution -->
+    <section class="bg-white border border-gray-200 backdrop-blur-sm bg-opacity-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6">
+      <h3 class="text-lg font-semibold mb-4">AGE DISTRIBUTION</h3>
+      <div class="chart-container h-40 flex items-center justify-center">
+        <canvas id="age-distribution-chart" class="w-full h-full"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <!-- Formulaire : Nouveau RDV -->
+  <div *ngIf="showAppointmentForm"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
+    <div class="bg-white rounded-xl p-6 w-11/12 md:w-1/2 shadow-2xl transform transition-all animate-scaleIn">
+      <h2 class="text-xl font-bold mb-4">Ajouter un Rendez-vous</h2>
+      <form (submit)="submitAppointment($event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Nom du patient</label>
+          <input type="text" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Date</label>
+          <input type="date" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Heure</label>
+          <input type="time" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Médecin</label>
+          <select class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+            <option>Dr. Kamal Berrada</option>
+            <option>Dr. Imane Tahri</option>
+            <option>Dr. Mohammed El Amrani</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="button" (click)="closeModals()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+            Annuler
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Formulaire : Nouveau Patient -->
+  <div *ngIf="showPatientForm"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
+    <div class="bg-white rounded-xl p-6 w-11/12 md:w-1/2 shadow-2xl transform transition-all animate-scaleIn">
+      <h2 class="text-xl font-bold mb-4">Ajouter un Nouveau Patient</h2>
+      <form (submit)="submitPatient($event)" class="space-y-4">
+        <!-- Nom -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Nom</label>
+          <input type="text" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+
+        <!-- Prénom -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Prénom</label>
+          <input type="text" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+
+        <!-- Téléphone -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Téléphone</label>
+          <input type="tel" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" required
+                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500" />
+        </div>
+
+        <!-- Nationalité -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Nationalité</label>
+          <select required
+                  class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+            <option value="" disabled selected>Choisir une nationalité</option>
+            <option value="marocaine">Marocaine</option>
+            <option value="française">Française</option>
+            <option value="algérienne">Algérienne</option>
+            <option value="tunisienne">Tunisienne</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <!-- Groupe Sanguin -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Type de Sang</label>
+          <select required
+                  class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+            <option value="" disabled selected>Choisir un groupe sanguin</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+
+        <!-- Adresse -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Adresse</label>
+          <textarea rows="2"
+                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"></textarea>
+        </div>
+
+        <!-- Boutons -->
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="button" (click)="closeModals()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+            Annuler
+          </button>
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,349 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+  <!-- Header -->
+  <section class="bg-white border border-gray-200 rounded-xl shadow-md p-6 mb-6 flex justify-between items-center">
+    <div class="header-content">
+      <h2 class="text-xl font-bold text-primary">Gestion des Factures</h2>
+      <p class="text-sm text-text-light mt-1">Suivez et gérez les factures des patients en temps réel.</p>
+    </div>
+    <button 
+      (click)="openAddModal()" 
+      class="btn btn-primary px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]">
+      + Nouvelle Facture
+    </button>
+  </section>
+
+  <!-- Filtres améliorés -->
+  <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg p-6 mb-8">
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- Recherche -->
+      <div class="flex-1">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Rechercher</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <input type="text"
+                 placeholder="Nom du patient, ID facture..."
+                 [(ngModel)]="searchQuery"
+                 class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+        </div>
+      </div>
+
+      <!-- Filtre par date -->
+      <div class="flex-1">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Filtrer par Date</label>
+        <div class="relative">
+          <input type="date"
+                 [(ngModel)]="selectedDate"
+                 class="block w-full px-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+        </div>
+      </div>
+
+      <!-- Bouton de réinitialisation -->
+      <div class="flex items-end">
+        <button 
+          (click)="clearFilters()"
+          class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau moderne -->
+  <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full">
+        <thead>
+          <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ID</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Patient</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Montant</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Description</th>
+            <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let invoice of paginatedInvoices; let i = index" 
+              class="hover:bg-blue-50/50 transition-all duration-200 group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                  {{ invoice.id }}
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
+                  {{ invoice.patientName.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <div class="text-sm font-semibold text-gray-900">{{ invoice.patientName }}</div>
+                  <div class="text-sm text-gray-500">Patient</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.date | date: 'dd/MM/yyyy' }}</div>
+              <div class="text-sm text-gray-500">{{ invoice.date | date: 'EEEE' }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
+                   [class]="getAmountColorClass(invoice.amount)">
+                {{ invoice.amount | currency: 'EUR' }}
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm text-gray-900 max-w-xs truncate" [title]="invoice.description">
+                {{ invoice.description || 'Aucune description' }}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right">
+              <div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button (click)="openViewModal(invoice)" 
+                        class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
+                        title="Voir">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+                <button (click)="openEditModal(invoice)" 
+                        class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                        title="Modifier">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button (click)="deleteInvoice(invoice)" 
+                        class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                        title="Supprimer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Message si aucune facture -->
+      <div *ngIf="paginatedInvoices.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune facture trouvée</h3>
+        <p class="text-gray-500">Commencez par créer votre première facture.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination moderne -->
+  <div *ngIf="totalPages > 1" class="mt-8 flex items-center justify-between">
+    <div class="text-sm text-gray-700">
+      Affichage <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> à 
+      <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredInvoices.length) }}</span> de 
+      <span class="font-medium">{{ filteredInvoices.length }}</span> résultats
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <button 
+        (click)="currentPage = currentPage > 1 ? currentPage - 1 : 1"
+        [disabled]="currentPage === 1"
+        class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+        Précédent
+      </button>
+
+      <ng-container *ngFor="let _ of getPagesArray(); let i = index">
+        <button 
+          (click)="currentPage = i + 1"
+          class="w-10 h-10 rounded-lg font-medium transition-all duration-200"
+          [class]="currentPage === i + 1 ? 
+            'bg-blue-600 text-white shadow-lg' : 
+            'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'">
+          {{ i + 1 }}
+        </button>
+      </ng-container>
+
+      <button 
+        (click)="currentPage = currentPage < totalPages ? currentPage + 1 : currentPage"
+        [disabled]="currentPage === totalPages"
+        class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <!-- Modale moderne -->
+  <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative transform transition-all duration-300 scale-100">
+      <button (click)="closeModal()" 
+              class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <ng-container [ngSwitch]="modalMode">
+        <!-- Formulaire d'ajout -->
+        <form *ngSwitchCase="'add'" (ngSubmit)="saveInvoice()" class="space-y-6">
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900">Nouvelle Facture</h3>
+            <p class="text-gray-600 mt-2">Créez une nouvelle facture pour un patient</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Patient</label>
+              <input type="text" [(ngModel)]="newInvoice.patientName" name="patientName" required
+                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                     placeholder="Nom complet du patient">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <input type="date" [(ngModel)]="newInvoice.date" name="date" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Montant (EUR)</label>
+                <input type="number" [(ngModel)]="newInvoice.amount" name="amount" required min="0" step="0.01"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                       placeholder="0.00">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+              <textarea [(ngModel)]="newInvoice.description" name="description" rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="Description des services ou traitements..."></textarea>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button type="button" (click)="closeModal()" 
+                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">
+              Annuler
+            </button>
+            <button type="submit" 
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+              Créer la Facture
+            </button>
+          </div>
+        </form>
+
+        <!-- Formulaire d'édition -->
+        <form *ngSwitchCase="'edit'" (ngSubmit)="saveInvoice()" class="space-y-6">
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900">Modifier la Facture</h3>
+            <p class="text-gray-600 mt-2">Modifiez les informations de la facture #{{ newInvoice.id }}</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Patient</label>
+              <input type="text" [(ngModel)]="newInvoice.patientName" name="patientName" required
+                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                <input type="date" [(ngModel)]="newInvoice.date" name="date" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Montant (EUR)</label>
+                <input type="number" [(ngModel)]="newInvoice.amount" name="amount" required min="0" step="0.01"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+              <textarea [(ngModel)]="newInvoice.description" name="description" rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"></textarea>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button type="button" (click)="closeModal()" 
+                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">
+              Annuler
+            </button>
+            <button type="submit" 
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+              Mettre à Jour
+            </button>
+          </div>
+        </form>
+
+        <!-- Vue détaillée -->
+        <div *ngSwitchCase="'view'" class="space-y-6">
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900">Détails de la Facture</h3>
+            <p class="text-gray-600 mt-2">Facture #{{ selectedInvoice.id }}</p>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-6 space-y-4">
+            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+              <span class="text-sm font-semibold text-gray-600">Patient</span>
+              <span class="text-lg font-bold text-gray-900">{{ selectedInvoice.patientName }}</span>
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+              <span class="text-sm font-semibold text-gray-600">Date</span>
+              <span class="text-lg text-gray-900">{{ selectedInvoice.date | date: 'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
+              <span class="text-sm font-semibold text-gray-600">Montant</span>
+              <span class="text-xl font-bold text-green-600">{{ selectedInvoice.amount | currency: 'EUR' }}</span>
+            </div>
+            <div class="py-3">
+              <span class="text-sm font-semibold text-gray-600 block mb-2">Description</span>
+              <p class="text-gray-900 bg-white p-4 rounded-lg border">
+                {{ selectedInvoice.description || 'Aucune description fournie' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="button" (click)="closeModal()" 
+                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">
+              Fermer
+            </button>
+            <button type="button" (click)="openEditModal(selectedInvoice); closeModal()" 
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+              Modifier
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
