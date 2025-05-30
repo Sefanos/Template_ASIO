@@ -66,6 +66,12 @@ export class LoginComponent {
         case 'patient':
           this.router.navigate(['/patient/dashboard']);
           break;
+        case 'nurse':
+          this.router.navigate(['/receptionist/dashboard']);
+          break;
+        case 'receptionist':
+          this.router.navigate(['/receptionist/dashboard']);
+          break;
         default:
           console.warn('Unknown role:', role);
           this.error = 'Invalid user role detected';

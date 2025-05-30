@@ -65,6 +65,6 @@ export const routes: Routes = [
     path: 'receptionist',
     loadChildren: () => import('./components/receptionist/receptionist.module').then(m => m.ReceptionistModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['receptionist'] }
+    data: { roles: ['receptionist','nurse'] }
   }
 ];
