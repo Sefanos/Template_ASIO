@@ -1,7 +1,9 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
 import { Bill, PaginatedResponse } from '../../../../../core/patient/domain/models/bill.model';
-import { BillFilters, BillService } from '../../../../../core/patient/services/bill.service.ts.service';
- 
+
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators'; 
+import { BillFilters, BillService } from '../../../../../core/patient/services/bill.service';
 
 @Component({
   selector: 'app-bill-list',
@@ -9,96 +11,86 @@ import { BillFilters, BillService } from '../../../../../core/patient/services/b
   templateUrl: './bill-list.component.html',
   styleUrl: './bill-list.component.css'
 })
-export class BillListComponent implements OnInit, OnChanges {
-  @Input() patientId!: string | number;
-  @Output() billSelected = new EventEmitter<Bill | undefined>(); // Émettre la facture sélectionnée
+
+export class BillListComponent implements OnInit, OnDestroy {
+  @Output() billSelected = new EventEmitter<Bill | undefined>();
 
   billsResponse: PaginatedResponse<Bill> | null = null;
   isLoading = true;
   errorMessage: string | null = null;
-  selectedBillId: number | null = null; // Pour styler la ligne sélectionnée
+  currentSelectedBillId: number | null = null;
 
   filters: BillFilters = {
     page: 1,
     per_page: 10,
-    sort_by: 'issue_date', // Par défaut, les plus récentes en premier
+    sort_by: 'issue_date',
     sort_direction: 'desc',
     date_from: '',
-    date_to: ''
+    date_to: '',
+    status: 'paid' // Par défaut "payée"
   };
-  sortableColumns: { key: 'issue_date' | 'amount', label: string }[] = [
-    { key: 'issue_date', label: "Date d'Émission" },
-    { key: 'amount', label: 'Montant' }
+
+  // Colonnes pour l'affichage et le tri. 'doctor_specialty' est pour affichage seulement.
+  sortableColumns: { key: 'id' | 'issue_date' | 'amount' | 'status' | 'doctor_name', label: string }[] = [
+    { key: 'id', label: "N° Facture" },
+    { key: 'issue_date', label: "Date" },
+    { key: 'doctor_name', label: "Nom Dr." },
+    { key: 'amount', label: 'Montant' },
+    { key: 'status', label: 'Statut' },
   ];
+
+  statusOptions: string[] = ['paid', 'pending', 'overdue', 'cancelled'];
+  private destroy$ = new Subject<void>();
 
   constructor(
     private billService: BillService,
     private cdr: ChangeDetectorRef
   ) {}
+
   ngOnInit(): void {
-    if (this.patientId) {
-      this.loadBills();
-    } else {
-      this.isLoading = false;
-      this.errorMessage = "L'identifiant du patient est requis pour charger les factures.";
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['patientId'] && !changes['patientId'].firstChange && changes['patientId'].currentValue) {
-      this.filters.page = 1;
-      this.selectedBillId = null; // Réinitialiser la sélection si l'ID patient change
-      this.billSelected.emit(undefined); // Émettre undefined pour désélectionner dans le parent
-      this.loadBills();
-    }
-  }
-  loadBills(): void {
-    if (!this.patientId) {
-      this.isLoading = false;
-      this.errorMessage = "L'identifiant du patient est manquant pour charger les factures.";
-      this.billsResponse = null; // Vider les factures précédentes
-      this.selectedBillId = null;
-      this.billSelected.emit(undefined);
-      this.cdr.detectChanges();
-      return;
-  }
-
-    this.isLoading = true;
-    this.errorMessage = null;
-    // Assurez-vous que String(this.patientId) est correct si patientId peut être un nombre
-    this.billService.getPaidBills(String(this.patientId), this.filters).subscribe({
-      next: (response) => {
-        this.billsResponse = response;
-        this.isLoading = false;
-        // Si une facture était sélectionnée et n'est plus dans la liste, désélectionner
-        if (this.selectedBillId && !response.data.find(b => b.id === this.selectedBillId)) {
-            this.selectedBillId = null;
-            this.billSelected.emit(undefined);
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des factures:', err);
-        this.billsResponse = null;
-        this.selectedBillId = null;
-        this.billSelected.emit(undefined);
-        if (err.status === 404) {
-          this.errorMessage = 'Aucune facture payée trouvée pour les critères sélectionnés.';
-        } else if (err.status === 401 || err.status === 403) {
-          this.errorMessage = 'Vous n\'êtes pas autorisé à voir ces informations.';
-        } else {
-          this.errorMessage = 'Une erreur est survenue lors du chargement des factures. Veuillez réessayer plus tard.';
-        }
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-  applyFilters(): void {
-    this.filters.page = 1;
-    // La désélection est gérée dans loadBills si la facture n'est plus visible
     this.loadBills();
   }
+
+  loadBills(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+    // Ne pas réinitialiser currentSelectedBillId ici pour garder la sélection active si elle est toujours dans la liste
+    // this.billSelected.emit(undefined); // Émettre seulement si la sélection change vraiment
+
+    this.billService.getBills(this.filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.billsResponse = response;
+          // Vérifier si la facture actuellement sélectionnée pour détail est toujours dans la nouvelle liste
+          if (this.currentSelectedBillId && !response.data.find(b => b.id === this.currentSelectedBillId)) {
+            this.currentSelectedBillId = null;
+            this.billSelected.emit(undefined); // Désélectionner si elle n'est plus là
+          }
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des factures:', err);
+          this.billsResponse = null;
+          this.currentSelectedBillId = null; // Désélectionner en cas d'erreur
+          this.billSelected.emit(undefined);
+          if (err.status === 404) {
+            this.errorMessage = 'Aucune facture trouvée pour les critères sélectionnés.';
+          } else {
+            this.errorMessage = 'Une erreur est survenue lors du chargement des factures.';
+          }
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  applyFilters(): void {
+    this.filters.page = 1;
+    this.loadBills();
+  }
+
   resetFilters(): void {
     this.filters = {
       page: 1,
@@ -106,15 +98,18 @@ export class BillListComponent implements OnInit, OnChanges {
       sort_by: 'issue_date',
       sort_direction: 'desc',
       date_from: '',
-      date_to: ''
+      date_to: '',
+      status: 'paid'
     };
+    // Ne pas désélectionner ici, loadBills s'en chargera si besoin
     this.loadBills();
   }
-  onSortChange(columnKey: 'issue_date' | 'amount'): void {
+
+  onSortChange(columnKey: 'id' | 'issue_date' | 'amount' | 'status' | 'doctor_name'): void {
     if (this.filters.sort_by === columnKey) {
       this.filters.sort_direction = this.filters.sort_direction === 'asc' ? 'desc' : 'asc';
     } else {
-      this.filters.sort_by = columnKey;
+      this.filters.sort_by = columnKey as BillFilters['sort_by']; // Cast car doctor_name n'est pas dans BillFilters.sort_by
       this.filters.sort_direction = 'desc';
     }
     this.filters.page = 1;
@@ -127,47 +122,54 @@ export class BillListComponent implements OnInit, OnChanges {
       this.loadBills();
     }
   }
-  selectBill(bill: Bill): void {
-    // AMÉLIORATION: Gérer la désélection si on clique sur la même facture
-    if (this.selectedBillId === bill.id) {
-      this.selectedBillId = null;
-      this.billSelected.emit(undefined);
+
+  viewBillDetails(bill: Bill): void {
+    if (this.currentSelectedBillId === bill.id) { // Si on clique sur la même facture déjà sélectionnée
+      this.currentSelectedBillId = null;
+      this.billSelected.emit(undefined); // Désélectionner
     } else {
-      this.selectedBillId = bill.id;
+      this.currentSelectedBillId = bill.id;
       this.billSelected.emit(bill);
     }
   }
-  getPaginationArray(): number[] {
-    if (!this.billsResponse || this.billsResponse.last_page <= 1) {
-      return [];
+
+  downloadBillPdf(bill: Bill, event: MouseEvent): void {
+    event.stopPropagation();
+    if (bill.pdf_link) {
+      window.open(bill.pdf_link, '_blank');
+    } else {
+      alert("Aucun PDF disponible pour cette facture.");
     }
+  }
+
+  getPaginationArray(): number[] {
+    if (!this.billsResponse || this.billsResponse.last_page <= 1) return [];
     const totalPages = this.billsResponse.last_page;
     const currentPage = this.billsResponse.current_page;
     const maxPagesToShow = 5;
     let startPage: number, endPage: number;
-
     if (totalPages <= maxPagesToShow) {
-      startPage = 1;
-      endPage = totalPages;
+      startPage = 1; endPage = totalPages;
     } else {
       const maxPagesBeforeCurrentPage = Math.floor(maxPagesToShow / 2);
       const maxPagesAfterCurrentPage = Math.ceil(maxPagesToShow / 2) - 1;
       if (currentPage <= maxPagesBeforeCurrentPage) {
-        startPage = 1;
-        endPage = maxPagesToShow;
+        startPage = 1; endPage = maxPagesToShow;
       } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
-        startPage = totalPages - maxPagesToShow + 1;
-        endPage = totalPages;
+        startPage = totalPages - maxPagesToShow + 1; endPage = totalPages;
       } else {
-
-        startPage = currentPage - maxPagesBeforeCurrentPage;
-        endPage = currentPage + maxPagesAfterCurrentPage;
+        startPage = currentPage - maxPagesBeforeCurrentPage; endPage = currentPage + maxPagesAfterCurrentPage;
       }
     }
     return Array.from(Array((endPage + 1) - startPage).keys()).map(i => startPage + i);
-  }  
+  }
 
   trackByBillId(index: number, bill: Bill): number {
     return bill.id;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
