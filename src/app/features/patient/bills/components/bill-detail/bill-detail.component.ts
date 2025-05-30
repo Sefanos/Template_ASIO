@@ -1,4 +1,5 @@
-import { Component, Input, SimpleChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { Bill } from '../../../../../core/patient/domain/models/bill.model';
  
  
 @Component({
@@ -8,5 +9,14 @@ import { Component, Input, SimpleChanges } from '@angular/core';
   styleUrl: './bill-detail.component.css'
 })
 export class BillDetailComponent {
+@Input() bill: Bill | undefined = undefined;
+
+  constructor() { }
+
+  downloadPdfFromDetail(): void {
+    if (this.bill?.pdf_link) {
+      window.open(this.bill.pdf_link, '_blank');
+    }
+  }
 
 }
