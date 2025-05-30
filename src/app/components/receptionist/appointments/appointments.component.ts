@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppointmentService } from '../../services/appointment.service';
+// Update the path below if your appointment.service.ts is in a different folder
+import { AppointmentService } from '../../../services/recepetionist-services/appointment.service';
+
 import { Router } from '@angular/router';
 
 @Component({

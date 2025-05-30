@@ -1,24 +1,77 @@
-/* Glass effect */
-.glass-effect {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+/* Active Link Styling for Sidebar */
+.active,
+.bg-blue-600.text-white {
+  background-color: #2563eb !important;
+  color: #fff !important;
+  border-radius: 16px;
+  transition: background 0.2s, color 0.2s;
 }
 
-/* Sidebar link active state */
-.sidebar-link.active {
-  background-color: var(--color-primary);
-  color: white;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Add animation for page transitions */
-.fade-enter {
-  animation: fadeIn 0.3s ease-in-out;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-@keyframes fadeIn {
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.overflow-auto, .overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #2563eb;
+}
+
+/* Animations for page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
+
+.logo-image {
+  height: 40px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.sidebar-logo {
+  animation: fadeInDown 0.5s ease-out;
+  max-width: 85%;
+}
+
+@keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -26,13 +79,6 @@
   }
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+:host-context(.dark) .logo-image {
+  filter: brightness(1.1) contrast(1.1);
 }
