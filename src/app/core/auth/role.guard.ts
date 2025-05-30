@@ -36,6 +36,7 @@ export class RoleGuard implements CanActivate {
     if ((userRole === 'admin' && currentUrl.startsWith('/admin')) || 
         (userRole === 'doctor' && currentUrl.startsWith('/doctor')) ||
         (userRole === 'patient' && currentUrl.startsWith('/patient')) ||
+        (userRole === 'nurse' && currentUrl.startsWith('/receptionist')) ||
         (userRole === 'receptionist' && currentUrl.startsWith('/receptionist'))) {
       console.log('RoleGuard: Already in correct section, allowing access');
       return true;
@@ -53,6 +54,9 @@ export class RoleGuard implements CanActivate {
         case 'patient':
           console.log('RoleGuard: Redirecting to patient dashboard');
           return this.router.createUrlTree(['/patient/dashboard']);
+        case 'nurse':
+          console.log('RoleGuard: Redirecting to nurse dashboard');
+          return this.router.createUrlTree(['/receptionist/dashboard']);
         case 'receptionist':
           console.log('RoleGuard: Redirecting to receptionist dashboard');
           return this.router.createUrlTree(['/receptionist/dashboard']);
