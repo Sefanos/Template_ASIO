@@ -10,33 +10,35 @@ export interface BillFilters {
   per_page?: number;
   date_from?: string;
   date_to?: string;
-  sort_by?: 'issue_date' | 'amount';
+ sort_by?: 'issue_date' | 'amount' | 'status' | 'due_date' | 'doctor_name';
   sort_direction?: 'asc' | 'desc';
+  status?: string; 
 }
 
 @Injectable({
-  providedIn: 'root' // Ou fournissez-le dans BillsModule si vous préférez
+  providedIn: 'root' 
 })
 export class BillService {
   private readonly API_BASE_URL = 'http://localhost:8000/api';
   
   constructor(private http: HttpClient) { }
 
-  getPaidBills(patientId: string, filters: BillFilters = {}): Observable<PaginatedResponse<Bill>> {
-    const url = `${this.API_BASE_URL}/patients/${patientId}/bills`;
+  getBills(filters: BillFilters = {}): Observable<PaginatedResponse<Bill>> {
+    const url = `${this.API_BASE_URL}/bills/first-patient`;
     let params = new HttpParams();
-    if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.page) params = params.set('page', filters.page.toString());
     if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
     if (filters.date_from) params = params.set('date_from', filters.date_from);
     if (filters.date_to) params = params.set('date_to', filters.date_to);
     if (filters.sort_by) params = params.set('sort_by', filters.sort_by);
     if (filters.sort_direction) params = params.set('sort_direction', filters.sort_direction);
+    if (filters.status) params = params.set('status', filters.status);
 
     return this.http.get<PaginatedResponse<Bill>>(url, { params });
   }
 
-  // Si vous avez une route backend pour télécharger directement le PDF
-  // getBillPdf(pdfLink: string): Observable<Blob> {
-  //   return this.http.get(pdfLink, { responseType: 'blob' });
-  // }
+  
+  getBillPdfByLink(pdfLink: string): Observable<Blob> {
+    return this.http.get(pdfLink, { responseType: 'blob' });
+  }
 }
