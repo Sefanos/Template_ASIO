@@ -3,6 +3,7 @@ import { AuthGuard } from './core/auth/auth.guard';
 import { RoleGuard } from './core/auth/role.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { DashboardComponent as adminDashboard } from './pages/admin_pages/dashboard/dashboard.component';
+import { FinancialDashboardComponent } from './pages/admin_pages/financial-dashboard/financial-dashboard.component';
 import { RolePageComponent } from './pages/admin_pages/role-page/role-page.component';
 import { RolesComponent } from './pages/admin_pages/roles/roles.component';
 import { UserPageComponent } from './pages/admin_pages/user-page/user-page.component';
@@ -13,6 +14,7 @@ import { DashboardComponent as docDashboard } from './pages/doc_pages/dashboard/
 import { PatientManagementComponent } from './pages/doc_pages/patient-management/patient-management.component';
 import { PatientRecordComponent } from './pages/doc_pages/patient-record/patient-record.component';
 import { PrescriptionComponent } from './pages/doc_pages/prescription/prescription.component';
+
 
 export const routes: Routes = [
   {
@@ -51,7 +53,8 @@ export const routes: Routes = [
       { path: 'users/:id', component: UserPageComponent },
       { path: 'user-page/:id', component: UserPageComponent },
       { path: 'roles', component: RolesComponent },
-      { path: 'role/:id', component: RolePageComponent }
+      { path: 'role/:id', component: RolePageComponent },
+      { path: 'financial-dashboard', component: FinancialDashboardComponent }
     ]
   },
   {

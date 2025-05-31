@@ -3,6 +3,7 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { SafeHtmlPipe } from './safe-html.pipe'; // Import du pipe
+import { AuthService } from '../../../core/auth/auth.service';
 
 // Animation fade pour les menus et modales
 const fadeAnimation = trigger('fadeAnimation', [
@@ -57,7 +58,7 @@ export class LayoutComponent implements OnInit {
     { route: 'profile', label: 'Profil', icon: 'profile', count: 0 }
   ];
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit(): void {
     // Check if dark mode was previously enabled
@@ -131,6 +132,8 @@ export class LayoutComponent implements OnInit {
 
   // Confirme la déconnexion
   logout(): void {
+
+    this.authService.logout();
     this.showLogoutModal = false;
     // Logique de déconnexion (vider le token, etc.)
     this.router.navigate(['/login']);

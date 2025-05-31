@@ -70,6 +70,11 @@ export class SidebarService {
       label: 'Roles & Permissions',
       route: '/admin/roles',
       icon: 'shield'
+    },
+    {
+      label: 'Financial Dashboard',
+      route: '/admin/financial-dashboard',
+      icon: 'bar-chart-2'
     }
   ];
 
