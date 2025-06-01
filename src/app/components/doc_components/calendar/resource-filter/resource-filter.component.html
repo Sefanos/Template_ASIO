@@ -30,7 +30,7 @@
         <div class="flex items-center">
           <div 
             class="h-3 w-3 rounded-full mr-2" 
-            [style.backgroundColor]="resource.eventColor || '#4285F4'"
+            [style.backgroundColor]="resource.eventColor || 'var(--color-primary)'"
           ></div>
           <span class="text-sm">{{ resource.title }}</span>
           <span class="text-xs text-text-light ml-1" *ngIf="resource.extendedProps?.specialty">
