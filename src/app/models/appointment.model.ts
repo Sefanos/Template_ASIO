@@ -16,7 +16,7 @@ export enum AppointmentType {
 }
 
 export interface Appointment {
-  patientEmail?: any;
+  patientEmail?: string;
   patientPhone?: any;
   id: number;
   patientId: number;
