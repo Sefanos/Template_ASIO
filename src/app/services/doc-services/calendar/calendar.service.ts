@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { CalendarEvent,CalendarResource } from '../../../models/calendar/calendar.model';
+import { CalendarEvent, CalendarResource } from '../../../models/calendar/calendar.model';
 import { Observable, of } from 'rxjs';
 
 @Injectable({
