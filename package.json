@@ -28,6 +28,7 @@
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/list": "^6.1.17",
     "@fullcalendar/resource-timegrid": "^6.1.17",
+    "@fullcalendar/resource-timeline": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
     "chart.heatmap.js": "^0.0.1-alpha",
     "chart.js": "^4.4.9",

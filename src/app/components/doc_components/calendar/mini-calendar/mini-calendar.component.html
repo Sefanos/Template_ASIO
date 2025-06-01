@@ -35,12 +35,14 @@
   <div class="grid grid-cols-7 gap-1">
     <div 
       *ngFor="let day of calendarDays" 
-      class="aspect-square flex items-center justify-center text-sm relative cursor-pointer rounded"
+      class="aspect-square flex items-center justify-center text-sm relative cursor-pointer rounded transition-colors"
       [ngClass]="{
         'text-gray-400': !day.currentMonth,
         'text-gray-900': day.currentMonth && !isSelectedDate(day.date),
-        'bg-blue-500 text-white rounded': isSelectedDate(day.date),
-        'hover:bg-gray-100': !isSelectedDate(day.date)
+        'bg-primary text-white': isSelectedDate(day.date),
+        'hover:bg-hover': !isSelectedDate(day.date),
+        'font-semibold': day.currentMonth && isToday(day.date) && !isSelectedDate(day.date),
+        'ring-2 ring-primary ring-opacity-50': day.currentMonth && isToday(day.date) && !isSelectedDate(day.date)
       }"
       (click)="selectDate(day.date)"
     >
@@ -48,13 +50,23 @@
       
       <!-- Event Indicator Dot -->
       <div *ngIf="day.hasEvents" 
-           class="absolute bottom-1 left-1/2 transform -translate-x-1/2 h-1 w-1 rounded-full"
+           class="absolute bottom-1 left-1/2 transform -translate-x-1/2 h-1.5 w-1.5 rounded-full"
            [ngClass]="{
-             'bg-blue-500': !isSelectedDate(day.date) && !day.hasUrgentEvents,
+             'bg-primary': !isSelectedDate(day.date) && !day.hasUrgentEvents,
              'bg-red-500': !isSelectedDate(day.date) && day.hasUrgentEvents,
              'bg-white': isSelectedDate(day.date)
            }">
       </div>
     </div>
+  </div>
+  
+  <!-- Today button -->
+  <div class="mt-4 flex justify-center">
+    <button 
+      (click)="goToToday()"
+      class="text-xs text-primary hover:text-primary-dark font-medium px-3 py-1 rounded-md hover:bg-primary-light hover:bg-opacity-10 transition-colors"
+    >
+      Today
+    </button>
   </div>
 </div>

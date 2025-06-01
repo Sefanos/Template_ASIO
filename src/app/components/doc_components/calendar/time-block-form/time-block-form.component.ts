@@ -2,8 +2,8 @@ import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
-import { CalendarEvent } from '../../../../models/calendar/calendar-event.model';
-import { CalendarResource } from '../../../../models/calendar/calendar-resource.model';
+import { CalendarEvent , CalendarResource } from '../../../../models/calendar/calendar.model';
+
 
 @Component({
   selector: 'app-time-block-form',

@@ -1,8 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, Input, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
-import { CalendarResource } from '../../../../models/calendar/calendar-resource.model';
+import { CalendarResource } from '../../../../models/calendar/calendar.model';
+import { CalendarContainerComponent } from '../calendar-container/calendar-container.component';
 
 @Component({
   selector: 'app-resource-filter',
@@ -12,46 +12,79 @@ import { CalendarResource } from '../../../../models/calendar/calendar-resource.
   styleUrls: ['./resource-filter.component.css']
 })
 export class ResourceFilterComponent implements OnInit {
-  private calendarService = inject(CalendarService);
+  @Input() resources: CalendarResource[] = [];
+  @Input() filteredDoctorIds: string[] = [];
   
-  // Get reactive state from service
-  resources = this.calendarService.resources;
-  filteredDoctorIds = this.calendarService.filteredDoctorIds;
+  private calendarContainer = inject(CalendarContainerComponent, { optional: true });
   
-  // Local state
-  selectedIds: string[] = [];
+  // Local reactive state
+  availableResources = signal<CalendarResource[]>([]);
+  selectedIds = signal<string[]>([]);
+  
+  constructor() {
+    // Set up effect to watch for resource changes - MOVED TO CONSTRUCTOR
+    if (this.calendarContainer) {
+      effect(() => {
+        const resources = this.calendarContainer!.getResources();
+        this.availableResources.set(resources);
+      });
+    }
+  }
   
   ngOnInit(): void {
-    // Initialize with all resources selected
-    this.selectAll();
+    // Initialize with current filter state
+    if (this.calendarContainer) {
+      this.selectedIds.set(this.calendarContainer.getFilteredDoctorIds());
+      this.availableResources.set(this.calendarContainer.getResources());
+    }
   }
   
   // Check if a resource is selected
   isSelected(resourceId: string): boolean {
-    return this.selectedIds.includes(resourceId);
+    return this.selectedIds().includes(resourceId);
   }
   
   // Toggle selection of a resource
   toggleResource(resourceId: string): void {
-    if (this.isSelected(resourceId)) {
-      this.selectedIds = this.selectedIds.filter(id => id !== resourceId);
+    const currentIds = this.selectedIds();
+    const index = currentIds.indexOf(resourceId);
+    
+    let newIds: string[];
+    if (index > -1) {
+      newIds = currentIds.filter(id => id !== resourceId);
     } else {
-      this.selectedIds = [...this.selectedIds, resourceId];
+      newIds = [...currentIds, resourceId];
     }
     
-    // Update service state
-    this.calendarService.setFilteredDoctorIds(this.selectedIds);
+    this.selectedIds.set(newIds);
+    
+    // Update parent component
+    if (this.calendarContainer) {
+      this.calendarContainer.setFilteredDoctorIds(newIds);
+    }
   }
   
   // Select all resources
   selectAll(): void {
-    this.selectedIds = this.resources().map(resource => resource.id);
-    this.calendarService.setFilteredDoctorIds(this.selectedIds);
+    const allIds = this.availableResources().map(resource => resource.id);
+    this.selectedIds.set(allIds);
+    
+    if (this.calendarContainer) {
+      this.calendarContainer.setFilteredDoctorIds(allIds);
+    }
   }
   
   // Deselect all resources
   selectNone(): void {
-    this.selectedIds = [];
-    this.calendarService.setFilteredDoctorIds(this.selectedIds);
+    this.selectedIds.set([]);
+    
+    if (this.calendarContainer) {
+      this.calendarContainer.setFilteredDoctorIds([]);
+    }
+  }
+  
+  // Get the current resources for template
+  getResources(): CalendarResource[] {
+    return this.availableResources();
   }
 }
