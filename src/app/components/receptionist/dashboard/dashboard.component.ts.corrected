@@ -1,12 +1,9 @@
+// filepath: c:\Template_ASIO\src\app\components\receptionist\dashboard\dashboard.component.ts
 import { Component, AfterViewInit } from '@angular/core';
 import { NgFor, NgIf, NgClass } from '@angular/common';
-import { CommonModule, registerLocaleData } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Chart from 'chart.js/auto';
-import localeFr from '@angular/common/locales/fr';
-
-// Enregistrer la locale française
-registerLocaleData(localeFr);
 
 @Component({
   selector: 'app-dashboard',
@@ -20,39 +17,42 @@ export class DashboardComponent implements AfterViewInit {
   pendingPatients = 3;
   finishedPatients = 25;
   latePatients = 7;
-  currentDate = new Date();
 
   // Liste complète des rendez-vous du jour
   todayAppointmentsList = [
     {
-      initials: 'SM',      name: 'Salwa Slimani',
+      initials: 'SM',
+      name: 'Salwa Slimani',
       type: 'Consultation',
-      doctor: 'Dr. Kamal Berrada',
+      doctor: 'Dr. Kamal',
       time: '09:00',
       status: 'completed',
       photo: 'assets/receptionist/images/FE.jpg'
     },
     {
-      initials: 'MH',      name: 'Mohamed Hariri',
+      initials: 'MH',
+      name: 'Mohamed Hariri',
       type: 'Contrôle',
-      doctor: 'Dr. Kamal Berrada',
+      doctor: 'Dr. Kamal',
       time: '10:30',
       status: 'upcoming',
       photo: 'assets/receptionist/images/eps3.jpg'
     },
     {
-      initials: 'FA',      name: 'Fatima Amrani',
+      initials: 'FA',
+      name: 'Fatima Amrani',
       type: 'Consultation',
-      doctor: 'Dr. Kamal Berrada',
+      doctor: 'Dr. Kamal',
       time: '11:15',
       status: 'late',
       photo: 'assets/receptionist/images/eps1.jpg'
     },
     // Nouveau patient ajouté
     {
-      initials: 'AA',      name: 'Adam AbouAli',
+      initials: 'AA',
+      name: 'Adam AbouAli',
       type: 'Consultation',
-      doctor: 'Dr. Kamal Berrada',
+      doctor: 'Dr. Kamal',
       time: '12:00',
       status: 'upcoming',
       photo: 'assets/receptionist/images/P4.jpg'
@@ -239,68 +239,28 @@ export class DashboardComponent implements AfterViewInit {
   renderDemographicChart() {
     const ctx = document.getElementById('demographic-chart') as HTMLCanvasElement;
     if (!ctx) return;
-    let data, labels;
-    let backgroundColors, hoverBackgroundColors;
-      // Définir la fonction createGradient avant son utilisation
-    function createGradient(ctx: any, colors: string[]) {
-      try {
-        const chartWidth = ctx.canvas.width || 300;
-        const chartHeight = ctx.canvas.height || 300;
-        const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
-        gradient.addColorStop(0, colors[0]);
-        gradient.addColorStop(1, colors[1]);
-        return gradient;
-      } catch (e) {
-        console.error('Erreur lors de la création du dégradé:', e);
-        return colors[0];
-      }
-    }
-
+    let data, backgroundColor, labels;
+    
     if (this.demographicFilter === 'age') {
       labels = ['0-18 ans', '19-35 ans', '36-50 ans', '51-65 ans', '65+ ans'];
       data = [18, 25, 32, 15, 10];
-      // Couleurs modernes avec dégradés
-      backgroundColors = [
-        createGradient(ctx, ['#3b82f6', '#1d4ed8']), // bleu
-        createGradient(ctx, ['#10b981', '#059669']), // vert
-        createGradient(ctx, ['#f59e0b', '#d97706']), // ambre
-        createGradient(ctx, ['#8b5cf6', '#6d28d9']), // violet
-        createGradient(ctx, ['#ef4444', '#b91c1c'])  // rouge
-      ];
-      hoverBackgroundColors = [
-        createGradient(ctx, ['#60a5fa', '#2563eb']), // bleu hover
-        createGradient(ctx, ['#34d399', '#059669']), // vert hover
-        createGradient(ctx, ['#fbbf24', '#d97706']), // ambre hover
-        createGradient(ctx, ['#a78bfa', '#7c3aed']), // violet hover
-        createGradient(ctx, ['#f87171', '#dc2626'])  // rouge hover
+      backgroundColor = [
+        'rgba(59, 130, 246, 0.85)', // bleu
+        'rgba(16, 185, 129, 0.85)', // vert
+        'rgba(251, 191, 36, 0.85)', // jaune
+        'rgba(139, 92, 246, 0.85)', // violet
+        'rgba(239, 68, 68, 0.85)'   // rouge
       ];
     } else {
       labels = ['Femmes', 'Hommes'];
       data = [40, 60];
-      backgroundColors = [
-        createGradient(ctx, ['#3b82f6', '#1d4ed8']), // bleu
-        createGradient(ctx, ['#f59e0b', '#d97706'])  // ambre
-      ];
-      hoverBackgroundColors = [
-        createGradient(ctx, ['#60a5fa', '#2563eb']), // bleu hover
-        createGradient(ctx, ['#fbbf24', '#d97706'])  // ambre hover
+      backgroundColor = [
+        'rgba(59, 130, 246, 0.85)', // bleu
+        'rgba(251, 191, 36, 0.85)'  // jaune
       ];
     }
     
     if (this.demographicChart) this.demographicChart.destroy();
-      // Crée une ombre pour le graphique
-    const shadowPlugin = {
-      id: 'shadowPlugin',
-      beforeDraw: (chart: any) => {
-        const { ctx, width, height } = chart;
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 5;
-        ctx.restore();
-      }
-    };
     
     this.demographicChart = new Chart(ctx, {
       type: 'doughnut',
@@ -308,80 +268,39 @@ export class DashboardComponent implements AfterViewInit {
         labels,
         datasets: [{
           data,
-          backgroundColor: backgroundColors,
-          hoverBackgroundColor: hoverBackgroundColors,
-          borderWidth: 3,
-          borderColor: '#ffffff',
-          hoverOffset: 16,
-          borderRadius: 4,
-          offset: 8,
-          spacing: 2
+          backgroundColor,
+          borderWidth: 8,
+          borderColor: '#fff',
+          hoverOffset: 14,
         }]
       },
       options: {
-        cutout: '75%',
-        radius: '90%',
+        cutout: '78%',
         plugins: {
-          legend: { 
-            display: false
-          },
+          legend: { display: false },
           tooltip: {
-            enabled: true,
-            backgroundColor: 'rgba(255,255,255,0.98)',
-            titleColor: '#1e40af',
-            bodyColor: '#1f2937',
-            borderColor: 'rgba(99, 102, 241, 0.3)',
-            borderWidth: 2,
-            cornerRadius: 8,
-            boxPadding: 8,
-            padding: {
-              top: 12,
-              bottom: 12,
-              left: 16,
-              right: 16
-            },
-            titleFont: {
-              size: 14,
-              weight: 'bold',
-            },
-            bodyFont: {
-              size: 14
-            },
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            titleColor: '#6366f1',
+            bodyColor: '#334155',
+            borderColor: '#6366f1',
+            borderWidth: 1.5,
+            padding: 16,
             displayColors: true,
+            boxPadding: 6,
             callbacks: {
-              title: (tooltipItems: any) => {
-                return tooltipItems[0].label;
-              },
-              label: (context: any) => {
-                return ` ${context.parsed} % du total`;
-              },
-              labelTextColor: () => {
-                return '#334155';
-              }
+              label: (context: any) => `${context.label}: ${context.parsed} %`
             }
           },
         },
-        layout: { 
-          padding: {
-            top: 24,
-            bottom: 24,
-            left: 20,
-            right: 20
-          }
-        },
+        layout: { padding: 28 },
         animation: {
-          animateScale: true,
           animateRotate: true,
-          duration: 1800,
-          easing: 'easeOutCirc',
-          delay: (context) => {
-            // Délai par segment pour un effet en cascade
-            return context.dataIndex * 150;
-          }
+          duration: 1400,
+          easing: 'easeOutQuart'
         },
         responsive: true,
         maintainAspectRatio: false,
-      },      plugins: [shadowPlugin]
+      }
     });
   }
 
