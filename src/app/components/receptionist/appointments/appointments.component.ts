@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-// Update the path below if your appointment.service.ts is in a different folder
-import { AppointmentService } from '../../../services/recepetionist-services/appointment.service';
-
+import { AppointmentService } from '../../../shared/services/appointment.service';
+import { Appointment } from '../../../models/appointment.model';
 import { Router } from '@angular/router';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-appointments',
@@ -13,11 +14,15 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule]
 })
-export class AppointmentsComponent implements OnInit {
+export class AppointmentsComponent implements OnInit, OnDestroy {
+  // ✅ Add destroy$ subject
+  private destroy$ = new Subject<void>();
+  
   searchQuery = '';
   selectedStatus = '';
   selectedDate = '';
-  appointments: any[] = [];
+  appointments: Appointment[] = [];
+  filteredAppointments: Appointment[] = []; // ✅ Add this property
   editingAppointment: any = null;
   selectedAppointment: any = null;
   isLoading = false;
@@ -25,6 +30,7 @@ export class AppointmentsComponent implements OnInit {
   // Pagination
   itemsPerPage = 5;
   currentPage = 1;
+  totalPages = 0; // ✅ Add this property
 
   constructor(
     private appointmentService: AppointmentService,
@@ -35,12 +41,63 @@ export class AppointmentsComponent implements OnInit {
     this.loadAppointments();
   }
 
+  // ✅ Add OnDestroy implementation
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   goToPlanning() {
     this.router.navigate(['/doctors-planning']);
   }
 
   loadAppointments() {
     this.isLoading = true;
+    
+    const filters = this.getFilters();
+
+    this.appointmentService.getAllAppointments(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (appointments) => {
+          this.appointments = appointments;
+          this.applyFilters(); // ✅ Use proper filtering method
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('❌ Error loading appointments:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  // ✅ Add missing updatePagination method
+  private updatePagination(): void {
+    this.totalPages = Math.ceil(this.filteredAppointments.length / this.itemsPerPage);
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = this.totalPages;
+    }
+  }
+
+  // ✅ Add proper filtering method
+  private applyFilters(): void {
+    this.filteredAppointments = this.appointments.filter((appointment: Appointment) => {
+      // ✅ Use correct field names from the transformed model
+      const matchesSearch = !this.searchQuery || 
+        appointment.patientName?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        appointment.doctorName?.toLowerCase().includes(this.searchQuery.toLowerCase());
+
+      const matchesStatus = !this.selectedStatus || appointment.status === this.selectedStatus;
+
+      const matchesDate = !this.selectedDate || appointment.date === this.selectedDate;
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+    
+    this.updatePagination();
+  }
+
+  getFilters() {
     const filters: any = {};
     
     if (this.selectedDate) {
@@ -48,123 +105,58 @@ export class AppointmentsComponent implements OnInit {
     }
     
     if (this.selectedStatus) {
-      filters.statut = this.getBackendStatusFromFilter();
+      filters.status = this.selectedStatus; // ✅ Use correct field name
     }
     
     if (this.searchQuery.trim()) {
       filters.search = this.searchQuery.trim();
     }
 
-    console.log('🔄 COMPONENT: Chargement avec filtres:', filters);
-
-    this.appointmentService.getAppointments(filters).subscribe({
-      next: (response: any) => {
-        console.log('✅ COMPONENT: Réponse reçue:', response);
-        this.appointments = (response.data || []).map((rdv: any) => ({
-          id: rdv.id,
-          patient: rdv.nom_patient,
-          prenom: rdv.prenom_patient,
-          nom_patient: rdv.nom_patient,
-          prenom_patient: rdv.prenom_patient,
-          time: rdv.date_heure,
-          date_heure: rdv.date_heure,
-          type: rdv.type,
-          status: this.mapBackendStatusToFrontend(rdv.statut),
-          statut: rdv.statut,
-          reminder: rdv.rappel,
-          rappel: rdv.rappel
-        }));
-        console.log('📝 COMPONENT: RDV mappés:', this.appointments.length, 'rendez-vous');
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        console.error('❌ COMPONENT: Erreur chargement:', error);
-        alert('Erreur lors du chargement: ' + error);
-        this.isLoading = false;
-      }
-    });
+    return filters;
   }
 
-  getBackendStatusFromFilter(): string {
-    const statusMap: {[key: string]: string} = {
-      'upcoming': 'À Venir',
-      'in_progress': 'En Cours',
-      'completed': 'Terminé',
-      'canceled': 'Annulé'
-    };
-    return statusMap[this.selectedStatus] || '';
-  }
+  // ✅ Remove old status mapping methods - not needed with transformation layer
 
-  mapBackendStatusToFrontend(statut: string): string {
-    const statusMap: {[key: string]: string} = {
-      'À Venir': 'upcoming',
-      'En Cours': 'in_progress',
-      'Terminé': 'completed',
-      'Annulé': 'canceled'
-    };
-    return statusMap[statut] || 'upcoming';
-  }
-
-  mapFrontendStatusToBackend(status: string): string {
-    const statusMap: {[key: string]: string} = {
-      'upcoming': 'À Venir',
-      'in_progress': 'En Cours',
-      'completed': 'Terminé',
-      'canceled': 'Annulé'
-    };
-    return statusMap[status] || 'À Venir';
-  }
-
-  get filteredAppointments() {
-    return this.appointments.filter((app: any) => {
-      const matchesSearch = !this.searchQuery || 
-        app.patient?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        app.prenom?.toLowerCase().includes(this.searchQuery.toLowerCase());
-
-      const matchesStatus = !this.selectedStatus || app.status === this.selectedStatus;
-
-      return matchesSearch && matchesStatus;
-    });
-  }
-
-  get paginatedAppointments() {
+  get paginatedAppointments(): Appointment[] {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
     return this.filteredAppointments.slice(start, end);
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.filteredAppointments.length / this.itemsPerPage);
+  get totalPagesArray(): number[] {
+    return Array(this.totalPages).fill(0).map((_, i) => i + 1);
   }
 
-  getPagesArray(): number[] {
-    return Array(this.totalPages).fill(0).map((_, i) => i);
-  }
-
+  // ✅ Updated method to handle the correct status values
   getLabelFromStatus(status: string): string {
     const labels: {[key: string]: string} = {
-      'upcoming': 'À venir',
-      'in_progress': 'En cours',
-      'completed': 'Terminé',
-      'canceled': 'Annulé'
+      'scheduled': 'Programmé',
+      'completed': 'Terminé', 
+      'cancelled': 'Annulé',
+      'no-show': 'Absent'
     };
     return labels[status] || 'Inconnu';
   }
 
-  openEditModal(appointment: any): void {
+  // ✅ Fixed openEditModal to use transformed data
+  openEditModal(appointment: Appointment): void {
     console.log('✏️ COMPONENT: Ouverture édition pour RDV ID:', appointment.id);
     
-    const dateTime = new Date(appointment.date_heure);
-    const formattedDateTime = dateTime.toISOString().slice(0, 16);
+    // ✅ Use the properly transformed date/time from the appointment
+    const startDateTime = appointment.startDateTime || new Date();
+    const formattedDateTime = startDateTime.toISOString().slice(0, 16);
 
     this.editingAppointment = {
       id: appointment.id,
-      nom_patient: appointment.nom_patient || '',
-      prenom_patient: appointment.prenom_patient || '',
-      date_heure: formattedDateTime,
-      type: appointment.type || 'Consultation',
-      status: appointment.status || 'upcoming',
-      rappel: appointment.rappel || ''
+      patientName: appointment.patientName || '',
+      doctorName: appointment.doctorName || '',
+      date: appointment.date,
+      time: appointment.time,
+      datetime: formattedDateTime, // For HTML datetime-local input
+      type: appointment.type || 'consultation',
+      status: appointment.status || 'scheduled',
+      reason: appointment.reason || '',
+      notes: appointment.notes || ''
     };
 
     console.log('📝 COMPONENT: Données édition préparées:', this.editingAppointment);
@@ -175,6 +167,7 @@ export class AppointmentsComponent implements OnInit {
     console.log('❌ COMPONENT: Modal édition fermée');
   }
 
+  // ✅ Fixed saveUpdatedAppointment to use proper data structure
   saveUpdatedAppointment(): void {
     if (!this.editingAppointment?.id) {
       alert("Aucun RDV sélectionné");
@@ -182,52 +175,54 @@ export class AppointmentsComponent implements OnInit {
     }
 
     // Validation
-    if (!this.editingAppointment.nom_patient?.trim()) {
+    if (!this.editingAppointment.patientName?.trim()) {
       alert("Le nom du patient est obligatoire");
       return;
     }
 
-    if (!this.editingAppointment.date_heure) {
+    if (!this.editingAppointment.datetime) {
       alert("La date et l'heure sont obligatoires");
       return;
     }
 
-    // Formatage date MySQL
-    const dateTime = new Date(this.editingAppointment.date_heure);
-    const formattedDateTime = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')} ${String(dateTime.getHours()).padStart(2, '0')}:${String(dateTime.getMinutes()).padStart(2, '0')}:00`;
-
-    const dataToSend = {
-      nom_patient: this.editingAppointment.nom_patient.trim(),
-      prenom_patient: this.editingAppointment.prenom_patient?.trim() || '',
-      date_heure: formattedDateTime,
-      type: this.editingAppointment.type || 'Consultation',
-      statut: this.mapFrontendStatusToBackend(this.editingAppointment.status),
-      rappel: this.editingAppointment.rappel?.trim() || null
+    // ✅ Create proper Appointment object for the mapper
+    const appointmentToUpdate: Appointment = {
+      id: this.editingAppointment.id,
+      date: this.editingAppointment.date,
+      time: this.editingAppointment.time,
+      type: this.editingAppointment.type,
+      provider: this.editingAppointment.doctorName,
+      reason: this.editingAppointment.reason,
+      status: this.editingAppointment.status,
+      notes: this.editingAppointment.notes,
+      patientName: this.editingAppointment.patientName,
+      doctorName: this.editingAppointment.doctorName,
+      startDateTime: new Date(this.editingAppointment.datetime)
     };
 
     console.log('💾 COMPONENT: Sauvegarde RDV ID:', this.editingAppointment.id);
-    console.log('📤 COMPONENT: Données à envoyer:', dataToSend);
+    console.log('📤 COMPONENT: Données à envoyer:', appointmentToUpdate);
 
-    this.appointmentService.updateAppointment(this.editingAppointment.id, dataToSend).subscribe({
-      next: (response: any) => {
+    // ✅ Use the proper service method with correct typing
+    this.appointmentService.updateAppointment(this.editingAppointment.id, appointmentToUpdate).subscribe({
+      next: (response: Appointment) => {
         console.log('✅ COMPONENT: RDV mis à jour avec succès:', response);
         this.closeEditModal();
-        
-        // Recharger immédiatement la liste
         this.loadAppointments();
         alert('Rendez-vous mis à jour avec succès');
       },
       error: (error: any) => {
         console.error('❌ COMPONENT: Erreur mise à jour:', error);
-        alert('Erreur lors de la mise à jour: ' + error);
+        alert('Erreur lors de la mise à jour: ' + (error.message || error));
       }
     });
   }
 
-  deleteAppointment(appointment: any): void {
+  // ✅ Fixed deleteAppointment to use correct field names
+  deleteAppointment(appointment: Appointment): void {
     if (!appointment.id) return;
 
-    const confirmMessage = `Êtes-vous sûr de vouloir supprimer le rendez-vous de ${appointment.patient} ${appointment.prenom || ''} ?`;
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer le rendez-vous de ${appointment.patientName} ?`;
     
     if (confirm(confirmMessage)) {
       console.log('🗑️ COMPONENT: Suppression RDV ID:', appointment.id);
@@ -240,13 +235,14 @@ export class AppointmentsComponent implements OnInit {
         },
         error: (error: any) => {
           console.error('❌ COMPONENT: Erreur suppression:', error);
-          alert('Erreur lors de la suppression: ' + error);
+          alert('Erreur lors de la suppression: ' + (error.message || error));
         }
       });
     }
   }
 
-  viewAppointmentDetails(appointment: any): void {
+  // ✅ Fixed viewAppointmentDetails
+  viewAppointmentDetails(appointment: Appointment): void {
     this.selectedAppointment = { ...appointment };
     console.log('👁️ COMPONENT: Affichage détails RDV:', appointment.id);
   }
@@ -285,5 +281,38 @@ export class AppointmentsComponent implements OnInit {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
     }
+  }
+  getPagesArray(): any[] {
+  return Array(this.totalPages).fill(0);
+}
+
+  quickConfirm(appointment: Appointment): void {
+    this.appointmentService.confirmAppointment(appointment.id)
+      .subscribe({
+        next: (updatedAppointment) => {
+          const index = this.appointments.findIndex(a => a.id === appointment.id);
+          if (index !== -1) {
+            this.appointments[index] = updatedAppointment;
+            this.applyFilters(); // ✅ Update filtered list
+          }
+        },
+        error: (error) => console.error('❌ Error confirming appointment:', error)
+      });
+  }
+
+  // ✅ Add search functionality
+  onSearchChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onStatusChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onDateChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
   }
 }
