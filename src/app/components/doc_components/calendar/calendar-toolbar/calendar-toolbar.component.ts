@@ -18,13 +18,12 @@ export class CalendarToolbarComponent {
   
   // Event emitter to notify parent component to open the new appointment modal
   @Output() createAppointment = new EventEmitter<void>();
-  
-  // View options
+    // View options (Resources view temporarily disabled until resource plugin is re-enabled)
   views = [
     { label: 'Month', value: 'dayGridMonth' },
     { label: 'Week', value: 'timeGridWeek' },
     { label: 'Day', value: 'timeGridDay' },
-    { label: 'Resources', value: 'resourceTimeGridDay' },
+    // { label: 'Resources', value: 'resourceTimeGridDay' }, // Temporarily disabled
     { label: 'List', value: 'listWeek' }
   ];
   

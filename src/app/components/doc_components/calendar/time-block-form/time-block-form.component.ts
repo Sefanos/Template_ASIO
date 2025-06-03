@@ -93,8 +93,7 @@ export class TimeBlockFormComponent implements OnInit {
       this.populateForm();
     }
   }
-  
-  private populateForm(): void {
+    private populateForm(): void {
     if (!this.blockToEdit) return;
     
     const start = new Date(this.blockToEdit.start);
@@ -113,9 +112,23 @@ export class TimeBlockFormComponent implements OnInit {
     
     // Additional fields based on form type
     if (this.isAppointmentForm) {
+      // Check for patient name in various possible locations based on the data structure
+      const patientName = 
+        this.blockToEdit.extendedProps?.patientName || 
+        (this.blockToEdit.extendedProps?.['originalAppointment']?.patientName) ||
+        '';
+        
+      // Check for appointment type in various possible locations
+      const appointmentType = 
+        this.blockToEdit.extendedProps?.appointmentType || 
+        (this.blockToEdit.extendedProps?.['originalAppointment']?.type) ||
+        'checkup';
+      
+      console.log('Populating appointment form with patient:', patientName, 'type:', appointmentType);
+        
       Object.assign(baseValues, {
-        patientName: this.blockToEdit.extendedProps?.patientName || '',
-        appointmentType: this.blockToEdit.extendedProps?.appointmentType || 'checkup'
+        patientName: patientName,
+        appointmentType: appointmentType
       });
     } else {
       Object.assign(baseValues, {
@@ -173,9 +186,11 @@ export class TimeBlockFormComponent implements OnInit {
       this.saveTimeBlock(formValues, startDateTime, endDateTime);
     }
   }
-  
   private saveAppointment(formValues: any, startDateTime: Date, endDateTime: Date): void {
-    // Create appointment event
+    // Create appointment event - preserve any existing extended properties
+    const baseExtendedProps = this.blockToEdit?.extendedProps || {};
+    const originalAppointment = baseExtendedProps['originalAppointment'] || {};
+    
     const appointment: CalendarEvent = {
       id: this.blockToEdit?.id || `appointment-${Date.now()}`,
       title: formValues.title,
@@ -185,11 +200,19 @@ export class TimeBlockFormComponent implements OnInit {
       color: '#4285F4', // Google Calendar blue
       textColor: '#FFFFFF',
       extendedProps: {
+        ...baseExtendedProps,
         isAppointment: true,
-        patientName: formValues.patientName || '',
-        appointmentType: formValues.appointmentType,
-        status: 'scheduled',
-        notes: formValues.notes
+        patientName: formValues.patientName || baseExtendedProps['patientName'] || '',
+        appointmentType: formValues.appointmentType || baseExtendedProps['appointmentType'] || 'checkup',
+        status: baseExtendedProps['status'] || 'scheduled',
+        notes: formValues.notes,
+        doctorName: baseExtendedProps['doctorName'],
+        doctorId: baseExtendedProps['doctorId'],
+        // Preserve original appointment data if it exists
+        originalAppointment: {
+          ...originalAppointment,
+          ...baseExtendedProps
+        }
       }
     };
     

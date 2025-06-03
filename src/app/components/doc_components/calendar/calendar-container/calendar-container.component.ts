@@ -17,17 +17,18 @@ import { MiniCalendarComponent } from '../mini-calendar/mini-calendar.component'
 import { ResourceFilterComponent } from '../resource-filter/resource-filter.component';
 import { SearchFilterComponent } from '../search-filter/search-filter.component';
 import { TimeBlockFormComponent } from '../time-block-form/time-block-form.component';
+import { AppointmentDetailsModalComponent } from '../appointment-details-modal/appointment-details-modal.component';
 
 @Component({
   selector: 'app-calendar-container',
-  standalone: true,
-  imports: [
+  standalone: true,  imports: [
     CommonModule,
     CalendarToolbarComponent,
     MiniCalendarComponent,
     ResourceFilterComponent,
     SearchFilterComponent,
-    TimeBlockFormComponent
+    TimeBlockFormComponent,
+    AppointmentDetailsModalComponent
   ],
   templateUrl: './calendar-container.component.html',
   styleUrls: ['./calendar-container.component.css']
@@ -40,11 +41,14 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   // State signals
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
-  
-  // State for time block form
+    // State for time block form
   showTimeBlockForm = signal<boolean>(false);
   selectedBlockToEdit = signal<CalendarEvent | null>(null);
   isAppointmentForm = signal<boolean>(false);
+  
+  // State for appointment details modal
+  showAppointmentDetails = signal<boolean>(false);
+  selectedAppointment = signal<CalendarEvent | null>(null);
   
   // Calendar reactive state from service
   currentView = this.calendarService.currentView;
@@ -208,7 +212,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     if (!this.calendar) return;
     this.calendar.refetchEvents();
   }
-    // Event handlers
+  // Event handlers
   private handleEventClick(info: any): void {
     const clickedEvent = info.event;
     
@@ -231,7 +235,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       this.selectedBlockToEdit.set(blockedTimeEvent);
       this.showTimeBlockForm.set(true);
     } else {
-      // Handle regular appointment click - This would typically open an appointment detail view
+      // Handle regular appointment click - Show appointment details modal
       const selectedEvent: CalendarEvent = {
         id: clickedEvent.id,
         title: clickedEvent.title,
@@ -244,7 +248,11 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       };
       
       this.calendarService.setSelectedEvent(selectedEvent);
-      // For MVP, we'll just log this
+      
+      // Show appointment details modal
+      this.selectedAppointment.set(selectedEvent);
+      this.showAppointmentDetails.set(true);
+      
       console.log('Appointment clicked:', selectedEvent);
     }
   }
@@ -363,13 +371,38 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     this.isAppointmentForm.set(false); // Set form mode to time block
     this.showTimeBlockForm.set(true);
   }
-  
-  closeBlockTimeForm(): void {
+    closeBlockTimeForm(): void {
     this.showTimeBlockForm.set(false);
     this.selectedBlockToEdit.set(null);
     // No need to reset isAppointmentForm as it will be set when opening the form again
   }
   
+  // Appointment details modal methods
+  closeAppointmentDetails(): void {
+    this.showAppointmentDetails.set(false);
+    this.selectedAppointment.set(null);
+  }
+  editAppointmentFromModal(appointment: CalendarEvent): void {
+    // Close the details modal
+    this.closeAppointmentDetails();
+    
+    // Ensure appointment is marked for editing as an appointment
+    const appointmentToEdit: CalendarEvent = {
+      ...appointment,
+      extendedProps: {
+        ...appointment.extendedProps,
+        isAppointment: true
+      }
+    };
+    
+    // Open the appointment form for editing with complete appointment data
+    this.selectedBlockToEdit.set(appointmentToEdit);
+    this.isAppointmentForm.set(true);
+    this.showTimeBlockForm.set(true);
+    
+    console.log('Opening appointment for editing:', appointmentToEdit);
+  }
+
   handleBlockTimeSaved(event: CalendarEvent): void {
     if (this.selectedBlockToEdit()) {
       // Update existing event

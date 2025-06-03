@@ -28,7 +28,7 @@
         Block Time
       </button>
     </div>
-      <!-- Main calendar -->
+        <!-- Main calendar -->
     <div class="bg-white rounded-card shadow-card p-card-padding">
       <!-- Loading state -->
       @if (loading()) {
@@ -59,15 +59,8 @@
             </button>
           </div>
         </div>
-      }
-        <!-- Calendar -->
-      @else {
-        <div class="calendar-debug mb-4">
-          <p class="text-sm text-gray-600">
-            Debug: Loading = {{ loading() }}, Error = {{ error() }}, Calendar initialized = {{ !!calendar }}
-          </p>
-        </div>
-        <div #calendar class="fc-container min-h-[700px] border-2 border-blue-500" style="background-color: #f0f0f0;">
+      }      <!-- Calendar -->
+      @else {        <div #calendar class="fc-container min-h-[700px]">
           <div class="p-4 text-center text-gray-500">
             Calendar container loaded - FullCalendar should render here
           </div>
@@ -86,3 +79,11 @@
   (saved)="handleBlockTimeSaved($event)"
   (deleted)="handleBlockTimeDeleted($event)"
 ></app-time-block-form>
+
+<!-- Appointment Details Modal -->
+<app-appointment-details-modal
+  [show]="showAppointmentDetails()"
+  [appointment]="selectedAppointment()"
+  (close)="closeAppointmentDetails()"
+  (edit)="editAppointmentFromModal($event)"
+></app-appointment-details-modal>

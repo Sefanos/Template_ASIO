@@ -1,8 +1,8 @@
 # Calendar Integration Testing Checklist
 
-## Pre-Testing Setup
-- [ ] Ensure backend API is running and accessible
-- [ ] Verify authentication tokens are valid
+## Pre-Testing Setup(done)
+- [x] Ensure backend API is running and accessible
+- [x] Verify authentication tokens are valid
 - [ ] Check that DoctorAppointmentService endpoints are responding
 - [ ] Start Angular development server (`ng serve`)
 

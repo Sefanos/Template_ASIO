@@ -6,70 +6,85 @@
   .fc-view {
     border-radius: 0.5rem;
     overflow: hidden;
+    background-color: white;
+  }
+  
+  .fc-view-harness {
+    background-color: white;
   }
   
   .fc-day-today {
-    background-color: rgba(44, 110, 170, 0.05) !important;
+    background-color: rgba(66, 133, 244, 0.08) !important;
   }
   
   .fc-event {
-    border-radius: 3px;
+    border-radius: 4px;
     border: none;
     font-size: 0.85rem;
-    opacity: 1 !important; /* Ensure events are visible */
-    visibility: visible !important; /* Force visibility */
-    display: block !important; /* Force display */
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     
     &.blocked-time {
       opacity: 0.9;
     }
   }
   
-  /* Debug styles to make events more visible */
   .fc-event-main {
     color: white !important;
-    background-color: #4285F4 !important;
-    border: 2px solid #2C6EAA !important;
   }
   
   .fc-timegrid-event {
     padding: 0.4rem;
-    min-height: 20px !important; /* Ensure minimum height */
+    min-height: 20px !important;
   }
   
   .fc-daygrid-event {
-    min-height: 20px !important; /* Ensure minimum height for day grid */
+    min-height: 20px !important;
   }
   
   .fc-timegrid-slot {
     height: 2.5rem;
+    border-color: #e5e7eb;
   }
   
   .fc-col-header-cell {
-    padding: 0.5rem 0;
-    background-color: #f9fafb;
-    font-weight: 500;
+    padding: 0.75rem 0;
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #374151;
+    border-color: #e5e7eb;
+  }  
+  .fc-timegrid-axis {
+    background-color: #f8fafc;
+    border-color: #e5e7eb;
   }
   
-  .fc-timegrid-axis {
-    background-color: #f9fafb;
+  .fc-scrollgrid {
+    border-color: #e5e7eb;
+  }
+  
+  .fc-daygrid-day, .fc-timegrid-col {
+    background-color: white;
+    border-color: #e5e7eb;
   }
   
   .fc-button-primary {
-    background-color: #2C6EAA;
-    border-color: #2C6EAA;
+    background-color: #4285F4;
+    border-color: #4285F4;
     
     &:hover {
-      background-color: #215584;
-      border-color: #215584;
+      background-color: #3367D6;
+      border-color: #3367D6;
     }
   }
   
   .fc-list-event-dot {
-    border-color: #2C6EAA;
+    border-color: #4285F4;
   }
   
   .fc-list-day-cushion {
-    background-color: #f9fafb;
+    background-color: #f8fafc;
   }
 }
