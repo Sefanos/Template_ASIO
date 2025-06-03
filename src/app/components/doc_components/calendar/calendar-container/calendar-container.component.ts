@@ -34,9 +34,12 @@ import { TimeBlockFormComponent } from '../time-block-form/time-block-form.compo
 })
 export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   @ViewChild('calendar') calendarEl!: ElementRef;
-  
-  private calendarService = inject(CalendarService);
+    private calendarService = inject(CalendarService);
   private calendar: Calendar | null = null;
+  
+  // State signals
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
   
   // State for time block form
   showTimeBlockForm = signal<boolean>(false);
@@ -92,14 +95,14 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   
   private initCalendar(): void {
     if (!this.calendarEl) return;
-    
-    this.calendar = new Calendar(this.calendarEl.nativeElement, {
+      this.calendar = new Calendar(this.calendarEl.nativeElement, {
       plugins: [
         dayGridPlugin,
         timeGridPlugin,
         listPlugin,
-        interactionPlugin,
-        resourceTimeGridPlugin
+        interactionPlugin
+        // Temporarily remove resourceTimeGridPlugin to test basic events
+        // resourceTimeGridPlugin
       ],
       initialView: this.currentView(),
       initialDate: this.currentDate(),
@@ -124,26 +127,88 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       eventClick: this.handleEventClick.bind(this),
       dateClick: this.handleDateClick.bind(this),
       select: this.handleRangeSelect.bind(this),
-      eventDrop: this.handleEventDrop.bind(this),
-      eventResize: this.handleEventResize.bind(this),
-      events: (fetchInfo, successCallback) => {
-        // Get filtered events from service
-        const events = this.calendarService.getFilteredEvents();
-        successCallback(events);
-      },
-      resources: this.calendarService.resources(),
-      schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source'
+      eventDrop: this.handleEventDrop.bind(this),      eventResize: this.handleEventResize.bind(this),
+      events: (fetchInfo, successCallback, failureCallback) => {
+        // Load appointments for the current date range
+        const startDate = fetchInfo.start.toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+        const endDate = fetchInfo.end.toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+        
+        console.log('FullCalendar requesting events for:', { startDate, endDate });
+        
+        this.calendarService.loadAppointmentsByDateRange(startDate, endDate).subscribe({
+          next: (calendarEvents) => {
+            console.log('Events loaded successfully, count:', calendarEvents.length);
+            if (calendarEvents.length > 0) {
+              console.log('Sample event:', calendarEvents[0]);
+            }
+            
+            // Transform the CalendarEvent objects to FullCalendar format
+            const fullCalendarEvents = calendarEvents.map(event => {
+              // Convert Date objects to ISO strings for FullCalendar
+              let startTime = event.start;
+              let endTime = event.end;
+              
+              if (startTime instanceof Date) {
+                startTime = startTime.toISOString();
+              }
+              if (endTime instanceof Date) {
+                endTime = endTime.toISOString();
+              }
+                const fcEvent: any = {
+                id: event.id,
+                title: event.title,
+                start: startTime,
+                end: endTime,
+                allDay: event.allDay || false,
+                backgroundColor: event.backgroundColor || event.color || '#4285F4',
+                borderColor: event.borderColor || event.color || '#4285F4',
+                textColor: event.textColor || '#FFFFFF',
+                extendedProps: event.extendedProps || {}
+                // Temporarily remove resourceId to test basic events
+                // resourceId: event.resourceId
+              };
+              
+              return fcEvent;
+            });
+            
+            console.log('Transformed events for FullCalendar:', fullCalendarEvents);
+            successCallback(fullCalendarEvents);
+          },
+          error: (error) => {
+            console.error('Failed to load calendar events:', error);
+            failureCallback(error);
+          }        });      },
+      // Temporarily remove resources to test basic events
+      // resources: this.calendarService.resources(),
+      schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+        // Professional event styling
+      eventDidMount: (info) => {
+        console.log('Event mounted:', info.event.title);
+        // Apply professional styling
+        info.el.style.minHeight = '20px';
+      }
     });
     
+    console.log('About to render calendar...');
     this.calendar.render();
+    console.log('Calendar rendered successfully');
+    
+    // Check calendar state after render
+    setTimeout(() => {
+      console.log('Calendar post-render check:');
+      console.log('- Calendar element:', this.calendarEl.nativeElement);
+      console.log('- Calendar element children count:', this.calendarEl.nativeElement.children.length);
+      console.log('- Calendar view:', this.calendar?.view?.type);
+      const fcEvents = this.calendarEl.nativeElement.querySelectorAll('.fc-event');
+      console.log('- Found events in DOM:', fcEvents.length);
+    }, 1000);
   }
   
   private refreshEvents(): void {
     if (!this.calendar) return;
     this.calendar.refetchEvents();
   }
-  
-  // Event handlers
+    // Event handlers
   private handleEventClick(info: any): void {
     const clickedEvent = info.event;
     
@@ -155,7 +220,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
         title: clickedEvent.title,
         start: clickedEvent.start.toISOString(),
         end: clickedEvent.end.toISOString(),
-        resourceId: clickedEvent.getResources()[0]?.id,
+        // resourceId: clickedEvent.getResources()[0]?.id, // Disabled since no resources
         color: clickedEvent.backgroundColor,
         textColor: clickedEvent.textColor,
         extendedProps: {
@@ -172,7 +237,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
         title: clickedEvent.title,
         start: clickedEvent.start.toISOString(),
         end: clickedEvent.end.toISOString(),
-        resourceId: clickedEvent.getResources()[0]?.id,
+        // resourceId: clickedEvent.getResources()[0]?.id, // Disabled since no resources
         extendedProps: {
           ...clickedEvent.extendedProps
         }
@@ -200,14 +265,13 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     else {
       endDateTime.setDate(endDateTime.getDate() + 1);
     }
-    
-    // Create an appointment event object
+      // Create an appointment event object
     const newAppointment: CalendarEvent = {
       id: `appointment-${Date.now()}`,
       title: 'New Appointment',
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
-      resourceId: info.resource?.id || this.calendarService.resources()[0]?.id,
+      // resourceId: info.resource?.id || this.calendarService.resources()[0]?.id, // Disabled since no resources
       color: '#4285F4', // Google Calendar blue
       textColor: '#FFFFFF',
       extendedProps: {
@@ -224,14 +288,13 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   
   private handleRangeSelect(info: any): void {
     // When a range is selected, open appointment form with the time range pre-filled
-    
-    // Create an appointment event object with the selected time range
+      // Create an appointment event object with the selected time range
     const newAppointment: CalendarEvent = {
       id: `appointment-${Date.now()}`,
       title: 'New Appointment',
       start: info.start.toISOString(),
       end: info.end.toISOString(),
-      resourceId: info.resource?.id || this.calendarService.resources()[0]?.id,
+      // resourceId: info.resource?.id || this.calendarService.resources()[0]?.id, // Disabled since no resources
       color: '#4285F4', // Google Calendar blue
       textColor: '#FFFFFF',
       extendedProps: {
@@ -245,8 +308,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     this.isAppointmentForm.set(true); // Set form type to appointment
     this.showTimeBlockForm.set(true);
   }
-  
-  private handleEventDrop(info: any): void {
+    private handleEventDrop(info: any): void {
     // Handle dropped (moved) events
     const movedEvent = info.event;
     
@@ -256,7 +318,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       title: movedEvent.title,
       start: movedEvent.start.toISOString(),
       end: movedEvent.end.toISOString(),
-      resourceId: movedEvent.getResources()[0]?.id,
+      // resourceId: movedEvent.getResources()[0]?.id, // Disabled since no resources
       color: movedEvent.backgroundColor,
       textColor: movedEvent.textColor,
       extendedProps: {
@@ -270,8 +332,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       this.calendarService.updateEvent(updatedEvent);
     }
   }
-  
-  private handleEventResize(info: any): void {
+    private handleEventResize(info: any): void {
     // Handle resized events
     const resizedEvent = info.event;
     
@@ -281,7 +342,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       title: resizedEvent.title,
       start: resizedEvent.start.toISOString(),
       end: resizedEvent.end.toISOString(),
-      resourceId: resizedEvent.getResources()[0]?.id,
+      // resourceId: resizedEvent.getResources()[0]?.id, // Disabled since no resources
       color: resizedEvent.backgroundColor,
       textColor: resizedEvent.textColor,
       extendedProps: {
@@ -346,14 +407,13 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     const startDateTime = new Date(this.currentDate());
     const endDateTime = new Date(startDateTime);
     endDateTime.setMinutes(endDateTime.getMinutes() + 30);
-    
-    // Create appointment event object
+      // Create appointment event object
     const newAppointment: CalendarEvent = {
       id: `appointment-${Date.now()}`,
       title: 'New Appointment',
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
-      resourceId: this.calendarService.resources()[0]?.id,
+      // resourceId: this.calendarService.resources()[0]?.id, // Disabled since no resources
       color: '#4285F4', // Google Calendar blue
       textColor: '#FFFFFF',
       extendedProps: {
@@ -361,10 +421,18 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
         status: 'scheduled'
       }
     };
-    
-    // Open the form with this pre-filled appointment
+      // Open the form with this pre-filled appointment
     this.selectedBlockToEdit.set(newAppointment);
     this.isAppointmentForm.set(true); // Set form mode to appointment
     this.showTimeBlockForm.set(true);
+  }
+  
+  // Error handling method
+  retryLoadData(): void {
+    this.error.set(null);
+    this.loading.set(true);
+    if (this.calendar) {
+      this.calendar.refetchEvents();
+    }
   }
 }

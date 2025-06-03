@@ -7,6 +7,8 @@ export interface CalendarEvent {
   resourceId?: string;
   color?: string;
   textColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
   extendedProps?: {
     patientId?: number;
     patientName?: string;

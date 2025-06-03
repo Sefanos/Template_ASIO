@@ -16,14 +16,29 @@
     border-radius: 3px;
     border: none;
     font-size: 0.85rem;
+    opacity: 1 !important; /* Ensure events are visible */
+    visibility: visible !important; /* Force visibility */
+    display: block !important; /* Force display */
     
     &.blocked-time {
       opacity: 0.9;
     }
   }
   
+  /* Debug styles to make events more visible */
+  .fc-event-main {
+    color: white !important;
+    background-color: #4285F4 !important;
+    border: 2px solid #2C6EAA !important;
+  }
+  
   .fc-timegrid-event {
     padding: 0.4rem;
+    min-height: 20px !important; /* Ensure minimum height */
+  }
+  
+  .fc-daygrid-event {
+    min-height: 20px !important; /* Ensure minimum height for day grid */
   }
   
   .fc-timegrid-slot {
