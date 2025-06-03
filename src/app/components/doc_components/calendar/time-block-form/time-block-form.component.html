@@ -48,37 +48,93 @@
           Title is required
         </div>
       </div>
-      
-      <!-- Patient field (only for appointments) -->
+        <!-- Patient field with enhanced search functionality (only for appointments) -->
       <div class="mb-4" *ngIf="isAppointmentForm">
-        <label for="patientName" class="block text-text-light mb-1 font-medium">Patient</label>
-        <input 
-          type="text" 
-          id="patientName" 
-          formControlName="patientName"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          placeholder="Enter patient name"
-        />
-      </div>
-      
-      <!-- Doctor/Resource Select -->
-      <div class="mb-4">
-        <label for="resourceId" class="block text-text-light mb-1 font-medium">Doctor</label>
-        <select 
-          id="resourceId" 
-          formControlName="resourceId"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
-          [ngClass]="{
-            'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
-            'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
-          }"
-        >
-          <option [value]="resource.id" *ngFor="let resource of resources()">{{ resource.title }}</option>
-        </select>
-        <div *ngIf="blockForm.get('resourceId')?.invalid && blockForm.get('resourceId')?.touched" class="text-status-urgent text-xs mt-1">
-          Please select a doctor
+        <label for="patientName" class="block text-text-light mb-1 font-medium">Patient <span class="text-status-urgent">*</span></label>        <div class="relative patient-search-container">
+          <!-- Patient search input with autocomplete -->
+          <div class="relative">
+            <input 
+              type="text" 
+              id="patientName" 
+              formControlName="patientName"
+              (input)="onPatientSearch($any($event.target).value)"
+              (focus)="showSearchOnFocus()"
+              (click)="showSearchOnFocus()"
+              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="Search for a patient..."
+              [class.border-status-urgent]="blockForm.get('patientName')?.invalid && blockForm.get('patientName')?.touched"
+              autocomplete="off"
+            />
+            <div class="absolute right-3 top-2.5 flex">
+              <!-- Loading indicator -->
+              <svg *ngIf="isLoadingPatients" class="animate-spin h-4 w-4 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              
+              <!-- Clear button when patient is selected -->
+              <button 
+                *ngIf="selectedPatient"
+                type="button" 
+                class="text-text-light hover:text-status-urgent"
+                (click)="clearSelectedPatient()"
+                aria-label="Clear selected patient"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+              <!-- Search results dropdown -->
+          <div *ngIf="showPatientsList" class="absolute z-10 w-full bg-white shadow-lg rounded-lg mt-1 overflow-y-auto max-h-64 border border-border">
+            <!-- Loading state -->
+            <div *ngIf="isLoadingPatients" class="px-3 py-4 text-center">
+              <div class="flex items-center justify-center">
+                <svg class="animate-spin h-5 w-5 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-text-light text-sm">Searching patients...</span>
+              </div>
+            </div>
+            
+            <!-- No results found -->
+            <div *ngIf="!isLoadingPatients && patients.length === 0 && blockForm.get('patientName')?.value?.length >= 2" class="px-3 py-3 text-center text-text-light text-sm">
+              No patients found matching "{{ blockForm.get('patientName')?.value }}"
+            </div>
+            
+            <!-- Patient results -->
+            <div *ngIf="!isLoadingPatients && patients.length > 0">
+              <div 
+                *ngFor="let patient of patients" 
+                class="px-3 py-2 cursor-pointer hover:bg-hover transition-colors flex items-center"
+                (click)="selectPatient(patient)"
+              >
+                <span class="font-medium">{{ patient.name }}</span>
+                <span *ngIf="patient.email" class="text-xs text-text-light ml-2">({{ patient.email }})</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Selected patient info card when in edit mode -->
+          <div *ngIf="selectedPatient && isEditing" class="mt-2 p-3 bg-hover/30 rounded-lg border border-primary/20">
+            <div class="text-sm">
+              <div class="font-medium">{{ selectedPatient.name }}</div>
+              <div *ngIf="selectedPatient.email" class="text-text-light">{{ selectedPatient.email }}</div>
+              <div *ngIf="selectedPatient.phone" class="text-text-light">{{ selectedPatient.phone }}</div>
+            </div>
+          </div>
+          
+          <!-- Hidden field for patient_user_id -->
+          <input type="hidden" formControlName="patient_user_id">
+          
+          <div *ngIf="blockForm.get('patientName')?.invalid && blockForm.get('patientName')?.touched" class="text-status-urgent text-xs mt-1">
+            Patient is required
+          </div>
         </div>
-      </div>
+      </div>      <!-- Doctor/Resource field is hidden but still present in the form -->
+      <input type="hidden" id="resourceId" formControlName="resourceId">
       
       <!-- Date and Time -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -150,21 +206,20 @@
           </div>
         </div>
       </div>
-      
-      <!-- Appointment Type (only for appointments) -->
+        <!-- Appointment Type (only for appointments) -->
       <div class="mb-4" *ngIf="isAppointmentForm">
-        <label for="appointmentType" class="block text-text-light mb-1 font-medium">Appointment Type</label>
+        <label for="appointmentType" class="block text-text-light mb-1 font-medium">Appointment Type <span class="text-status-urgent">*</span></label>
         <select 
           id="appointmentType" 
-          formControlName="appointmentType"
+          formControlName="type"
           class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          [class.border-status-urgent]="blockForm.get('type')?.invalid && blockForm.get('type')?.touched"
         >
-          <option value="checkup">Regular Checkup</option>
-          <option value="followup">Follow-up</option>
-          <option value="consultation">Consultation</option>
-          <option value="emergency">Emergency</option>
-          <option value="other">Other</option>
+          <option *ngFor="let type of appointmentTypes" [value]="type.value">{{ type.label }}</option>
         </select>
+        <div *ngIf="blockForm.get('type')?.invalid && blockForm.get('type')?.touched" class="text-status-urgent text-xs mt-1">
+          Appointment type is required
+        </div>
       </div>
       
       <!-- Block Category (only for time blocks) -->
@@ -209,24 +264,76 @@
           </div>
         </div>
       </div>
-      
-      <!-- Additional Notes -->
+        <!-- Additional Notes -->
       <div class="mb-4">
         <label for="notes" class="block text-text-light mb-1 font-medium">
-          <span *ngIf="isAppointmentForm">Appointment Notes</span>
+          <span *ngIf="isAppointmentForm">Staff Notes (Optional)</span>
           <span *ngIf="!isAppointmentForm">Notes (Optional)</span>
         </label>
         <textarea 
-          id="notes" 
-          formControlName="notes"
+          [id]="isAppointmentForm ? 'notes_by_staff' : 'notes'" 
+          [formControlName]="isAppointmentForm ? 'notes_by_staff' : 'notes'"
           rows="2"
           class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
           [ngClass]="{
             'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
             'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
           }"
-          [placeholder]="isAppointmentForm ? 'Patient details, reason for visit, etc.' : 'Any additional details...'"
+          [placeholder]="isAppointmentForm ? 'Additional notes for staff about this appointment...' : 'Any additional details...'"
         ></textarea>
+        <div *ngIf="isAppointmentForm && blockForm.get('notes_by_staff')?.errors?.['maxlength']" class="text-status-urgent text-xs mt-1">
+          Maximum length is 1000 characters
+        </div>
+      </div>
+        <!-- Reason for Visit (only for appointments) -->
+      <div class="mb-4" *ngIf="isAppointmentForm">
+        <label for="reason_for_visit" class="block text-text-light mb-1 font-medium">Reason for Visit <span class="text-status-urgent">*</span></label>
+        <textarea 
+          id="reason_for_visit" 
+          formControlName="reason_for_visit"
+          rows="2"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          [class.border-status-urgent]="blockForm.get('reason_for_visit')?.invalid && blockForm.get('reason_for_visit')?.touched"
+          placeholder="Enter reason for the appointment..."
+        ></textarea>
+        <div *ngIf="blockForm.get('reason_for_visit')?.invalid && blockForm.get('reason_for_visit')?.touched" class="text-status-urgent text-xs mt-1">
+          <span *ngIf="blockForm.get('reason_for_visit')?.errors?.['required']">Reason for visit is required</span>
+          <span *ngIf="blockForm.get('reason_for_visit')?.errors?.['maxlength']">Maximum length is 500 characters</span>
+        </div>
+      </div>
+      
+      <!-- Advanced appointment options (only for appointments) -->
+      <div class="mb-4" *ngIf="isAppointmentForm">
+        <details class="border border-border rounded-lg">
+          <summary class="px-3 py-2 cursor-pointer font-medium">Advanced Options</summary>
+          <div class="p-3 border-t border-border">
+            
+            <!-- Priority -->
+            <div class="mb-3">
+              <label for="priority" class="block text-text-light mb-1 font-medium text-sm">Priority</label>
+              <select 
+                id="priority" 
+                formControlName="priority"
+                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              >
+                <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            
+            <!-- Reminder Preference -->
+            <div class="mb-3">
+              <label for="reminder_preference" class="block text-text-light mb-1 font-medium text-sm">Reminder Preference</label>
+              <select 
+                id="reminder_preference" 
+                formControlName="reminder_preference"
+                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              >
+                <option *ngFor="let option of reminderOptions" [value]="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            
+          </div>
+        </details>
       </div>
       
       <div *ngIf="errorMessage" class="p-3 bg-status-urgent/10 text-status-urgent rounded-lg mb-4">

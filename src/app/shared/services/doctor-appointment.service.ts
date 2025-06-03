@@ -133,15 +133,27 @@ export class DoctorAppointmentService {
 
   unblockTimeSlot(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/appointments/time-slots/blocked/${id}`);
-  }
-
-  // Patient search for appointments
+  }  // Patient search for appointments
   getAvailablePatients(search?: string): Observable<any[]> {
     const params: any = {};
     if (search) {
       params.search = search;
     }
-    return this.http.get<any[]>(`${this.baseUrl}/appointments/patients/search`, { params });
+    console.log('Making API call to search patients with params:', params);
+    return this.http.get<any>(`${this.baseUrl}/appointments/patients/search`, { params })
+      .pipe(
+        tap(response => console.log('Raw API response:', response)),
+        map(response => {
+          // Extract the data array from the API response
+          const patients = response.success && response.data ? response.data : [];
+          console.log('Extracted patients:', patients);
+          return patients;
+        }),
+        catchError(error => {
+          console.error('Error in getAvailablePatients:', error);
+          throw error;
+        })
+      );
   }
 
   // Check for scheduling conflicts
