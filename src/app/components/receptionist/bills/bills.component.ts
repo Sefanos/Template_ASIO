@@ -38,6 +38,7 @@ export class BillsComponent {
   // Pagination
   itemsPerPage = 5;
   currentPage = 1;
+  constructor() {}
 
   get filteredInvoices() {
     return this.invoices.filter(invoice => {
@@ -77,16 +78,11 @@ export class BillsComponent {
     if (this.invoices.length === 0) return 0;
     return this.getTotalAmount() / this.invoices.length;
   }
-
   // ✅ Méthode pour les couleurs selon le montant
   getAmountColorClass(amount: number): string {
-    if (amount < 100) {
-      return 'bg-green-100 text-green-800';
-    } else if (amount < 200) {
-      return 'bg-yellow-100 text-yellow-800';
-    } else {
-      return 'bg-red-100 text-red-800';
-    }
+    if (amount > 200) return 'bg-red-50 text-red-700';
+    if (amount > 100) return 'bg-yellow-50 text-yellow-700';
+    return 'bg-green-50 text-green-700';
   }
 
   // ✅ Méthode pour réinitialiser les filtres

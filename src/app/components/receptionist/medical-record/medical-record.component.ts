@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf, NgClass } from '@angular/common';
 import { PatientService } from '../../../services/recepetionist-services/patient.service';
+import { ThemeService } from '../../../services/theme.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-medical-record',
@@ -10,9 +12,11 @@ import { PatientService } from '../../../services/recepetionist-services/patient
   templateUrl: './medical-record.component.html',
   styleUrls: ['./medical-record.component.css']
 })
-export class MedicalRecordComponent implements OnInit {
+export class MedicalRecordComponent implements OnInit, OnDestroy {
   currentView = 'grid';
   isListView = false;
+  isDarkMode = false;
+  private themeSubscription: Subscription | null = null;
 
   patients: any[] = [];
   filteredPatients: any[] = [];
@@ -42,11 +46,22 @@ export class MedicalRecordComponent implements OnInit {
     address: '',
     showDetails: false
   };
-
-  constructor(private patientService: PatientService) {}
+  constructor(
+    private patientService: PatientService,
+    private themeService: ThemeService
+  ) {}
 
   ngOnInit(): void {
     this.loadPatients();
+    this.themeSubscription = this.themeService.darkMode$.subscribe(isDark => {
+      this.isDarkMode = isDark;
+    });
+  }
+  
+  ngOnDestroy(): void {
+    if (this.themeSubscription) {
+      this.themeSubscription.unsubscribe();
+    }
   }
 
   loadPatients() {

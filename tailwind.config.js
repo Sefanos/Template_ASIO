@@ -4,6 +4,7 @@ module.exports = {
     "./src/**/*.{html,ts}",
     "./src/app/features/patient/**/*.{html,ts}", // Added for patient UI components
   ],
+  darkMode: false, // Désactive le mode sombre
   theme: {
     extend: {
       colors: {

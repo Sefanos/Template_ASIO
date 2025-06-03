@@ -15,3 +15,17 @@
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Dark mode styles */
+:host-context(.dark) .bg-white {
+  transition: background-color 0.3s ease-in-out;
+}
+
+:host-context(.dark) input:disabled {
+  opacity: 0.8;
+}
+
+:host-context(.dark) input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}

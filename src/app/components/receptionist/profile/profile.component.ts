@@ -20,9 +20,9 @@ export class ProfileComponent implements OnInit {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
-
-  constructor(private http: HttpClient) {}
-
+  constructor(
+    private http: HttpClient
+  ) {}
   ngOnInit(): void {
     this.loadProfile();
   }

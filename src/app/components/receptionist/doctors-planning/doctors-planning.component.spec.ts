@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../../services/theme.service';
 
 import { DoctorsPlanningComponent } from './doctors-planning.component';
 
@@ -8,7 +11,9 @@ describe('DoctorsPlanningComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [DoctorsPlanningComponent]
+      imports: [CommonModule, FormsModule],
+      declarations: [DoctorsPlanningComponent],
+      providers: [ThemeService]
     })
     .compileComponents();
 

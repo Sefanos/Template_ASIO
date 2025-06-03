@@ -1,3 +1,4 @@
+// filepath: c:\Template_ASIO\src\app\components\receptionist\dashboard\dashboard.component.ts
 import { Component, AfterViewInit, OnInit, OnDestroy } from '@angular/core';
 import { NgFor, NgIf, NgClass } from '@angular/common';
 import { CommonModule, registerLocaleData } from '@angular/common';
@@ -18,14 +19,29 @@ registerLocaleData(localeFr);
   imports: [NgFor, NgIf, NgClass, CommonModule, FormsModule]
 })
 export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
+  // Statistiques du tableau de bord
   todayAppointments = 12;
   pendingPatients = 3;
   finishedPatients = 25;
   latePatients = 7;
   currentDate = new Date();
   
+  // Propriétés pour le thème
   isDarkMode = false;
   private themeSubscription: Subscription | null = null;
+  
+  // Références aux graphiques pour la gestion du thème
+  private renderedCharts = false;
+  private demographicChart: Chart | null = null;
+  private weeklyOverviewChart: Chart | null = null;
+  private rdvChart: Chart | null = null;
+  
+  // Propriétés pour les modals et filtres
+  selectedStat: string | null = null;
+  showAppointmentForm = false;
+  showPatientForm = false;
+  demographicFilter: 'age' | 'gender' = 'age';
+  userName = 'Omar Bennani'; // Ou récupère dynamiquement selon le contexte
   
   constructor(private themeService: ThemeService) {}
   
@@ -43,21 +59,38 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.themeSubscription) {
       this.themeSubscription.unsubscribe();
     }
+    
+    // Nettoyer les graphiques
+    if (this.demographicChart) {
+      this.demographicChart.destroy();
+    }
+    if (this.weeklyOverviewChart) {
+      this.weeklyOverviewChart.destroy();
+    }
+    if (this.rdvChart) {
+      this.rdvChart.destroy();
+    }
   }
-    // Garder une référence aux graphiques pour pouvoir les mettre à jour
-  private renderedCharts = false;
-  private demographicChart: Chart | null = null;
-  private weeklyOverviewChart: Chart | null = null;
-  private rdvChart: Chart | null = null;
+
+  ngAfterViewInit(): void {
+    // Initialisation de tous les graphiques
+    this.initRdvChart();
+    this.initGenderChart();
+    this.initAgeChart();
+    this.initWeeklyOverviewChart();
+    this.renderDemographicChart();
+    this.initPatientsLineChart();
+    
+    // Marquer que les graphiques ont été rendus
+    this.renderedCharts = true;
+  }
   
-  // Méthode pour rafraîchir les graphiques lorsque le thème change  
+  // Méthode pour rafraîchir les graphiques lorsque le thème change
   refreshChartsWithTheme(): void {
     // Mettre à jour les graphiques qui utilisent les couleurs du thème
     this.renderDemographicChart();
     this.initWeeklyOverviewChart();
     this.initRdvChart();
-    this.initGenderChart();
-    this.initAgeChart();
     this.initPatientsLineChart();
     // Les autres graphiques ne sont pas affectés par le changement de thème
   }
@@ -65,7 +98,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
   // Liste complète des rendez-vous du jour
   todayAppointmentsList = [
     {
-      initials: 'SM',      name: 'Salwa Slimani',
+      initials: 'SM',
+      name: 'Salwa Slimani',
       type: 'Consultation',
       doctor: 'Dr. Kamal Berrada',
       time: '09:00',
@@ -73,7 +107,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       photo: 'assets/receptionist/images/FE.jpg'
     },
     {
-      initials: 'MH',      name: 'Mohamed Hariri',
+      initials: 'MH',
+      name: 'Mohamed Hariri',
       type: 'Contrôle',
       doctor: 'Dr. Kamal Berrada',
       time: '10:30',
@@ -81,7 +116,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       photo: 'assets/receptionist/images/eps3.jpg'
     },
     {
-      initials: 'FA',      name: 'Fatima Amrani',
+      initials: 'FA',
+      name: 'Fatima Amrani',
       type: 'Consultation',
       doctor: 'Dr. Kamal Berrada',
       time: '11:15',
@@ -90,7 +126,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
     },
     // Nouveau patient ajouté
     {
-      initials: 'AA',      name: 'Adam AbouAli',
+      initials: 'AA',
+      name: 'Adam AbouAli',
       type: 'Consultation',
       doctor: 'Dr. Kamal Berrada',
       time: '12:00',
@@ -104,33 +141,21 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.todayAppointmentsList.filter(a => a.status === 'upcoming');
   }
 
-  selectedStat: string | null = null;
-  openStatModal(stat: string) { this.selectedStat = stat; }
-  closeStatModal() { this.selectedStat = null; }
+  // Méthodes pour les modals statistiques
+  openStatModal(stat: string) { 
+    this.selectedStat = stat; 
+  }
+  
+  closeStatModal() { 
+    this.selectedStat = null; 
+  }
 
+  // Événements du calendrier
   calendarEvents = [
     { title: 'Dr. Imane - Mr. Kamal', time: '10:00', photo: 'assets/images/doctor5.jpg' },
     { title: 'Dr. Mehdi - Mme. Hilal', time: '11:30', photo: 'assets/images/doctor1.jpg' },
     { title: 'Dr. Mohammed - M. Walid', time: '14:00', photo: 'assets/images/doctor3.jpg' }
   ];
-
-  showAppointmentForm = false;
-  showPatientForm = false;
-
-  userName = 'Omar Bennani'; // Ou récupère dynamiquement selon le contexte
-  demographicFilter: 'age' | 'gender' = 'age';
-  
-  ngAfterViewInit(): void {
-    this.initRdvChart();
-    this.initGenderChart();
-    this.initAgeChart();
-    this.initWeeklyOverviewChart();
-    this.renderDemographicChart();
-    this.initPatientsLineChart();
-    
-    // Marquer que les graphiques ont été rendus
-    this.renderedCharts = true;
-  }
 
   getStatusLabel(status: string): string {
     switch (status) {
@@ -189,7 +214,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-  initGenderChart() {
+
+  initGenderChart(): void {
     const genderCtx = document.getElementById('gender-distribution-chart') as HTMLCanvasElement;
     if (!genderCtx) return;
     new Chart(genderCtx, {
@@ -221,7 +247,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-  initAgeChart() {
+
+  initAgeChart(): void {
     const ageCtx = document.getElementById('age-distribution-chart') as HTMLCanvasElement;
     if (!ageCtx) return;
     new Chart(ageCtx, {
@@ -268,7 +295,8 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-  initWeeklyOverviewChart() {
+  
+  initWeeklyOverviewChart(): void {
     const weeklyCtx = document.getElementById('weekly-overview-chart') as HTMLCanvasElement;
     if (!weeklyCtx) return;
     
@@ -323,12 +351,12 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-  renderDemographicChart() {
+  
+  renderDemographicChart(): void {
     const ctx = document.getElementById('demographic-chart') as HTMLCanvasElement;
     if (!ctx) return;
-    let data, labels;
-    let backgroundColors, hoverBackgroundColors;
-      // Définir la fonction createGradient avant son utilisation
+    
+    // Définir la fonction createGradient
     function createGradient(ctx: any, colors: string[]) {
       try {
         const chartWidth = ctx.canvas.width || 300;
@@ -342,6 +370,9 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
         return colors[0];
       }
     }
+    
+    let data, labels;
+    let backgroundColors, hoverBackgroundColors;
 
     if (this.demographicFilter === 'age') {
       labels = ['0-18 ans', '19-35 ans', '36-50 ans', '51-65 ans', '65+ ans'];
@@ -374,8 +405,11 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       ];
     }
     
-    if (this.demographicChart) this.demographicChart.destroy();
-      // Crée une ombre pour le graphique
+    if (this.demographicChart) {
+      this.demographicChart.destroy();
+    }
+    
+    // Crée une ombre pour le graphique
     const shadowPlugin = {
       id: 'shadowPlugin',
       beforeDraw: (chart: any) => {
@@ -398,7 +432,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
           backgroundColor: backgroundColors,
           hoverBackgroundColor: hoverBackgroundColors,
           borderWidth: 3,
-          borderColor: '#ffffff',
+          borderColor: this.isDarkMode ? '#1e293b' : '#ffffff',
           hoverOffset: 16,
           borderRadius: 4,
           offset: 8,
@@ -414,10 +448,10 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
           },
           tooltip: {
             enabled: true,
-            backgroundColor: 'rgba(255,255,255,0.98)',
-            titleColor: '#1e40af',
-            bodyColor: '#1f2937',
-            borderColor: 'rgba(99, 102, 241, 0.3)',
+            backgroundColor: this.isDarkMode ? 'rgba(30,41,59,0.98)' : 'rgba(255,255,255,0.98)',
+            titleColor: this.isDarkMode ? '#60a5fa' : '#1e40af',
+            bodyColor: this.isDarkMode ? '#cbd5e1' : '#1f2937',
+            borderColor: this.isDarkMode ? 'rgba(99, 102, 241, 0.5)' : 'rgba(99, 102, 241, 0.3)',
             borderWidth: 2,
             cornerRadius: 8,
             boxPadding: 8,
@@ -443,7 +477,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
                 return ` ${context.parsed} % du total`;
               },
               labelTextColor: () => {
-                return '#334155';
+                return this.isDarkMode ? '#cbd5e1' : '#334155';
               }
             }
           },
@@ -468,10 +502,12 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
         },
         responsive: true,
         maintainAspectRatio: false,
-      },      plugins: [shadowPlugin]
+      },
+      plugins: [shadowPlugin]
     });
   }
-  initPatientsLineChart() {
+
+  initPatientsLineChart(): void {
     const ctx = document.getElementById('patients-line-chart') as HTMLCanvasElement;
     if (!ctx) return;
     new Chart(ctx, {
@@ -547,18 +583,22 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
   openNewAppointmentModal(): void {
     this.showAppointmentForm = true;
   }
+  
   openNewPatientModal(): void {
     this.showPatientForm = true;
   }
+  
   closeModals(): void {
     this.showAppointmentForm = false;
     this.showPatientForm = false;
   }
+  
   submitAppointment(event: Event): void {
     event.preventDefault();
     alert('Rendez-vous enregistré avec succès !');
     this.closeModals();
   }
+  
   submitPatient(event: Event): void {
     event.preventDefault();
     alert('Patient ajouté avec succès !');

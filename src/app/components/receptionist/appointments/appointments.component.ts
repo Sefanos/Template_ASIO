@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 // Update the path below if your appointment.service.ts is in a different folder
 import { AppointmentService } from '../../../services/recepetionist-services/appointment.service';
-
 import { Router } from '@angular/router';
 
 @Component({
@@ -21,11 +20,9 @@ export class AppointmentsComponent implements OnInit {
   editingAppointment: any = null;
   selectedAppointment: any = null;
   isLoading = false;
-
   // Pagination
   itemsPerPage = 5;
   currentPage = 1;
-
   constructor(
     private appointmentService: AppointmentService,
     private router: Router

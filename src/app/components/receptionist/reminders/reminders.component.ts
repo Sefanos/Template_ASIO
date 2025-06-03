@@ -108,4 +108,5 @@ export class RemindersComponent {
       this.reminders = this.reminders.filter(r => r.id !== reminder.id);
     }
   }
+  constructor() {}
 }
