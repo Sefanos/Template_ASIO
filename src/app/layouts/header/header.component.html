@@ -1,15 +1,12 @@
 <header class="bg-white border-b border-border shadow-sm flex items-center justify-between px-6 py-4">
   <div class="flex items-center">
-    <div class="flex items-center mr-12">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-primary mr-3">
+    <div class="flex items-center mr-12">      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-primary mr-3">
         <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
       </svg>
       <span class="text-lg font-semibold text-text-dark">Medical Practice Management System</span>
     </div>
-  </div>
-  
-  <div class="flex items-center gap-4">
-    <div class="text-sm text-text-light flex items-center">
+  </div>    <div class="flex items-center gap-4">
+      <div class="text-sm text-text-light flex items-center">
       <div class="mr-2">{{ userName || 'Dr.BOUFARRA' }}</div>
       
       <!-- Avatar circle -->
@@ -18,11 +15,10 @@
       </div>
     </div>
     
-    <div class="relative">
-      <!-- Settings/Profile button with cleaner icon -->
+    <div class="relative">      <!-- Settings/Profile button with cleaner icon -->
       <button 
         (click)="toggleDropdown()" 
-        class="text-text-light hover:text-primary transition-colors flex items-center justify-center rounded-full h-8 w-8 hover:bg-gray-100 focus:outline-none" 
+        class="text-text-light dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 transition-colors flex items-center justify-center rounded-full h-8 w-8 hover:bg-gray-100 dark:hover:bg-slate-700 focus:outline-none" 
         aria-haspopup="true" 
         [attr.aria-expanded]="isDropdownOpen">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
@@ -34,7 +30,7 @@
 
       <!-- Dropdown Menu with smoother animation and cleaner design -->
       <div *ngIf="isDropdownOpen" 
-           class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-100 dropdown-shadow animate-dropdown"
+           class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-lg dark:shadow-slate-900/40 py-1 z-50 border border-gray-100 dark:border-slate-700 dropdown-shadow animate-dropdown"
            (mouseleave)="closeDropdown()"
            @dropdownAnimation>
         <div class="px-4 py-3 border-b border-gray-100">

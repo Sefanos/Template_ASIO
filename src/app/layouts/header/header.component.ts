@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -22,7 +22,7 @@ import { AuthService } from '../../core/auth/auth.service';
     ])
   ]
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   isDropdownOpen = false;
   userName: string = '';
   userEmail: string = '';
@@ -38,6 +38,10 @@ export class HeaderComponent {
         this.userEmail = user.email;
       }
     });
+  }
+  
+  ngOnInit(): void {
+    // Rien à initialiser ici
   }
   
   toggleDropdown(): void {

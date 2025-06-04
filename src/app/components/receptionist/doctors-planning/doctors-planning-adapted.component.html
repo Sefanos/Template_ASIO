@@ -1,0 +1,188 @@
+<div class="p-4 space-y-6 bg-gray-50 min-h-screen">
+  <!-- En-tête de la page avec titre et boutons d'action -->
+  <section class="bg-white border border-blue-100 rounded-2xl shadow p-4 flex flex-col md:flex-row justify-between items-center mb-6">
+    <div class="header-content space-y-2">
+      <h2 class="text-2xl md:text-3xl font-semibold text-blue-700 tracking-tight">Planning du Médecin</h2>
+      <p class="text-base text-slate-600 font-light mt-1">
+        Consultez et gérez les disponibilités de
+        <span class="font-semibold text-blue-600">{{ doctorName }}</span> en temps réel.
+      </p>
+    </div>
+    <div class="header-actions flex items-center gap-4 mt-6 md:mt-0">
+      <button 
+        (click)="openAddEventModal()" 
+        type="button"
+        class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        Nouveau RDV
+      </button>
+      <button 
+        (click)="saveAllEvents()" 
+        type="button"
+        class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-green-600 text-white font-medium shadow hover:bg-green-700 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+        Sauvegarder
+      </button>
+    </div>
+  </section>
+
+  <!-- Grille du calendrier et filtres -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Panneau latéral gauche -->
+    <div class="lg:col-span-1">
+      <!-- Mini calendrier -->
+      <section class="bg-white border border-blue-100 rounded-2xl shadow p-4 mb-6">
+        <h3 class="text-lg font-semibold text-blue-700 mb-4">Date</h3>
+        <!-- Mini calendrier ici -->
+        <div class="mini-calendar mb-4 p-2 border border-gray-100 rounded-lg">
+          <!-- Implémentation du mini-calendrier -->
+          <div class="grid grid-cols-7 gap-1 text-center">
+            <div class="text-xs text-gray-500 font-medium">L</div>
+            <div class="text-xs text-gray-500 font-medium">M</div>
+            <div class="text-xs text-gray-500 font-medium">M</div>
+            <div class="text-xs text-gray-500 font-medium">J</div>
+            <div class="text-xs text-gray-500 font-medium">V</div>
+            <div class="text-xs text-gray-500 font-medium">S</div>
+            <div class="text-xs text-gray-500 font-medium">D</div>
+            <!-- Jours du mois -->
+            <!-- Ces divs seraient générés dynamiquement -->
+            <div *ngFor="let day of daysInMonth" 
+                 [class.bg-blue-100]="isSelectedDay(day)"
+                 [class.text-blue-700]="isSelectedDay(day)"
+                 [class.font-medium]="isSelectedDay(day)"
+                 [class.text-gray-400]="!isCurrentMonth(day)"
+                 class="text-xs py-1 rounded-full cursor-pointer hover:bg-blue-50"
+                 (click)="selectDate(day)">
+              {{day.getDate()}}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filtre médecins -->
+        <h3 class="text-lg font-semibold text-blue-700 mb-2">Médecins</h3>
+        <div class="space-y-2">
+          <div *ngFor="let doctor of doctors" class="flex items-center">
+            <input type="checkbox" [(ngModel)]="doctor.selected" 
+                   class="form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" 
+                   (change)="filterDoctors()">
+            <span class="ml-2 text-gray-700">{{doctor.name}}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+    
+    <!-- Zone principale du calendrier -->
+    <div class="lg:col-span-3">
+      <!-- Barre d'outils du calendrier -->
+      <section class="bg-white border border-blue-100 rounded-2xl shadow p-4 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <span>Vue :</span>
+            <select [(ngModel)]="selectedView" (change)="changeView(selectedView)"
+              class="border border-gray-200 rounded-md px-3 py-1 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="dayGridMonth">Mois</option>
+              <option value="timeGridWeek">Semaine</option>
+              <option value="timeGridDay">Jour</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-4">
+            <button (click)="prev()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-100 flex items-center justify-center shadow-sm hover:shadow transition-colors duration-200">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="current-date text-base font-semibold text-blue-700">{{ currentViewDate }}</span>
+            <button (click)="next()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-100 flex items-center justify-center shadow-sm hover:shadow transition-colors duration-200">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="flex gap-2 mt-4 md:mt-0">
+            <button *ngFor="let view of views"
+              [class.bg-blue-100]="selectedView === view.value"
+              [class.text-blue-700]="selectedView === view.value"
+              (click)="changeView(view.value)"
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+              {{ view.label }}
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Calendrier principal -->
+      <section class="bg-white border border-blue-100 rounded-2xl shadow p-4 mb-6 hover:shadow-lg transition-shadow duration-300">
+        <h3 class="text-lg font-semibold text-blue-700 mb-4">Disponibilités & Rendez-vous</h3>
+        <div #calendarEl id="calendar" class="calendar-container h-[600px] rounded-lg overflow-hidden"></div>
+        <div class="text-xs text-gray-400 mt-2">Cliquez sur une plage libre pour créer un RDV, ou sur un RDV pour le modifier/supprimer.</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modale pour la création/modification d'événements -->
+  <div *ngIf="showEventModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 animate-fadeIn border border-blue-100">
+      <!-- Bandeau supérieur -->
+      <div class="absolute -top-4 left-6 flex items-center gap-2">
+        <span class="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold shadow">
+          {{ editingEvent?.event ? 'Modification' : 'Nouveau' }}
+        </span>
+        <span *ngIf="editingEvent?.event" class="inline-block px-2 py-1 rounded-full bg-gray-100 text-blue-700 text-xs font-semibold border border-blue-100 shadow-sm">
+          #{{ editingEvent.event.id || 'RDV' }}
+        </span>
+      </div>
+      <!-- Bouton fermeture -->
+      <button (click)="closeAddEventModal()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-600 text-2xl transition-colors duration-200 focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Formulaire -->
+      <form (ngSubmit)="editingEvent?.event ? updateEvent() : addNewEvent()" class="space-y-5 pt-4">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-700">Nom du patient</label>
+          <input type="text" [(ngModel)]="editingEvent.patient" name="patient" required
+                 class="w-full border-0 border-b-2 border-blue-200 focus:border-blue-500 bg-gray-50 px-4 py-2 rounded-t-lg focus:bg-white transition-all duration-200 shadow-sm focus:shadow-md outline-none text-blue-900 font-medium" placeholder="Nom complet">
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-700">Type de rendez-vous</label>
+          <select [(ngModel)]="editingEvent.type" name="type"
+                  class="w-full border-0 border-b-2 border-blue-200 focus:border-blue-500 bg-gray-50 px-4 py-2 rounded-t-lg focus:bg-white transition-all duration-200 shadow-sm focus:shadow-md outline-none text-blue-900 font-medium">
+            <option *ngFor="let t of appointmentTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-700">Titre</label>
+          <input type="text" [(ngModel)]="editingEvent.title" name="title" required
+                 class="w-full border-0 border-b-2 border-blue-200 focus:border-blue-500 bg-gray-50 px-4 py-2 rounded-t-lg focus:bg-white transition-all duration-200 shadow-sm focus:shadow-md outline-none text-blue-900 font-medium" placeholder="Ex : Consultation annuelle">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-700">Date</label>
+            <input type="date" [(ngModel)]="editingEvent.date" name="date" required
+                   class="w-full border-0 border-b-2 border-blue-200 focus:border-blue-500 bg-gray-50 px-4 py-2 rounded-t-lg focus:bg-white transition-all duration-200 shadow-sm focus:shadow-md outline-none text-blue-900 font-medium">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-700">Heure</label>
+            <input type="time" [(ngModel)]="editingEvent.time" name="time" required
+                   class="w-full border-0 border-b-2 border-blue-200 focus:border-blue-500 bg-gray-50 px-4 py-2 rounded-t-lg focus:bg-white transition-all duration-200 shadow-sm focus:shadow-md outline-none text-blue-900 font-medium">
+          </div>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-gray-700">Durée (minutes)</label>
+          <input type="number" [(ngModel)]="editingEvent.duration" name="duration" required min="5" max="480"
+                 class="w-full border-0 border-b-2 border-blue-200 focus:border-blue-500 bg-gray-50 px-4 py-2 rounded-t-lg focus:bg-white transition-all duration-200 shadow-sm focus:shadow-md outline-none text-blue-900 font-medium">
+        </div>
+        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+          <button type="button" (click)="closeAddEventModal()" class="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold shadow transition-all duration-200">
+            Annuler
+          </button>
+          <button *ngIf="editingEvent?.event" type="button" (click)="deleteEditEvent()" class="px-5 py-2 bg-red-600 text-white rounded-lg font-semibold shadow hover:bg-red-700 transition-all duration-200">
+            Supprimer
+          </button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition-all duration-200 flex items-center gap-2">
+            <svg *ngIf="editingEvent?.event" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+            {{ editingEvent?.event ? 'Enregistrer' : 'Créer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

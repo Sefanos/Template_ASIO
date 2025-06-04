@@ -3,7 +3,9 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { SafeHtmlPipe } from './safe-html.pipe'; // Import du pipe
-import { AuthService } from '../../../core/auth/auth.service';
+
+import { ThemeService } from '../../../services/theme.service';
+
 
 // Animation fade pour les menus et modales
 const fadeAnimation = trigger('fadeAnimation', [
@@ -36,8 +38,7 @@ export class LayoutComponent implements OnInit {
   showLogoutModal = false;
   isSidebarCollapsed = false;
   showUserMenu = false;
-  showNotifications = false;
-  isDarkMode = false;
+  showNotifications = false;  isDarkMode = false;
   notificationCount = 3;
   showHelpModal = false; // Propriété pour contrôler l'affichage de la modale d'aide
 
@@ -58,15 +59,14 @@ export class LayoutComponent implements OnInit {
     { route: 'profile', label: 'Profil', icon: 'profile', count: 0 }
   ];
 
-  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
+
+  constructor(private router: Router, private route: ActivatedRoute, private themeService: ThemeService) {
+    this.themeService.darkMode$.subscribe(isDark => {
+      this.isDarkMode = isDark;
+    });
+  }
 
   ngOnInit(): void {
-    // Check if dark mode was previously enabled
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode === 'true') {
-      this.enableDarkMode();
-    }
-    
     // Check viewport size for sidebar default state
     this.checkScreenSize();
   }
@@ -98,25 +98,9 @@ export class LayoutComponent implements OnInit {
       this.showUserMenu = false; // Close user menu if open
     }
   }
-
+  // Méthode pour basculer le mode sombre via le service
   toggleDarkMode(): void {
-    this.isDarkMode = !this.isDarkMode;
-    if (this.isDarkMode) {
-      this.enableDarkMode();
-    } else {
-      this.disableDarkMode();
-    }
-    localStorage.setItem('darkMode', this.isDarkMode.toString());
-  }
-
-  enableDarkMode(): void {
-    this.isDarkMode = true;
-    document.documentElement.classList.add('dark');
-  }
-
-  disableDarkMode(): void {
-    this.isDarkMode = false;
-    document.documentElement.classList.remove('dark');
+    this.themeService.toggleDarkMode();
   }
 
   // Ouvre la modale de déconnexion
@@ -142,9 +126,7 @@ export class LayoutComponent implements OnInit {
   // Ouvre la modale d'aide
   openHelpModal(): void {
     this.showHelpModal = true;
-  }
-
-  // Ferme la modale d'aide
+  }  // Ferme la modale d'aide
   closeHelpModal(): void {
     this.showHelpModal = false;
   }

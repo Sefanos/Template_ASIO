@@ -1,8 +1,3 @@
-.glass-effect {
-  background: rgba(255, 250, 250, 0.8);
-  backdrop-filter: blur(10px);
-}
-
 .animate-fadeIn {
   animation: fadeIn 0.3s ease forwards;
 }
@@ -47,4 +42,81 @@ button svg polyline {
   background-color: #F0F9FF;
   transform: translateX(5px);
   transition: all 0.2s ease;
+}
+
+/* Mini calendar styles */
+.mini-calendar .selected {
+  background-color: #6b7280;
+  color: white;
+}
+
+.mini-calendar .has-events::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #6b7280;
+}
+
+.mini-calendar .has-urgent-events::after {
+  background-color: #ef4444;
+}
+
+/* Resource filter styles */
+.doctor-checkbox:checked + .doctor-label {
+  border-left: 3px solid #6b7280;
+  background-color: #f5f5f5;
+}
+
+/* Styles for fullcalendar */
+.fc-theme-standard {
+  --fc-border-color: rgba(203, 213, 225, 0.8);
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: #f8fafc;
+  --fc-list-event-hover-bg-color: #f1f5f9;
+  --fc-button-bg-color: #e0e7ff;
+  --fc-button-border-color: #c7d2fe;
+  --fc-button-hover-bg-color: #c7d2fe;
+  --fc-button-hover-border-color: #818cf8;
+  --fc-button-active-bg-color: #818cf8;
+  --fc-button-active-border-color: #6366f1;
+  --fc-event-bg-color: #4f46e5;
+  --fc-event-border-color: #4f46e5;
+  --fc-event-text-color: #fff;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(229, 231, 235, 0.4);
+}
+
+.fc .fc-timegrid-now-indicator-line {
+  border-color: #ef4444;
+}
+
+.fc .fc-highlight {
+  background: rgba(229, 231, 235, 0.3);
+}
+
+/* Modal styles */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Block time button */
+.block-time-btn {
+  background-color: #ef4444;
+  transition: background-color 0.2s;
+}
+
+.block-time-btn:hover {
+  background-color: #dc2626;
 }

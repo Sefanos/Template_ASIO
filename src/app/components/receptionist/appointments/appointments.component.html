@@ -71,6 +71,7 @@
           (change)="loadAppointments(); currentPage = 1"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
       </div>
 
       <!-- Actions -->
@@ -124,6 +125,7 @@
 
   <!-- Appointments Table -->
   <div *ngIf="!isLoading" class="bg-white rounded-lg shadow-sm overflow-hidden">
+
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -316,7 +318,6 @@
       </div>
     </div>
   </div>
-
   <!-- Edit/Create Modal -->
   <div *ngIf="editingAppointment" 
        class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"

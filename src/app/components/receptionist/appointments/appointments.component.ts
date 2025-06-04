@@ -26,7 +26,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   editingAppointment: Partial<Appointment> | null = null;
   selectedAppointment: Appointment | null = null;
   isLoading = false;
-
   // Pagination
   itemsPerPage = 10;
   currentPage = 1;
@@ -53,7 +52,6 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     'Vaccination',
     'Examen médical'
   ];
-
   constructor(
     private receptionistService: ReceptionistAppointmentService,
     private router: Router
