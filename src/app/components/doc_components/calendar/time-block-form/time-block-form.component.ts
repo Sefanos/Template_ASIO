@@ -33,13 +33,16 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
   errorMessage: string = '';
   resources = this.calendarService.resources;
   weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  
-  // Patient search functionality
+    // Patient search functionality
   patients: any[] = [];
   selectedPatient: any = null;
   patientSearchTerm = new Subject<string>();
   isLoadingPatients = false;
   showPatientsList = false; // Controls visibility of patient search results dropdown
+  
+  // Loading states for form operations
+  isSubmitting = false; // For form submission (create/update)
+  isDeleting = false;   // For delete operations
   
   // Appointment types based on backend validation
   appointmentTypes = [
@@ -230,7 +233,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
       this.syncAppointmentDates();
     }
   }
-    private populateForm(): void {
+  private populateForm(): void {
     if (!this.blockToEdit) return;
     
     const start = new Date(this.blockToEdit.start);
@@ -239,7 +242,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
     // Set basic fields for both types
     const baseValues: Record<string, any> = {
       title: this.blockToEdit.title,
-      resourceId: this.blockToEdit.resourceId || '',
+      resourceId: this.blockToEdit.resourceId || this.getCurrentDoctorId(), // Fix: Ensure resourceId is always set
       startDate: this.formatDate(start),
       startTime: this.formatTime(start),
       endDate: this.formatDate(end),
@@ -261,6 +264,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
         
       const patientId = 
         extendedProps['patient_user_id'] || 
+        extendedProps['patientId'] ||
         originalAppointment['patient_user_id'] ||
         '';
       
@@ -275,6 +279,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
       const reasonForVisit = 
         extendedProps['reason_for_visit'] || 
         originalAppointment['reason_for_visit'] ||
+        this.blockToEdit.title || // Use title as fallback
         '';
       
       // Get priority, notes and reminder preference
@@ -294,7 +299,13 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
         originalAppointment['reminder_preference'] ||
         'email';
       
-      
+      console.log('Populating appointment form with data:', {
+        patientName,
+        patientId,
+        appointmentType,
+        reasonForVisit,
+        resourceId: baseValues['resourceId']
+      });
         
       Object.assign(baseValues, {
         patientName: patientName,
@@ -307,7 +318,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
         reminder_preference: reminderPreference
       });
         // If we have a patient ID, set the selectedPatient object with all available info
-      if (patientId) {
+      if (patientId && patientName) {
         // Get additional patient info if available
         const patientEmail = extendedProps['patientEmail'] || originalAppointment['patientEmail'] || '';
         const patientPhone = extendedProps['patientPhone'] || originalAppointment['patientPhone'] || '';
@@ -319,7 +330,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
           phone: patientPhone
         };
         
-        
+        console.log('Auto-selected patient:', this.selectedPatient);
       }
     } else {
       Object.assign(baseValues, {
@@ -352,17 +363,9 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
     
     this.blockForm.patchValue(baseValues);
   }  saveBlock(): void {
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    if (this.isSubmitting) {
+      return; // Prevent double submission
+    }
     
     // Debug individual field validation
     
@@ -392,26 +395,30 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
       this.errorMessage = `Please fill all required fields: ${errors.join(', ')}`;
       return;
     }
+
+    // Set loading state
+    this.isSubmitting = true;
+    this.errorMessage = '';
     
     const formValues = this.blockForm.value;
     
       // Validate dates
     const startDateTime = this.combineDateAndTime(formValues.startDate, formValues.startTime);
     const endDateTime = this.combineDateAndTime(formValues.endDate, formValues.endTime);
-    
-    // For appointments, ensure they're on the same day
+      // For appointments, ensure they're on the same day
     if (this.isAppointmentForm) {
       const startDate = new Date(formValues.startDate);
       const endDate = new Date(formValues.endDate);
       
       if (startDate.toDateString() !== endDate.toDateString()) {
         this.errorMessage = 'Appointments cannot span multiple days. Please select the same date for start and end.';
+        this.isSubmitting = false;
         return;
       }
     }
-    
-    if (endDateTime <= startDateTime) {
+      if (endDateTime <= startDateTime) {
       this.errorMessage = 'End time must be after start time';
+      this.isSubmitting = false;
       return;
     }
     
@@ -446,8 +453,8 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
       next: (appointments) => {
         console.log('✅ Backend connectivity test PASSED - got appointments:', appointments.length);
         this.proceedWithAppointmentCreation(formValues, startDateTime, endDateTime);
-      },
-      error: (error) => {
+      },      error: (error) => {
+        this.isSubmitting = false; // Clear loading state on connectivity test failure
         console.log('❌ Backend connectivity test FAILED:', error);
         console.log('This suggests an authentication or network issue before we even try to create the appointment');
         
@@ -507,10 +514,10 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
             status: 'scheduled',
             originalAppointment: createdAppointment          }
         };
-        
-        this.saved.emit(appointment);
+          this.saved.emit(appointment);
         this.closeForm();
       },      error: (error) => {
+        this.isSubmitting = false; // Clear loading state on error
         console.error('Error creating appointment:', error);
         console.error('Error status:', error.status);
         console.error('Error message:', error.message);
@@ -573,11 +580,11 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
             reminder_preference: formValues.reminder_preference,
             originalAppointment: updatedAppointment          }
         };
-        
-        this.saved.emit(appointment);
+          this.saved.emit(appointment);
         this.closeForm();
       },
       error: (error) => {
+        this.isSubmitting = false; // Clear loading state on error
         console.error('Error updating appointment:', error);
         this.errorMessage = 'Failed to update appointment. Please try again.';
       }
@@ -610,11 +617,11 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
             notes: formValues.notes,
             originalBlock: response.data
           }
-        };
-          this.saved.emit(blockedTime);
+        };          this.saved.emit(blockedTime);
         this.closeForm();
       },
       error: (error) => {
+        this.isSubmitting = false; // Clear loading state on error
         console.error('Error creating time block:', error);
         this.errorMessage = 'Failed to block time slot. Please try again.';
       }
@@ -657,11 +664,11 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
         };
         
         console.log('Updated time block:', blockedTime);
-        
-        this.saved.emit(blockedTime);
+          this.saved.emit(blockedTime);
         this.closeForm();
       },
       error: (error) => {
+        this.isSubmitting = false; // Clear loading state on error
         console.error('Error updating time block:', error);
         this.errorMessage = 'Failed to update time block. Please try again.';
       }
@@ -676,8 +683,9 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
       default: return '#E67C73'; // Default red for blocked time
     }
   }
-    deleteBlock(): void {
-    if (this.blockToEdit) {
+  deleteBlock(): void {
+    if (this.blockToEdit && !this.isDeleting) {
+      this.isDeleting = true;
       this.deleted.emit(this.blockToEdit.id);
       this.closeForm();
     }
@@ -685,8 +693,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
     cancel(): void {
     this.closeForm();
   }
-  
-  private closeForm(): void {
+    private closeForm(): void {
     // Clean up default date/time in CalendarService
     this.calendarService.clearDefaultDateTime();
     
@@ -696,13 +703,25 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
     this.showPatientsList = false;
     this.errorMessage = '';
     
-    
+    // Reset loading states
+    this.isSubmitting = false;
+    this.isDeleting = false;
     
     // Emit close event
     this.close.emit();
   }// Search for patients based on the input term
   onPatientSearch(term: string): void {
     console.log('Patient search term:', term);
+    
+    // If user is typing and we have a selected patient, clear it (they're searching for a new patient)
+    if (this.selectedPatient && term !== this.selectedPatient.name) {
+      console.log('User is searching for a different patient, clearing selected patient');
+      this.selectedPatient = null;
+      this.blockForm.patchValue({
+        patient_user_id: ''
+      }, { emitEvent: false });
+    }
+    
     if (term && term.length >= 2) {
       this.showPatientsList = true;
       this.isLoadingPatients = true;
@@ -826,9 +845,15 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
         }
       }
     });
-  }
-  // Show or hide the patients list based on focus event
+  }  // Show or hide the patients list based on focus event
   showSearchOnFocus(): void {
+    // If we already have a selected patient, don't show the search dropdown unless we clear the field first
+    if (this.selectedPatient) {
+      console.log('Patient already selected, not showing search dropdown');
+      this.showPatientsList = false;
+      return;
+    }
+    
     // If we have a stored search term, re-search to show existing results
     const currentValue = this.blockForm.get('patientName')?.value;
     if (currentValue && currentValue.length >= 2) {

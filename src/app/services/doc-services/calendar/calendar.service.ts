@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { CalendarEvent } from '../../../models/calendar/calendar-event.model';
 import { CalendarResource } from '../../../models/calendar/calendar-resource.model';
-import { Observable, of, BehaviorSubject, catchError, map, tap } from 'rxjs';
+import { Observable, of, BehaviorSubject, catchError, map, tap, switchMap } from 'rxjs';
 import { DoctorAppointmentService } from '../../../shared/services/doctor-appointment.service';
 import { AppointmentMapperService } from '../../../shared/services/appointment-mapper.service';
 
@@ -84,31 +84,105 @@ export class CalendarService {  // Signal-based state for reactive UI updates
         return of([]);
       })
     );
-  }
-  loadAppointmentsByDateRange(startDate: string, endDate: string): Observable<CalendarEvent[]> {
+  }  loadAppointmentsByDateRange(startDate: string, endDate: string): Observable<CalendarEvent[]> {
     console.log('CalendarService: Starting to load appointments for date range:', { startDate, endDate });
     this._loading.set(true);
     this._error.set(null);
     
-    return this.doctorAppointmentService.getAppointmentsByDateRange(startDate, endDate).pipe(
+    // Load both appointments and blocked time slots
+    const appointments$ = this.doctorAppointmentService.getAppointmentsByDateRange(startDate, endDate).pipe(
       tap(appointments => console.log('CalendarService: Received appointments:', appointments)),
-      map(appointments => this.appointmentMapper.mapAppointmentsToCalendarEvents(appointments)),
-      tap(calendarEvents => {
-        console.log('CalendarService: Mapped to calendar events:', calendarEvents);
-        this._events.set(calendarEvents);
+      map(appointments => this.appointmentMapper.mapAppointmentsToCalendarEvents(appointments))
+    );
+    
+    const blockedSlots$ = this.loadBlockedTimeSlots(startDate, endDate);
+    
+    return appointments$.pipe(
+      switchMap(appointmentEvents => 
+        blockedSlots$.pipe(
+          map(blockedEvents => [...appointmentEvents, ...blockedEvents])
+        )
+      ),
+      tap(combinedEvents => {
+        console.log('CalendarService: Combined appointments and blocked time events:', combinedEvents);
+        this._events.set(combinedEvents);
         this._loading.set(false);
       }),
       catchError(error => {
-        console.error('CalendarService: Failed to load appointments by date range:', error);
-        this._error.set('Failed to load appointments. Please try again.');
+        console.error('CalendarService: Failed to load calendar events:', error);
+        this._error.set('Failed to load calendar events. Please try again.');
         this._loading.set(false);
         return of([]);
       })
     );
   }
-
   refreshData(): void {
     this.loadAppointments();
+  }
+  loadBlockedTimeSlots(startDate: string, endDate: string): Observable<CalendarEvent[]> {
+    console.log('CalendarService: Loading blocked time slots for date range:', { startDate, endDate });
+    
+    return this.doctorAppointmentService.getBlockedSlots(startDate, endDate).pipe(
+      map(blockedSlots => {
+        console.log('CalendarService: Received blocked slots:', blockedSlots);
+        
+        return blockedSlots.map(slot => {
+          const blockedEvent: CalendarEvent = {
+            id: `blocked-${slot.id}`,
+            title: slot.reason || 'Blocked Time',
+            start: slot.start_datetime,
+            end: slot.end_datetime,
+            allDay: false,
+            color: this.getBlockedTimeColor(slot.reason),
+            backgroundColor: this.getBlockedTimeColor(slot.reason),
+            borderColor: this.getBlockedTimeColor(slot.reason),
+            textColor: '#FFFFFF',
+            extendedProps: {
+              isBlockedTime: true,
+              blockCategory: this.getBlockCategory(slot.reason),
+              notes: slot.reason,
+              originalBlockedSlot: slot
+            }
+          };
+          
+          return blockedEvent;
+        });
+      }),
+      catchError(error => {
+        console.error('CalendarService: Failed to load blocked time slots:', error);
+        return of([]);
+      })
+    );
+  }
+
+  private getBlockedTimeColor(reason: string): string {
+    const lowerReason = reason?.toLowerCase() || '';
+    
+    if (lowerReason.includes('lunch') || lowerReason.includes('break')) {
+      return '#FF9800'; // Orange
+    } else if (lowerReason.includes('meeting') || lowerReason.includes('conference')) {
+      return '#9C27B0'; // Purple
+    } else if (lowerReason.includes('vacation') || lowerReason.includes('holiday')) {
+      return '#4CAF50'; // Green
+    } else if (lowerReason.includes('emergency') || lowerReason.includes('urgent')) {
+      return '#F44336'; // Red
+    } else {
+      return '#607D8B'; // Blue Grey (default)
+    }
+  }
+
+  private getBlockCategory(reason: string): 'lunch' | 'meeting' | 'vacation' | 'other' {
+    const lowerReason = reason?.toLowerCase() || '';
+    
+    if (lowerReason.includes('lunch') || lowerReason.includes('break')) {
+      return 'lunch';
+    } else if (lowerReason.includes('meeting') || lowerReason.includes('conference')) {
+      return 'meeting';
+    } else if (lowerReason.includes('vacation') || lowerReason.includes('holiday')) {
+      return 'vacation';
+    } else {
+      return 'other';
+    }
   }
 
   // Data operations
@@ -222,12 +296,64 @@ export class CalendarService {  // Signal-based state for reactive UI updates
         return of(null);
       })
     );
-  }
-  updateBlockedTime(blockedTime: CalendarEvent): Observable<CalendarEvent> {
-    return this.updateEvent(blockedTime);
-  }
-  deleteBlockedTime(blockedTimeId: string): Observable<boolean> {
-    return this.deleteEvent(blockedTimeId);
+  }  updateBlockedTime(blockedTime: CalendarEvent): Observable<CalendarEvent> {
+    if (!blockedTime.extendedProps?.['originalBlockedSlot']) {
+      console.warn('No original blocked slot found for update');
+      return of(blockedTime);
+    }
+    
+    const originalSlot = blockedTime.extendedProps['originalBlockedSlot'];
+    const startTime = blockedTime.start instanceof Date ? 
+      blockedTime.start.toISOString() : 
+      new Date(blockedTime.start).toISOString();
+    const endTime = blockedTime.end instanceof Date ? 
+      blockedTime.end.toISOString() : 
+      new Date(blockedTime.end!).toISOString();
+    
+    return this.doctorAppointmentService.updateBlockedTimeSlot(
+      originalSlot.id,
+      startTime,
+      endTime,
+      blockedTime.title
+    ).pipe(
+      map(() => {
+        // Update local state
+        this._events.update(events => 
+          events.map(event => event.id === blockedTime.id ? blockedTime : event)
+        );
+        return blockedTime;
+      }),
+      catchError(error => {
+        console.error('Failed to update blocked time slot:', error);
+        this._error.set('Failed to update blocked time slot. Please try again.');
+        return of(blockedTime);
+      })
+    );
+  }  deleteBlockedTime(blockedTimeId: string): Observable<boolean> {
+    // Find the blocked time event to get the original slot ID
+    const blockedTimeEvent = this._events().find(event => event.id === blockedTimeId);
+    
+    if (!blockedTimeEvent?.extendedProps?.['originalBlockedSlot']) {
+      console.warn('No original blocked slot found for deletion');
+      // Still remove from local state
+      this._events.update(events => events.filter(event => event.id !== blockedTimeId));
+      return of(true);
+    }
+    
+    const originalSlotId = blockedTimeEvent.extendedProps['originalBlockedSlot'].id;
+    
+    return this.doctorAppointmentService.deleteBlockedTimeSlot(originalSlotId).pipe(
+      tap(() => {
+        // Remove from local state
+        this._events.update(events => events.filter(event => event.id !== blockedTimeId));
+      }),
+      map(() => true),
+      catchError(error => {
+        console.error('Failed to delete blocked time slot:', error);
+        this._error.set('Failed to delete blocked time slot. Please try again.');
+        return of(false);
+      })
+    );
   }
 
   // Helper methods

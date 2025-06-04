@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Appointment, ApiAppointmentResponse } from '../../models/appointment.model';
 import { AppointmentMapperService } from './appointment-mapper.service';
 import { environment } from '../../../environments/environment';
@@ -189,24 +189,39 @@ export class DoctorAppointmentService {
   rescheduleAppointment(id: number, newDateTime: string): Observable<Appointment> {
     return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}/reschedule`, {
       new_datetime: newDateTime
-    }).pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));  }
-
-  // Time slot management
-  getBlockedSlots(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/appointments/time-slots/blocked`);
-  }
-  unblockTimeSlot(id: number): Observable<any> {
+    }).pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));  }  // Time slot management
+  getBlockedSlots(startDate?: string, endDate?: string): Observable<any[]> {
+    let params: any = {};
+    
+    if (startDate && endDate) {
+      // Date range query
+      params.start_date = startDate;
+      params.end_date = endDate;
+    } else if (startDate) {
+      // Single date query
+      params.date = startDate;
+    }
+    
+    return this.http.get<any>(`${this.baseUrl}/appointments/time-slots/blocked`, { params }).pipe(
+      map(response => {
+        // Extract the data array from the API response
+        return response.data || [];
+      })
+    );
+  }unblockTimeSlot(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/appointments/time-slots/blocked/${id}`);
   }
-  // Update blocked time slot (delete old and create new)
+  // Delete blocked time slot (alias for unblockTimeSlot for consistency)
+  deleteBlockedTimeSlot(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/appointments/time-slots/blocked/${id}`);
+  }// Update blocked time slot (delete old and create new)
   updateBlockedTimeSlot(id: number, startTime: string, endTime: string, reason: string): Observable<any> {
-    // For now, we'll delete the old one and create a new one
-    // In a real implementation, you might have a PUT endpoint
-    return this.http.put(`${this.baseUrl}/appointments/time-slots/blocked/${id}`, {
-      start_datetime: startTime,
-      end_datetime: endTime,
-      reason
-    });
+    // Since there's no PUT endpoint, we'll delete the old one and create a new one
+    return this.unblockTimeSlot(id).pipe(
+      tap(() => console.log('Deleted old blocked time slot:', id)),
+      switchMap(() => this.blockTimeSlot(startTime, endTime, reason)),
+      tap((result) => console.log('Created new blocked time slot:', result))
+    );
   }// Patient search for appointments
   getAvailablePatients(search?: string): Observable<any[]> {
     const params: any = {};

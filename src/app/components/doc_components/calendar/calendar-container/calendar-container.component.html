@@ -87,3 +87,11 @@
   (close)="closeAppointmentDetails()"
   (edit)="editAppointmentFromModal($event)"
 ></app-appointment-details-modal>
+
+<!-- Blocked Time Delete Modal -->
+<app-blocked-time-delete-modal
+  [show]="showBlockedTimeDeleteModal()"
+  [blockedTime]="selectedBlockedTime()"
+  (close)="closeBlockedTimeDeleteModal()"
+  (delete)="handleBlockedTimeDelete($event)"
+></app-blocked-time-delete-modal>

@@ -18,6 +18,7 @@ import { ResourceFilterComponent } from '../resource-filter/resource-filter.comp
 import { SearchFilterComponent } from '../search-filter/search-filter.component';
 import { TimeBlockFormComponent } from '../time-block-form/time-block-form.component';
 import { AppointmentDetailsModalComponent } from '../appointment-details-modal/appointment-details-modal.component';
+import { BlockedTimeDeleteModalComponent } from '../blocked-time-delete-modal/blocked-time-delete-modal.component';
 
 @Component({
   selector: 'app-calendar-container',
@@ -28,7 +29,8 @@ import { AppointmentDetailsModalComponent } from '../appointment-details-modal/a
     ResourceFilterComponent,
     SearchFilterComponent,
     TimeBlockFormComponent,
-    AppointmentDetailsModalComponent
+    AppointmentDetailsModalComponent,
+    BlockedTimeDeleteModalComponent
   ],
   templateUrl: './calendar-container.component.html',
   styleUrls: ['./calendar-container.component.css']
@@ -45,10 +47,13 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   showTimeBlockForm = signal<boolean>(false);
   selectedBlockToEdit = signal<CalendarEvent | null>(null);
   isAppointmentForm = signal<boolean>(false);
-  
-  // State for appointment details modal
+    // State for appointment details modal
   showAppointmentDetails = signal<boolean>(false);
   selectedAppointment = signal<CalendarEvent | null>(null);
+  
+  // State for blocked time delete modal
+  showBlockedTimeDeleteModal = signal<boolean>(false);
+  selectedBlockedTime = signal<CalendarEvent | null>(null);
   
   // Calendar reactive state from service
   currentView = this.calendarService.currentView;
@@ -211,8 +216,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   private refreshEvents(): void {
     if (!this.calendar) return;
     this.calendar.refetchEvents();
-  }
-  // Event handlers
+  }  // Event handlers
   private handleEventClick(info: any): void {
     const clickedEvent = info.event;
     
@@ -232,8 +236,9 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
         }
       };
       
-      this.selectedBlockToEdit.set(blockedTimeEvent);
-      this.showTimeBlockForm.set(true);
+      // Show delete modal for blocked time
+      this.selectedBlockedTime.set(blockedTimeEvent);
+      this.showBlockedTimeDeleteModal.set(true);
     } else {
       // Handle regular appointment click - Show appointment details modal
       const selectedEvent: CalendarEvent = {
@@ -340,11 +345,32 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     this.selectedBlockToEdit.set(null);
     // No need to reset isAppointmentForm as it will be set when opening the form again
   }
-  
-  // Appointment details modal methods
+    // Appointment details modal methods
   closeAppointmentDetails(): void {
     this.showAppointmentDetails.set(false);
     this.selectedAppointment.set(null);
+  }
+
+  // Blocked time delete modal methods
+  closeBlockedTimeDeleteModal(): void {
+    this.showBlockedTimeDeleteModal.set(false);
+    this.selectedBlockedTime.set(null);
+  }
+
+  handleBlockedTimeDelete(blockedTimeId: string): void {
+    this.calendarService.deleteBlockedTime(blockedTimeId).subscribe({
+      next: (success) => {
+        if (success) {
+          console.log('Blocked time deleted successfully');
+          this.refreshEvents();
+        }
+        this.closeBlockedTimeDeleteModal();
+      },
+      error: (error) => {
+        console.error('Failed to delete blocked time:', error);
+        this.closeBlockedTimeDeleteModal();
+      }
+    });
   }
   editAppointmentFromModal(appointment: CalendarEvent): void {
     // Close the details modal

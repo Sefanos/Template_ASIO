@@ -32,12 +32,12 @@
         <label for="title" class="block text-text-light mb-1 font-medium">
           <span *ngIf="isAppointmentForm">Appointment Title</span>
           <span *ngIf="!isAppointmentForm">Block Title</span>
-        </label>
-        <input 
+        </label>        <input 
           type="text" 
           id="title" 
           formControlName="title"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+          [disabled]="isSubmitting || isDeleting"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           [ngClass]="{
             'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
             'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
@@ -52,15 +52,15 @@
       <div class="mb-4" *ngIf="isAppointmentForm">
         <label for="patientName" class="block text-text-light mb-1 font-medium">Patient <span class="text-status-urgent">*</span></label>        <div class="relative patient-search-container">
           <!-- Patient search input with autocomplete -->
-          <div class="relative">
-            <input 
+          <div class="relative">            <input 
               type="text" 
               id="patientName" 
               formControlName="patientName"
+              [disabled]="isSubmitting || isDeleting"
               (input)="onPatientSearch($any($event.target).value)"
               (focus)="showSearchOnFocus()"
               (click)="showSearchOnFocus()"
-              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Search for a patient..."
               [class.border-status-urgent]="blockForm.get('patientName')?.invalid && blockForm.get('patientName')?.touched"
               autocomplete="off"
@@ -139,12 +139,12 @@
       <!-- Date and Time -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <label for="startDate" class="block text-text-light mb-1 font-medium">Start Date</label>
-          <input 
+          <label for="startDate" class="block text-text-light mb-1 font-medium">Start Date</label>          <input 
             type="date" 
             id="startDate" 
             formControlName="startDate"
-            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [disabled]="isSubmitting || isDeleting"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             [ngClass]="{
               'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
               'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
@@ -155,12 +155,12 @@
           </div>
         </div>
         <div>
-          <label for="startTime" class="block text-text-light mb-1 font-medium">Start Time</label>
-          <input 
+          <label for="startTime" class="block text-text-light mb-1 font-medium">Start Time</label>          <input 
             type="time" 
             id="startTime" 
             formControlName="startTime"
-            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [disabled]="isSubmitting || isDeleting"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             [ngClass]="{
               'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
               'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
@@ -174,12 +174,12 @@
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <label for="endDate" class="block text-text-light mb-1 font-medium">End Date</label>
-          <input 
+          <label for="endDate" class="block text-text-light mb-1 font-medium">End Date</label>          <input 
             type="date" 
             id="endDate" 
             formControlName="endDate"
-            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [disabled]="isSubmitting || isDeleting"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             [ngClass]="{
               'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
               'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
@@ -190,12 +190,12 @@
           </div>
         </div>
         <div>
-          <label for="endTime" class="block text-text-light mb-1 font-medium">End Time</label>
-          <input 
+          <label for="endTime" class="block text-text-light mb-1 font-medium">End Time</label>          <input 
             type="time" 
             id="endTime" 
             formControlName="endTime"
-            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+            [disabled]="isSubmitting || isDeleting"
+            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             [ngClass]="{
               'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
               'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
@@ -208,11 +208,11 @@
       </div>
         <!-- Appointment Type (only for appointments) -->
       <div class="mb-4" *ngIf="isAppointmentForm">
-        <label for="appointmentType" class="block text-text-light mb-1 font-medium">Appointment Type <span class="text-status-urgent">*</span></label>
-        <select 
+        <label for="appointmentType" class="block text-text-light mb-1 font-medium">Appointment Type <span class="text-status-urgent">*</span></label>        <select 
           id="appointmentType" 
           formControlName="type"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          [disabled]="isSubmitting || isDeleting"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
           [class.border-status-urgent]="blockForm.get('type')?.invalid && blockForm.get('type')?.touched"
         >
           <option *ngFor="let type of appointmentTypes" [value]="type.value">{{ type.label }}</option>
@@ -224,11 +224,11 @@
       
       <!-- Block Category (only for time blocks) -->
       <div class="mb-4" *ngIf="!isAppointmentForm">
-        <label for="blockCategory" class="block text-text-light mb-1 font-medium">Category</label>
-        <select 
+        <label for="blockCategory" class="block text-text-light mb-1 font-medium">Category</label>        <select 
           id="blockCategory" 
           formControlName="blockCategory"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-status-urgent focus:border-status-urgent"
+          [disabled]="isSubmitting || isDeleting"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-status-urgent focus:border-status-urgent disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="lunch">Lunch</option>
           <option value="meeting">Meeting</option>
@@ -239,12 +239,12 @@
       
       <!-- Recurring Options (only for time blocks) -->
       <div class="mb-4" *ngIf="!isAppointmentForm">
-        <div class="flex items-center mb-2">
-          <input 
+        <div class="flex items-center mb-2">          <input 
             type="checkbox" 
             id="isRecurring" 
             formControlName="isRecurring"
-            class="h-4 w-4 text-status-urgent focus:ring-status-urgent border-gray-300 rounded"
+            [disabled]="isSubmitting || isDeleting"
+            class="h-4 w-4 text-status-urgent focus:ring-status-urgent border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <label for="isRecurring" class="ml-2 block text-text">Recurring time block</label>
         </div>
@@ -252,11 +252,11 @@
         <div *ngIf="blockForm.get('isRecurring')?.value">
           <div class="pl-6 space-y-2">
             <div class="flex flex-wrap gap-2">
-              <label class="inline-flex items-center" *ngFor="let day of weekDays; let i = index">
-                <input 
+              <label class="inline-flex items-center" *ngFor="let day of weekDays; let i = index">                <input 
                   type="checkbox" 
                   [formControlName]="'day' + i"
-                  class="h-4 w-4 text-status-urgent focus:ring-status-urgent border-gray-300 rounded"
+                  [disabled]="isSubmitting || isDeleting"
+                  class="h-4 w-4 text-status-urgent focus:ring-status-urgent border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <span class="ml-2 text-sm">{{ day }}</span>
               </label>
@@ -269,12 +269,12 @@
         <label for="notes" class="block text-text-light mb-1 font-medium">
           <span *ngIf="isAppointmentForm">Staff Notes (Optional)</span>
           <span *ngIf="!isAppointmentForm">Notes (Optional)</span>
-        </label>
-        <textarea 
+        </label>        <textarea 
           [id]="isAppointmentForm ? 'notes_by_staff' : 'notes'" 
           [formControlName]="isAppointmentForm ? 'notes_by_staff' : 'notes'"
           rows="2"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none"
+          [disabled]="isSubmitting || isDeleting"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           [ngClass]="{
             'focus:ring-2 focus:ring-primary focus:border-primary': isAppointmentForm,
             'focus:ring-2 focus:ring-status-urgent focus:border-status-urgent': !isAppointmentForm
@@ -287,12 +287,12 @@
       </div>
         <!-- Reason for Visit (only for appointments) -->
       <div class="mb-4" *ngIf="isAppointmentForm">
-        <label for="reason_for_visit" class="block text-text-light mb-1 font-medium">Reason for Visit <span class="text-status-urgent">*</span></label>
-        <textarea 
+        <label for="reason_for_visit" class="block text-text-light mb-1 font-medium">Reason for Visit <span class="text-status-urgent">*</span></label>        <textarea 
           id="reason_for_visit" 
           formControlName="reason_for_visit"
           rows="2"
-          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          [disabled]="isSubmitting || isDeleting"
+          class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
           [class.border-status-urgent]="blockForm.get('reason_for_visit')?.invalid && blockForm.get('reason_for_visit')?.touched"
           placeholder="Enter reason for the appointment..."
         ></textarea>
@@ -310,11 +310,11 @@
             
             <!-- Priority -->
             <div class="mb-3">
-              <label for="priority" class="block text-text-light mb-1 font-medium text-sm">Priority</label>
-              <select 
+              <label for="priority" class="block text-text-light mb-1 font-medium text-sm">Priority</label>              <select 
                 id="priority" 
                 formControlName="priority"
-                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                [disabled]="isSubmitting || isDeleting"
+                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
               </select>
@@ -322,11 +322,11 @@
             
             <!-- Reminder Preference -->
             <div class="mb-3">
-              <label for="reminder_preference" class="block text-text-light mb-1 font-medium text-sm">Reminder Preference</label>
-              <select 
+              <label for="reminder_preference" class="block text-text-light mb-1 font-medium text-sm">Reminder Preference</label>              <select 
                 id="reminder_preference" 
                 formControlName="reminder_preference"
-                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                [disabled]="isSubmitting || isDeleting"
+                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option *ngFor="let option of reminderOptions" [value]="option.value">{{ option.label }}</option>
               </select>
@@ -348,7 +348,6 @@
         actionButtonText: {{ actionButtonText }} |
         blockToEdit: {{ blockToEdit ? 'EXISTS' : 'NULL' }}
       </div>
-    
       <!-- Form Actions -->
       <div class="flex justify-between pt-3 border-t border-border">
         <div>
@@ -357,9 +356,14 @@
             type="button" 
             *ngIf="isEditing"
             (click)="deleteBlock()"
-            class="px-3 py-1.5 bg-status-urgent text-white rounded-button text-sm font-medium hover:bg-status-urgent/90 transition-colors"
+            [disabled]="isDeleting || isSubmitting"
+            class="px-3 py-1.5 bg-status-urgent text-white rounded-button text-sm font-medium hover:bg-status-urgent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
-            Delete
+            <svg *ngIf="isDeleting" class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isDeleting ? 'Deleting...' : 'Delete' }}
           </button>
         </div>
         
@@ -367,18 +371,24 @@
           <button 
             type="button" 
             (click)="cancel()"
-            class="px-3 py-1.5 bg-hover text-text rounded-button text-sm font-medium hover:bg-gray-200 transition-colors"
+            [disabled]="isSubmitting || isDeleting"
+            class="px-3 py-1.5 bg-hover text-text rounded-button text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>          <button 
             type="submit" 
+            [disabled]="isSubmitting || isDeleting"
             [ngClass]="{
               'bg-primary hover:bg-primary-dark': isAppointmentForm,
               'bg-status-urgent hover:bg-status-urgent/90': !isAppointmentForm
             }"
-            class="px-3 py-1.5 text-white rounded-button text-sm font-medium transition-colors"
+            class="px-3 py-1.5 text-white rounded-button text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
-            {{ actionButtonText }}
+            <svg *ngIf="isSubmitting" class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isSubmitting ? (isAppointmentForm ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Updating...' : 'Blocking...')) : actionButtonText }}
           </button>
         </div>
       </div>
