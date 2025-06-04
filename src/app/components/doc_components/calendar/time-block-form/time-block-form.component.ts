@@ -1,10 +1,11 @@
-import { Component, EventEmitter, HostListener, inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnInit, OnChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
 import { CalendarEvent } from '../../../../models/calendar/calendar-event.model';
 import { CalendarResource } from '../../../../models/calendar/calendar-resource.model';
 import { DoctorAppointmentService } from '../../../../shared/services/doctor-appointment.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { Observable, of, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
@@ -15,7 +16,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
   templateUrl: './time-block-form.component.html',
   styleUrls: ['./time-block-form.component.css']
 })
-export class TimeBlockFormComponent implements OnInit {
+export class TimeBlockFormComponent implements OnInit, OnChanges {
   @Input() show: boolean = false;
   @Input() blockToEdit: CalendarEvent | null = null;
   @Input() isAppointmentForm: boolean = false; // New input to differentiate between appointment and block time forms
@@ -23,9 +24,10 @@ export class TimeBlockFormComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<CalendarEvent>();
   @Output() deleted = new EventEmitter<string>();
-    private calendarService = inject(CalendarService);
+  private calendarService = inject(CalendarService);
   private fb = inject(FormBuilder);
   private doctorAppointmentService = inject(DoctorAppointmentService);
+  private authService = inject(AuthService);
   
   blockForm!: FormGroup;
   errorMessage: string = '';
@@ -63,18 +65,48 @@ export class TimeBlockFormComponent implements OnInit {
     { value: 'both', label: 'Both' },
     { value: 'none', label: 'None' }
   ];
-  
   get isEditing(): boolean {
-    return !!this.blockToEdit;
+    const result = !!this.blockToEdit;
+    
+    return result;
+  }
+  
+  get isCreating(): boolean {
+    const result = !this.blockToEdit;
+    
+    return result;
+  }
+    get actionButtonText(): string {
+    const result = this.isAppointmentForm
+      ? (this.isEditing ? 'Update Appointment' : 'Create Appointment')
+      : (this.isEditing ? 'Update Time Block' : 'Block Time');
+    
+    return result;
+  }
+
+  private getCurrentDoctorId(): string {
+    const currentUser = this.authService.currentUserValue;
+    if (currentUser && currentUser.id) {
+      return currentUser.id.toString();
+    }
+    console.warn('Could not get current user ID, falling back to default doctor-1');
+    return 'doctor-1'; // Fallback in case of issues
   }
     ngOnInit(): void {
+    console.log('TimeBlockFormComponent initialized:', {
+      isAppointmentForm: this.isAppointmentForm,
+      isEditing: this.isEditing,
+      isCreating: this.isCreating,
+      blockToEdit: this.blockToEdit
+    });
+    
     this.initForm();
       // Setup patient search with debounce
     this.patientSearchTerm.pipe(
       debounceTime(400),
       distinctUntilChanged(),
       switchMap(term => {
-        console.log('Searching for patients with term:', term);
+        
         if (!term || term.length < 2) {
           return of([]);
         }
@@ -83,7 +115,7 @@ export class TimeBlockFormComponent implements OnInit {
       })
     ).subscribe({
       next: (results) => {
-        console.log('Patient search results:', results);
+        
         this.patients = results;
         this.isLoadingPatients = false;
       },
@@ -94,18 +126,27 @@ export class TimeBlockFormComponent implements OnInit {
       }
     });
   }
-  
-  ngOnChanges(): void {
-    if (this.blockForm && this.blockToEdit) {
-      this.populateForm();
+    ngOnChanges(): void {
+    
+    
+    
+    // Reinitialize form when inputs change
+    if (this.blockForm) {
+      this.initForm();
     }
   }
-  
-  private initForm(): void {
-    // Base form controls for both block time and appointments
+    private initForm(): void {
+    
+    
+    // Reset patient selection when initializing form
+    this.selectedPatient = null;
+    this.patients = [];
+    this.showPatientsList = false;
+    this.errorMessage = '';
+      // Base form controls for both block time and appointments
     const formControls = {
       title: ['', Validators.required],
-      resourceId: ['', Validators.required],
+      resourceId: ['', [Validators.required]], // Now properly required with current doctor's ID
       startDate: ['', Validators.required],
       startTime: ['', Validators.required],
       endDate: ['', Validators.required],
@@ -140,26 +181,53 @@ export class TimeBlockFormComponent implements OnInit {
         day6: [false], // Sunday,
       });
     }
-    
-    this.blockForm = this.fb.group(formControls);
+      this.blockForm = this.fb.group(formControls);
     
     // Initialize with default values if not editing
     if (!this.blockToEdit) {
-      const today = new Date();
-      this.blockForm.patchValue({
-        startDate: this.formatDate(today),
-        endDate: this.formatDate(today),
-        startTime: '09:00',
-        endTime: '10:00',
-        resourceId: this.resources()[0]?.id || ''
+      // Try to get default date/time from CalendarService first
+      const defaultStart = this.calendarService.defaultStartDateTime();
+      const defaultEnd = this.calendarService.defaultEndDateTime();
+      
+      let startDate: Date, endDate: Date, startTime: string, endTime: string;
+      
+      if (defaultStart && defaultEnd) {
+        // Use the default date/time from CalendarService (from calendar clicks)
+        startDate = defaultStart;
+        endDate = defaultEnd;
+        startTime = this.formatTime(defaultStart);
+        endTime = this.formatTime(defaultEnd);
+        
+        console.log('Using CalendarService default date/time:', {
+          startDate,
+          endDate,
+          startTime,
+          endTime
+        });
+      } else {
+        // Fallback to current time
+        const today = new Date();
+        startDate = today;
+        endDate = today;
+        startTime = '09:00';
+        endTime = '10:00';
+        
+        console.log('Using fallback default date/time (CalendarService defaults not available)');
+      }
+        this.blockForm.patchValue({
+        startDate: this.formatDate(startDate),
+        endDate: this.formatDate(endDate),
+        startTime: startTime,
+        endTime: endTime,
+        resourceId: this.getCurrentDoctorId() // Use actual current doctor's ID
       });
     } else {
       this.populateForm();
     }
-    
-    // Setup field synchronization if this is an appointment form
+      // Setup field synchronization if this is an appointment form
     if (this.isAppointmentForm) {
       this.syncAppointmentFields();
+      this.syncAppointmentDates();
     }
   }
     private populateForm(): void {
@@ -226,7 +294,7 @@ export class TimeBlockFormComponent implements OnInit {
         originalAppointment['reminder_preference'] ||
         'email';
       
-      console.log('Populating appointment form with patient:', patientName, 'type:', appointmentType);
+      
         
       Object.assign(baseValues, {
         patientName: patientName,
@@ -251,7 +319,7 @@ export class TimeBlockFormComponent implements OnInit {
           phone: patientPhone
         };
         
-        console.log('Found patient information for editing:', this.selectedPatient);
+        
       }
     } else {
       Object.assign(baseValues, {
@@ -283,167 +351,356 @@ export class TimeBlockFormComponent implements OnInit {
     }
     
     this.blockForm.patchValue(baseValues);
-  }
-  
-  saveBlock(): void {
-    if (this.blockForm.invalid) {
-      this.errorMessage = 'Please fill all required fields';
+  }  saveBlock(): void {
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // Debug individual field validation
+    
+    Object.keys(this.blockForm.controls).forEach(key => {
+      const control = this.blockForm.get(key);
+      console.log(`${key}:`, {
+        value: control?.value,
+        valid: control?.valid,
+        invalid: control?.invalid,
+        errors: control?.errors,
+        touched: control?.touched
+      });
+    });
+      if (this.blockForm.invalid) {
+      
+      this.blockForm.markAllAsTouched();
+      
+      // Create a detailed error message
+      const errors: string[] = [];
+      Object.keys(this.blockForm.controls).forEach(key => {
+        const control = this.blockForm.get(key);
+        if (control?.invalid && control.hasError('required')) {
+          errors.push(key);
+        }
+      });
+      
+      this.errorMessage = `Please fill all required fields: ${errors.join(', ')}`;
       return;
     }
     
     const formValues = this.blockForm.value;
     
-    // Validate dates
+      // Validate dates
     const startDateTime = this.combineDateAndTime(formValues.startDate, formValues.startTime);
     const endDateTime = this.combineDateAndTime(formValues.endDate, formValues.endTime);
+    
+    // For appointments, ensure they're on the same day
+    if (this.isAppointmentForm) {
+      const startDate = new Date(formValues.startDate);
+      const endDate = new Date(formValues.endDate);
+      
+      if (startDate.toDateString() !== endDate.toDateString()) {
+        this.errorMessage = 'Appointments cannot span multiple days. Please select the same date for start and end.';
+        return;
+      }
+    }
     
     if (endDateTime <= startDateTime) {
       this.errorMessage = 'End time must be after start time';
       return;
     }
     
-    // Create the event object based on form type
+    // Determine if this is a create or update operation
+    const isCreating = !this.blockToEdit;
+    
+    
+    // Handle different operations based on form type and create/update mode
     if (this.isAppointmentForm) {
-      this.saveAppointment(formValues, startDateTime, endDateTime);
+      if (isCreating) {
+        
+        this.createNewAppointment(formValues, startDateTime, endDateTime);
+      } else {
+        
+        this.updateExistingAppointment(formValues, startDateTime, endDateTime);
+      }
     } else {
-      this.saveTimeBlock(formValues, startDateTime, endDateTime);
-    }
-  }
-  private saveAppointment(formValues: any, startDateTime: Date, endDateTime: Date): void {
-    // Create appointment event - preserve any existing extended properties
-    const baseExtendedProps = this.blockToEdit?.extendedProps || {};
-    const originalAppointment = baseExtendedProps['originalAppointment'] || {};
-    
-    // Ensure we have all fields required by the backend API
-    const appointment: CalendarEvent = {
-      id: this.blockToEdit?.id || `appointment-${Date.now()}`,
-      title: formValues.title,
-      start: startDateTime.toISOString(),
-      end: endDateTime.toISOString(),
-      resourceId: formValues.resourceId,
-      color: '#4285F4', // Google Calendar blue for appointments
-      textColor: '#FFFFFF',
-      extendedProps: {
-        ...baseExtendedProps,
-        isAppointment: true,
-        // Patient information
-        patientName: formValues.patientName,
-        patient_user_id: formValues.patient_user_id,
-        // Appointment details
-        type: formValues.type,
-        appointmentType: formValues.appointmentType, // For backward compatibility
-        reason_for_visit: formValues.reason_for_visit,
-        priority: formValues.priority || 'normal',
-        // Notes and preferences
-        notes_by_staff: formValues.notes_by_staff || formValues.notes,
-        notes: formValues.notes_by_staff || formValues.notes, // For backward compatibility
-        reminder_preference: formValues.reminder_preference || 'email',
-        // Status management
-        status: baseExtendedProps['status'] || 'scheduled',
-        // Doctor information
-        doctorName: baseExtendedProps['doctorName'],
-        doctorId: baseExtendedProps['doctorId'],
-        // Preserve original appointment data if it exists
-        originalAppointment: {
-          ...originalAppointment,
-          patient_user_id: formValues.patient_user_id,
-          appointment_datetime_start: startDateTime.toISOString(),
-          appointment_datetime_end: endDateTime.toISOString(),
-          type: formValues.type,
-          reason_for_visit: formValues.reason_for_visit,
-          priority: formValues.priority,
-          notes_by_staff: formValues.notes_by_staff || formValues.notes,
-          reminder_preference: formValues.reminder_preference || 'email'
-        }
+      if (isCreating) {
+        
+        this.createNewTimeBlock(formValues, startDateTime, endDateTime);
+      } else {
+        
+        this.updateExistingTimeBlock(formValues, startDateTime, endDateTime);
       }
+    }
+  }  private createNewAppointment(formValues: any, startDateTime: Date, endDateTime: Date): void {
+    console.log('=== APPOINTMENT CREATION PROCESS START ===');
+    
+    // First, let's test if we can reach the backend with a simple GET request
+    console.log('🔍 Testing backend connectivity...');
+    this.doctorAppointmentService.getMyAppointments().subscribe({
+      next: (appointments) => {
+        console.log('✅ Backend connectivity test PASSED - got appointments:', appointments.length);
+        this.proceedWithAppointmentCreation(formValues, startDateTime, endDateTime);
+      },
+      error: (error) => {
+        console.log('❌ Backend connectivity test FAILED:', error);
+        console.log('This suggests an authentication or network issue before we even try to create the appointment');
+        
+        let errorMessage = 'Cannot connect to backend. Please check your connection and try logging in again.';
+        if (error.status === 401) {
+          errorMessage = 'Authentication expired. Please log in again.';
+        } else if (error.status === 0) {
+          errorMessage = 'Cannot reach the server. Please check your internet connection.';
+        }
+        
+        this.errorMessage = errorMessage;
+      }
+    });  }
+
+  private proceedWithAppointmentCreation(formValues: any, startDateTime: Date, endDateTime: Date): void {
+    console.log('🚀 Proceeding with appointment creation...');
+    
+    // Prepare API payload for new appointment
+    const apiPayload = {
+      patient_user_id: formValues.patient_user_id,
+      appointment_datetime_start: this.formatDateTimeForBackend(startDateTime),
+      appointment_datetime_end: this.formatDateTimeForBackend(endDateTime),
+      type: formValues.type,
+      reason_for_visit: formValues.reason_for_visit,
+      priority: formValues.priority || 'normal',
+      notes_by_staff: formValues.notes_by_staff || '',
+      reminder_preference: formValues.reminder_preference || 'email'
     };
     
-    console.log('Saving appointment with data:', appointment);
     
-    // Send to backend API if we have a proper patient ID
-    if (formValues.patient_user_id) {
-      const apiPayload = {
-        patient_user_id: formValues.patient_user_id,
-        appointment_datetime_start: startDateTime.toISOString(),
-        appointment_datetime_end: endDateTime.toISOString(),
-        type: formValues.type,
-        reason_for_visit: formValues.reason_for_visit,
-        priority: formValues.priority,
-        notes_by_staff: formValues.notes_by_staff || formValues.notes,
-        reminder_preference: formValues.reminder_preference
-      };
-      
-      console.log('API payload:', apiPayload);
-      
-      // Skip API call in this implementation as it should be handled by the calendar container
-      // We just propagate the event with all necessary data
-    }
     
-    // Save the appointment (will be caught by the parent component)
-    this.saved.emit(appointment);
-    this.close.emit();
-  }
-  
-  private saveTimeBlock(formValues: any, startDateTime: Date, endDateTime: Date): void {
-    // Create recurrence rule if needed
-    let recurrenceRule = '';
-    if (formValues.isRecurring) {
-      const selectedDays = [];
-      const dayMap = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
-      
-      for (let i = 0; i < 7; i++) {
-        if (formValues[`day${i}`]) {
-          selectedDays.push(dayMap[i]);
+    console.log('Payload being sent:', JSON.stringify(apiPayload, null, 2));
+    
+    // Call the backend to create the appointment
+    this.doctorAppointmentService.createAppointment(apiPayload).subscribe({
+      next: (createdAppointment) => {
+        
+        
+        // Create calendar event object for the frontend
+        const appointment: CalendarEvent = {
+          id: `appointment-${createdAppointment.id || Date.now()}`,
+          title: formValues.title,
+          start: startDateTime.toISOString(),
+          end: endDateTime.toISOString(),
+          resourceId: formValues.resourceId,
+          color: '#4285F4', // Blue for appointments
+          textColor: '#FFFFFF',
+          extendedProps: {
+            isAppointment: true,
+            patientName: formValues.patientName,
+            patient_user_id: formValues.patient_user_id,
+            type: formValues.type,
+            reason_for_visit: formValues.reason_for_visit,
+            priority: formValues.priority,
+            notes_by_staff: formValues.notes_by_staff,
+            reminder_preference: formValues.reminder_preference,
+            status: 'scheduled',
+            originalAppointment: createdAppointment          }
+        };
+        
+        this.saved.emit(appointment);
+        this.closeForm();
+      },      error: (error) => {
+        console.error('Error creating appointment:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        console.error('Error response body:', error.error);
+        
+        // Display more specific error message
+        let errorMessage = 'Failed to create appointment. Please try again.';
+        if (error.error && error.error.message) {
+          errorMessage = error.error.message;
+        } else if (error.error && error.error.error) {
+          errorMessage = error.error.error;
         }
+        
+        this.errorMessage = errorMessage;
       }
-      
-      if (selectedDays.length > 0) {
-        recurrenceRule = `FREQ=DAILY;BYDAY=${selectedDays.join(',')}`;
-      }
-    }
+    });
+  }
+
+  private updateExistingAppointment(formValues: any, startDateTime: Date, endDateTime: Date): void {
     
-    // Set color based on category
-    let color = '#E67C73'; // Default red for blocked time
-    if (formValues.blockCategory === 'meeting') {
-      color = '#8E24AA'; // Purple
-    } else if (formValues.blockCategory === 'vacation') {
-      color = '#F4B400'; // Yellow
-    } else if (formValues.blockCategory === 'lunch') {
-      color = '#E67C73'; // Red
-    }
     
-    // Create blocked time event
-    const blockedTime: CalendarEvent = {
-      id: this.blockToEdit?.id || `block-${Date.now()}`,
-      title: formValues.title,
-      start: startDateTime.toISOString(),
-      end: endDateTime.toISOString(),
-      resourceId: formValues.resourceId,
-      color: color,
-      textColor: '#FFFFFF',
-      extendedProps: {
-        isBlockedTime: true,
-        blockCategory: formValues.blockCategory,
-        notes: formValues.notes,
-        recurrenceRule: recurrenceRule || undefined
-      }
+    if (!this.blockToEdit) return;
+    
+    // Get the appointment ID from the existing appointment
+    const appointmentId = this.blockToEdit.extendedProps?.['originalAppointment']?.id || 
+                          this.blockToEdit.extendedProps?.['appointmentId'] ||
+                          this.blockToEdit.id;    // Prepare API payload for update
+    const apiPayload = {
+      patient_user_id: formValues.patient_user_id,
+      appointment_datetime_start: this.formatDateTimeForBackend(startDateTime),
+      appointment_datetime_end: this.formatDateTimeForBackend(endDateTime),
+      type: formValues.type,
+      reason_for_visit: formValues.reason_for_visit,
+      priority: formValues.priority || 'normal',
+      notes_by_staff: formValues.notes_by_staff || '',
+      reminder_preference: formValues.reminder_preference || 'email'
     };
     
-    // Save the time block
-    this.saved.emit(blockedTime);
-    this.close.emit();
+    
+    
+    // Call the backend to update the appointment
+    this.doctorAppointmentService.updateAppointment(appointmentId, apiPayload).subscribe({
+      next: (updatedAppointment) => {
+        
+        
+        // Create updated calendar event object
+        const appointment: CalendarEvent = {
+          ...this.blockToEdit!,
+          title: formValues.title,
+          start: startDateTime.toISOString(),
+          end: endDateTime.toISOString(),
+          extendedProps: {
+            ...this.blockToEdit!.extendedProps,
+            patientName: formValues.patientName,
+            patient_user_id: formValues.patient_user_id,
+            type: formValues.type,
+            reason_for_visit: formValues.reason_for_visit,
+            priority: formValues.priority,
+            notes_by_staff: formValues.notes_by_staff,
+            reminder_preference: formValues.reminder_preference,
+            originalAppointment: updatedAppointment          }
+        };
+        
+        this.saved.emit(appointment);
+        this.closeForm();
+      },
+      error: (error) => {
+        console.error('Error updating appointment:', error);
+        this.errorMessage = 'Failed to update appointment. Please try again.';
+      }
+    });
   }
-  
-  deleteBlock(): void {
+  private createNewTimeBlock(formValues: any, startDateTime: Date, endDateTime: Date): void {
+    
+    
+    // Call the backend to block the time slot
+    this.doctorAppointmentService.blockTimeSlot(
+      this.formatDateTimeForBackend(startDateTime),
+      this.formatDateTimeForBackend(endDateTime),
+      formValues.title
+    ).subscribe({
+      next: (response) => {
+        console.log('Time block created successfully:', response);
+        
+        // Create calendar event object for the frontend
+        const blockedTime: CalendarEvent = {
+          id: `block-${response.data?.id || Date.now()}`,
+          title: formValues.title,
+          start: startDateTime.toISOString(),
+          end: endDateTime.toISOString(),
+          resourceId: formValues.resourceId,
+          color: this.getBlockColor(formValues.blockCategory),
+          textColor: '#FFFFFF',
+          extendedProps: {
+            isBlockedTime: true,
+            blockCategory: formValues.blockCategory,
+            notes: formValues.notes,
+            originalBlock: response.data
+          }
+        };
+          this.saved.emit(blockedTime);
+        this.closeForm();
+      },
+      error: (error) => {
+        console.error('Error creating time block:', error);
+        this.errorMessage = 'Failed to block time slot. Please try again.';
+      }
+    });
+  }
+  private updateExistingTimeBlock(formValues: any, startDateTime: Date, endDateTime: Date): void {
+    
+    
+    if (!this.blockToEdit) return;
+    
+    // Get the time block ID from the existing block
+    const timeBlockId = this.blockToEdit.extendedProps?.['originalBlock']?.id || 
+                        this.blockToEdit.extendedProps?.['timeBlockId'] ||
+                        this.blockToEdit.id;
+    
+    
+      // Call the backend to update the time block
+    this.doctorAppointmentService.updateBlockedTimeSlot(
+      timeBlockId,
+      this.formatDateTimeForBackend(startDateTime),
+      this.formatDateTimeForBackend(endDateTime),
+      formValues.title
+    ).subscribe({
+      next: (response) => {
+        console.log('Time block updated successfully:', response);
+        
+        // Create updated time block event object for frontend
+        const blockedTime: CalendarEvent = {
+          ...this.blockToEdit!,
+          title: formValues.title,
+          start: startDateTime.toISOString(),
+          end: endDateTime.toISOString(),
+          color: this.getBlockColor(formValues.blockCategory),
+          extendedProps: {
+            ...this.blockToEdit!.extendedProps,
+            blockCategory: formValues.blockCategory,
+            notes: formValues.notes,
+            originalBlock: response.data || response
+          }
+        };
+        
+        console.log('Updated time block:', blockedTime);
+        
+        this.saved.emit(blockedTime);
+        this.closeForm();
+      },
+      error: (error) => {
+        console.error('Error updating time block:', error);
+        this.errorMessage = 'Failed to update time block. Please try again.';
+      }
+    });
+  }
+
+  private getBlockColor(category: string): string {
+    switch (category) {
+      case 'meeting': return '#8E24AA'; // Purple
+      case 'vacation': return '#F4B400'; // Yellow
+      case 'lunch': return '#E67C73'; // Red
+      default: return '#E67C73'; // Default red for blocked time
+    }
+  }
+    deleteBlock(): void {
     if (this.blockToEdit) {
       this.deleted.emit(this.blockToEdit.id);
-      this.close.emit();
+      this.closeForm();
     }
   }
+    cancel(): void {
+    this.closeForm();
+  }
   
-  cancel(): void {
+  private closeForm(): void {
+    // Clean up default date/time in CalendarService
+    this.calendarService.clearDefaultDateTime();
+    
+    // Reset form state
+    this.selectedPatient = null;
+    this.patients = [];
+    this.showPatientsList = false;
+    this.errorMessage = '';
+    
+    
+    
+    // Emit close event
     this.close.emit();
-  }  // Search for patients based on the input term
+  }// Search for patients based on the input term
   onPatientSearch(term: string): void {
     console.log('Patient search term:', term);
     if (term && term.length >= 2) {
@@ -501,11 +758,10 @@ export class TimeBlockFormComponent implements OnInit {
     const formValues = this.blockForm.value;
     const startDateTime = this.combineDateAndTime(formValues.startDate, formValues.startTime);
     const endDateTime = this.combineDateAndTime(formValues.endDate, formValues.endTime);
-    
-    const payload = {
+      const payload = {
       doctor_user_id: formValues.resourceId,
-      appointment_datetime_start: startDateTime.toISOString(),
-      appointment_datetime_end: endDateTime.toISOString()
+      start_datetime: this.formatDateTimeForBackend(startDateTime),
+      end_datetime: this.formatDateTimeForBackend(endDateTime)
     };
     
     this.doctorAppointmentService.checkConflicts(payload).subscribe({
@@ -550,6 +806,27 @@ export class TimeBlockFormComponent implements OnInit {
     this.blockForm.get('endDate')?.valueChanges.subscribe(() => this.checkConflicts());
     this.blockForm.get('endTime')?.valueChanges.subscribe(() => this.checkConflicts());
   }
+  // Synchronize start and end dates for appointments (they should be the same day)
+  private syncAppointmentDates(): void {
+    // When start date changes, update end date to match
+    this.blockForm.get('startDate')?.valueChanges.subscribe(startDate => {
+      if (startDate && this.isAppointmentForm) {
+        this.blockForm.patchValue({ endDate: startDate }, { emitEvent: false });
+        console.log('Synced end date to match start date:', startDate);
+      }
+    });
+    
+    // When end date changes, update start date to match (for appointments, they should be same day)
+    this.blockForm.get('endDate')?.valueChanges.subscribe(endDate => {
+      if (endDate && this.isAppointmentForm) {
+        const currentStartDate = this.blockForm.get('startDate')?.value;
+        if (currentStartDate !== endDate) {
+          this.blockForm.patchValue({ startDate: endDate }, { emitEvent: false });
+          console.log('Synced start date to match end date:', endDate);
+        }
+      }
+    });
+  }
   // Show or hide the patients list based on focus event
   showSearchOnFocus(): void {
     // If we have a stored search term, re-search to show existing results
@@ -569,7 +846,6 @@ export class TimeBlockFormComponent implements OnInit {
       this.showPatientsList = false;
     }, 200); // Small delay to allow clicks to register first
   }
-
   // Handle document clicks to hide search results when clicking outside
   @HostListener('document:click', ['$event'])
   handleDocumentClick(event: MouseEvent): void {
@@ -579,5 +855,28 @@ export class TimeBlockFormComponent implements OnInit {
     if (searchContainer && !searchContainer.contains(target)) {
       this.hideSearchResults();
     }
+  }
+  /**
+   * Format Date object to backend expected format: "YYYY-MM-DD HH:mm:ss"
+   * Uses UTC time to match backend timezone expectations
+   * @param date Date object to format
+   * @returns Formatted date string in UTC
+   */
+  private formatDateTimeForBackend(date: Date): string {
+    // Use UTC methods to ensure timezone consistency with backend
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    
+    const formatted = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    console.log('Formatted date for backend (UTC):', { 
+      input: date.toISOString(), 
+      localTime: date.toString(),
+      utcOutput: formatted 
+    });
+    return formatted;
   }
 }

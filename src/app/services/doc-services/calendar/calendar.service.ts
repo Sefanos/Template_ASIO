@@ -18,6 +18,10 @@ export class CalendarService {  // Signal-based state for reactive UI updates
   private _searchQuery = signal<string>('');
   private _loading = signal<boolean>(false);
   private _error = signal<string | null>(null);
+  
+  // New signals for default date/time for new appointments
+  private _defaultStartDateTime = signal<Date | null>(null);
+  private _defaultEndDateTime = signal<Date | null>(null);
 
   // Public API for consuming components
   public events = this._events.asReadonly();
@@ -29,6 +33,10 @@ export class CalendarService {  // Signal-based state for reactive UI updates
   public searchQuery = this._searchQuery.asReadonly();
   public loading = this._loading.asReadonly();
   public error = this._error.asReadonly();
+  
+  // Public API for default date/time
+  public defaultStartDateTime = this._defaultStartDateTime.asReadonly();
+  public defaultEndDateTime = this._defaultEndDateTime.asReadonly();
 
   private doctorAppointmentService = inject(DoctorAppointmentService);
   private appointmentMapper = inject(AppointmentMapperService);  constructor() {
@@ -251,10 +259,46 @@ export class CalendarService {  // Signal-based state for reactive UI updates
       return true;
     });
   }
-
   private setHours(date: Date, hours: number, minutes: number): Date {
     const newDate = new Date(date);
     newDate.setHours(hours, minutes, 0, 0);
     return newDate;
+  }
+
+  // Methods to set default date/time for new appointments
+  setDefaultDateTimeForNewAppointment(date: Date): void {
+    // Set start time to the clicked time or 9:00 AM if no specific time
+    const startTime = new Date(date);
+    if (startTime.getHours() === 0 && startTime.getMinutes() === 0) {
+      startTime.setHours(9, 0, 0, 0);
+    }
+    
+    // Set end time to 1 hour after start time
+    const endTime = new Date(startTime);
+    endTime.setHours(startTime.getHours() + 1);
+    
+    this._defaultStartDateTime.set(startTime);
+    this._defaultEndDateTime.set(endTime);
+    
+    console.log('CalendarService: Set default date/time for new appointment:', {
+      start: startTime,
+      end: endTime
+    });
+  }
+
+  setDefaultDateTimeRangeForNewAppointment(startDate: Date, endDate: Date): void {
+    this._defaultStartDateTime.set(new Date(startDate));
+    this._defaultEndDateTime.set(new Date(endDate));
+    
+    console.log('CalendarService: Set default date/time range for new appointment:', {
+      start: startDate,
+      end: endDate
+    });
+  }
+
+  // Method to clear default date/time (optional, for cleanup)
+  clearDefaultDateTime(): void {
+    this._defaultStartDateTime.set(null);
+    this._defaultEndDateTime.set(null);
   }
 }

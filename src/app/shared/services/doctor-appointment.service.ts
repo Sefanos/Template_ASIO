@@ -58,20 +58,85 @@ export class DoctorAppointmentService {
     // Using the general update endpoint to update notes
     return this.http.put<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}`, { notes })
       .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));  }
-
   blockTimeSlot(startTime: string, endTime: string, reason: string): Observable<any> {
-    // Using the correct backend endpoint for blocking time slots
+    // Using the correct backend endpoint for blocking time slots with correct field names
     return this.http.post(`${this.baseUrl}/appointments/time-slots/block`, {
-      start_time: startTime,
-      end_time: endTime,
+      start_datetime: startTime,
+      end_datetime: endTime,
       reason
     });
-  }
-
-  // Create new appointment
+  }// Create new appointment
   createAppointment(appointmentData: any): Observable<Appointment> {
-    return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments`, appointmentData)
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));
+    console.log('=== CREATE APPOINTMENT DEBUG START ===');
+    console.log('API URL:', `${this.baseUrl}/appointments`);
+    console.log('Base URL parts:', {
+      environment_apiUrl: environment.apiUrl,
+      baseUrl: this.baseUrl,
+      fullUrl: `${this.baseUrl}/appointments`
+    });
+    console.log('Request payload:', JSON.stringify(appointmentData, null, 2));
+    
+    // Check authentication
+    const token = localStorage.getItem('auth_token');
+    const currentUser = localStorage.getItem('currentUser');
+    console.log('Auth details:', {
+      hasToken: !!token,
+      tokenLength: token ? token.length : 0,
+      tokenPreview: token ? token.substring(0, 20) + '...' : 'None',
+      hasCurrentUser: !!currentUser,
+      currentUserPreview: currentUser ? JSON.parse(currentUser).email : 'None'
+    });
+    
+    // Make a test request to check if the endpoint is reachable
+    console.log('=== Making HTTP POST request ===');
+    
+    return this.http.post<any>(`${this.baseUrl}/appointments`, appointmentData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    }).pipe(
+        tap(response => {
+          console.log('✅ Create appointment SUCCESS:', response);
+          console.log('=== CREATE APPOINTMENT DEBUG END ===');
+        }),
+        map(response => {
+          // Handle the backend response wrapper format for create operations
+          if (response.success && response.data) {
+            console.log('Extracting appointment data from response wrapper:', response.data);
+            return this.mapper.mapApiResponseToAppointment(response.data);
+          } else {
+            // Direct appointment data (for compatibility)
+            return this.mapper.mapApiResponseToAppointment(response);
+          }
+        }),
+        catchError(error => {
+          console.log('❌ Create appointment ERROR:', error);
+          console.log('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            url: error.url,
+            error: error.error
+          });
+          
+          // Try to extract more details from the error
+          if (error.error) {
+            console.log('Backend error response:', error.error);
+            if (typeof error.error === 'string') {
+              try {
+                const parsedError = JSON.parse(error.error);
+                console.log('Parsed backend error:', parsedError);
+              } catch (e) {
+                console.log('Could not parse error as JSON:', error.error);
+              }
+            }
+          }
+          
+          console.log('=== CREATE APPOINTMENT DEBUG END ===');
+          throw error;
+        })
+      );
   }
 
   // Update existing appointment
@@ -130,10 +195,19 @@ export class DoctorAppointmentService {
   getBlockedSlots(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/appointments/time-slots/blocked`);
   }
-
   unblockTimeSlot(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/appointments/time-slots/blocked/${id}`);
-  }  // Patient search for appointments
+  }
+  // Update blocked time slot (delete old and create new)
+  updateBlockedTimeSlot(id: number, startTime: string, endTime: string, reason: string): Observable<any> {
+    // For now, we'll delete the old one and create a new one
+    // In a real implementation, you might have a PUT endpoint
+    return this.http.put(`${this.baseUrl}/appointments/time-slots/blocked/${id}`, {
+      start_datetime: startTime,
+      end_datetime: endTime,
+      reason
+    });
+  }// Patient search for appointments
   getAvailablePatients(search?: string): Observable<any[]> {
     const params: any = {};
     if (search) {
@@ -155,10 +229,16 @@ export class DoctorAppointmentService {
         })
       );
   }
-
   // Check for scheduling conflicts
   checkConflicts(appointmentData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/appointments/check-conflicts`, appointmentData);
+    console.log('Checking conflicts with payload:', appointmentData);
+    return this.http.post(`${this.baseUrl}/appointments/check-conflicts`, appointmentData).pipe(
+      tap(response => console.log('Conflict check response:', response)),
+      catchError(error => {
+        console.error('Conflict check error:', error);
+        throw error;
+      })
+    );
   }
 
   // Get appointment statistics

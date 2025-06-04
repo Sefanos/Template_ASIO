@@ -6,28 +6,46 @@ import { CalendarEvent } from '../../models/calendar/calendar-event.model';
   providedIn: 'root'
 })
 export class AppointmentMapperService {
-
   /**
    * Transform API response to frontend Appointment model
-   */
-  mapApiResponseToAppointment(apiResponse: ApiAppointmentResponse): Appointment {
-    const startDate = new Date(apiResponse.appointment_datetime_start);
-    const endDate = new Date(apiResponse.appointment_datetime_end);
+   */  mapApiResponseToAppointment(apiResponse: ApiAppointmentResponse): Appointment {
+    console.log('Mapping API response:', apiResponse);
     
-    return {
-      id: apiResponse.id,
+    // Handle different date field names and formats from backend
+    let startDate: Date;
+    let endDate: Date;
+    
+    // Check for different response formats
+    if (apiResponse.appointment_datetime_start) {
+      // Standard format for existing appointments
+      startDate = this.parseBackendDateTime(apiResponse.appointment_datetime_start);
+      endDate = apiResponse.appointment_datetime_end ? 
+        this.parseBackendDateTime(apiResponse.appointment_datetime_end) :
+        new Date(startDate.getTime() + 30 * 60 * 1000); // Default 30 minutes
+    } else if ((apiResponse as any).appointment_datetime) {
+      // Format for newly created appointments - just start time
+      startDate = this.parseBackendDateTime((apiResponse as any).appointment_datetime);
+      // For newly created appointments, assume 30 minutes duration if no end time
+      endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
+    } else {
+      console.error('No valid datetime field found in API response:', apiResponse);
+      throw new Error('Invalid datetime in API response');
+    }
+    
+    console.log('Parsed dates:', { startDate, endDate });    return {
+      id: apiResponse.id || (apiResponse as any).appointment_id,
       date: this.formatDateToString(startDate),
       time: this.formatTimeToString(startDate),
-      type: this.mapAppointmentType(apiResponse.type),
+      type: this.mapAppointmentType(apiResponse.type || 'consultation'),
       provider: apiResponse.doctor?.name || 'Unknown Doctor',
       reason: apiResponse.reason_for_visit || 'No reason specified',
-      status: this.mapApiStatusToFrontendStatus(apiResponse.status),
+      status: this.mapApiStatusToFrontendStatus(apiResponse.status || 'scheduled'),
       notes: this.combineNotes(apiResponse.notes_by_patient, apiResponse.notes_by_staff),
       
       // Additional fields for enhanced functionality
       patientId: apiResponse.patient_user_id,
       doctorId: apiResponse.doctor_user_id,
-      patientName: apiResponse.patient?.name,
+      patientName: apiResponse.patient?.name || (apiResponse as any).patient_name,
       doctorName: apiResponse.doctor?.name,
       doctorSpecialty: 'General Medicine', // You can add this to backend later
       startDateTime: startDate,
@@ -66,7 +84,6 @@ export class AppointmentMapperService {
   private formatDateToString(date: Date): string {
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
   }
-
   private formatTimeToString(date: Date): string {
     return date.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
@@ -75,7 +92,53 @@ export class AppointmentMapperService {
     }); // "10:30 AM"
   }
 
-  private mapAppointmentType(apiType: string): string {
+  /**
+   * Parse backend datetime strings which may be in different formats
+   * Examples: "2025-07-08 08:00", "2025-07-08 08:00:00", "2025-07-08T08:00:00"
+   */
+  private parseBackendDateTime(dateTimeString: string): Date {
+    if (!dateTimeString) {
+      throw new Error('Empty datetime string');
+    }
+    
+    console.log('Parsing backend datetime:', dateTimeString);
+    
+    // Handle different formats from backend
+    let normalizedDateTime = dateTimeString.trim();
+      // If it's missing seconds, add them
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(normalizedDateTime)) {
+      normalizedDateTime += ':00';
+      console.log('Added seconds to datetime:', normalizedDateTime);
+    }
+    
+    // Replace space with T for ISO format if needed
+    if (normalizedDateTime.includes(' ') && !normalizedDateTime.includes('T')) {
+      normalizedDateTime = normalizedDateTime.replace(' ', 'T');
+      console.log('Converted to ISO format:', normalizedDateTime);
+    }
+    
+    // Add timezone info if missing for local time parsing
+    if (!normalizedDateTime.includes('Z') && !normalizedDateTime.includes('+') && !normalizedDateTime.includes('-', 10)) {
+      // Assume local time, no timezone conversion needed
+      console.log('Local time format detected, using direct parsing');
+    }
+    
+    const parsedDate = new Date(normalizedDateTime);
+    
+    if (isNaN(parsedDate.getTime())) {
+      console.error('Failed to parse datetime:', dateTimeString);
+      throw new Error(`Invalid date format: ${dateTimeString}`);
+    }
+    
+    console.log('Successfully parsed date:', parsedDate);
+    return parsedDate;
+  }
+  private mapAppointmentType(apiType: string | undefined): string {
+    // Handle undefined or null values with a default
+    if (!apiType) {
+      return 'Consultation'; // Default appointment type
+    }
+    
     const typeMap: { [key: string]: string } = {
       'emergency': 'Emergency',
       'routine': 'Routine',

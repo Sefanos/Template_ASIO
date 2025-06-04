@@ -256,63 +256,27 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       console.log('Appointment clicked:', selectedEvent);
     }
   }
-  
-  private handleDateClick(info: any): void {
+    private handleDateClick(info: any): void {
     // Open the appointment creation form when a date/time cell is clicked
+    console.log('Date clicked for new appointment:', info.date);
     
-    // We'll reuse the time block form for appointments by default
-    // For a production app, you might want a dedicated appointment form
-    let startDateTime = new Date(info.date);
-    let endDateTime = new Date(info.date);
+    // Store the clicked date/time info for the form to use
+    this.calendarService.setDefaultDateTimeForNewAppointment(info.date);
     
-    // For time grid views, set a default appointment duration (e.g., 30 minutes)
-    if (info.view.type.includes('timeGrid')) {
-      endDateTime.setMinutes(endDateTime.getMinutes() + 30);
-    } 
-    // For day grid views (all-day), set the end date to the next day
-    else {
-      endDateTime.setDate(endDateTime.getDate() + 1);
-    }
-      // Create an appointment event object
-    const newAppointment: CalendarEvent = {
-      id: `appointment-${Date.now()}`,
-      title: 'New Appointment',
-      start: startDateTime.toISOString(),
-      end: endDateTime.toISOString(),
-      // resourceId: info.resource?.id || this.calendarService.resources()[0]?.id, // Disabled since no resources
-      color: '#4285F4', // Google Calendar blue
-      textColor: '#FFFFFF',
-      extendedProps: {
-        isAppointment: true,
-        status: 'scheduled'
-      }
-    };
-    
-    // Open the form with this pre-filled appointment
-    this.selectedBlockToEdit.set(newAppointment);
+    // Open new appointment form (no blockToEdit = creating new)
+    this.selectedBlockToEdit.set(null); // Set to null for creating new appointment
     this.isAppointmentForm.set(true); // Set form type to appointment
     this.showTimeBlockForm.set(true);
   }
-  
-  private handleRangeSelect(info: any): void {
+    private handleRangeSelect(info: any): void {
     // When a range is selected, open appointment form with the time range pre-filled
-      // Create an appointment event object with the selected time range
-    const newAppointment: CalendarEvent = {
-      id: `appointment-${Date.now()}`,
-      title: 'New Appointment',
-      start: info.start.toISOString(),
-      end: info.end.toISOString(),
-      // resourceId: info.resource?.id || this.calendarService.resources()[0]?.id, // Disabled since no resources
-      color: '#4285F4', // Google Calendar blue
-      textColor: '#FFFFFF',
-      extendedProps: {
-        isAppointment: true,
-        status: 'scheduled'
-      }
-    };
+    console.log('Date range selected for new appointment:', info.start, 'to', info.end);
     
-    // Open the form with this pre-filled appointment
-    this.selectedBlockToEdit.set(newAppointment);
+    // Store the selected range info for the form to use
+    this.calendarService.setDefaultDateTimeRangeForNewAppointment(info.start, info.end);
+    
+    // Open new appointment form (no blockToEdit = creating new)
+    this.selectedBlockToEdit.set(null); // Set to null for creating new appointment
     this.isAppointmentForm.set(true); // Set form type to appointment
     this.showTimeBlockForm.set(true);
   }
@@ -433,29 +397,17 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     
     this.refreshEvents();
   }
-  
-  // Handle "New Appointment" button click from toolbar
+    // Handle "New Appointment" button click from toolbar
   createNewAppointment(): void {
     // Create default appointment at current time with 30-minute duration
-    const startDateTime = new Date(this.currentDate());
-    const endDateTime = new Date(startDateTime);
-    endDateTime.setMinutes(endDateTime.getMinutes() + 30);
-      // Create appointment event object
-    const newAppointment: CalendarEvent = {
-      id: `appointment-${Date.now()}`,
-      title: 'New Appointment',
-      start: startDateTime.toISOString(),
-      end: endDateTime.toISOString(),
-      // resourceId: this.calendarService.resources()[0]?.id, // Disabled since no resources
-      color: '#4285F4', // Google Calendar blue
-      textColor: '#FFFFFF',
-      extendedProps: {
-        isAppointment: true,
-        status: 'scheduled'
-      }
-    };
-      // Open the form with this pre-filled appointment
-    this.selectedBlockToEdit.set(newAppointment);
+    console.log('Creating new appointment from toolbar button');
+    
+    const now = new Date();
+    // Store the default time for the form to use
+    this.calendarService.setDefaultDateTimeForNewAppointment(now);
+    
+    // Open new appointment form (no blockToEdit = creating new)
+    this.selectedBlockToEdit.set(null); // Set to null for creating new appointment
     this.isAppointmentForm.set(true); // Set form mode to appointment
     this.showTimeBlockForm.set(true);
   }
