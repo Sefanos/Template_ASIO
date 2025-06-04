@@ -332,6 +332,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
+
   renderDemographicChart() {
     const ctx = document.getElementById('demographic-chart') as HTMLCanvasElement;
     if (!ctx) return;
