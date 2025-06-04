@@ -1,7 +1,8 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { AppointmentService } from '../../../../../core/patient/services/appointment.service';
+import { PatientAppointmentService } from '../../../../../shared/services/patient-appointment.service';
+import { PatientAppointmentAdapter } from '../../../../../shared/services/patient-appointment-adapter.service';
 import { Appointment } from '../../../../../core/patient/domain/models/appointment.model';
  
 
@@ -31,7 +32,8 @@ export class AppointmentHistoryComponent implements OnInit {
     expandedAppointmentIds: Set<number> = new Set();
   
     constructor(
-      private appointmentService: AppointmentService,
+      private patientAppointmentService: PatientAppointmentService,
+      private appointmentAdapter: PatientAppointmentAdapter,
       private cdr: ChangeDetectorRef,
       private dialog: MatDialog,
       private router: Router
@@ -45,53 +47,22 @@ export class AppointmentHistoryComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
     
-    // Ne passe plus de patientId - le backend utilise le premier patient
-    this.appointmentService.getAppointmentHistory().subscribe({
-      next: (data) => {
-        this.allAppointments = data.map(appointment => {
-          let parsedDate: string = appointment.date as string; // Par défaut, on garde la chaîne originale
-          if (typeof appointment.date === 'string') {
-            // Supprimer les suffixes ordinaux (st, nd, rd, th) avant de tenter l'analyse
-            const dateStringWithoutOrdinal = appointment.date.replace(/(\d+)(st|nd|rd|th)/, '$1');
-            const tempDate = new Date(dateStringWithoutOrdinal);
-            if (!isNaN(tempDate.getTime())) { // Vérifier si la conversion a réussi
-              parsedDate = tempDate.toISOString(); // Convertir Date en chaîne ISO
-            } else {
-              console.warn(`Impossible d'analyser la chaîne de date: "${appointment.date}". Utilisation de l'original ou pourrait apparaître comme invalide.`);
-            }
-} else if (appointment.date && Object.prototype.toString.call(appointment.date) === '[object Date]') {
-            parsedDate = (appointment.date as Date).toISOString(); // Convertir Date en chaîne ISO
-          }
-
-          return {
-            ...appointment,
-            // Ensure patientId and doctorId are present, defaulting if not found on the source object.
-            // This addresses the type error if the source 'appointment' objects from 'data'
-            // do not contain patientId or doctorId, which are required by the Appointment model.
-          
-            doctorId: (appointment as any).doctorId ?? -1,   // Using -1 as a default for missing ID
-            date: parsedDate, // Garantir que date est toujours une chaîne
-            status: this.mapServiceStatusToDomainStatus(appointment.status as string | undefined, 'Unknown')
-          };
-        });
-
-console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))); 
-        console.log('allAppointments (après mapping, 10 premiers):', JSON.stringify(this.allAppointments.slice(0, 10)));
+    // Use the real patient appointment service
+    this.patientAppointmentService.getAppointmentHistory().subscribe({
+      next: (response) => {
+        // Convert shared appointments to patient model using adapter
+        const sharedAppointments = response.data;
+        this.allAppointments = this.appointmentAdapter.toPatientModelArray(sharedAppointments);
+        
+        console.log('Appointment history loaded:', this.allAppointments);
         
         this.applyFiltersAndPagination();
-                  
-        if (this.paginatedAppointments) {
-          console.log('paginatedAppointments (première page):', JSON.stringify(this.paginatedAppointments));
-          console.log('Nombre dans paginatedAppointments:', this.paginatedAppointments.length);
-        }
-        console.log('currentPage:', this.currentPage, 'itemsPerPage:', this.itemsPerPage);
-        
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Erreur lors de la récupération de l\'historique des rendez-vous:', error);
-        this.errorMessage = 'Échec du chargement de l\'historique des rendez-vous. Veuillez réessayer plus tard.';
+      error: (error: any) => {
+        console.error('Error loading appointment history:', error);
+        this.errorMessage = 'Failed to load appointment history. Please try again later.';
         this.isLoading = false;
         this.allAppointments = [];
         this.applyFiltersAndPagination();
@@ -211,23 +182,17 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
   
     loadAppointmentDetails(id: number): void {
       // Charger des détails supplémentaires depuis l'API
-      this.appointmentService.getAppointmentDetails(id).subscribe(
-        (details: Partial<Omit<Appointment, 'status'> & { status?: string }>) => {
+      this.patientAppointmentService.getAppointmentDetails(id).subscribe({
+        next: (sharedAppointment) => {
+          // Convert shared appointment to patient model using adapter
+          const appointmentDetails = this.appointmentAdapter.toPatientModel(sharedAppointment);
+          
           // Mettre à jour les détails du rendez-vous
           const index = this.allAppointments.findIndex(a => a.id === id);
           if (index !== -1) {
-            const existingAppointment = this.allAppointments[index];
-            const newStatus = this.mapServiceStatusToDomainStatus(details.status, existingAppointment.status);
-
             this.allAppointments[index] = {
-              ...existingAppointment,
-              ...details, // Spread other properties from details
-              status: newStatus, // Override status with the correctly mapped and typed one
-              // S'assurer que les propriétés spécifiques sont correctement mises à jour
-              doctorSpecialty: details.doctorSpecialty || existingAppointment.doctorSpecialty || 'General Practice',
-              location: details.location || existingAppointment.location || 'Main Medical Center',
-              notes: details.notes || existingAppointment.notes || [],
-              followUp: typeof details.followUp === 'boolean' ? details.followUp : (existingAppointment.followUp || false)
+              ...this.allAppointments[index],
+              ...appointmentDetails
             };
             
             // Mettre à jour également dans les rendez-vous paginés
@@ -239,10 +204,10 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
             this.cdr.detectChanges();
           }
         },
-        error => {
+        error: (error: any) => {
           console.error('Failed to load appointment details:', error);
         }
-      );
+      });
     }
   
     viewMedicalRecord(id: number): void {
@@ -467,8 +432,8 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
   
     cancelAppointment(id: number): void {
       if (confirm('Are you sure you want to cancel this appointment?')) {
-        this.appointmentService.cancelAppointment(id, 'Cancelled by patient').subscribe(
-          () => {
+        this.patientAppointmentService.cancelMyAppointment(id, 'Cancelled by patient').subscribe({
+          next: () => {
             // Mettre à jour le statut du rendez-vous en local
             const index = this.allAppointments.findIndex(a => a.id === id);
             if (index !== -1) {
@@ -485,10 +450,10 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
               this.cdr.detectChanges();
             }
           },
-          error => {
+          error: (error: any) => {
             console.error('Failed to cancel appointment:', error);
           }
-        );
+        });
       }
     }
   
