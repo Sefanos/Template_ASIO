@@ -143,38 +143,95 @@
         </div>
 
         <form [formGroup]="bookingForm" (ngSubmit)="submitNewAppointment()" class="space-y-4">
+          
+          <!-- Success/Error Messages -->
+          <div *ngIf="successMessage" class="bg-status-success/10 border border-status-success/20 text-status-success p-3 rounded-md text-sm flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            {{ successMessage }}
+          </div>
+          
+          <div *ngIf="errorMessage" class="bg-status-urgent/10 border border-status-urgent/20 text-status-urgent p-3 rounded-md text-sm flex items-start">
+            <i class="fas fa-exclamation-triangle mr-2 mt-0.5"></i>
+            <span>{{ errorMessage }}</span>
+          </div>
+
+          <!-- Doctor Selection -->
           <div class="form-group">
-            <label for="fullName" class="block text-sm font-medium text-text-light mb-1.5">Full Name <span class="text-status-urgent">*</span></label>
-            <input type="text" id="fullName" formControlName="fullName" placeholder="John Doe" required
-                   class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
-                   [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('fullName')?.invalid || !bookingForm.get('fullName')?.touched,
-                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('fullName')?.invalid && (bookingForm.get('fullName')?.dirty || bookingForm.get('fullName')?.touched)}">
-            <div *ngIf="bookingForm.get('fullName')?.invalid && (bookingForm.get('fullName')?.dirty || bookingForm.get('fullName')?.touched)" class="text-xs text-status-urgent mt-1">
-              Full name is required.
+            <label for="doctorId" class="block text-sm font-medium text-text-light mb-1.5">Select Doctor <span class="text-status-urgent">*</span></label>
+            <select id="doctorId" formControlName="doctorId" required
+                    class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none"
+                    [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('doctorId')?.invalid || !bookingForm.get('doctorId')?.touched,
+                                'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('doctorId')?.invalid && (bookingForm.get('doctorId')?.dirty || bookingForm.get('doctorId')?.touched)}"
+                    [disabled]="loadingDoctors">
+              <option value="" *ngIf="!loadingDoctors">Choose a doctor</option>
+              <option value="" *ngIf="loadingDoctors">Loading doctors...</option>
+              <option *ngFor="let doctor of resources" [value]="doctor.id">
+                {{ doctor.title }}
+              </option>
+            </select>
+            <div *ngIf="loadingDoctors" class="text-xs text-text-muted mt-1 flex items-center">
+              <svg class="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Loading available doctors...
+            </div>
+            <div *ngIf="doctorsError && !loadingDoctors" class="text-xs text-status-urgent mt-1">
+              {{ doctorsError }}
+            </div>
+            <div *ngIf="bookingForm.get('doctorId')?.invalid && (bookingForm.get('doctorId')?.dirty || bookingForm.get('doctorId')?.touched)" class="text-xs text-status-urgent mt-1">
+              Please select a doctor.
             </div>
           </div>
 
+          <!-- Appointment Type -->
           <div class="form-group">
-            <label for="email" class="block text-sm font-medium text-text-light mb-1.5">Email</label>
-            <input type="email" id="email" formControlName="email" placeholder="john.doe@example.com"
-                   class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
-                   [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('email')?.errors?.['email'] || !bookingForm.get('email')?.touched,
-                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('email')?.errors?.['email'] && (bookingForm.get('email')?.dirty || bookingForm.get('email')?.touched)}">
-            <div *ngIf="bookingForm.get('email')?.errors?.['email'] && (bookingForm.get('email')?.dirty || bookingForm.get('email')?.touched)" class="text-xs text-status-urgent mt-1">
-              Please enter a valid email address.
+            <label for="appointmentType" class="block text-sm font-medium text-text-light mb-1.5">Appointment Type <span class="text-status-urgent">*</span></label>
+            <select id="appointmentType" formControlName="appointmentType" required
+                    class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none">
+              <option *ngFor="let type of appointmentTypes" [value]="type.value" [title]="type.description">
+                {{ type.label }}
+              </option>
+            </select>
+            <div class="text-xs text-text-muted mt-1" *ngIf="getFormControlValue('appointmentType')">
+              {{ getAppointmentTypeDescription(getFormControlValue('appointmentType')) }}
             </div>
           </div>
 
+          <!-- Reason for Visit -->
           <div class="form-group">
-            <label for="phoneNumber" class="block text-sm font-medium text-text-light mb-1.5">Phone Number</label>
-            <input type="tel" id="phoneNumber" formControlName="phoneNumber" placeholder="+1234567890"
-                   class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70">
+            <label for="reasonForVisit" class="block text-sm font-medium text-text-light mb-1.5">Reason for Visit <span class="text-status-urgent">*</span></label>
+            <input type="text" id="reasonForVisit" formControlName="reasonForVisit" placeholder="e.g., Annual checkup, Follow-up consultation, specific symptoms" required
+                   class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
+                   [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('reasonForVisit')?.invalid || !bookingForm.get('reasonForVisit')?.touched,
+                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('reasonForVisit')?.invalid && (bookingForm.get('reasonForVisit')?.dirty || bookingForm.get('reasonForVisit')?.touched)}">          <div *ngIf="isFormControlInvalid('reasonForVisit')" class="text-xs text-status-urgent mt-1">
+            <div *ngIf="hasFormControlError('reasonForVisit', 'required')">Please provide a reason for your visit.</div>
+            <div *ngIf="hasFormControlError('reasonForVisit', 'minlength')">Reason must be at least 10 characters.</div>
+            <div *ngIf="hasFormControlError('reasonForVisit', 'maxlength')">Reason cannot exceed 500 characters.</div>
+          </div>          <div class="text-xs text-text-muted mt-1" *ngIf="getFormControlValue('reasonForVisit')">
+            {{ getFormControlValue('reasonForVisit').length || 0 }}/500 characters
+          </div>
           </div>
 
+          <!-- Patient Information Note -->
+          <div class="form-section border-t border-border pt-4 mt-6">
+            <div class="flex items-center p-3 bg-primary/10 border border-primary/20 rounded-md">
+              <i class="fas fa-info-circle text-primary mr-2"></i>
+              <span class="text-sm text-primary">This appointment will be booked using your account information.</span>
+            </div>
+          </div>
+
+          <!-- Additional Notes -->
           <div class="form-group">
-            <label for="notes" class="block text-sm font-medium text-text-light mb-1.5">Notes (Optional)</label>
-            <textarea id="notes" formControlName="notes" rows="3" placeholder="Additional information about your appointment"
+            <label for="notes" class="block text-sm font-medium text-text-light mb-1.5">Additional Notes (Optional)</label>
+            <textarea id="notes" formControlName="notes" rows="3" placeholder="Any additional information about your appointment"
                       class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70 min-h-[80px]"></textarea>
+            <div class="text-xs text-text-muted mt-1" *ngIf="getFormControlValue('notes')">
+              {{ getFormControlValue('notes').length || 0 }}/1000 characters
+            </div>
+            <div *ngIf="hasFormControlError('notes', 'maxlength')" class="text-xs text-status-urgent mt-1">
+              Notes cannot exceed 1000 characters.
+            </div>
           </div>
 
           <div class="modal-actions flex justify-end mt-6 pt-4 border-t border-border space-x-3">

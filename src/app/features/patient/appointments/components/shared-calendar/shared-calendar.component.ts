@@ -10,6 +10,7 @@ import { PatientAppointmentService } from '../../../../../shared/services/patien
 import { PatientAppointmentAdapter } from '../../../../../shared/services/patient-appointment-adapter.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { AuthService } from '../../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-shared-calendar',
@@ -40,7 +41,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   miniCalendarWeekDaysHeader = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   customToolbarTitle: string = '';
 
-  isSubmitting: boolean = false; // Added this property
+  isSubmitting: boolean = false;
+  successMessage: string | null = null;
+  errorMessage: string | null = null;
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
@@ -78,18 +81,28 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   selectedEndTimeForBooking: string | null = null;
   slotDurationMinutes = 30; 
 
+  // Available appointment types with descriptions
+  appointmentTypes = [
+    { value: 'consultation', label: 'General Consultation', description: 'Initial or routine medical consultation' },
+    { value: 'follow-up', label: 'Follow-up Visit', description: 'Follow-up appointment for ongoing treatment' },
+    { value: 'procedure', label: 'Medical Procedure', description: 'Scheduled medical procedure or treatment' },
+    { value: 'therapy', label: 'Therapy Session', description: 'Physical therapy or rehabilitation session' },
+    { value: 'emergency', label: 'Urgent Care', description: 'Urgent medical attention needed' }
+  ];
+
   constructor(
     private patientAppointmentService: PatientAppointmentService,
     private appointmentAdapter: PatientAppointmentAdapter,
     private fb: FormBuilder,
     private datePipe: DatePipe,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authService: AuthService
   ) {
     this.bookingForm = this.fb.group({
-      fullName: ['', Validators.required],
-      email: ['', [Validators.email]],
-      phoneNumber: [''],
-      notes: [''],
+      doctorId: ['', Validators.required],
+      appointmentType: ['consultation', Validators.required],
+      reasonForVisit: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
+      notes: ['', Validators.maxLength(1000)]
     });
   }
 
@@ -405,13 +418,20 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     today.setHours(0, 0, 0, 0); // Compare dates only, not time for past date check
 
     if (selectInfo.start < today) {
-      alert("Vous ne pouvez pas sélectionner une date ou une heure passée.");
+      alert("You cannot select a past date or time.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
 
     if (this.isSlotOccupied(selectInfo.start, selectInfo.end)) {
-      alert("Ce créneau horaire est déjà réservé ou bloqué.");
+      alert("This time slot is already booked or blocked.");
+      if (this.calendarApi) this.calendarApi.unselect();
+      return;
+    }
+
+    // Check if we have available doctors
+    if (this.resources.length === 0) {
+      alert("No doctors are available. Please try again later.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
@@ -427,14 +447,32 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       this.selectedEndTimeForBooking = this.datePipe.transform(defaultEndDate, 'HH:mm');
     }
 
-    this.bookingForm.reset({ fullName: '', email: '', phoneNumber: '', notes: '' });
+    // Reset form with default values
+    this.bookingForm.reset({
+      doctorId: '',
+      appointmentType: 'consultation',
+      reasonForVisit: '',
+      notes: ''
+    });
     this.isBookingFormOpen = true;
   }
 
   submitNewAppointment(): void {
     this.isSubmitting = true;
+    this.errorMessage = null;
+    this.successMessage = null;
+    
     if (this.bookingForm.invalid || !this.selectedDateForBooking || !this.selectedTimeForBooking) {
       this.bookingForm.markAllAsTouched();
+      this.errorMessage = 'Please fill in all required fields correctly.';
+      this.isSubmitting = false;
+      return;
+    }
+
+    // Get current user from auth service
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      this.errorMessage = 'Please log in to book an appointment.';
       this.isSubmitting = false;
       return;
     }
@@ -444,53 +482,66 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     const [startHours, startMinutes] = this.selectedTimeForBooking!.split(':').map(Number);
     startDate.setHours(startHours, startMinutes, 0, 0);
 
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + this.slotDurationMinutes);
+
     if (startDate < new Date()) {
-      alert("Cannot create appointment in the past.");
-      this.closeBookingForm();
+      this.errorMessage = "Cannot schedule appointment in the past.";
+      this.isSubmitting = false;
       return;
     }
 
-    // Prepare appointment data for API
+    // Prepare appointment data for API according to backend requirements
+    // ✅ FIXED: Use 'reason' instead of 'reason_for_visit' to match backend expectations
     const appointmentData = {
-      doctor_id: 1, // You might want to make this configurable
-      date: this.selectedDateForBooking,
-      time: this.selectedTimeForBooking,
-      reason: formValue.notes || 'General consultation',
-      patient_name: formValue.fullName,
-      patient_email: formValue.email,
-      patient_phone: formValue.phoneNumber
+      doctor_id: parseInt(formValue.doctorId),
+      appointment_datetime_start: startDate.toISOString(),
+      appointment_datetime_end: endDate.toISOString(),
+      type: formValue.appointmentType,
+      reason: formValue.reasonForVisit, // ✅ FIXED: Changed from 'reason_for_visit' to 'reason'
+      notes_by_patient: formValue.notes
+      // ✅ REMOVED: Manual patient contact info - using authenticated user instead
     };
+
+    console.log('Submitting appointment data:', appointmentData);
 
     // Use the real API to book appointment
     this.patientAppointmentService.bookAppointment(appointmentData).subscribe({
-      next: (sharedAppointment) => {
-        // Convert shared appointment to patient model using adapter
-        const patientAppointment = this.appointmentAdapter.toPatientModel(sharedAppointment);
+      next: (response) => {
+        console.log('Appointment booked successfully:', response);
         
-        // Create calendar event from the booked appointment
-        const newEvent: MyCalendarEvent = {
-          id: patientAppointment.id.toString(),
-          title: `${patientAppointment.reason || 'Appointment'} - ${patientAppointment.doctorName || 'Doctor'}`,
-          start: new Date(patientAppointment.date + 'T' + patientAppointment.time),
-          end: new Date(new Date(patientAppointment.date + 'T' + patientAppointment.time).getTime() + 30 * 60000),
-          backgroundColor: this.getStatusColor(patientAppointment.status),
-          borderColor: this.getStatusColor(patientAppointment.status),
-          extendedProps: {
-            resourceId: 'doctor' + patientAppointment.doctorId,
-            description: patientAppointment.reason,
-            status: patientAppointment.status as 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed'
-          }
-        };
-
-        this.allCalendarEvents.push(newEvent);
-        this.filterAndSearchEvents();
-        this.closeBookingForm();
+        this.successMessage = 'Appointment booked successfully!';
         
-        alert('Appointment booked successfully!');
+        // Reload appointments to show the new one
+        this.loadAppointments();
+        
+        // Close modal after a brief delay to show success message
+        setTimeout(() => {
+          this.closeBookingForm();
+        }, 1500);
       },
       error: (error: any) => {
         console.error('Error booking appointment:', error);
-        alert('Failed to book appointment. Please try again.');
+        
+        // Handle specific error messages from the backend
+        // Prioritize the most specific error message available
+        if (error.error && error.error.error) {
+          // This contains the most specific error (like appointment limits)
+          this.errorMessage = error.error.error;
+        } else if (error.error && error.error.message) {
+          this.errorMessage = error.error.message;
+        } else if (error.error && error.error.errors) {
+          // Handle validation errors
+          const errors = Object.values(error.error.errors).flat();
+          this.errorMessage = Array.isArray(errors) ? errors.join(', ') : 'Validation failed.';
+        } else if (error.status === 422) {
+          this.errorMessage = 'Please check your appointment details and try again.';
+        } else if (error.status === 409) {
+          this.errorMessage = 'This time slot is no longer available. Please choose another time.';
+        } else {
+          this.errorMessage = 'Failed to book appointment. Please try again.';
+        }
+        
         this.isSubmitting = false;
       }
     });
@@ -501,7 +552,15 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.selectedDateForBooking = null;
     this.selectedTimeForBooking = null;
     this.selectedEndTimeForBooking = null;
-    this.isSubmitting = false; // Ensure isSubmitting is reset
+    this.isSubmitting = false;
+    this.successMessage = null;
+    this.errorMessage = null;
+    this.bookingForm.reset({
+      doctorId: '',
+      appointmentType: 'consultation',
+      reasonForVisit: '',
+      notes: ''
+    });
     if (this.calendarApi) {
       this.calendarApi.unselect();
     }
@@ -524,5 +583,28 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   closeEventModal(): void {
     this.isEventModalOpen = false;
     this.selectedEventDetails = null;
+  }
+
+  // Helper method for template to safely get appointment type description
+  getAppointmentTypeDescription(value: string): string {
+    const type = this.appointmentTypes.find(t => t.value === value);
+    return type ? type.description : '';
+  }
+
+  // Helper method to get form control value safely
+  getFormControlValue(controlName: string): any {
+    return this.bookingForm.get(controlName)?.value || '';
+  }
+
+  // Helper method to check if form control has specific error
+  hasFormControlError(controlName: string, errorType: string): boolean {
+    const control = this.bookingForm.get(controlName);
+    return !!(control?.errors?.[errorType] && (control?.dirty || control?.touched));
+  }
+
+  // Helper method to check if form control is invalid and touched/dirty
+  isFormControlInvalid(controlName: string): boolean {
+    const control = this.bookingForm.get(controlName);
+    return !!(control?.invalid && (control?.dirty || control?.touched));
   }
 }
