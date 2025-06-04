@@ -112,14 +112,10 @@ export class PatientDataUtilsService {
       date: appt.date,
       time: appt.time || '9:00 AM',
       type: appt.type || 'Regular checkup',
-      doctorId: appt.doctorId || 1,
+      provider: appt.provider || 'Dr. Sefanos',
       reason: appt.reason,
       status: appt.status || 'scheduled',
-      patientId: appt.patientId || 1,
-      patientName: appt.patientName || 'John Doe',
-      doctorName: appt.doctorName || 'Dr. Sefanos',
-      duration: appt.duration || 30, // Default to 30 minutes
-      isBlockedTime: appt.isBlockedTime || false, 
+      notes: appt.notes || ''
     }));
   }
 

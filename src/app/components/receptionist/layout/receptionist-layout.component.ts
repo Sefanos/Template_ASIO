@@ -3,9 +3,7 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { SafeHtmlPipe } from './safe-html.pipe'; // Import du pipe
-
 import { ThemeService } from '../../../services/theme.service';
-
 
 // Animation fade pour les menus et modales
 const fadeAnimation = trigger('fadeAnimation', [
@@ -58,6 +56,7 @@ export class LayoutComponent implements OnInit {
     { route: 'reminders', label: 'Rappels', icon: 'reminders', count: 1 },
     { route: 'profile', label: 'Profil', icon: 'profile', count: 0 }
   ];
+  authService: any;
 
 
   constructor(private router: Router, private route: ActivatedRoute, private themeService: ThemeService) {

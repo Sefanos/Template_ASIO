@@ -3,15 +3,12 @@ import { CalendarOptions, EventClickArg, DateSelectArg, CalendarApi, ViewApi } f
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin from '@fullcalendar/interaction'; // Pour la sélection de date, le clic sur événement
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarEvent } from '../../../../../models/calendar/calendar.model';
-import { PatientAppointmentService } from '../../../../../shared/services/appointment/patient-appointment.service';
-import { AuthService } from '../../../../../core/auth/auth.service'; // ✅ Add AuthService
+import { MyCalendarEvent } from '../../../../../core/patient/domain/models/calendar-event.model';
+import { StaticCalendarDataService } from '../../../../../core/patient/services/static-calendar-data.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { Appointment } from '../../../../../models/appointment.model';
-import { User } from '../../../../../models/user.model'; // ✅ Add User model
 
 @Component({
   selector: 'app-shared-calendar',
@@ -25,13 +22,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
   public calendarApi!: CalendarApi;
 
-  // ✅ Add current user properties
-  currentUser: User | null = null;
-  currentPatientName: string = '';
-
   doctorName = 'Dr. Sarah Johnson';
-  allCalendarEvents: CalendarEvent[] = [];
-  calendarEvents: CalendarEvent[] = [];
+  allCalendarEvents: MyCalendarEvent[] = [];
+  calendarEvents: MyCalendarEvent[] = [];
   resources = [
     { id: 'doctorSarah', title: 'Dr. Sarah Johnson', eventColor: '#3a87ad' },
     { id: 'doctorJohn', title: 'Doctor John', eventColor: '#468847' },
@@ -39,13 +32,12 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   selectedResources: string[] = [];
   searchTerm: string = '';
 
-  miniCalendarViewDate: Date = new Date();
+  miniCalendarViewDate: Date = new Date(2025, 4, 1); // May 1, 2025
   miniCalendarDays: { date: Date, dayOfMonth: number, isCurrentMonth: boolean, isSelected: boolean }[] = [];
   miniCalendarWeekDaysHeader = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   customToolbarTitle: string = '';
 
-  isSubmitting: boolean = false;
-  isLoading: boolean = false;
+  isSubmitting: boolean = false; // Added this property
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
@@ -74,7 +66,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   };
 
   isEventModalOpen = false;
-  selectedEventDetails: CalendarEvent | null = null;
+  selectedEventDetails: MyCalendarEvent | null = null;
 
   isBookingFormOpen = false;
   bookingForm: FormGroup;
@@ -84,8 +76,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   slotDurationMinutes = 30; 
 
   constructor(
-    private patientAppointmentService: PatientAppointmentService,
-    private authService: AuthService, // ✅ Add AuthService
+    private staticDataService: StaticCalendarDataService,
     private fb: FormBuilder,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef
@@ -99,10 +90,15 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // ✅ Load current user first
-    this.loadCurrentUser();
-    this.loadAppointments();
+    this.allCalendarEvents = this.staticDataService.getStaticAppointments().map(app => ({
+      ...app,
+      start: new Date(app.start), 
+      end: app.end ? new Date(app.end) : undefined,
+      backgroundColor: this.resources.find(r => r.id === app.extendedProps?.resourceId)?.eventColor || '#3788d8',
+      borderColor: this.resources.find(r => r.id === app.extendedProps?.resourceId)?.eventColor || '#3788d8'
+    }));
     this.selectedResources = this.resources.map(r => r.id);
+    this.filterAndSearchEvents();
     this.generateMiniCalendar();
   }
 
@@ -110,303 +106,16 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     if (this.calendarComponent) {
       this.calendarApi = this.calendarComponent.getApi();
       this.updateCustomToolbarTitle(this.calendarApi.view);
-      this.filterAndSearchEvents();
+      // No need to removeAllEvents and addEventSource here if events are set via calendarOptions
+      // and updated via filterAndSearchEvents which calls addEventSource.
+      // If initial events are not showing, ensure calendarOptions.events is correctly populated
+      // or call filterAndSearchEvents once calendarApi is available.
+      this.filterAndSearchEvents(); // Ensure events are loaded after API is ready
     }
   }
 
-  // ✅ Load current user information
-  private loadCurrentUser(): void {
-    this.authService.getCurrentUser().subscribe({
-      next: (user) => {
-        this.currentUser = user;
-        if (user) {
-          // Extract patient name from user data
-          this.currentPatientName = user.name || 'Current Patient';
-          
-          // Pre-fill form with user data
-          this.bookingForm.patchValue({
-            fullName: this.currentPatientName,
-            email: user.email || '',
-            phoneNumber: user.phone || ''
-          });
-        }
-      },
-      error: (error) => {
-        console.error('Error loading current user:', error);
-        this.currentPatientName = 'Current Patient';
-      }
-    });
-  }
-
-  // 🔄 Simplified load appointments - only real data
-  loadAppointments(): void {
-    this.isLoading = true;
-    
-    this.patientAppointmentService.getMyAppointments().subscribe({
-      next: (appointments) => {
-        // Convert appointments to calendar events
-        this.allCalendarEvents = this.convertAppointmentsToEvents(appointments);
-        this.filterAndSearchEvents();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading appointments:', error);
-        this.isLoading = false;
-        // Show empty calendar on error
-        this.allCalendarEvents = [];
-        this.filterAndSearchEvents();
-      }
-    });
-  }
-
-  // 🔄 Convert appointment models to calendar events
-  private convertAppointmentsToEvents(appointments: Appointment[]): CalendarEvent[] {
-    return appointments.map(appointment => {
-      // Parse date and time
-      const appointmentDate = new Date(appointment.date);
-      const timeString = appointment.time.trim();
-      
-      // Handle different time formats
-      let startDate: Date;
-      if (timeString.includes('AM') || timeString.includes('PM')) {
-        // 12-hour format: "10:30 AM"
-        const [time, period] = timeString.split(' ');
-        const [hours, minutes] = time.split(':').map(Number);
-        
-        let hour24 = hours;
-        if (period === 'PM' && hours !== 12) hour24 += 12;
-        if (period === 'AM' && hours === 12) hour24 = 0;
-        
-        startDate = new Date(appointmentDate);
-        startDate.setHours(hour24, minutes, 0, 0);
-      } else {
-        // 24-hour format: "10:30" or "14:30"
-        const [hours, minutes] = timeString.split(':').map(Number);
-        startDate = new Date(appointmentDate);
-        startDate.setHours(hours, minutes || 0, 0, 0);
-      }
-      
-      const endDate = new Date(startDate);
-      endDate.setMinutes(startDate.getMinutes() + this.slotDurationMinutes);
-
-      // Determine color based on status
-      const statusColors = {
-        'Confirmed': '#28a745',
-        'Pending': '#ffc107', 
-        'Completed': '#6c757d',
-        'Cancelled': '#dc3545'
-      };
-
-      const backgroundColor = statusColors[appointment.status as keyof typeof statusColors] || '#007bff';
-
-      return {
-        id: appointment.id.toString(),
-        title: `${appointment.reason} - ${appointment.doctorName}`,
-        start: startDate,
-        end: endDate,
-        allDay: false,
-        backgroundColor: backgroundColor, // ✅ Now properly typed
-        borderColor: backgroundColor,    // ✅ Now properly typed
-        textColor: '#ffffff',           // ✅ White text for better contrast
-        extendedProps: {
-          appointmentId: appointment.id,
-          patientName: this.currentPatientName || 'Current Patient', // ✅ Use real patient name
-          doctorName: appointment.doctorName,
-          doctorSpecialty: appointment.doctorSpecialty,
-          status: appointment.status as "Confirmed" | "Pending" | "Completed" | "Cancelled",
-          location: appointment.location,
-          reason: appointment.reason,
-          notes: appointment.notes,
-          followUp: appointment.followUp,
-          cancelReason: appointment.cancelReason,
-          resourceId: this.getDoctorResourceId(appointment.doctorName)
-        }
-      };
-    });
-  }
-
-  // 🔄 Map doctor names to resource IDs
-  private getDoctorResourceId(doctorName: string): string {
-    if (doctorName.includes('Sarah Johnson')) return 'doctorSarah';
-    if (doctorName.includes('John')) return 'doctorJohn';
-    return 'doctorSarah'; // Default fallback
-  }
-
-  // 🔄 Updated submitNewAppointment
-  submitNewAppointment(): void {
-    this.isSubmitting = true;
-    
-    if (this.bookingForm.invalid || !this.selectedDateForBooking || !this.selectedTimeForBooking) {
-      this.bookingForm.markAllAsTouched();
-      this.isSubmitting = false;
-      return;
-    }
-
-    const formValue = this.bookingForm.value;
-    const startDate = new Date(this.selectedDateForBooking!);
-    const [startHours, startMinutes] = this.selectedTimeForBooking!.split(':').map(Number);
-    startDate.setHours(startHours, startMinutes, 0, 0);
-
-    let endDate = new Date(startDate);
-    if (this.selectedEndTimeForBooking) {
-      const [endHours, endMinutes] = this.selectedEndTimeForBooking.split(':').map(Number);
-      endDate.setHours(endHours, endMinutes, 0, 0);
-    } else { 
-      endDate.setMinutes(startDate.getMinutes() + this.slotDurationMinutes);
-    }
-
-    // Validation checks
-    if (startDate < new Date()) {
-      alert("Impossible de créer un rendez-vous dans le passé.");
-      this.closeBookingForm();
-      return;
-    }
-    if (this.isSlotOccupied(startDate, endDate)) {
-      alert("Ce créneau horaire a été réservé pendant que vous remplissiez le formulaire.");
-      this.closeBookingForm();
-      return;
-    }
-
-    // ✅ Create appointment object with real user data
-    const appointmentData = {
-      date: this.datePipe.transform(startDate, 'yyyy-MM-dd')!,
-      time: this.datePipe.transform(startDate, 'hh:mm a')!,
-      reason: formValue.notes || 'Consultation générale',
-      doctorName: this.doctorName,
-      doctorSpecialty: 'General Medicine',
-      patientName: formValue.fullName || this.currentPatientName,
-      patientEmail: formValue.email || this.currentUser?.email,
-      patientPhone: formValue.phoneNumber || this.currentUser?.phone,
-      patientId: this.currentUser?.id, // ✅ Include patient ID
-      notes: formValue.notes ? [formValue.notes] : []
-    };
-
-    // Book appointment using the service
-    this.patientAppointmentService.bookAppointment(appointmentData).subscribe({
-      next: (appointment) => {
-        // Add the new appointment to calendar
-        const newEvent = this.convertAppointmentsToEvents([appointment])[0];
-        this.allCalendarEvents.push(newEvent);
-        this.filterAndSearchEvents();
-        this.closeBookingForm();
-        this.isSubmitting = false;
-        
-        // Show success message
-        alert('Rendez-vous créé avec succès!');
-      },
-      error: (error) => {
-        console.error('Error creating appointment:', error);
-        alert('Erreur lors de la création du rendez-vous. Veuillez réessayer.');
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  // 🔄 Updated event click handler
-  handleEventClick(clickInfo: EventClickArg) {
-    const appointmentId = clickInfo.event.extendedProps?.['appointmentId'];
-    
-    if (appointmentId) {
-      // For real appointments, try to get detailed info
-      if (this.patientAppointmentService.getAppointmentDetails) {
-        this.patientAppointmentService.getAppointmentDetails(appointmentId).subscribe({
-          next: (appointment) => {
-            this.selectedEventDetails = {
-              id: clickInfo.event.id,
-              title: clickInfo.event.title,
-              start: clickInfo.event.start || new Date(),
-              end: clickInfo.event.end || new Date(),
-              allDay: clickInfo.event.allDay,
-              backgroundColor: clickInfo.event.backgroundColor,
-              borderColor: clickInfo.event.borderColor,
-              textColor: clickInfo.event.textColor,
-              extendedProps: {
-                ...clickInfo.event.extendedProps,
-                ...appointment,
-                status: appointment.status as "Confirmed" | "Pending" | "Completed" | "Cancelled"
-              }
-            };
-            this.isEventModalOpen = true;
-          },
-          error: (error) => {
-            console.error('Error loading appointment details:', error);
-            // Fallback to basic event info
-            this.showBasicEventInfo(clickInfo);
-          }
-        });
-      } else {
-        this.showBasicEventInfo(clickInfo);
-      }
-    } else {
-      this.showBasicEventInfo(clickInfo);
-    }
-  }
-
-  // 🔄 Helper method for showing basic event info
-  private showBasicEventInfo(clickInfo: EventClickArg): void {
-    this.selectedEventDetails = {
-      id: clickInfo.event.id,
-      title: clickInfo.event.title,
-      start: clickInfo.event.start || new Date(),
-      end: clickInfo.event.end || new Date(),
-      allDay: clickInfo.event.allDay,
-      backgroundColor: clickInfo.event.backgroundColor,
-      borderColor: clickInfo.event.borderColor,
-      textColor: clickInfo.event.textColor,
-      extendedProps: clickInfo.event.extendedProps
-    };
-    this.isEventModalOpen = true;
-  }
-
-  // 🔄 Refresh appointments
-  refreshAppointments(): void {
-    this.loadAppointments();
-  }
-
-  // 🔄 Cancel appointment method
-  cancelAppointment(appointmentId: number, reason: string): void {
-    if (this.patientAppointmentService.cancelMyAppointment) {
-      this.patientAppointmentService.cancelMyAppointment(appointmentId, reason).subscribe({
-        next: () => {
-          // Remove or update the event in calendar
-          const eventIndex = this.allCalendarEvents.findIndex(e => 
-            e.extendedProps?.appointmentId === appointmentId
-          );
-          if (eventIndex !== -1) {
-            this.allCalendarEvents[eventIndex].extendedProps!.status = 'Cancelled';
-            this.allCalendarEvents[eventIndex].backgroundColor = '#dc3545';
-            this.allCalendarEvents[eventIndex].borderColor = '#dc3545';
-          }
-          this.filterAndSearchEvents();
-          this.closeEventModal();
-          alert('Rendez-vous annulé avec succès!');
-        },
-        error: (error) => {
-          console.error('Error cancelling appointment:', error);
-          alert('Erreur lors de l\'annulation du rendez-vous.');
-        }
-      });
-    } else {
-      alert('Fonction d\'annulation non disponible.');
-    }
-  }
-
-  // ✅ Get current user info for display
-  getCurrentUserInfo(): string {
-    if (this.currentUser) {
-      return this.currentPatientName;
-    }
-    return 'Patient';
-  }
-
-  // ✅ Check if user is authenticated
-  isUserAuthenticated(): boolean {
-    return this.authService.isAuthenticated();
-  }
-
-  // All your existing methods remain the same...
-  updateCustomToolbarTitle(view: ViewApi) {
-    if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek') {
+  updateCustomToolbarTitle(view: ViewApi) { // Changed type to ViewApi for better type safety
+    if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek') { // dayGridWeek is not a standard FullCalendar view type, maybe custom?
       const start = this.datePipe.transform(view.activeStart, 'MMM d');
       const end = this.datePipe.transform(view.activeEnd, 'MMM d, yyyy');
       this.customToolbarTitle = `${start} - ${end}`;
@@ -415,9 +124,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     } else if (view.type === 'timeGridDay') {
       this.customToolbarTitle = this.datePipe.transform(view.currentStart, 'MMMM d, yyyy') || '';
     } else {
-      this.customToolbarTitle = view.title;
+      this.customToolbarTitle = view.title; // Fallback to FullCalendar's default title
     }
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); // Ensure view updates if title changes outside Angular's zone
   }
 
   filterAndSearchEvents(): void {
@@ -436,6 +145,8 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       this.calendarApi.removeAllEvents();
       this.calendarApi.addEventSource(this.calendarEvents);
     } else {
+      // This branch might be hit if filterAndSearchEvents is called before ngAfterViewInit
+      // It's generally safer to ensure calendarApi is initialized.
       this.calendarOptions.events = this.calendarEvents;
     }
   }
@@ -456,15 +167,15 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.miniCalendarDays = [];
     const firstDayOfMonth = new Date(this.miniCalendarViewDate.getFullYear(), this.miniCalendarViewDate.getMonth(), 1);
     const firstDayToDisplay = new Date(firstDayOfMonth);
-    firstDayToDisplay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+    firstDayToDisplay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay()); // Adjust to start of the week (Sunday)
     
     const mainCalendarCurrentDate = this.calendarApi ? this.calendarApi.getDate() : new Date();
 
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
       const currentDay = new Date(firstDayToDisplay);
       currentDay.setDate(firstDayToDisplay.getDate() + i);
       this.miniCalendarDays.push({
-        date: new Date(currentDay),
+        date: new Date(currentDay), // Create a new Date object to avoid reference issues
         dayOfMonth: currentDay.getDate(),
         isCurrentMonth: currentDay.getMonth() === this.miniCalendarViewDate.getMonth(),
         isSelected: this.isSameDate(currentDay, mainCalendarCurrentDate)
@@ -480,7 +191,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
 
   previousMiniMonth(): void {
     this.miniCalendarViewDate.setMonth(this.miniCalendarViewDate.getMonth() - 1);
-    this.miniCalendarViewDate = new Date(this.miniCalendarViewDate);
+    this.miniCalendarViewDate = new Date(this.miniCalendarViewDate); // Create new Date object to trigger change detection if needed
     this.generateMiniCalendar();
   }
 
@@ -493,9 +204,12 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   selectMiniCalendarDate(date: Date): void {
     if (this.calendarApi) {
       this.calendarApi.gotoDate(date);
+      // The datesSet callback in calendarOptions should handle updating the miniCalendar's selected state
+      // by calling generateMiniCalendar, which checks against calendarApi.getDate().
+      // Explicitly updating here can also work:
       this.miniCalendarDays.forEach(day => day.isSelected = this.isSameDate(day.date, date));
-      this.miniCalendarViewDate = new Date(date);
-      this.generateMiniCalendar();
+      this.miniCalendarViewDate = new Date(date); // Sync mini-calendar view if needed
+      this.generateMiniCalendar(); // Re-generate to update selection
     }
   }
 
@@ -503,8 +217,8 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     if (this.calendarApi) {
       this.calendarApi.today();
     }
-    this.miniCalendarViewDate = new Date();
-    this.generateMiniCalendar();
+    this.miniCalendarViewDate = new Date(); // Set mini-calendar to current month
+    this.generateMiniCalendar(); // Regenerate to select today
   }
 
   mainCalendarNext(): void { if (this.calendarApi) this.calendarApi.next(); }
@@ -524,7 +238,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
 
   handleDateSelect(selectInfo: DateSelectArg) {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // Compare dates only, not time for past date check
 
     if (selectInfo.start < today) {
       alert("Vous ne pouvez pas sélectionner une date ou une heure passée.");
@@ -549,13 +263,62 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       this.selectedEndTimeForBooking = this.datePipe.transform(defaultEndDate, 'HH:mm');
     }
 
-    this.bookingForm.reset({ 
-      fullName: this.currentPatientName,
-      email: this.currentUser?.email || '',
-      phoneNumber: this.currentUser?.phone || '',
-      notes: '' 
-    });
+    this.bookingForm.reset({ fullName: '', email: '', phoneNumber: '', notes: '' });
     this.isBookingFormOpen = true;
+  }
+
+  submitNewAppointment(): void {
+    this.isSubmitting = true; // Set submitting state
+    if (this.bookingForm.invalid || !this.selectedDateForBooking || !this.selectedTimeForBooking) {
+      this.bookingForm.markAllAsTouched();
+      this.isSubmitting = false; // Reset if validation fails early
+      return;
+    }
+
+    const formValue = this.bookingForm.value;
+    const startDate = new Date(this.selectedDateForBooking!);
+    const [startHours, startMinutes] = this.selectedTimeForBooking!.split(':').map(Number);
+    startDate.setHours(startHours, startMinutes, 0, 0);
+
+    let endDate = new Date(startDate);
+    if (this.selectedEndTimeForBooking) {
+      const [endHours, endMinutes] = this.selectedEndTimeForBooking.split(':').map(Number);
+      endDate.setHours(endHours, endMinutes, 0, 0);
+    } else { 
+      endDate.setMinutes(startDate.getMinutes() + this.slotDurationMinutes);
+    }
+
+    if (startDate < new Date()) {
+      alert("Impossible de créer un rendez-vous dans le passé.");
+      this.closeBookingForm(); // This will also set isSubmitting to false
+      return;
+    }
+    if (this.isSlotOccupied(startDate, endDate)) {
+      alert("Ce créneau horaire a été réservé pendant que vous remplissiez le formulaire.");
+      this.closeBookingForm(); // This will also set isSubmitting to false
+      return;
+    }
+
+    const newEvent: MyCalendarEvent = {
+      id: `new_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      title: formValue.fullName,
+      start: startDate,
+      end: endDate,
+      allDay: false,
+      extendedProps: {
+        description: formValue.notes,
+        status: 'Pending', 
+        patientEmail: formValue.email,
+        patientPhone: formValue.phoneNumber,
+        // resourceId: this.resources[0].id, // Assign a default resource if needed
+      },
+      backgroundColor: '#ffc107', 
+      borderColor: '#ffc107'
+    };
+
+    this.allCalendarEvents.push(newEvent);
+    this.filterAndSearchEvents(); 
+    this.closeBookingForm(); // This will also set isSubmitting to false
   }
 
   closeBookingForm(): void {
@@ -563,10 +326,24 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.selectedDateForBooking = null;
     this.selectedTimeForBooking = null;
     this.selectedEndTimeForBooking = null;
-    this.isSubmitting = false;
+    this.isSubmitting = false; // Ensure isSubmitting is reset
     if (this.calendarApi) {
       this.calendarApi.unselect();
     }
+  }
+
+  handleEventClick(clickInfo: EventClickArg) {
+    this.selectedEventDetails = {
+      id: clickInfo.event.id,
+      title: clickInfo.event.title,
+      start: clickInfo.event.start || new Date(), // Fallback if start is null
+      end: clickInfo.event.end ?? undefined, // Use nullish coalescing
+      allDay: clickInfo.event.allDay,
+      extendedProps: clickInfo.event.extendedProps,
+      backgroundColor: clickInfo.event.backgroundColor,
+      borderColor: clickInfo.event.borderColor
+    };
+    this.isEventModalOpen = true;
   }
 
   closeEventModal(): void {
@@ -576,5 +353,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
 
   printCalendar(): void {
     alert('Fonctionnalité d\'impression à implémenter.');
+    // Consider using a library or more robust print CSS for better results
+    // window.print(); 
   }
 }

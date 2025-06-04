@@ -1,13 +1,7 @@
-import { Component, inject, OnInit, Input, signal, effect } from '@angular/core';
+import { Component, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CalendarContainerComponent } from '../calendar-container/calendar-container.component';
-
-interface CalendarDay {
-  date: Date;
-  currentMonth: boolean;
-  hasEvents: boolean;
-  hasUrgentEvents: boolean;
-}
+import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-mini-calendar',
@@ -17,171 +11,169 @@ interface CalendarDay {
   styleUrls: ['./mini-calendar.component.css']
 })
 export class MiniCalendarComponent implements OnInit {
-  @Input() currentDate: Date = new Date();
-  
-  private calendarContainer = inject(CalendarContainerComponent, { optional: true });
+  private calendarService = inject(CalendarService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   
   // Calendar data
-  calendarDays: CalendarDay[] = [];
-  currentMonthName: string = '';
-  currentYear: number = new Date().getFullYear();
-  dayNames: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  currentDate: Date = new Date();
+  today: Date = new Date();
+  calendarDays: Array<{
+    date: Date;
+    currentMonth: boolean;
+    hasEvents: boolean;
+    hasUrgentEvents: boolean;
+    firstInRow: boolean;
+  }> = [];
+  dayNames: string[] = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   
-  // Reactive state
-  selectedDate = signal<Date>(new Date());
+  // Track if we need to prevent circular updates
+  private updatingFromClick = false;
   
   constructor() {
-    // Set up effect to watch for date changes from parent - MOVED TO CONSTRUCTOR
-    if (this.calendarContainer) {
-      effect(() => {
-        const date = this.calendarContainer!.getCurrentDate();
-        this.currentDate = date;
-        this.selectedDate.set(date);
-        this.generateCalendar();
-      });
-    }
+    // React to date changes from main calendar
+    effect(() => {
+      if (!this.updatingFromClick) {
+        const newDate = this.calendarService.currentDate();
+        if (!this.isSameMonth(this.currentDate, newDate)) {
+          this.currentDate = new Date(newDate);
+          this.generateCalendarDays();
+        }
+      }
+    });
   }
   
   ngOnInit(): void {
-    // Initialize with current state
-    if (this.calendarContainer) {
-      this.currentDate = this.calendarContainer.getCurrentDate();
-    }
-    this.selectedDate.set(this.currentDate);
-    this.generateCalendar();
+    // Initialize with today's date
+    this.currentDate = new Date(this.calendarService.currentDate());
+    this.today = new Date(); // Today's date for highlighting
+    this.generateCalendarDays();
   }
   
-  selectDate(date: Date): void {
-    this.selectedDate.set(date);
-    this.currentDate = date;
-    if (this.calendarContainer) {
-      // Set the date AND switch to day view when clicking a day
-      this.calendarContainer.setCurrentDate(date);
-      this.calendarContainer.setCurrentView('timeGridDay');
-    }
+  get currentMonthName(): string {
+    return this.currentDate.toLocaleDateString('default', { month: 'long' });
+  }
+  
+  get currentYear(): number {
+    return this.currentDate.getFullYear();
   }
   
   prevMonth(): void {
-    const prevMonth = new Date(this.currentDate);
-    prevMonth.setMonth(prevMonth.getMonth() - 1);
-    this.currentDate = prevMonth;
-    this.selectedDate.set(prevMonth);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentDate(prevMonth);
-    }
-    this.generateCalendar();
+    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+    this.generateCalendarDays();
   }
   
   nextMonth(): void {
-    const nextMonth = new Date(this.currentDate);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    this.currentDate = nextMonth;
-    this.selectedDate.set(nextMonth);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentDate(nextMonth);
-    }
-    this.generateCalendar();
+    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+    this.generateCalendarDays();
   }
   
-  goToToday(): void {
-    const today = new Date();
-    this.currentDate = today;
-    this.selectedDate.set(today);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentDate(today);
-      // Also switch to day view when clicking "Today"
-      this.calendarContainer.setCurrentView('timeGridDay');
-    }
-    this.generateCalendar();
-  }
-  
-  isToday(date: Date): boolean {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+  selectDate(date: Date): void {
+    this.updatingFromClick = true;
+    
+    // Set the current date in the calendar service
+    this.calendarService.setCurrentDate(date);
+    
+    // Set the view to day view when a date is selected
+    this.calendarService.setCurrentView('timeGridDay');
+    
+    // Reset the flag after a short delay to allow the effect to complete
+    setTimeout(() => {
+      this.updatingFromClick = false;
+    }, 50);
   }
   
   isSelectedDate(date: Date): boolean {
-    return date.toDateString() === this.selectedDate().toDateString();
+    const selectedDate = this.calendarService.currentDate();
+    return this.isSameDay(date, selectedDate);
   }
   
-  private generateCalendar(): void {
-    const year = this.currentDate.getFullYear();
-    const month = this.currentDate.getMonth();
-    
-    this.currentMonthName = this.currentDate.toLocaleDateString('en-US', {
-      month: 'long'
-    });
-    this.currentYear = year;
-    
-    // Get first day of month and number of days
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
+  private generateCalendarDays(): void {
     this.calendarDays = [];
     
-    // Add days from previous month
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const date = new Date(year, month, -i);
-      this.calendarDays.push({
-        date,
-        currentMonth: false,
-        hasEvents: this.hasEventsOnDate(date),
-        hasUrgentEvents: this.hasUrgentEventsOnDate(date)
-      });
-    }
+    // Get the first day of the month
+    const firstDayOfMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
     
-    // Add days of current month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      this.calendarDays.push({
-        date,
-        currentMonth: true,
-        hasEvents: this.hasEventsOnDate(date),
-        hasUrgentEvents: this.hasUrgentEventsOnDate(date)
-      });
-    }
+    // Get the last day of the month
+    const lastDayOfMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
     
-    // Add days from next month to complete the grid (42 days = 6 weeks)
-    const totalCells = 42;
-    const remainingCells = totalCells - this.calendarDays.length;
-    for (let day = 1; day <= remainingCells; day++) {
-      const date = new Date(year, month + 1, day);
+    // Get the day of the week of the first day (0-6, where 0 is Sunday)
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    
+    // Calculate the number of days from the previous month to show
+    const daysFromPrevMonth = firstDayWeekday;
+    
+    // Get the first day to display (might be from the previous month)
+    const firstDayToShow = new Date(firstDayOfMonth);
+    firstDayToShow.setDate(firstDayToShow.getDate() - daysFromPrevMonth);
+    
+    // Generate 6 rows of 7 days each (42 days)
+    // Or just enough rows to show the current month
+    const totalDaysToShow = this.getDaysNeeded(firstDayOfMonth, lastDayOfMonth);
+    
+    let currentDay = new Date(firstDayToShow);
+    
+    for (let i = 0; i < totalDaysToShow; i++) {
+      // Check if this date is in the current month
+      const isCurrentMonth = currentDay.getMonth() === this.currentDate.getMonth();
+      
+      // Check if this date has events (mock data for now)
+      const hasEvents = this.hasEvents(currentDay);
+      const hasUrgentEvents = this.hasUrgentEvents(currentDay);
+      
+      // Check if this is the first day in its row
+      const firstInRow = i % 7 === 0;
+      
+      // Add the day to the calendar
       this.calendarDays.push({
-        date,
-        currentMonth: false,
-        hasEvents: this.hasEventsOnDate(date),
-        hasUrgentEvents: this.hasUrgentEventsOnDate(date)
+        date: new Date(currentDay),
+        currentMonth: isCurrentMonth,
+        hasEvents: hasEvents,
+        hasUrgentEvents: hasUrgentEvents,
+        firstInRow: firstInRow
       });
+      
+      // Move to the next day
+      currentDay.setDate(currentDay.getDate() + 1);
     }
   }
   
-  private hasEventsOnDate(date: Date): boolean {
-    if (this.calendarContainer) {
-      const appointments = this.calendarContainer.doctorAppointments();
-      const dateString = date.toISOString().split('T')[0];
-      
-      return appointments.some(appointment => 
-        appointment.date === dateString
-      );
-    }
+  private getDaysNeeded(firstDayOfMonth: Date, lastDayOfMonth: Date): number {
+    // Calculate how many days we need to show
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    const totalDaysInMonth = lastDayOfMonth.getDate();
+    const lastDayWeekday = lastDayOfMonth.getDay();
     
-    return false;
+    // Days from previous month + days in current month + days from next month
+    return firstDayWeekday + totalDaysInMonth + (6 - lastDayWeekday);
   }
   
-  private hasUrgentEventsOnDate(date: Date): boolean {
-    if (this.calendarContainer) {
-      const appointments = this.calendarContainer.doctorAppointments();
-      const dateString = date.toISOString().split('T')[0];
-      
-      return appointments.some(appointment => 
-        appointment.date === dateString && 
-        // Fixed: Use proper Appointment model properties
-        (appointment.type === 'emergency' || appointment.reason?.toLowerCase().includes('urgent'))
-      );
-    }
+  // Mock data for events - you'd replace this with actual data from your service
+  private hasEvents(date: Date): boolean {
+    // For demo purposes, show events on some random dates 
+    // You should replace this with actual event data
+    const events = this.calendarService.events();
     
-    return false;
+    return events.some(event => this.isSameDay(new Date(event.start), date));
+  }
+  
+  private hasUrgentEvents(date: Date): boolean {
+    // For demo purposes, show urgent events on May 12, 2025 (from the screenshot)
+    const targetDate = new Date(2025, 4, 12); // May 12, 2025
+    
+    return this.isSameDay(date, targetDate);
+  }
+  
+  // Helper to check if two dates are the same day
+  private isSameDay(date1: Date, date2: Date): boolean {
+    return date1.getDate() === date2.getDate() && 
+           date1.getMonth() === date2.getMonth() && 
+           date1.getFullYear() === date2.getFullYear();
+  }
+  
+  // Helper to check if two dates are in the same month
+  private isSameMonth(date1: Date, date2: Date): boolean {
+    return date1.getMonth() === date2.getMonth() && 
+           date1.getFullYear() === date2.getFullYear();
   }
 }

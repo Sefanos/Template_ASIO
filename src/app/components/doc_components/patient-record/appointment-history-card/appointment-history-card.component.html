@@ -25,7 +25,7 @@
             <div class="font-medium mb-1">{{ appointment.date }} {{ appointment.time }}</div>
             <div class="text-sm text-text">{{ appointment.reason }}</div>
             <div class="text-xs text-text-light mt-1">
-              {{ appointment.type }} with {{ appointment.doctorName }}
+              {{ appointment.type }} with {{ appointment.provider }}
             </div>
             <div *ngIf="appointment.notes" class="text-xs text-text mt-1">{{ appointment.notes }}</div>
           </div>
