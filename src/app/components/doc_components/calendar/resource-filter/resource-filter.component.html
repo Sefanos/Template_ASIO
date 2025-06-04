@@ -1,8 +1,8 @@
 <div class="mb-4 p-4 bg-white rounded-card shadow-sm">
-  <h3 class="text-sm font-semibold text-text-light mb-3">DOCTORS / STAFF</h3>
+  <h3 class="text-sm font-semibold text-text-light mb-3">DOCTOR</h3>
   
-  <!-- All/None quick selections -->
-  <div class="flex justify-between mb-3">
+  <!-- All/None quick selections - Only show if multiple resources -->
+  <div class="flex justify-between mb-3" *ngIf="availableResources().length > 1">
     <button 
       (click)="selectAll()"
       class="text-xs text-primary hover:text-primary-dark font-medium"
@@ -19,7 +19,7 @@
   
   <!-- Resource list with checkboxes -->
   <div class="space-y-2 max-h-48 overflow-y-auto">
-    <div *ngFor="let resource of resources()" class="flex items-center">
+    <div *ngFor="let resource of availableResources()" class="flex items-center">
       <label class="flex items-center space-x-2 w-full cursor-pointer hover:bg-hover p-1.5 rounded-lg">
         <input 
           type="checkbox"
@@ -30,7 +30,7 @@
         <div class="flex items-center">
           <div 
             class="h-3 w-3 rounded-full mr-2" 
-            [style.backgroundColor]="resource.eventColor || '#9CA3AF'"
+            [style.backgroundColor]="resource.eventColor || 'var(--color-primary)'"
           ></div>
           <span class="text-sm">{{ resource.title }}</span>
           <span class="text-xs text-text-light ml-1" *ngIf="resource.extendedProps?.specialty">
@@ -41,11 +41,26 @@
     </div>
   </div>
   
+  <!-- Show message if no resources -->
+  <div *ngIf="availableResources().length === 0" class="text-sm text-text-light text-center py-4">
+    No doctors available
+  </div>
+  
   <!-- Resource color legend -->
   <div class="mt-4 pt-3 border-t border-border">
-    <div class="flex items-center">
-      <span class="h-3 w-3 rounded-full bg-[#E67C73] mr-2"></span>
-      <span class="text-xs text-text-light">Blocked Time</span>
+    <div class="space-y-1">
+      <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full bg-[#4285F4] mr-2"></span>
+        <span class="text-xs text-text-light">Scheduled Appointments</span>
+      </div>
+      <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full bg-[#34A853] mr-2"></span>
+        <span class="text-xs text-text-light">Confirmed Appointments</span>
+      </div>
+      <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full bg-[#FF5722] mr-2"></span>
+        <span class="text-xs text-text-light">Blocked Time</span>
+      </div>
     </div>
   </div>
 </div>

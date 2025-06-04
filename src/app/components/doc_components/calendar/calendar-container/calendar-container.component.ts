@@ -1,7 +1,12 @@
-import { Component, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy, signal, effect } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy, signal, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
-import { CalendarEvent } from '../../../../models/calendar/calendar-event.model';
+import { DoctorAppointmentService } from '../../../../shared/services/appointment/doctor-appointement.service';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { CalendarEvent, CalendarResource } from '../../../../models/calendar/calendar.model';
+import { Appointment, AppointmentStatus } from '../../../../models/appointment.model';
+import { User } from '../../../../models/user.model';
+import { LoggingService } from '../../../../shared/services/loggin.service';
+
 
 // FullCalendar imports
 import { Calendar } from '@fullcalendar/core';
@@ -35,20 +40,71 @@ import { TimeBlockFormComponent } from '../time-block-form/time-block-form.compo
 export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   @ViewChild('calendar') calendarEl!: ElementRef;
   
-  private calendarService = inject(CalendarService);
+  private doctorAppointmentService = inject(DoctorAppointmentService);
+  private authService = inject(AuthService);
   private calendar: Calendar | null = null;
+   private loggingService = inject(LoggingService);
   
   // State for time block form
   showTimeBlockForm = signal<boolean>(false);
   selectedBlockToEdit = signal<CalendarEvent | null>(null);
   isAppointmentForm = signal<boolean>(false);
   
-  // Calendar reactive state from service
-  currentView = this.calendarService.currentView;
-  currentDate = this.calendarService.currentDate;
+  // Calendar reactive state
+  currentView = signal<string>('timeGridWeek');
+  currentDate = signal<Date>(new Date());
+  
+  // Filter states for UI components
+  filteredDoctorIds = signal<string[]>([]);
+  searchQuery = signal<string>('');
+  selectedEvent = signal<CalendarEvent | null>(null);
+  
+  // Doctor appointment state
+  doctorAppointments = this.doctorAppointmentService.filteredAppointments;
+  
+  // Current authenticated doctor - convert Observable to signal
+  currentDoctor = signal<User | null>(null);
+  
+  // Resources - only show current doctor
+  resources = signal<CalendarResource[]>([]);
   
   constructor() {
-    // Use effect to react to signal changes
+try {
+      
+      // Subscribe to auth service and convert to signal
+      this.authService.currentUser.subscribe(user => {
+        this.currentDoctor.set(user);
+      });
+      
+      // Initialize resources with current doctor
+      effect(() => {
+        const doctor = this.currentDoctor();
+        if (doctor && this.authService.hasRole(['doctor'])) {
+          this.resources.set([{
+            id: doctor.id.toString(),
+            title: `Dr. ${doctor.name}`,
+            eventColor: '#4285F4',
+            extendedProps: {
+              type: 'doctor',
+              // specialty: doctor.specialty || 'General Practice',
+              // image: doctor.profileImage || '/assets/placeholder-user.jpg',
+              // firstName: doctor.firstName,
+              // lastName: doctor.lastName,
+              email: doctor.email
+            },
+            businessHours: [{
+              startTime: '08:00',
+              endTime: '17:00',
+              daysOfWeek: [1, 2, 3, 4, 5]
+            }]
+          }]);
+        }
+      });
+} catch (error) {
+   this.loggingService.error('Error setting up doctor resources:', error);
+}
+    
+    // Use effect to react to view changes
     effect(() => {
       const view = this.currentView();
       if (this.calendar && this.calendar.view && this.calendar.view.type !== view) {
@@ -56,32 +112,50 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       }
     });
     
+    // Use effect to react to date changes
     effect(() => {
       const date = this.currentDate();
       if (this.calendar) {
         this.calendar.gotoDate(date);
+        // Load appointments for the new date
+        this.loadAppointmentsForDate(date);
       }
     });
     
+    // Use effect to react to filter changes
     effect(() => {
-      // This will run whenever filteredDoctorIds changes
-      this.calendarService.filteredDoctorIds();
+      this.filteredDoctorIds();
       if (this.calendar) {
         this.refreshEvents();
       }
     });
     
+    // Use effect to react to search changes
     effect(() => {
-      // This will run whenever searchQuery changes
-      this.calendarService.searchQuery();
+      this.searchQuery();
       if (this.calendar) {
         this.refreshEvents();
+      }
+    });
+    
+    // Use effect to react to appointment changes
+    effect(() => {
+      this.doctorAppointments();
+      if (this.calendar) {
+        // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          this.refreshEvents();
+        });
       }
     });
   }
   
   ngAfterViewInit(): void {
-    this.initCalendar();
+    // Use setTimeout to ensure proper initialization order
+    setTimeout(() => {
+      this.initCalendar();
+      this.loadInitialAppointments();
+    });
   }
   
   ngOnDestroy(): void {
@@ -106,7 +180,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       headerToolbar: false, // We're using our custom toolbar
       allDaySlot: true,
       dayMaxEvents: true,
-      slotMinTime: '07:00:00',
+      slotMinTime: '06:00:00',
       slotMaxTime: '19:00:00',
       slotDuration: '00:15:00',
       navLinks: true,
@@ -127,15 +201,116 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       eventDrop: this.handleEventDrop.bind(this),
       eventResize: this.handleEventResize.bind(this),
       events: (fetchInfo, successCallback) => {
-        // Get filtered events from service
-        const events = this.calendarService.getFilteredEvents();
-        successCallback(events);
+        // Convert doctor appointments to calendar events
+        const calendarEvents = this.convertAppointmentsToEvents();
+        // Apply filters
+        const filteredEvents = this.applyFilters(calendarEvents);
+        successCallback(filteredEvents);
       },
-      resources: this.calendarService.resources(),
+      resources: this.resources(),
       schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source'
     });
     
     this.calendar.render();
+  }
+  
+  private loadInitialAppointments(): void {
+    // Load appointments for the current date
+    this.loadAppointmentsForDate(this.currentDate());
+  }
+  
+  private loadAppointmentsForDate(date: Date): void {
+    // Set the selected date in doctor service and load appointments
+    this.doctorAppointmentService.setSelectedDate(date);
+  }
+  
+  private convertAppointmentsToEvents(): CalendarEvent[] {
+    const appointments = this.doctorAppointments();
+    
+    return appointments.map(appointment => this.appointmentToCalendarEvent(appointment));
+  }
+  
+  private appointmentToCalendarEvent(appointment: Appointment): CalendarEvent {
+    // Combine date and time to create full datetime strings
+    const startDateTime = this.combineDateTime(appointment.date, appointment.time);
+    const endDateTime = appointment.endTime ? 
+      this.combineDateTime(appointment.date, appointment.endTime) : 
+      this.addMinutes(startDateTime, appointment.duration);
+    
+    return {
+      id: appointment.id.toString(),
+      title: appointment.isBlockedTime ? appointment.reason : `${appointment.patientName} - ${appointment.reason}`,
+      start: startDateTime,
+      end: endDateTime,
+      resourceId: appointment.doctorId?.toString(),
+      color: appointment.isBlockedTime ? '#FF5722' : this.getAppointmentColor(appointment),
+      textColor: '#FFFFFF',
+      extendedProps: {
+        isBlockedTime: appointment.isBlockedTime,
+        isAppointment: !appointment.isBlockedTime,
+        status: appointment.status,
+        patientId: appointment.patientId,
+        patientName: appointment.patientName,
+        reason: appointment.reason,
+        notes: appointment.notes,
+        appointmentType: appointment.type,
+        originalAppointment: appointment
+      }
+    };
+  }
+  
+  private combineDateTime(date: string, time: string): string {
+    return `${date}T${time}:00`;
+  }
+  
+  private addMinutes(dateTimeString: string, minutes: number): string {
+    const date = new Date(dateTimeString);
+    date.setMinutes(date.getMinutes() + minutes);
+    return date.toISOString();
+  }
+  
+  private getAppointmentColor(appointment: Appointment): string {
+    // Color coding based on appointment status
+    switch (appointment.status) {
+      case AppointmentStatus.Pending:
+        return '#4285F4'; // Blue
+      case AppointmentStatus.Confirmed:
+        return '#34A853'; // Green
+      case AppointmentStatus.Cancelled:
+        return '#EA4335'; // Red
+      case AppointmentStatus.Completed:
+        return '#9AA0A6'; // Gray
+      case AppointmentStatus.NoShow:
+        return '#FF6D01'; // Orange
+      default:
+        return '#4285F4'; // Default blue
+    }
+  }
+  
+  private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
+    const currentDoctor = this.currentDoctor();
+    const searchQuery = this.searchQuery().toLowerCase();
+    
+    return events.filter(event => {
+      // Only show appointments for current doctor
+      if (currentDoctor && event.resourceId !== currentDoctor.id.toString()) {
+        return false;
+      }
+      
+      // Filter by search query
+      if (searchQuery) {
+        const matchesTitle = event.title.toLowerCase().includes(searchQuery);
+        const matchesPatient = event.extendedProps?.patientName?.toLowerCase().includes(searchQuery);
+        const matchesType = event.extendedProps?.appointmentType?.toLowerCase().includes(searchQuery);
+        const matchesReason = event.extendedProps?.reason?.toLowerCase().includes(searchQuery);
+        
+        if (!(matchesTitle || matchesPatient || matchesType || matchesReason)) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
   }
   
   private refreshEvents(): void {
@@ -166,7 +341,7 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       this.selectedBlockToEdit.set(blockedTimeEvent);
       this.showTimeBlockForm.set(true);
     } else {
-      // Handle regular appointment click - This would typically open an appointment detail view
+      // Handle regular appointment click
       const selectedEvent: CalendarEvent = {
         id: clickedEvent.id,
         title: clickedEvent.title,
@@ -178,17 +353,16 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
         }
       };
       
-      this.calendarService.setSelectedEvent(selectedEvent);
-      // For MVP, we'll just log this
+      this.selectedEvent.set(selectedEvent);
       console.log('Appointment clicked:', selectedEvent);
     }
   }
   
   private handleDateClick(info: any): void {
-    // Open the appointment creation form when a date/time cell is clicked
+    const currentDoctor = this.currentDoctor();
+    if (!currentDoctor) return;
     
-    // We'll reuse the time block form for appointments by default
-    // For a production app, you might want a dedicated appointment form
+    // Open the appointment creation form when a date/time cell is clicked
     let startDateTime = new Date(info.date);
     let endDateTime = new Date(info.date);
     
@@ -207,42 +381,41 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
       title: 'New Appointment',
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
-      resourceId: info.resource?.id || this.calendarService.resources()[0]?.id,
-      color: '#4285F4', // Google Calendar blue
+      resourceId: currentDoctor.id.toString(),
+      color: '#4285F4',
       textColor: '#FFFFFF',
       extendedProps: {
         isAppointment: true,
-        status: 'scheduled'
+        status: AppointmentStatus.Pending
       }
     };
     
-    // Open the form with this pre-filled appointment
     this.selectedBlockToEdit.set(newAppointment);
-    this.isAppointmentForm.set(true); // Set form type to appointment
+    this.isAppointmentForm.set(true);
     this.showTimeBlockForm.set(true);
   }
   
   private handleRangeSelect(info: any): void {
-    // When a range is selected, open appointment form with the time range pre-filled
+    const currentDoctor = this.currentDoctor();
+    if (!currentDoctor) return;
     
-    // Create an appointment event object with the selected time range
+    // When a range is selected, open appointment form with the time range pre-filled
     const newAppointment: CalendarEvent = {
       id: `appointment-${Date.now()}`,
       title: 'New Appointment',
       start: info.start.toISOString(),
       end: info.end.toISOString(),
-      resourceId: info.resource?.id || this.calendarService.resources()[0]?.id,
-      color: '#4285F4', // Google Calendar blue
+      resourceId: currentDoctor.id.toString(),
+      color: '#4285F4',
       textColor: '#FFFFFF',
       extendedProps: {
         isAppointment: true,
-        status: 'scheduled'
+        status: AppointmentStatus.Pending
       }
     };
     
-    // Open the form with this pre-filled appointment
     this.selectedBlockToEdit.set(newAppointment);
-    this.isAppointmentForm.set(true); // Set form type to appointment
+    this.isAppointmentForm.set(true);
     this.showTimeBlockForm.set(true);
   }
   
@@ -250,121 +423,216 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     // Handle dropped (moved) events
     const movedEvent = info.event;
     
-    // Create event object from the moved event
-    const updatedEvent: CalendarEvent = {
-      id: movedEvent.id,
-      title: movedEvent.title,
-      start: movedEvent.start.toISOString(),
-      end: movedEvent.end.toISOString(),
-      resourceId: movedEvent.getResources()[0]?.id,
-      color: movedEvent.backgroundColor,
-      textColor: movedEvent.textColor,
-      extendedProps: {
-        ...movedEvent.extendedProps
+    if (movedEvent.extendedProps.originalAppointment) {
+      // This is from the doctor appointment service
+      const originalAppointment: Appointment = movedEvent.extendedProps.originalAppointment;
+      const newDate = movedEvent.start.toISOString().split('T')[0];
+      const newTime = movedEvent.start.toTimeString().substring(0, 5);
+      
+      // Update through doctor appointment service
+      if (originalAppointment.isBlockedTime) {
+        const updatedBlockData: Partial<Appointment> = {
+          date: newDate,
+          time: newTime,
+          endTime: movedEvent.end?.toTimeString().substring(0, 5),
+          reason: originalAppointment.reason,
+          isBlockedTime: true
+        };
+        
+        this.doctorAppointmentService.addBlockedTime(updatedBlockData).subscribe({
+          next: () => this.refreshEvents(),
+          error: (error) => {
+            console.error('Error updating blocked time:', error);
+            info.revert(); // Revert the move on error
+          }
+        });
+      } else {
+        // For regular appointments, call reschedule method
+        this.doctorAppointmentService.rescheduleDoctorAppointment(originalAppointment.id, newDate, newTime).subscribe({
+          next: () => this.refreshEvents(),
+          error: (error) => {
+            console.error('Error rescheduling appointment:', error);
+            info.revert();
+          }
+        });
       }
-    };
-    
-    if (updatedEvent.extendedProps?.isBlockedTime) {
-      this.calendarService.updateBlockedTime(updatedEvent);
-    } else {
-      this.calendarService.updateEvent(updatedEvent);
     }
   }
   
   private handleEventResize(info: any): void {
-    // Handle resized events
+    // Handle resized events - similar logic to handleEventDrop
     const resizedEvent = info.event;
     
-    // Create event object from the resized event
-    const updatedEvent: CalendarEvent = {
-      id: resizedEvent.id,
-      title: resizedEvent.title,
-      start: resizedEvent.start.toISOString(),
-      end: resizedEvent.end.toISOString(),
-      resourceId: resizedEvent.getResources()[0]?.id,
-      color: resizedEvent.backgroundColor,
-      textColor: resizedEvent.textColor,
-      extendedProps: {
-        ...resizedEvent.extendedProps
+    if (resizedEvent.extendedProps.originalAppointment) {
+      const originalAppointment: Appointment = resizedEvent.extendedProps.originalAppointment;
+      const newEndTime = resizedEvent.end?.toTimeString().substring(0, 5);
+      
+      if (originalAppointment.isBlockedTime) {
+        const updatedBlockData: Partial<Appointment> = {
+          date: originalAppointment.date,
+          time: originalAppointment.time,
+          endTime: newEndTime,
+          reason: originalAppointment.reason,
+          isBlockedTime: true
+        };
+        
+        this.doctorAppointmentService.addBlockedTime(updatedBlockData).subscribe({
+          next: () => this.refreshEvents(),
+          error: (error) => {
+            console.error('Error updating blocked time:', error);
+            info.revert();
+          }
+        });
+      } else {
+        console.log('Resizing appointment to end at:', newEndTime);
+        // TODO: Implement appointment duration update
       }
-    };
-    
-    if (updatedEvent.extendedProps?.isBlockedTime) {
-      this.calendarService.updateBlockedTime(updatedEvent);
-    } else {
-      this.calendarService.updateEvent(updatedEvent);
     }
   }
   
   // Time block form methods
   showBlockTimeForm(): void {
-    this.selectedBlockToEdit.set(null); // Reset any previously selected block
-    this.isAppointmentForm.set(false); // Set form mode to time block
+    this.selectedBlockToEdit.set(null);
+    this.isAppointmentForm.set(false);
     this.showTimeBlockForm.set(true);
   }
   
   closeBlockTimeForm(): void {
     this.showTimeBlockForm.set(false);
     this.selectedBlockToEdit.set(null);
-    // No need to reset isAppointmentForm as it will be set when opening the form again
   }
   
   handleBlockTimeSaved(event: CalendarEvent): void {
     if (this.selectedBlockToEdit()) {
       // Update existing event
       if (event.extendedProps?.['isAppointment']) {
-        this.calendarService.updateEvent(event);
+        // For appointments - TODO: implement appointment update
+        console.log('Updating appointment via doctor service:', event);
       } else {
-        this.calendarService.updateBlockedTime(event);
+        // For blocked time, use doctor service
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+        
+        const blockData: Partial<Appointment> = {
+          date: startDate.toISOString().split('T')[0],
+          time: startDate.toTimeString().substring(0, 5),
+          endTime: endDate.toTimeString().substring(0, 5),
+          reason: event.title,
+          isBlockedTime: true
+        };
+        
+        this.doctorAppointmentService.addBlockedTime(blockData).subscribe({
+          next: () => {
+            this.refreshEvents();
+            this.closeBlockTimeForm();
+          },
+          error: (error) => console.error('Error saving blocked time:', error)
+        });
+        return;
       }
     } else {
       // Add new event
       if (event.extendedProps?.['isAppointment']) {
-        this.calendarService.addEvent(event);
+        // For new appointments - TODO: implement appointment creation
+        console.log('Creating new appointment via doctor service:', event);
       } else {
-        this.calendarService.addBlockedTime(event);
+        // For new blocked time
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+        
+        const blockData: Partial<Appointment> = {
+          date: startDate.toISOString().split('T')[0],
+          time: startDate.toTimeString().substring(0, 5),
+          endTime: endDate.toTimeString().substring(0, 5),
+          reason: event.title,
+          isBlockedTime: true
+        };
+        
+        this.doctorAppointmentService.addBlockedTime(blockData).subscribe({
+          next: () => {
+            this.refreshEvents();
+            this.closeBlockTimeForm();
+          },
+          error: (error) => console.error('Error adding blocked time:', error)
+        });
+        return;
       }
     }
     
     this.refreshEvents();
+    this.closeBlockTimeForm();
   }
   
   handleBlockTimeDeleted(eventId: string): void {
-    // Determine if it's an appointment or blocked time based on the ID prefix
-    if (eventId.startsWith('appointment-')) {
-      this.calendarService.deleteEvent(eventId);
-    } else {
-      this.calendarService.deleteBlockedTime(eventId);
-    }
-    
+    // TODO: Implement proper deletion through doctor appointment service
+    console.log('Deleting event:', eventId);
     this.refreshEvents();
+    this.closeBlockTimeForm();
   }
   
   // Handle "New Appointment" button click from toolbar
   createNewAppointment(): void {
-    // Create default appointment at current time with 30-minute duration
+    const currentDoctor = this.currentDoctor();
+    if (!currentDoctor) return;
+    
     const startDateTime = new Date(this.currentDate());
     const endDateTime = new Date(startDateTime);
     endDateTime.setMinutes(endDateTime.getMinutes() + 30);
     
-    // Create appointment event object
     const newAppointment: CalendarEvent = {
       id: `appointment-${Date.now()}`,
       title: 'New Appointment',
       start: startDateTime.toISOString(),
       end: endDateTime.toISOString(),
-      resourceId: this.calendarService.resources()[0]?.id,
-      color: '#4285F4', // Google Calendar blue
+      resourceId: currentDoctor.id.toString(),
+      color: '#4285F4',
       textColor: '#FFFFFF',
       extendedProps: {
         isAppointment: true,
-        status: 'scheduled'
+        status: AppointmentStatus.Pending
       }
     };
     
-    // Open the form with this pre-filled appointment
     this.selectedBlockToEdit.set(newAppointment);
-    this.isAppointmentForm.set(true); // Set form mode to appointment
+    this.isAppointmentForm.set(true);
     this.showTimeBlockForm.set(true);
+  }
+  
+  // Public methods for UI components
+  setCurrentView(view: string): void {
+    this.currentView.set(view);
+  }
+  
+  setCurrentDate(date: Date): void {
+    this.currentDate.set(date);
+  }
+  
+  setFilteredDoctorIds(doctorIds: string[]): void {
+    this.filteredDoctorIds.set(doctorIds);
+  }
+  
+  setSearchQuery(query: string): void {
+    this.searchQuery.set(query);
+  }
+  
+  // Getter methods for child components
+  getCurrentView(): string {
+    return this.currentView();
+  }
+  
+  getCurrentDate(): Date {
+    return this.currentDate();
+  }
+  
+  getResources(): CalendarResource[] {
+    return this.resources();
+  }
+  
+  getSearchQuery(): string {
+    return this.searchQuery();
+  }
+  
+  getFilteredDoctorIds(): string[] {
+    return this.filteredDoctorIds();
   }
 }
