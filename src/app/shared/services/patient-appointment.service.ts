@@ -106,13 +106,34 @@ export class PatientAppointmentService {
         catchError(error => throwError(() => error))
       );
   }
-
   getAvailableDoctors(): Observable<any[]> {
     return this.http.get<{success: boolean, data: any[]}>(`${this.baseUrl}/doctors/available`)
       .pipe(
         map(response => response.data),
         catchError(error => throwError(() => error))
       );
+  }  getDoctorById(doctorId: number): Observable<any> {
+    // Use available doctors endpoint since there's no individual doctor endpoint for patients
+    return this.getAvailableDoctors().pipe(
+      map(doctors => {
+        console.log('Available doctors:', doctors);
+        console.log('Looking for doctor with user ID:', doctorId);
+        
+        // Find doctor by user ID (appointment.doctor_user_id matches availableDoctor.id)
+        const doctor = doctors.find(d => d.id === doctorId);
+        
+        if (!doctor) {
+          throw new Error(`Doctor with user ID ${doctorId} not found`);
+        }
+        
+        console.log('Found doctor:', doctor);
+        return doctor;
+      }),
+      catchError(error => {
+        console.error('Error finding doctor:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getAvailableSlots(doctorId: number, date: string): Observable<any> {

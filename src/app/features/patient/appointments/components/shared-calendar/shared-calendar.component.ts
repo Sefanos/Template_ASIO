@@ -11,6 +11,10 @@ import { PatientAppointmentAdapter } from '../../../../../shared/services/patien
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { MatDialog } from '@angular/material/dialog';
+import { RescheduleAppointmentComponent } from '../reschedule-appointment/reschedule-appointment.component';
+import { ConfirmationDialogComponent, ConfirmationDialogData, ConfirmationDialogResult } from '../../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { ToastService } from '../../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-shared-calendar',
@@ -35,6 +39,10 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   loadingDoctors = false;
   loadingAppointments = false;
   doctorsError: string | null = null;
+  // Add new loading states for operations
+  cancellingAppointment = false;
+  reschedulingAppointment = false;
+  isCalendarRefreshing = false;
 
   miniCalendarViewDate: Date = new Date(2025, 4, 1); // May 1, 2025
   miniCalendarDays: { date: Date, dayOfMonth: number, isCurrentMonth: boolean, isSelected: boolean }[] = [];
@@ -96,7 +104,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialog: MatDialog,
+    private toastService: ToastService
   ) {
     this.bookingForm = this.fb.group({
       doctorId: ['', Validators.required],
@@ -133,8 +143,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         console.log('Created doctor resources:', this.resources);
         this.loadingDoctors = false;
         
-        // Start with no doctors selected (as requested)
-        this.selectedResources = [];
+        // Auto-select all doctors by default when page loads
+        this.selectedResources = this.resources.map(resource => resource.id);
+        console.log('Auto-selected all doctors:', this.selectedResources);
         
         // Load appointments after doctors are ready
         this.loadAppointments();
@@ -167,6 +178,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   loadAppointments(): void {
     console.log('Loading appointments for calendar...');
     this.loadingAppointments = true;
+    this.isCalendarRefreshing = true;
     
     // Load all appointments to display in calendar (not just upcoming)
     this.patientAppointmentService.getMyAppointments().subscribe({
@@ -213,6 +225,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         
         console.log('Calendar events created:', this.allCalendarEvents);
         this.loadingAppointments = false;
+        this.isCalendarRefreshing = false;
         
         // Only show events for selected doctors (none selected initially)
         this.filterAndSearchEvents();
@@ -221,6 +234,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         console.error('Error loading appointments for calendar:', error);
         this.allCalendarEvents = [];
         this.loadingAppointments = false;
+        this.isCalendarRefreshing = false;
         this.filterAndSearchEvents();
       }
     });
@@ -418,20 +432,20 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     today.setHours(0, 0, 0, 0); // Compare dates only, not time for past date check
 
     if (selectInfo.start < today) {
-      alert("You cannot select a past date or time.");
+      this.toastService.warning("You cannot select a past date or time.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
 
     if (this.isSlotOccupied(selectInfo.start, selectInfo.end)) {
-      alert("This time slot is already booked or blocked.");
+      this.toastService.warning("This time slot is already booked or blocked.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
 
     // Check if we have available doctors
     if (this.resources.length === 0) {
-      alert("No doctors are available. Please try again later.");
+      this.toastService.error("No doctors are available. Please try again later.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
@@ -509,15 +523,16 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       next: (response) => {
         console.log('Appointment booked successfully:', response);
         
-        this.successMessage = 'Appointment booked successfully!';
+        this.toastService.success('Appointment booked successfully!');
         
-        // Reload appointments to show the new one
+        // Set calendar refreshing state and reload appointments to show the new one
+        this.isCalendarRefreshing = true;
         this.loadAppointments();
         
         // Close modal after a brief delay to show success message
         setTimeout(() => {
           this.closeBookingForm();
-        }, 1500);
+        }, 1000);
       },
       error: (error: any) => {
         console.error('Error booking appointment:', error);
@@ -582,7 +597,239 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.isEventModalOpen = false;
     this.selectedEventDetails = null;
   }
-  // Helper method for template to safely get appointment type description
+
+  // Reschedule appointment functionality
+  rescheduleAppointment(appointmentId: string | undefined): void {
+    if (!appointmentId) {
+      console.error('No appointment ID provided for reschedule');
+      return;
+    }
+
+    // Find the appointment details from allCalendarEvents
+    const appointmentEvent = this.allCalendarEvents.find(event => event.id === appointmentId);
+    if (!appointmentEvent) {
+      console.error('Appointment not found for reschedule:', appointmentId);
+      this.toastService.error('Appointment not found. Please refresh the page and try again.');
+      return;
+    }
+
+    // Convert calendar event to appointment object format expected by reschedule modal
+    const appointment = {
+      id: parseInt(appointmentId),
+      date: appointmentEvent.start instanceof Date ? 
+        appointmentEvent.start.toISOString().split('T')[0] : 
+        new Date(appointmentEvent.start).toISOString().split('T')[0],
+      time: appointmentEvent.start instanceof Date ? 
+        appointmentEvent.start.toTimeString().slice(0, 5) : 
+        new Date(appointmentEvent.start).toTimeString().slice(0, 5),
+      doctorName: appointmentEvent.extendedProps?.doctorName || 'Unknown Doctor',
+      reason: appointmentEvent.extendedProps?.description || 'Appointment',
+      status: appointmentEvent.extendedProps?.status || 'pending',
+      doctorId: appointmentEvent.extendedProps?.resourceId ? 
+        parseInt(appointmentEvent.extendedProps.resourceId) : null
+    };
+
+    // Check if appointment can be rescheduled
+    if (!this.canRescheduleAppointment(appointment)) {
+      return;
+    }
+
+    // Open the reschedule modal
+    const dialogRef = this.dialog.open(RescheduleAppointmentComponent, {
+      width: '500px',
+      data: { appointment: appointment },
+      disableClose: false
+    });
+
+    // Handle dialog result
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.reschedulingAppointment = true;
+        console.log('Appointment rescheduled successfully:', result);
+        // Close the event details modal
+        this.closeEventModal();
+        // Set calendar refreshing state and refresh the calendar to show updated appointment
+        this.isCalendarRefreshing = true;
+        this.loadAppointments();
+        // Show success message briefly
+        this.toastService.success('Appointment rescheduled successfully!');
+        this.reschedulingAppointment = false;
+      }
+    });
+  }
+
+    // Cancel appointment functionality with double confirmation
+  cancelAppointment(appointmentId: string | undefined): void {
+    console.log('cancelAppointment method called with ID:', appointmentId);
+    
+    if (!appointmentId) {
+      console.error('No appointment ID provided for cancellation');
+      return;
+    }
+
+    // Find the appointment details from allCalendarEvents
+    const appointmentEvent = this.allCalendarEvents.find(event => event.id === appointmentId);
+    if (!appointmentEvent) {
+      console.error('Appointment not found for cancellation:', appointmentId);
+      this.toastService.error('Appointment not found. Please refresh the page and try again.');
+      return;
+    }
+
+    // Convert calendar event to appointment object for validation
+    const appointment = {
+      id: parseInt(appointmentId),
+      date: appointmentEvent.start instanceof Date ? 
+        appointmentEvent.start.toISOString().split('T')[0] : 
+        new Date(appointmentEvent.start).toISOString().split('T')[0],
+      time: appointmentEvent.start instanceof Date ? 
+        appointmentEvent.start.toTimeString().slice(0, 5) : 
+        new Date(appointmentEvent.start).toTimeString().slice(0, 5),
+      doctorName: appointmentEvent.extendedProps?.doctorName || 'Unknown Doctor',
+      reason: appointmentEvent.extendedProps?.description || 'Appointment',
+      status: appointmentEvent.extendedProps?.status || 'pending'
+    };
+
+    // Check if appointment can be cancelled
+    if (!this.canCancelAppointment(appointment)) {
+      return;
+    }
+
+    // Open Angular Material confirmation dialog
+    const dialogData: ConfirmationDialogData = {
+      title: 'Cancel Appointment',
+      message: `Are you sure you want to cancel this appointment?\n\nDate: ${appointment.date}\nTime: ${appointment.time}\nDoctor: ${appointment.doctorName}\nReason: ${appointment.reason}\n\nThis action cannot be undone.`,
+      confirmText: 'Cancel Appointment',
+      cancelText: 'Keep Appointment',
+      needsReason: true,
+      reasonLabel: 'Cancellation Reason',
+      reasonPlaceholder: 'Please provide a reason for cancelling this appointment (this helps us improve our services)'
+    };
+
+    console.log('🔍 About to open dialog with data:', dialogData);
+    console.log('🔍 Dialog service:', this.dialog);
+    console.log('🔍 ConfirmationDialogComponent:', ConfirmationDialogComponent);
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: dialogData,
+      disableClose: true,
+      panelClass: 'custom-dialog-container',
+      autoFocus: false,
+      restoreFocus: false
+    });
+
+    console.log('🔍 Dialog reference created:', dialogRef);
+
+    dialogRef.afterClosed().subscribe((result: ConfirmationDialogResult | undefined) => {
+      if (result && result.confirmed) {
+        // Set loading state
+        this.cancellingAppointment = true;
+        
+        // Proceed with cancellation
+        console.log('Cancelling appointment:', appointmentId, 'Reason:', result.reason);
+        
+        this.patientAppointmentService.cancelMyAppointment(parseInt(appointmentId), result.reason!).subscribe({
+          next: (success) => {
+            this.cancellingAppointment = false;
+            if (success) {
+              console.log('Appointment cancelled successfully');
+              // Close the event details modal
+              this.closeEventModal();
+              // Set calendar refreshing state and refresh the calendar to show updated appointment
+              this.isCalendarRefreshing = true;
+              this.loadAppointments();
+              // Show success message
+              this.toastService.success('Appointment cancelled successfully!');
+            } else {
+              this.toastService.error('Failed to cancel appointment. Please try again.');
+            }
+          },
+          error: (error: any) => {
+            this.cancellingAppointment = false;
+            console.error('Error cancelling appointment:', error);
+            
+            // Handle specific error messages from the backend
+            if (error.error && error.error.message) {
+              this.toastService.error('Failed to cancel appointment', error.error.message);
+            } else if (error.error && error.error.error) {
+              this.toastService.error('Failed to cancel appointment', error.error.error);
+            } else if (error.status === 422) {
+              this.toastService.error('Invalid cancellation request. Please check the appointment details.');
+            } else if (error.status === 404) {
+              this.toastService.error('Appointment not found. It may have already been cancelled or modified.');
+            } else {
+              this.toastService.error('Failed to cancel appointment. Please try again later.');
+            }
+          }
+        });
+      }
+    });
+  }
+
+  // Helper method to check if reschedule button should be shown
+  canShowRescheduleButton(): boolean {
+    const status = this.selectedEventDetails?.extendedProps?.status;
+    return status != null && ['Confirmed', 'Pending'].includes(status);
+  }
+
+  // Check if appointment can be rescheduled
+  canRescheduleAppointment(appointment: any): boolean {
+    const status = appointment.status?.toLowerCase();
+    if (!['confirmed', 'pending'].includes(status)) {
+      this.toastService.warning('Only confirmed or pending appointments can be rescheduled.');
+      return false;
+    }
+
+    // Check if appointment is in the past
+    try {
+      const appointmentDate = new Date(`${appointment.date}T${appointment.time}`);
+      const now = new Date();
+      if (appointmentDate < now) {
+        this.toastService.warning('Cannot reschedule past appointments.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking appointment date:', error);
+      this.toastService.error('Error checking appointment date. Please try again.');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Helper method to check if cancel button should be shown
+  canShowCancelButton(): boolean {
+    const status = this.selectedEventDetails?.extendedProps?.status;
+    const canShow = status != null && ['Confirmed', 'Pending'].includes(status);
+    console.log('canShowCancelButton called - status:', status, 'canShow:', canShow);
+    return canShow;
+  }
+
+  // Check if appointment can be cancelled
+  canCancelAppointment(appointment: any): boolean {
+    const status = appointment.status?.toLowerCase();
+    if (!['confirmed', 'pending'].includes(status)) {
+      this.toastService.warning('Only confirmed or pending appointments can be cancelled.');
+      return false;
+    }
+
+    // Check if appointment is in the past
+    try {
+      const appointmentDate = new Date(`${appointment.date}T${appointment.time}`);
+      const now = new Date();
+      if (appointmentDate < now) {
+        this.toastService.warning('Cannot cancel past appointments.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking appointment date:', error);
+      this.toastService.error('Error checking appointment date. Please try again.');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Helper method to get appointment type description
   getAppointmentTypeDescription(value: string): string {
     const type = this.appointmentTypes.find(t => t.value === value);
     return type ? type.description : '';

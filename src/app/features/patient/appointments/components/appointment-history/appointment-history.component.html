@@ -1,28 +1,38 @@
 <div class="appointment-history-container bg-card p-card-padding rounded-card shadow-card font-sans">
   <div class="mb-6">
     <h2 id="appointmentHistoryTitle" class="text-section-header font-display text-text">Your Appointment History</h2>
-    <p class="text-body text-text-light">Track all your past and upcoming appointments with {{ doctorName }}</p>
+    <p class="text-body text-text-light">Track all your past and upcoming appointments</p>
   </div>
 
   <div class="controls-bar flex flex-col sm:flex-row justify-between items-center mb-card-margin gap-4">
-    <div class="relative w-full sm:flex-grow">
+    <div class="search-container relative w-full sm:flex-grow">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <i class="fas fa-search text-text-muted text-sm"></i>
       </div>
       <input
         type="text"
-        placeholder="Search by reason..."
+        placeholder="Search by reason, doctor, or date..."
         [(ngModel)]="searchTerm"
         (ngModelChange)="onSearchTermChange()"
         class="search-input w-full pl-10 pr-4 py-2.5 border border-border rounded-input text-body text-text bg-card focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"
-        aria-label="Search appointments by reason"
+        aria-label="Search appointments"
       />
     </div>
-    <div class="buttons flex space-x-3 w-full sm:w-auto">
-      <button type="button" class="btn-filter flex-grow sm:flex-grow-0 flex items-center justify-center text-sm font-medium py-2 px-4 rounded-button border border-border text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-card transition-colors duration-150" (click)="openFilterModal()" aria-label="Filter appointments">
-        <i class="fas fa-filter mr-2"></i>Filter
-      </button>
-      <button type="button" class="btn-export flex-grow sm:flex-grow-0 flex items-center justify-center text-sm font-medium py-2 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-card transition-colors duration-150" (click)="exportData()" aria-label="Export appointment data">
+    
+    <div class="filters-and-actions flex space-x-3 w-full sm:w-auto">
+      <select 
+        [(ngModel)]="statusFilter"
+        (ngModelChange)="onStatusFilterChange()"
+        class="status-filter py-2 px-3 border border-border rounded-input text-sm text-text bg-card focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+        aria-label="Filter by status"
+      >
+        <option value="">All Statuses</option>
+        <option *ngFor="let status of getStatusOptions()" [value]="status">
+          {{ status | titlecase }}
+        </option>
+      </select>
+      
+      <button type="button" class="btn-export flex items-center justify-center text-sm font-medium py-2 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-card transition-colors duration-150" (click)="exportData()" aria-label="Export appointment data">
         <i class="fas fa-upload mr-2"></i>Export
       </button>
     </div>
@@ -50,28 +60,27 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-border">
-        <ng-container *ngIf="paginatedAppointments.length > 0; else noAppointments">
-          <ng-container *ngFor="let appointment of paginatedAppointments; trackBy: trackByAppointmentId">
-            <!-- Ligne principale -->
+        <ng-container *ngIf="getPaginatedAppointments().length > 0; else noAppointments">
+          <ng-container *ngFor="let appointment of getPaginatedAppointments(); trackBy: trackByAppointmentId">
+            <!-- Main row -->
             <tr class="hover:bg-hover transition-colors duration-150">
               <td class="p-3 text-body text-text-light whitespace-nowrap">
-                <i class="far fa-calendar-alt mr-2 text-primary" aria-hidden="true"></i> {{ appointment.date | date:'mediumDate' }}
+                <i class="far fa-calendar-alt mr-2 text-primary" aria-hidden="true"></i> 
+                {{ formatDate(appointment.date) }}
               </td>
               <td class="p-3 text-body text-text-light whitespace-nowrap">
-                <i class="far fa-clock mr-2 text-primary" aria-hidden="true"></i> {{ appointment.time }}
+                <i class="far fa-clock mr-2 text-primary" aria-hidden="true"></i> 
+                {{ formatTime(appointment.time) }}
               </td>
-              <td class="p-3 text-body text-text break-words min-w-[200px]">{{ appointment.reason || 'N/A' }}</td>
+              <td class="p-3 text-body text-text break-words min-w-[200px]">
+                {{ appointment.reason || 'N/A' }}
+              </td>
               <td class="p-3 text-body text-text-light whitespace-nowrap">
                 <span
                   class="status-badge inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
-                  [ngClass]="{
-                    'bg-status-success/20 text-status-success': appointment.status === 'Confirmed' || appointment.status === 'Completed',
-                    'bg-status-warning/20 text-status-warning': appointment.status === 'Pending',
-                    'bg-status-urgent/20 text-status-urgent': appointment.status === 'Cancelled',
-                    'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(appointment.status || '')
-                  }"
+                  [ngClass]="getStatusClass(appointment.status)"
                 >
-                  {{ appointment.status }}
+                  {{ appointment.status | titlecase }}
                 </span>
               </td>
               <td class="p-3 text-body text-text-light whitespace-nowrap">
@@ -86,12 +95,12 @@
               </td>
             </tr>
             
-            <!-- Ligne de détails (expanded) -->
+            <!-- Details row (expanded) -->
             <tr *ngIf="isAppointmentExpanded(appointment.id)" class="bg-hover">
               <td colspan="5" class="p-4">
                 <div class="appointment-details bg-white rounded-lg p-4 shadow-sm border border-border">
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Informations sur le rendez-vous -->
+                    <!-- Appointment Information -->
                     <div class="details-section">
                       <h3 class="font-medium text-text mb-2 flex items-center">
                         <i class="fas fa-info-circle mr-2 text-primary"></i>
@@ -100,11 +109,11 @@
                       <ul class="space-y-2">
                         <li class="flex items-start">
                           <span class="text-text-muted w-24">Date:</span>
-                          <span>{{ appointment.date | date:'fullDate' }}</span>
+                          <span>{{ formatDate(appointment.date) }}</span>
                         </li>
                         <li class="flex items-start">
                           <span class="text-text-muted w-24">Time:</span>
-                          <span>{{ appointment.time }}</span>
+                          <span>{{ formatTime(appointment.time) }}</span>
                         </li>
                         <li class="flex items-start">
                           <span class="text-text-muted w-24">Status:</span>
@@ -112,21 +121,21 @@
                             class="status-badge inline-block px-2 py-0.5 text-xs font-semibold rounded-full"
                             [ngClass]="getStatusClass(appointment.status)"
                           >
-                            {{ appointment.status }}
+                            {{ appointment.status | titlecase }}
                           </span>
                         </li>
-                        <li class="flex items-start" *ngIf="appointment.location">
-                          <span class="text-text-muted w-24">Location:</span>
-                          <span>{{ appointment.location }}</span>
-                        </li>
-                        <li class="flex items-start" *ngIf="appointment.followUp">
+                        <li class="flex items-start" *ngIf="appointment.type">
                           <span class="text-text-muted w-24">Type:</span>
-                          <span class="bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs">Follow-up visit</span>
+                          <span>{{ appointment.type | titlecase }}</span>
+                        </li>
+                        <li class="flex items-start" *ngIf="appointment.id">
+                          <span class="text-text-muted w-24">ID:</span>
+                          <span>APPT-{{ appointment.id }}</span>
                         </li>
                       </ul>
                     </div>
                     
-                    <!-- Informations sur le médecin -->
+                    <!-- Doctor Information -->
                     <div class="details-section">
                       <h3 class="font-medium text-text mb-2 flex items-center">
                         <i class="fas fa-user-md mr-2 text-primary"></i>
@@ -135,22 +144,31 @@
                       <ul class="space-y-2">
                         <li class="flex items-start">
                           <span class="text-text-muted w-24">Doctor:</span>
-                          <span>{{ appointment.doctorName }}</span>
+                          <span>{{ getDoctorName(appointment) }}</span>
                         </li>
-                        <li class="flex items-start" *ngIf="appointment.doctorSpecialty">
+                        <li class="flex items-start">
                           <span class="text-text-muted w-24">Specialty:</span>
-                          <span>{{ appointment.doctorSpecialty }}</span>
+                          <span *ngIf="appointment.doctorSpecialty" class="text-text">
+                            {{ appointment.doctorSpecialty }}
+                          </span>
+                          <span *ngIf="!appointment.doctorSpecialty && getDoctorId(appointment) && isDoctorLoading(getDoctorId(appointment))" class="text-text-muted">
+                            <i class="fas fa-spinner fa-spin mr-1"></i>Loading...
+                          </span>
+                          <span *ngIf="!appointment.doctorSpecialty && getDoctorId(appointment) && !isDoctorLoading(getDoctorId(appointment))" class="text-text">
+                            {{ getDoctorSpecialty(getDoctorId(appointment)) }}
+                          </span>
+                          <span *ngIf="!appointment.doctorSpecialty && !getDoctorId(appointment)" class="text-text-muted">
+                            Not available
+                          </span>
+                        </li>
+                        <li class="flex items-start" *ngIf="appointment.provider">
+                          <span class="text-text-muted w-24">Provider:</span>
+                          <span>{{ appointment.provider }}</span>
                         </li>
                       </ul>
-                      <div class="mt-4" *ngIf="appointment.status === 'Completed'">
-                        <a href="#" class="text-primary hover:underline flex items-center text-sm">
-                          <i class="fas fa-file-medical mr-2"></i>
-                          View doctor's notes
-                        </a>
-                      </div>
                     </div>
                     
-                    <!-- Raison de la visite -->
+                    <!-- Visit Details -->
                     <div class="details-section">
                       <h3 class="font-medium text-text mb-2 flex items-center">
                         <i class="fas fa-clipboard-list mr-2 text-primary"></i>
@@ -160,15 +178,13 @@
                         <p class="text-text-muted mb-1">Reason:</p>
                         <p class="text-text">{{ appointment.reason || 'No reason provided' }}</p>
                       </div>
-                      <div *ngIf="appointment.notes && appointment.notes.length > 0" class="mt-3">
+                      <div *ngIf="appointment.notes" class="mt-3">
                         <p class="text-text-muted mb-1">Notes:</p>
-                        <ul class="list-disc pl-5 text-sm text-text">
-                          <li *ngFor="let note of appointment.notes">{{ note }}</li>
-                        </ul>
+                        <p class="text-sm text-text">{{ appointment.notes }}</p>
                       </div>
-                      <div *ngIf="appointment.cancelReason" class="mt-3">
-                        <p class="text-text-muted mb-1">Cancellation reason:</p>
-                        <p class="text-status-urgent">{{ appointment.cancelReason }}</p>
+                      <div *ngIf="appointment.startDateTime" class="mt-3">
+                        <p class="text-text-muted mb-1">Booked on:</p>
+                        <p class="text-sm text-text">{{ formatDate(appointment.startDateTime) }}</p>
                       </div>
                     </div>
                   </div>
@@ -176,7 +192,7 @@
                   <!-- Actions -->
                   <div class="actions mt-4 pt-3 border-t border-border flex flex-wrap gap-2 justify-end">
                     <button 
-                      *ngIf="appointment.status === 'Completed'"
+                      *ngIf="appointment.status?.toLowerCase() === 'completed'"
                       (click)="viewMedicalRecord(appointment.id)"
                       class="btn-action text-sm py-1.5 px-3 rounded-button bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center"
                     >
@@ -190,8 +206,8 @@
                       <i class="fas fa-calendar-alt mr-1.5"></i> Reschedule
                     </button>
                     <button 
-                      *ngIf="appointment.status === 'Confirmed'"
-                      (click)="printConfirmation(appointment.id)"
+                      *ngIf="appointment.status?.toLowerCase() === 'confirmed'"
+                      (click)="printConfirmation(appointment)"
                       class="btn-action text-sm py-1.5 px-3 rounded-button bg-hover text-text-light hover:bg-hover/80 transition-colors flex items-center"
                     >
                       <i class="fas fa-print mr-1.5"></i> Print
@@ -214,8 +230,8 @@
             <td colspan="5" class="no-results text-center py-12 text-text-muted">
               <div class="flex flex-col items-center">
                 <i class="fas fa-folder-open text-4xl mb-3"></i>
-                <span *ngIf="allAppointments.length > 0 && searchTerm.trim() !== ''" class="text-body">No appointments match your search criteria.</span>
-                <span *ngIf="allAppointments.length === 0 && !searchTerm.trim()" class="text-body">No appointment history found.</span>
+                <span *ngIf="appointments.length > 0 && (searchTerm.trim() !== '' || statusFilter !== '')" class="text-body">No appointments match your search criteria.</span>
+                <span *ngIf="appointments.length === 0" class="text-body">No appointment history found.</span>
               </div>
             </td>
           </tr>
@@ -264,6 +280,6 @@
   </div>
 
   <footer class="history-footer mt-card-margin pt-4 border-t border-border text-sm text-text-muted text-center">
-    Your appointment history with {{ doctorName }}
+    Your appointment history
   </footer>
 </div>

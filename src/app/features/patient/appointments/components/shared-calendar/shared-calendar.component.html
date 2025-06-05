@@ -84,7 +84,17 @@
           <button (click)="changeMainCalendarView('dayGridMonth')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'dayGridMonth' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'dayGridMonth'">Month</button>
         </div>
       </div>
-      <div class="fc-theme-standard"> <!-- Wrapper for FullCalendar theme compatibility -->
+      <div class="fc-theme-standard relative"> <!-- Wrapper for FullCalendar theme compatibility -->
+        <!-- Calendar Loading Overlay -->
+        <div *ngIf="isCalendarRefreshing" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-card">
+          <div class="flex flex-col items-center space-y-3">
+            <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm text-text-light font-medium">Refreshing calendar...</span>
+          </div>
+        </div>
         <full-calendar #calendar [options]="calendarOptions"></full-calendar>
       </div>
     </div>
@@ -93,39 +103,138 @@
 
   <!-- Modal pour afficher les détails de l'événement -->
   <div class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 transition-opacity duration-300" *ngIf="isEventModalOpen" (click)="closeEventModal()">
-    <div class="modal-content event-details-modal bg-card rounded-card shadow-xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" (click)="$event.stopPropagation()">
+    <div class="modal-content event-details-modal bg-card rounded-card shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
       <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
-        <h3 class="text-section-header font-display text-text">Event Details</h3>
-        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeEventModal()" aria-label="Close event details"><i class="fas fa-times"></i></button>
+        <h3 class="text-section-header font-display text-text">Appointment Details</h3>
+        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeEventModal()" aria-label="Close event details">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <div class="modal-body p-card-padding overflow-y-auto space-y-3 text-body leading-comfortable" *ngIf="selectedEventDetails">
-        <h4 class="text-card-title font-semibold" [style.color]="selectedEventDetails.backgroundColor || 'inherit'">{{ selectedEventDetails.title }}</h4>
-        <p>
-          <strong class="text-text-light">Start:</strong> <span class="text-text">{{ selectedEventDetails.start | date:'medium' }}</span> <br />
-          <strong class="text-text-light" *ngIf="selectedEventDetails.end">End:</strong> <span class="text-text" *ngIf="selectedEventDetails.end">{{ selectedEventDetails.end | date:'medium' }}</span>
-        </p>
-        <p *ngIf="selectedEventDetails.extendedProps?.description">
-          <strong class="text-text-light">Description:</strong> <span class="text-text whitespace-pre-line">{{ selectedEventDetails.extendedProps?.description }}</span>
-        </p>
-         <p *ngIf="selectedEventDetails.extendedProps?.patientEmail">
-          <strong class="text-text-light">Patient Email:</strong> <span class="text-text">{{ selectedEventDetails.extendedProps?.patientEmail }}</span>
-        </p>
-         <p *ngIf="selectedEventDetails.extendedProps?.patientPhone">
-          <strong class="text-text-light">Patient Phone:</strong> <span class="text-text">{{ selectedEventDetails.extendedProps?.patientPhone }}</span>
-        </p>
-        <p *ngIf="selectedEventDetails.extendedProps?.status">
-          <strong class="text-text-light">Status:</strong>
-          <span class="status-badge inline-block px-2.5 py-1 ml-1.5 text-xs font-semibold rounded-full align-middle"
-                [ngClass]="{
-                  'bg-status-success/20 text-status-success': selectedEventDetails.extendedProps?.status === 'Confirmed' || selectedEventDetails.extendedProps?.status === 'Completed',
-                  'bg-status-warning/20 text-status-warning': selectedEventDetails.extendedProps?.status === 'Pending',
-                  'bg-status-urgent/20 text-status-urgent': selectedEventDetails.extendedProps?.status === 'Cancelled',
-                  'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(selectedEventDetails.extendedProps?.status ?? '')
-                }">
-            {{ selectedEventDetails.extendedProps?.status }}
-          </span>
-        </p>
+      
+      <!-- Modal Body -->
+      <div class="modal-body p-card-padding overflow-y-auto space-y-4 text-body leading-comfortable" *ngIf="selectedEventDetails">
+        
+        <!-- Appointment Title -->
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0 bg-primary/20 text-primary rounded-full p-2">
+            <i class="fas fa-calendar-check text-lg"></i>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-card-title font-semibold text-text mb-1">{{ selectedEventDetails.title || 'Appointment' }}</h4>
+            <div class="flex items-center space-x-2">
+              <span class="status-badge inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
+                    [ngClass]="{
+                      'bg-status-success/20 text-status-success': selectedEventDetails.extendedProps?.status === 'Confirmed' || selectedEventDetails.extendedProps?.status === 'Completed',
+                      'bg-status-warning/20 text-status-warning': selectedEventDetails.extendedProps?.status === 'Pending',
+                      'bg-status-urgent/20 text-status-urgent': selectedEventDetails.extendedProps?.status === 'Cancelled',
+                      'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(selectedEventDetails.extendedProps?.status ?? '')
+                    }">
+                <i class="fas fa-circle text-xs mr-1"></i>
+                {{ selectedEventDetails.extendedProps?.status || 'Scheduled' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointment Information Grid -->
+        <div class="grid grid-cols-1 gap-4">
+          
+          <!-- Date & Time -->
+          <div class="bg-hover/50 rounded-md p-3">
+            <div class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-clock text-primary"></i>
+              <span class="font-medium text-text-light">Date & Time</span>
+            </div>
+            <p class="text-text">
+              <strong>Start:</strong> {{ selectedEventDetails.start | date:'EEEE, MMMM d, yyyy \'at\' h:mm a' }}
+            </p>
+            <p class="text-text" *ngIf="selectedEventDetails.end">
+              <strong>End:</strong> {{ selectedEventDetails.end | date:'h:mm a' }}
+            </p>
+          </div>
+
+          <!-- Doctor Information -->
+          <div class="bg-hover/50 rounded-md p-3" *ngIf="selectedEventDetails.extendedProps?.doctorName">
+            <div class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-user-md text-primary"></i>
+              <span class="font-medium text-text-light">Doctor</span>
+            </div>
+            <p class="text-text">{{ selectedEventDetails.extendedProps?.doctorName }}</p>
+            <p class="text-text-light text-sm" *ngIf="selectedEventDetails.extendedProps?.doctorSpecialty">
+              {{ selectedEventDetails.extendedProps?.doctorSpecialty }}
+            </p>
+          </div>
+
+          <!-- Reason for Visit -->
+          <div class="bg-hover/50 rounded-md p-3" *ngIf="selectedEventDetails.extendedProps?.description">
+            <div class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-clipboard-list text-primary"></i>
+              <span class="font-medium text-text-light">Reason for Visit</span>
+            </div>
+            <p class="text-text whitespace-pre-line">{{ selectedEventDetails.extendedProps?.description }}</p>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="bg-hover/50 rounded-md p-3" *ngIf="selectedEventDetails.extendedProps?.patientEmail || selectedEventDetails.extendedProps?.patientPhone">
+            <div class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-address-card text-primary"></i>
+              <span class="font-medium text-text-light">Contact Information</span>
+            </div>
+            <p class="text-text" *ngIf="selectedEventDetails.extendedProps?.patientEmail">
+              <i class="fas fa-envelope text-text-light mr-2"></i>
+              {{ selectedEventDetails.extendedProps?.patientEmail }}
+            </p>
+            <p class="text-text" *ngIf="selectedEventDetails.extendedProps?.patientPhone">
+              <i class="fas fa-phone text-text-light mr-2"></i>
+              {{ selectedEventDetails.extendedProps?.patientPhone }}
+            </p>
+          </div>
+
+        </div>
       </div>
+
+      <!-- Modal Footer with Action Buttons -->
+      <div class="modal-footer p-card-padding border-t border-border bg-hover/30">
+        <div class="flex justify-end space-x-3">
+          <button 
+            type="button"
+            (click)="closeEventModal()"
+            class="btn-secondary py-2 px-4 text-sm font-medium rounded-button border border-border text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors">
+            Close
+          </button>
+          
+          <button 
+            *ngIf="canShowCancelButton()"
+            type="button"
+            (click)="cancelAppointment(selectedEventDetails?.id || '')"
+            [disabled]="cancellingAppointment || reschedulingAppointment"
+            class="btn-danger py-2 px-4 text-sm font-medium rounded-button bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
+            <svg *ngIf="cancellingAppointment" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <i *ngIf="!cancellingAppointment" class="fas fa-ban mr-2"></i>
+            {{ cancellingAppointment ? 'Cancelling...' : 'Cancel Appointment' }}
+          </button>
+          
+          <button 
+            *ngIf="canShowRescheduleButton()"
+            type="button"
+            (click)="rescheduleAppointment(selectedEventDetails?.id || '')"
+            [disabled]="cancellingAppointment || reschedulingAppointment"
+            class="btn-primary py-2 px-4 text-sm font-medium rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
+            <svg *ngIf="reschedulingAppointment" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <i *ngIf="!reschedulingAppointment" class="fas fa-calendar-alt mr-2"></i>
+            {{ reschedulingAppointment ? 'Rescheduling...' : 'Reschedule' }}
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
