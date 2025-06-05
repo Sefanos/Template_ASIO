@@ -1,0 +1,121 @@
+<div class="reschedule-modal bg-card p-6 rounded-card max-w-md w-full">
+  <div class="modal-header mb-6">
+    <h2 class="text-xl font-semibold text-text-primary mb-2">Reschedule Appointment</h2>
+    <p class="text-sm text-text-muted">
+      Current appointment: {{ appointmentInfo?.date }} at {{ appointmentInfo?.time }}
+      <br>
+      with {{ appointmentInfo?.doctorName || appointmentInfo?.provider }}
+    </p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message mb-4 p-3 rounded-button text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30">
+    <i class="fas fa-exclamation-triangle mr-2"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="success-message mb-4 p-3 rounded-button text-sm bg-status-success/10 text-status-success border border-status-success/30">
+    <i class="fas fa-check-circle mr-2"></i>
+    {{ successMessage }}
+  </div>
+
+  <form [formGroup]="rescheduleForm" (ngSubmit)="onSubmit()" class="space-y-4">
+    <!-- Date Field -->
+    <div class="form-group">
+      <label for="date" class="block text-sm font-medium text-text-primary mb-2">
+        New Date <span class="text-status-urgent">*</span>
+      </label>
+      <input
+        type="date"
+        id="date"
+        formControlName="date"
+        class="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        [class.border-status-urgent]="isFieldInvalid('date')"
+        [min]="getTomorrowDate()"
+      />
+      <div *ngIf="isFieldInvalid('date')" class="error-text text-xs text-status-urgent mt-1">
+        {{ getFieldError('date') }}
+      </div>
+    </div>
+
+    <!-- Time Field -->
+    <div class="form-group">
+      <label for="time" class="block text-sm font-medium text-text-primary mb-2">
+        New Time <span class="text-status-urgent">*</span>
+      </label>
+      <input
+        type="time"
+        id="time"
+        formControlName="time"
+        class="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        [class.border-status-urgent]="isFieldInvalid('time')"
+      />
+      <div *ngIf="isFieldInvalid('time')" class="error-text text-xs text-status-urgent mt-1">
+        {{ getFieldError('time') }}
+      </div>
+    </div>
+
+    <!-- Duration Field -->
+    <div class="form-group">
+      <label for="duration" class="block text-sm font-medium text-text-primary mb-2">
+        Duration (minutes) <span class="text-status-urgent">*</span>
+      </label>
+      <select
+        id="duration"
+        formControlName="duration"
+        class="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        [class.border-status-urgent]="isFieldInvalid('duration')"
+      >
+        <option value="15">15 minutes</option>
+        <option value="30">30 minutes</option>
+        <option value="45">45 minutes</option>
+        <option value="60">1 hour</option>
+        <option value="90">1.5 hours</option>
+        <option value="120">2 hours</option>
+      </select>
+      <div *ngIf="isFieldInvalid('duration')" class="error-text text-xs text-status-urgent mt-1">
+        {{ getFieldError('duration') }}
+      </div>
+    </div>
+
+    <!-- Reason Field -->
+    <div class="form-group">
+      <label for="reason" class="block text-sm font-medium text-text-primary mb-2">
+        Reason for Reschedule <span class="text-status-urgent">*</span>
+      </label>
+      <textarea
+        id="reason"
+        formControlName="reason"
+        rows="3"
+        placeholder="Please provide a reason for rescheduling..."
+        class="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+        [class.border-status-urgent]="isFieldInvalid('reason')"
+      ></textarea>
+      <div *ngIf="isFieldInvalid('reason')" class="error-text text-xs text-status-urgent mt-1">
+        {{ getFieldError('reason') }}
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions flex justify-end space-x-3 mt-6 pt-4 border-t border-border">
+      <button
+        type="button"
+        (click)="onCancel()"
+        class="btn-secondary px-4 py-2 text-sm border border-border text-text-light rounded-button hover:bg-hover transition-colors duration-150"
+        [disabled]="isLoading"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="btn-primary px-4 py-2 text-sm bg-primary text-white rounded-button hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center"
+        [disabled]="isLoading || !rescheduleForm.valid"
+      >
+        <i *ngIf="isLoading" class="fas fa-spinner fa-spin mr-2"></i>
+        <i *ngIf="!isLoading" class="fas fa-calendar-alt mr-2"></i>
+        {{ isLoading ? 'Rescheduling...' : 'Reschedule Appointment' }}
+      </button>
+    </div>
+  </form>
+</div>

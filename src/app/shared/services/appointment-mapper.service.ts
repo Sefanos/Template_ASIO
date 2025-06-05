@@ -41,13 +41,12 @@ export class AppointmentMapperService {
       reason: apiResponse.reason_for_visit || 'No reason specified',
       status: this.mapApiStatusToFrontendStatus(apiResponse.status || 'scheduled'),
       notes: this.combineNotes(apiResponse.notes_by_patient, apiResponse.notes_by_staff),
-      
-      // Additional fields for enhanced functionality
+        // Additional fields for enhanced functionality
       patientId: apiResponse.patient_user_id,
       doctorId: apiResponse.doctor_user_id,
       patientName: apiResponse.patient?.name || (apiResponse as any).patient_name,
       doctorName: apiResponse.doctor?.name,
-      doctorSpecialty: 'General Medicine', // You can add this to backend later
+      doctorSpecialty: undefined, // Will be loaded dynamically by component
       startDateTime: startDate,
       endDateTime: endDate,
       duration: this.calculateDurationInMinutes(startDate, endDate)

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf, NgClass } from '@angular/common';
 import { PatientService } from '../../../services/recepetionist-services/patient.service';
 import { ThemeService } from '../../../services/theme.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -48,7 +49,8 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
   };
   constructor(
     private patientService: PatientService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -191,7 +193,7 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
 
   saveNewPatient() {
     if (!this.newPatient.name || !this.newPatient.email) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      this.toastService.warning('Veuillez remplir tous les champs obligatoires.');
       return;
     }
 
@@ -209,10 +211,10 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
       next: () => {
         this.loadPatients();
         this.closeAddModal();
-        alert('Patient ajouté');
+        this.toastService.success('Patient ajouté');
         this.selectedFile = null;
       },
-      error: () => alert('Erreur lors de l\'ajout du patient')
+      error: () => this.toastService.error('Erreur lors de l\'ajout du patient')
     });
   }
 
@@ -239,10 +241,10 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
       next: () => {
         this.loadPatients();
         this.showAddModal = false;
-        alert('Patient mis à jour');
+        this.toastService.success('Patient mis à jour');
         this.selectedFile = null;
       },
-      error: () => alert('Erreur lors de la mise à jour')
+      error: () => this.toastService.error('Erreur lors de la mise à jour')
     });
   }
 
@@ -251,9 +253,9 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
       this.patientService.deletePatient(patient.id).subscribe({
         next: () => {
           this.loadPatients();
-          alert('Patient supprimé');
+          this.toastService.success('Patient supprimé');
         },
-        error: () => alert('Erreur lors de la suppression')
+        error: () => this.toastService.error('Erreur lors de la suppression')
       });
     }
   }
