@@ -481,7 +481,6 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     const startDate = new Date(this.selectedDateForBooking!);
     const [startHours, startMinutes] = this.selectedTimeForBooking!.split(':').map(Number);
     startDate.setHours(startHours, startMinutes, 0, 0);
-
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + this.slotDurationMinutes);
 
@@ -541,7 +540,6 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         } else {
           this.errorMessage = 'Failed to book appointment. Please try again.';
         }
-        
         this.isSubmitting = false;
       }
     });
@@ -584,7 +582,6 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.isEventModalOpen = false;
     this.selectedEventDetails = null;
   }
-
   // Helper method for template to safely get appointment type description
   getAppointmentTypeDescription(value: string): string {
     const type = this.appointmentTypes.find(t => t.value === value);
