@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
-import { Bill, PaginatedResponse } from '../../../../../core/patient/domain/models/bill.model';
+import { Bill, FrontendPaginatedResponse } from '../../../../../core/patient/domain/models/bill.model';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators'; 
@@ -15,7 +15,7 @@ import { BillFilters, BillService } from '../../../../../core/patient/services/b
 export class BillListComponent implements OnInit, OnDestroy {
   @Output() billSelected = new EventEmitter<Bill | undefined>();
 
-  billsResponse: PaginatedResponse<Bill> | null = null;
+  billsResponse: FrontendPaginatedResponse<Bill> | null = null;
   isLoading = true;
   errorMessage: string | null = null;
   currentSelectedBillId: number | null = null;
@@ -27,19 +27,19 @@ export class BillListComponent implements OnInit, OnDestroy {
     sort_direction: 'desc',
     date_from: '',
     date_to: '',
-    status: 'paid' // Par défaut "payée"
+    // status: 'paid' // Status filter removed
   };
 
-  // Colonnes pour l'affichage et le tri. 'doctor_specialty' est pour affichage seulement.
-  sortableColumns: { key: 'id' | 'issue_date' | 'amount' | 'status' | 'doctor_name', label: string }[] = [
-    { key: 'id', label: "N° Facture" },
+  // Adjusted sortable columns
+  sortableColumns: { key: BillFilters['sort_by'], label: string }[] = [
+    { key: 'bill_number', label: "N° Facture" },// Assuming bill_number is sortable
     { key: 'issue_date', label: "Date" },
-    { key: 'doctor_name', label: "Nom Dr." },
+    { key: 'doctor_name', label: "Nom Dr." }, // Assuming backend handles doctor.name as doctor_name for sorting
     { key: 'amount', label: 'Montant' },
-    { key: 'status', label: 'Statut' },
+    // { key: 'status', label: 'Statut' }, // Status column removed
   ];
 
-  statusOptions: string[] = ['paid', 'pending', 'overdue', 'cancelled'];
+ // statusOptions: string[] = ['paid', 'pending', 'overdue', 'cancelled']; // Status options removed
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -54,15 +54,13 @@ export class BillListComponent implements OnInit, OnDestroy {
   loadBills(): void {
     this.isLoading = true;
     this.errorMessage = null;
-    // Ne pas réinitialiser currentSelectedBillId ici pour garder la sélection active si elle est toujours dans la liste
-    // this.billSelected.emit(undefined); // Émettre seulement si la sélection change vraiment
-
+    
     this.billService.getBills(this.filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.billsResponse = response;
-          // Vérifier si la facture actuellement sélectionnée pour détail est toujours dans la nouvelle liste
+         
           if (this.currentSelectedBillId && !response.data.find(b => b.id === this.currentSelectedBillId)) {
             this.currentSelectedBillId = null;
             this.billSelected.emit(undefined); // Désélectionner si elle n'est plus là
@@ -75,10 +73,9 @@ export class BillListComponent implements OnInit, OnDestroy {
           this.billsResponse = null;
           this.currentSelectedBillId = null; // Désélectionner en cas d'erreur
           this.billSelected.emit(undefined);
-          if (err.status === 404) {
+           this.errorMessage = err.message || 'Une erreur est survenue lors du chargement des factures.';
+           if (err.status === 404 || (err.message && err.message.includes('Aucune facture'))) {
             this.errorMessage = 'Aucune facture trouvée pour les critères sélectionnés.';
-          } else {
-            this.errorMessage = 'Une erreur est survenue lors du chargement des factures.';
           }
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -99,17 +96,18 @@ export class BillListComponent implements OnInit, OnDestroy {
       sort_direction: 'desc',
       date_from: '',
       date_to: '',
-      status: 'paid'
+      // status: 'paid' // Status filter removed
     };
-    // Ne pas désélectionner ici, loadBills s'en chargera si besoin
+ 
     this.loadBills();
   }
 
-  onSortChange(columnKey: 'id' | 'issue_date' | 'amount' | 'status' | 'doctor_name'): void {
+  onSortChange(columnKey: BillFilters['sort_by']): void {
+    if (!columnKey) return; // Should not happen with defined columns
     if (this.filters.sort_by === columnKey) {
       this.filters.sort_direction = this.filters.sort_direction === 'asc' ? 'desc' : 'asc';
     } else {
-      this.filters.sort_by = columnKey as BillFilters['sort_by']; // Cast car doctor_name n'est pas dans BillFilters.sort_by
+      this.filters.sort_by = columnKey;
       this.filters.sort_direction = 'desc';
     }
     this.filters.page = 1;
@@ -117,37 +115,64 @@ export class BillListComponent implements OnInit, OnDestroy {
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= (this.billsResponse?.last_page || 1) && page !== this.filters.page) {
+    if (this.billsResponse && page >= 1 && page <= this.billsResponse.last_page && page !== this.filters.page) {
       this.filters.page = page;
       this.loadBills();
     }
   }
 
-  viewBillDetails(bill: Bill): void {
-    if (this.currentSelectedBillId === bill.id) { // Si on clique sur la même facture déjà sélectionnée
+ viewBillDetails(bill: Bill): void {
+    if (this.currentSelectedBillId === bill.id) {
       this.currentSelectedBillId = null;
-      this.billSelected.emit(undefined); // Désélectionner
+      this.billSelected.emit(undefined);
     } else {
       this.currentSelectedBillId = bill.id;
       this.billSelected.emit(bill);
     }
   }
 
-  downloadBillPdf(bill: Bill, event: MouseEvent): void {
+
+downloadBillPdf(bill: Bill, event: MouseEvent): void {
     event.stopPropagation();
-    if (bill.pdf_link) {
-      window.open(bill.pdf_link, '_blank');
+    // The bill object from the list might not have pdf_path,
+    // but the backend will generate the PDF on the fly for the /receipt endpoint.
+    // So, we only need the bill.id.
+    if (bill.id) {
+      this.billService.downloadPatientBillReceipt(bill.id).subscribe({ // Use the new service method
+        next: blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Recu-${bill.bill_number || bill.id}.pdf`; // Changed to "Recu-"
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          a.remove();
+        },
+        error: error => {
+          console.error('Erreur de téléchargement du reçu PDF depuis la liste:', error);
+          // Check for specific error types if backend provides them
+          let errorMessage = "Erreur lors du téléchargement du PDF.";
+          if (error.status === 403) {
+            errorMessage = "Vous n'êtes pas autorisé à télécharger ce reçu.";
+          } else if (error.status === 404) {
+            errorMessage = "Reçu non trouvé.";
+          }
+          alert(errorMessage);
+        }
+      });
     } else {
-      alert("Aucun PDF disponible pour cette facture.");
+      alert("ID de facture manquant, impossible de télécharger le PDF.");
     }
   }
 
   getPaginationArray(): number[] {
-    if (!this.billsResponse || this.billsResponse.last_page <= 1) return [];
+    if (!this.billsResponse || !this.billsResponse.last_page || this.billsResponse.last_page <= 1) return [];
     const totalPages = this.billsResponse.last_page;
     const currentPage = this.billsResponse.current_page;
     const maxPagesToShow = 5;
     let startPage: number, endPage: number;
+
     if (totalPages <= maxPagesToShow) {
       startPage = 1; endPage = totalPages;
     } else {

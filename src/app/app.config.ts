@@ -1,4 +1,4 @@
-import { ApplicationConfig, ErrorHandler, inject } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, inject, LOCALE_ID } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -6,6 +6,14 @@ import { authInterceptor } from './core/interceptors';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { LoggingService } from './shared/services/loggin.service'; // FIXED: Updated import path
+
+
+// Import French locale data
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+
+// Register the French locale data.
+registerLocaleData(localeFr);
 
 // Custom error handler to log detailed errors
 export class GlobalErrorHandler implements ErrorHandler {
@@ -35,6 +43,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     LoggingService,
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: { hasBackdrop: true } }
+    { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: { hasBackdrop: true } },
+    { provide: LOCALE_ID, useValue: 'fr-FR' }
+  
   ]
 };
