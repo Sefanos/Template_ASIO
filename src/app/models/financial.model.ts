@@ -10,6 +10,36 @@ export interface RevenueOverviewData {
   revenue_by_period: {period: string, amount: number}[];
 }
 
+export interface WeeklyRevenueData {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  daily_breakdown: {period: string, amount: number}[];
+}
+
+export interface MonthlyRevenueData {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  daily_breakdown: {period: string, amount: number}[];
+}
+
+export interface YearlyRevenueData {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  monthly_breakdown: {period: number, amount: number}[];
+}
+
+// Combined type for generic handling
+export type RevenueData = WeeklyRevenueData | MonthlyRevenueData | YearlyRevenueData;
+
 export interface ServiceBreakdownData {
   service_breakdown: {
     service_breakdown: {
