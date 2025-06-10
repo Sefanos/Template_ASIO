@@ -28,6 +28,9 @@ export class RemindersComponent implements OnInit, OnDestroy {
   confirmTitle: string = '';
   pendingNotificationId: string | null = null;
   
+  // Loading states for individual actions
+  markingAsReadIds: Set<string> = new Set();
+  
   private subscriptions: Subscription = new Subscription();
 
   constructor(private notificationService: NotificationService) {}
@@ -90,6 +93,7 @@ export class RemindersComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.upcomingReminders = response.data;
           this.reminderTotalPages = response.last_page;
+          console.log('Upcoming Reminders:', this.upcomingReminders);
           this.isLoadingReminders = false;
         },
         error: (error) => {
@@ -104,6 +108,9 @@ export class RemindersComponent implements OnInit, OnDestroy {
    * Mark notification as read
    */
   markAsRead(notificationId: string): void {
+    // Add to loading set
+    this.markingAsReadIds.add(notificationId);
+    
     this.subscriptions.add(
       this.notificationService.markAsRead(notificationId).subscribe({
         next: () => {
@@ -112,8 +119,14 @@ export class RemindersComponent implements OnInit, OnDestroy {
           if (notification) {
             notification.read_at = new Date().toISOString();
           }
+          // Remove from loading set
+          this.markingAsReadIds.delete(notificationId);
         },
-        error: (error) => console.error('Error marking as read:', error)
+        error: (error) => {
+          console.error('Error marking as read:', error);
+          // Remove from loading set even on error
+          this.markingAsReadIds.delete(notificationId);
+        }
       })
     );
   }
@@ -178,6 +191,13 @@ export class RemindersComponent implements OnInit, OnDestroy {
    */
   isUnread(notification: Notification): boolean {
     return !notification.read_at;
+  }
+
+  /**
+   * Check if notification is being marked as read
+   */
+  isMarkingAsRead(notificationId: string): boolean {
+    return this.markingAsReadIds.has(notificationId);
   }
 
   /**
