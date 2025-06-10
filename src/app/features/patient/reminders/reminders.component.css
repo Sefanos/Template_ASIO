@@ -1,0 +1,263 @@
+/* Patient Notifications & Reminders Component Styles */
+
+/* Loading animation enhancement */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.notification-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Notification card hover effects */
+.notification-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.notification-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Unread notification styling */
+.notification-unread {
+  position: relative;
+}
+
+.notification-unread::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Badge animations */
+.badge-notification {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Tab transition */
+.tab-content {
+  animation: slideIn 0.2s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Button hover effects */
+.action-button {
+  transition: all 0.15s ease-in-out;
+}
+
+.action-button:hover {
+  transform: scale(1.05);
+}
+
+/* Custom scrollbar for notification list */
+.notifications-list {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.notifications-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notifications-list::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .notification-card {
+    padding: 1rem;
+  }
+  
+  .notification-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tab-navigation {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  
+  .tab-navigation::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Priority-based notification styling */
+.notification-urgent {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(to right, #fef2f2, #ffffff);
+}
+
+.notification-high {
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(to right, #fffbeb, #ffffff);
+}
+
+.notification-medium {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(to right, #eff6ff, #ffffff);
+}
+
+.notification-low {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(to right, #f0fdf4, #ffffff);
+}
+
+/* Focus states for accessibility */
+.focus-ring:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .action-button,
+  .tab-navigation {
+    display: none;
+  }
+  
+  .notification-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+}
+
+/* Custom Modal Animations */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+.slide-in-from-bottom-4 {
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+.fade-in-0 {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Custom button hover effects for modal */
+.modal-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.modal-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.modal-button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Enhanced focus states for modal */
+.modal-button:focus {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Modal entrance animation for better UX */
+.modal-enter {
+  animation: modalEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive modal adjustments */
+@media (max-width: 640px) {
+  .modal-content {
+    margin: 1rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
