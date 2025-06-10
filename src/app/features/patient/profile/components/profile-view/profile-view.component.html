@@ -4,8 +4,17 @@
     <p class="text-body">Loading profile data...</p>
   </div>
 
-  <div *ngIf="!isLoading" class="profile-content bg-card p-card-padding rounded-card shadow-card">
-    <h2 class="text-section-header font-display text-text mb-6 pb-4 border-b border-border">Profile Information</h2>
+  <div *ngIf="errorMessage && !isLoading" class="p-3.5 rounded-button mb-5 text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30 flex items-center">
+    <i class="fas fa-exclamation-circle mr-2"></i> {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && profileData" class="profile-content bg-card p-card-padding rounded-card shadow-card">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-border">
+      <h2 class="text-section-header font-display text-text">Profile Information</h2>
+      <button (click)="navigateToEdit()" class="text-sm font-medium py-2 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-colors duration-150">
+        Edit Profile
+      </button>
+    </div>
 
     <div class="profile-sections grid grid-cols-1 lg:grid-cols-12 gap-card-margin">
       <!-- Profile Image Section -->
@@ -13,7 +22,7 @@
         <h3 class="text-card-title font-display text-text mb-4">Profile Picture</h3>
         <div class="profile-image-container flex flex-col items-center">
           <div class="image-preview w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center mb-4 border-2 border-border shadow-sm">
-            <img *ngIf="profileData?.profile_image" [src]="sanitizeImageUrl(profileData?.profile_image)" alt="Profile picture" class="w-full h-full object-cover" />
+            <img *ngIf="profileData?.profile_image" [src]="getSanitizedImageUrl(profileData.profile_image)" alt="Profile picture" class="w-full h-full object-cover" />
             <div *ngIf="!profileData?.profile_image" class="no-image text-6xl text-text-muted flex items-center justify-center w-full h-full bg-background">
               <i class="fas fa-user"></i>
             </div>
@@ -44,7 +53,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="info-section pt-6 border-t border-border">
           <h3 class="text-card-title font-display text-text mb-4">Additional Information</h3>
           <div class="info-grid grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
@@ -54,11 +63,11 @@
             </div>
             <div class="info-group">
               <label class="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Blood Type</label>
-              <div class="info-value text-body text-text break-words">{{ profileData?.bloodType || 'Not provided' }}</div>
+              <div class="info-value text-body text-text break-words">{{ profileData?.blood_type || 'Not provided' }}</div>
             </div>
             <div class="info-group">
               <label class="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Marital Status</label>
-              <div class="info-value text-body text-text break-words">{{ profileData?.maritalStatus || 'Not provided' }}</div>
+              <div class="info-value text-body text-text break-words">{{ profileData?.marital_status || 'Not provided' }}</div>
             </div>
             <div class="info-group">
               <label class="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Nationality</label>
@@ -70,11 +79,14 @@
             </div>
             <div class="info-group sm:col-span-2">
               <label class="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Emergency Contact</label>
-              <div class="info-value text-body text-text break-words">{{ profileData?.emergencyContact || 'Not provided' }}</div>
+              <div class="info-value text-body text-text break-words">{{ profileData?.emergency_contact || 'Not provided' }}</div>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+   <div *ngIf="!isLoading && !profileData && !errorMessage" class="text-center py-10 text-text-light">
+    <p>No profile data found.</p>
   </div>
 </div>
