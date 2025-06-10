@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 
 import { RemindersRoutingModule } from './reminders-routing.module';
 import { RemindersComponent } from './reminders.component';
@@ -15,6 +16,7 @@ import { ReminderDetailComponent } from './components/reminder-detail/reminder-d
   ],
   imports: [
     CommonModule,
+    HttpClientModule,
     RemindersRoutingModule
   ]
 })
