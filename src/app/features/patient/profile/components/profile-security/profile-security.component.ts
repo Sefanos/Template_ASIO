@@ -1,7 +1,9 @@
+ 
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { PatientService } from '../../../../../core/patient/services/patient.service'; // Assuming you have a method here
+import { PatientService, BackendResponse } from '../../../../../core/patient/services/patient.service';
 import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 
 // Custom Validator for password mismatch
 export function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -9,65 +11,99 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
   const confirmPassword = control.get('confirmPassword');
 
   if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
-    return { passwordMismatch: true };
+    confirmPassword.setErrors({ passwordMismatch: true }); // Set error on confirmPassword control
+    return { passwordMismatch: true }; // Return error on form group level as well
+  } else if (confirmPassword && confirmPassword.hasError('passwordMismatch')) {
+    // Clear mismatch error if passwords now match or newPassword changes
+     confirmPassword.setErrors(null);
   }
   return null;
 }
 @Component({
   selector: 'app-profile-security',
-  standalone: false,
+  standalone: false, // Assuming this is part of a module
   templateUrl: './profile-security.component.html',
   styleUrl: './profile-security.component.css'
 })
-
 export class ProfileSecurityComponent implements OnInit {
-  passwordForm!: FormGroup;
+  passwordForm!: FormGroup; // Definite assignment assertion
   isSubmitting = false;
   updateSuccessMessage: string | null = null;
   updateErrorMessage: string | null = null;
 
   constructor(
     private fb: FormBuilder,
-    private patientService: PatientService // Or an AuthService if password change is handled there
+    private patientService: PatientService
   ) { }
 
   ngOnInit(): void {
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]], // Backend usually has min length
       confirmPassword: ['', Validators.required]
     }, { validators: passwordMatchValidator });
   }
+
   onChangePassword(): void {
     this.updateSuccessMessage = null;
     this.updateErrorMessage = null;
 
     if (this.passwordForm.invalid) {
-      this.passwordForm.markAllAsTouched(); // Mark all fields as touched to show errors
+      this.passwordForm.markAllAsTouched();
+      // Check specific errors for better user feedback if needed
+      if (this.passwordForm.errors?.['passwordMismatch']) {
+          this.updateErrorMessage = 'New passwords do not match.';
+      } else {
+          this.updateErrorMessage = 'Please correct the errors in the form.';
+      }
       return;
     }
 
     this.isSubmitting = true;
-    const { currentPassword, newPassword } = this.passwordForm.value;
+    const formValue = this.passwordForm.value;
+    const payload = {
+      current_password: formValue.currentPassword,
+      new_password: formValue.newPassword,
+      new_password_confirmation: formValue.confirmPassword // Laravel expects this
+    };
 
-    // Replace with your actual service call
-    this.patientService.changePassword(currentPassword, newPassword)
+    this.patientService.changePassword(payload)
       .pipe(finalize(() => this.isSubmitting = false))
       .subscribe({
-        next: (response: { status: string; message?: string }) => {
-          // Assuming response structure like { status: 'success', message: 'Password updated' }
-          if (response && response.status === 'success') {
-            this.updateSuccessMessage = response.message || 'Mot de passe changé avec succès !';
+        next: (response: BackendResponse<null>) => {
+          if (response.success) {
+            this.updateSuccessMessage = response.message || 'Password changed successfully!';
             this.passwordForm.reset();
+            // Optionally, clear validators or re-initialize form if reset doesn't clear touched/dirty states as desired
+            Object.keys(this.passwordForm.controls).forEach(key => {
+                this.passwordForm.get(key)?.setErrors(null) ;
+                this.passwordForm.get(key)?.markAsUntouched();
+                this.passwordForm.get(key)?.markAsPristine();
+            });
+            this.passwordForm.setErrors(null);
+
+
           } else {
-            this.updateErrorMessage = response.message || 'Une erreur est survenue lors du changement de mot de passe.';
+            // Backend indicates failure but not an HTTP error (e.g., validation handled with success:false)
+            this.updateErrorMessage = response.message || 'Failed to change password.';
+            if (response.errors) {
+                const firstErrorKey = Object.keys(response.errors)[0];
+                if (response.errors[firstErrorKey] && response.errors[firstErrorKey].length > 0) {
+                    this.updateErrorMessage = response.errors[firstErrorKey][0];
+                }
+            }
           }
         },
-        error: (error: any) => {
+        error: (error: HttpErrorResponse) => {
           console.error('Error changing password:', error);
-          this.updateErrorMessage = error.error?.message || 'Échec du changement de mot de passe. Veuillez réessayer.';
+          this.updateErrorMessage = error.error?.message || 'Failed to change password. Please try again.';
+          if (error.error?.errors) { // Laravel validation errors
+            const firstErrorKey = Object.keys(error.error.errors)[0];
+            if (error.error.errors[firstErrorKey] && error.error.errors[firstErrorKey].length > 0) {
+                this.updateErrorMessage = error.error.errors[firstErrorKey][0];
+            }
+          }
         }
       });
   }
-
 }

@@ -4,7 +4,7 @@
       <p class="text-body text-text-light mb-6 pb-4 border-b border-border">
         Gérez votre mot de passe et les paramètres de sécurité de votre compte.
       </p>
-  
+
       <!-- Success and Error Messages -->
       <div *ngIf="updateSuccessMessage" class="p-3.5 rounded-button mb-5 text-sm bg-status-success/10 text-status-success border border-status-success/30 flex items-center">
         <i class="fas fa-check-circle mr-2"></i> {{ updateSuccessMessage }}
@@ -12,7 +12,7 @@
       <div *ngIf="updateErrorMessage" class="p-3.5 rounded-button mb-5 text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30 flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i> {{ updateErrorMessage }}
       </div>
-  
+
       <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="space-y-6">
         <div class="form-group">
           <label for="currentPassword" class="block text-sm font-medium text-text-light mb-1.5">Mot de passe actuel</label>
@@ -24,7 +24,7 @@
             <span *ngIf="passwordForm.get('currentPassword')?.errors?.['required']">Le mot de passe actuel est requis.</span>
           </div>
         </div>
-  
+
         <div class="form-group">
           <label for="newPassword" class="block text-sm font-medium text-text-light mb-1.5">Nouveau mot de passe</label>
           <input type="password" id="newPassword" formControlName="newPassword"
@@ -37,21 +37,21 @@
             <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Le mot de passe doit contenir au moins 8 caractères.</span>
           </div>
         </div>
-  
+
         <div class="form-group">
           <label for="confirmPassword" class="block text-sm font-medium text-text-light mb-1.5">Confirmer le mot de passe</label>
           <input type="password" id="confirmPassword" formControlName="confirmPassword"
                  class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
-                 [ngClass]="{'border-border focus:border-primary focus:ring-primary': !passwordForm.get('confirmPassword')?.invalid || !passwordForm.get('confirmPassword')?.touched || !passwordForm.errors?.['passwordMismatch'],
-                             'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': (passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) || passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched}">
-          <div *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched" class="text-xs text-status-urgent mt-1">
-            <span *ngIf="passwordForm.get('confirmPassword')?.errors?.['required']">La confirmation du mot de passe est requise.</span>
+                 [ngClass]="{'border-border focus:border-primary focus:ring-primary': !(passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) && !passwordForm.errors?.['passwordMismatch'],
+                             'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': (passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) || (passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched)}">
+          <div *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.errors?.['required']" class="text-xs text-status-urgent mt-1">
+            La confirmation du mot de passe est requise.
           </div>
-           <div *ngIf="passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched" class="text-xs text-status-urgent mt-1">
+           <div *ngIf="passwordForm.errors?.['passwordMismatch'] && (passwordForm.get('confirmPassword')?.touched || passwordForm.get('newPassword')?.touched)" class="text-xs text-status-urgent mt-1">
             Les mots de passe ne correspondent pas.
           </div>
         </div>
-  
+
         <div class="form-actions flex justify-start mt-8 pt-6 border-t border-border">
           <button type="submit" class="text-sm font-medium py-2.5 px-6 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
                   [disabled]="isSubmitting || passwordForm.invalid">
