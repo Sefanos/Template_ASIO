@@ -8,6 +8,7 @@ import {
   FinancialResponse,
   MonthlyRevenueData,
   RevenueData,
+  RevenueTimelineData,
   WeeklyRevenueData,
   YearlyRevenueData
 } from '../models/financial.model';
@@ -90,5 +91,54 @@ export class FinancialService {
         throw new Error(response.message || 'Failed to fetch bills data');
       })
     );
+  }
+
+  /**
+   * Get revenue timeline data from the backend API
+   */
+  getRevenueTimeline(timeframe: string = 'monthly', fromDate?: string, toDate?: string): Observable<any> {
+    let params = new HttpParams()
+      .set('timeframe', timeframe)
+      .set('groupby', 'month');
+    
+    if (fromDate) {
+      params = params.set('from_date', fromDate);
+    }
+    
+    if (toDate) {
+      params = params.set('to_date', toDate);
+    }
+    
+    return this.http.get<any>(`${this.apiUrl}/analytics/revenue`, { params })
+      .pipe(
+        map(response => {
+          console.log('Revenue API response:', response);
+          if (response.success) {
+            return response.data;
+          }
+          throw new Error('Failed to fetch revenue data');
+        })
+      );
+  }
+
+  /**
+   * Get weekly timeline data
+   */
+  getWeeklyTimeline(): Observable<RevenueTimelineData> {
+    return this.getRevenueTimeline('weekly');
+  }
+
+  /**
+   * Get monthly timeline data
+   */
+  getMonthlyTimeline(): Observable<RevenueTimelineData> {
+    return this.getRevenueTimeline('monthly');
+  }
+
+  /**
+   * Get yearly timeline data
+   */
+  getYearlyTimeline(): Observable<RevenueTimelineData> {
+    return this.getRevenueTimeline('yearly');
   }
 }
