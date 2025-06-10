@@ -123,3 +123,25 @@ export interface FinancialResponse<T> {
   message?: string;
   errors?: {[key: string]: string[]};
 }
+
+// Revenue Timeline interfaces
+export interface RevenueTimelineData {
+  total_revenue: number;
+  period_revenue: number;
+  growth_rate: number;
+  average_bill_amount: number;
+  bill_count: number;
+  revenue_by_period: {
+    period: string;
+    amount: number;
+  }[];
+}
+
+export interface TimelineMetric {
+  period: string;
+  value: number;
+  displayValue: string;
+  percentage: number;
+  trend: number;
+  status: 'success' | 'warning' | 'urgent';
+}
