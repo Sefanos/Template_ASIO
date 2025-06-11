@@ -6,6 +6,7 @@ import { SafeHtmlPipe } from './safe-html.pipe';
 import { ThemeService } from '../../../services/theme.service';
 import { AuthService } from '../../../core/auth/auth.service';
 
+
 // Animation fade pour les menus et modales
 const fadeAnimation = trigger('fadeAnimation', [
   transition(':enter', [
@@ -58,8 +59,8 @@ export class LayoutComponent implements OnInit {
   ];
 
   constructor(
-    private router: Router, 
-    private route: ActivatedRoute, 
+    private router: Router,
+    private route: ActivatedRoute,
     private themeService: ThemeService,
     private authService: AuthService
   ) {

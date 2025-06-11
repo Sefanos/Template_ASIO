@@ -14,37 +14,34 @@
   </section>  <!-- Liste des rappels -->
   <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <div *ngFor="let reminder of reminders"
-         class="reminder-card bg-white border border-gray-200 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">
-      <!-- ID et Statut -->
+         class="reminder-card bg-white border border-gray-200 rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">      <!-- ID et Statut -->
       <div class="flex justify-between items-start mb-4">
-        <span class="text-xs font-medium text-gray-500 dark:text-slate-400">#{{ reminder.id }}</span>
+        <span class="text-xs font-medium text-gray-500">#{{ reminder.id }}</span>
         <span class="status-badge capitalize inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
               [ngClass]="getStatusClass(reminder.status)">
           {{ reminder.status }}
         </span>
-      </div>
-      <!-- Informations patient -->
+      </div>      <!-- Informations patient -->
       <div class="patient-info flex items-center mb-3">
-        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               class="w-5 h-5 text-blue-600 dark:text-blue-400">
+               class="w-5 h-5 text-blue-600">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </div>
-        <strong class="text-gray-800 dark:text-white">{{ reminder.patientName }}</strong>
-      </div>
-      <!-- Message -->
-      <div class="message text-sm text-gray-700 dark:text-slate-300 mb-4 line-clamp-2">
-        <i class="fas fa-envelope mr-2 text-gray-500 dark:text-slate-400"></i>
+        <strong class="text-gray-800">{{ reminder.patientName }}</strong>
+      </div>      <!-- Message -->
+      <div class="message text-sm text-gray-700 mb-4 line-clamp-2">
+        <i class="fas fa-envelope mr-2 text-gray-500"></i>
         {{ reminder.message || 'Aucun message défini' }}
       </div>
       <!-- Date -->
-      <div class="date text-xs text-gray-500 dark:text-slate-400 mb-4 flex items-center">
+      <div class="date text-xs text-gray-500 mb-4 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             class="w-4 h-4 mr-2 text-gray-500 dark:text-slate-400">
+             class="w-4 h-4 mr-2 text-gray-500">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>

@@ -212,8 +212,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
           hoverBackgroundColor: ['#2c6dd5', '#eab308'],
           borderWidth: 0
         }]
-      },
-      options: {
+      },      options: {
         responsive: true,
         cutout: '60%',
         plugins: {
@@ -245,8 +244,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
           barPercentage: 0.6,
           categoryPercentage: 0.7
         }]
-      },
-      options: {
+      },      options: {
         indexAxis: 'y',
         responsive: true,
         plugins: {
@@ -323,8 +321,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
               color: this.isDarkMode ? '#94a3b8' : '#64748b'
             },
             grid: { display: false }
-          },
-          y: { 
+          },          y: { 
             grid: { color: this.isDarkMode ? '#334155' : '#e5e7eb' },
             ticks: { color: this.isDarkMode ? '#94a3b8' : '#64748b' }
           }
@@ -332,26 +329,6 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-
-  renderDemographicChart() {
-    const ctx = document.getElementById('demographic-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-    let data, labels;
-    let backgroundColors, hoverBackgroundColors;
-      // Définir la fonction createGradient avant son utilisation
-    function createGradient(ctx: any, colors: string[]) {
-      try {
-        const chartWidth = ctx.canvas.width || 300;
-        const chartHeight = ctx.canvas.height || 300;
-        const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
-        gradient.addColorStop(0, colors[0]);
-        gradient.addColorStop(1, colors[1]);
-        return gradient;
-      } catch (e) {
-        console.error('Erreur lors de la création du dégradé:', e);
-        return colors[0];
-      }
-    }
 
     if (this.demographicFilter === 'age') {
       labels = ['0-18 ans', '19-35 ans', '36-50 ans', '51-65 ans', '65+ ans'];
@@ -475,10 +452,10 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
             // Délai par segment pour un effet en cascade
             return context.dataIndex * 150;
           }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      },      plugins: [shadowPlugin]
+        },        responsive: true,
+        maintainAspectRatio: false
+      },
+      plugins: [shadowPlugin]
     });
   }
 
@@ -488,23 +465,23 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
     new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
         datasets: [
           {
-            label: 'Male',
+            label: 'Hommes',
             data: [12, 14, 13, 16, 18, 17, 19, 20, 18, 17, 16, 15],
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59,130,246,0.08)',
+            borderColor: this.isDarkMode ? '#3b82f6' : '#2563eb',
+            backgroundColor: this.isDarkMode ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)',
             fill: true,
             tension: 0.4,
             pointRadius: 0,
             borderWidth: 3
           },
           {
-            label: 'Female',
+            label: 'Femmes',
             data: [10, 12, 11, 13, 15, 14, 16, 19, 17, 16, 15, 14],
-            borderColor: '#60a5fa',
-            backgroundColor: 'rgba(96,165,250,0.08)',
+            borderColor: this.isDarkMode ? '#60a5fa' : '#3b82f6',
+            backgroundColor: this.isDarkMode ? 'rgba(96,165,250,0.12)' : 'rgba(96,165,250,0.08)',
             fill: true,
             tension: 0.4,
             pointRadius: 0,
@@ -517,10 +494,10 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#fff',
-            titleColor: '#2563eb',
-            bodyColor: '#334155',
-            borderColor: '#2563eb',
+            backgroundColor: this.isDarkMode ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.95)',
+            titleColor: this.isDarkMode ? '#3b82f6' : '#2563eb',
+            bodyColor: this.isDarkMode ? '#cbd5e1' : '#334155',
+            borderColor: this.isDarkMode ? '#3b82f6' : '#2563eb',
             borderWidth: 1,
             padding: 12,
             displayColors: false,
@@ -532,12 +509,19 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
         scales: {
           x: {
             grid: { display: false },
-            ticks: { color: '#64748b', font: { weight: 'bold', size: 14 } }
+
+            ticks: { 
+              color: this.isDarkMode ? '#94a3b8' : '#64748b', 
+              font: { weight: 'bold', size: 14 } 
+            }
           },
           y: {
             beginAtZero: true,
-            grid: { color: '#e0e7ef' },
-            ticks: { color: '#64748b', font: { size: 13 } }
+            grid: { color: this.isDarkMode ? '#334155' : '#e0e7ef' },
+            ticks: { 
+              color: this.isDarkMode ? '#94a3b8' : '#64748b', 
+              font: { size: 13 } 
+            }
           }
         },
         animation: {
@@ -547,6 +531,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
+  /* Fonction dupliquée renderDemographicChart supprimée - Début ligne ~554 jusqu'à ~650 */
 
   // Formulaires modaux
   openNewAppointmentModal(): void {
