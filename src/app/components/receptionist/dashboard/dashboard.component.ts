@@ -329,25 +329,6 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-  renderDemographicChart() {
-    const ctx = document.getElementById('demographic-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-    let data, labels;
-    let backgroundColors, hoverBackgroundColors;
-      // Définir la fonction createGradient avant son utilisation
-    function createGradient(ctx: any, colors: string[]) {
-      try {
-        const chartWidth = ctx.canvas.width || 300;
-        const chartHeight = ctx.canvas.height || 300;
-        const gradient = ctx.createLinearGradient(0, 0, 0, chartHeight);
-        gradient.addColorStop(0, colors[0]);
-        gradient.addColorStop(1, colors[1]);
-        return gradient;
-      } catch (e) {
-        console.error('Erreur lors de la création du dégradé:', e);
-        return colors[0];
-      }
-    }
 
     if (this.demographicFilter === 'age') {
       labels = ['0-18 ans', '19-35 ans', '36-50 ans', '51-65 ans', '65+ ans'];
@@ -477,6 +458,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       plugins: [shadowPlugin]
     });
   }
+
   initPatientsLineChart() {
     const ctx = document.getElementById('patients-line-chart') as HTMLCanvasElement;
     if (!ctx) return;
@@ -527,6 +509,7 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
         scales: {
           x: {
             grid: { display: false },
+
             ticks: { 
               color: this.isDarkMode ? '#94a3b8' : '#64748b', 
               font: { weight: 'bold', size: 14 } 

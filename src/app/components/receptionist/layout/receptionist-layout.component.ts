@@ -57,6 +57,7 @@ export class LayoutComponent implements OnInit {
     { route: 'reminders', label: 'Rappels', icon: 'reminders', count: 1 },
     { route: 'profile', label: 'Profil', icon: 'profile', count: 0 }
   ];
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
