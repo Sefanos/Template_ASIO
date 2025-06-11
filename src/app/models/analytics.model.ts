@@ -143,13 +143,6 @@ export interface DoctorRevenueResponse {
   errors?: {[key: string]: string[]};
 }
 
-export interface ServiceBreakdown {
-  service_type: string;
-  count: number;
-  total_revenue: number;
-  average_price: number;
-}
-
 export interface ServiceBreakdownResponse {
   success: boolean;
   data: {
@@ -157,6 +150,14 @@ export interface ServiceBreakdownResponse {
   };
   message?: string;
   errors?: {[key: string]: string[]};
+}
+
+export interface ServiceBreakdown {
+  service_type: string;
+  count: number;
+  total_revenue: number;
+  average_price: number;
+  doctor_specialty?: string; // Added this optional property
 }
 
 export interface RevenueTimeframe {
