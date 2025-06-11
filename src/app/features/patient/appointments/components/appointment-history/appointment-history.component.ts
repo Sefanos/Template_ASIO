@@ -1,9 +1,8 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { AppointmentService } from '../../../../../core/patient/services/appointment.service';
-import { Appointment } from '../../../../../core/patient/domain/models/appointment.model';
- 
+import { PatientAppointmentService } from '../../../../../shared/services/patient-appointment.service';
+import { RescheduleAppointmentComponent } from '../reschedule-appointment/reschedule-appointment.component';
 
 @Component({
   selector: 'app-appointment-history',
@@ -13,284 +12,396 @@ import { Appointment } from '../../../../../core/patient/domain/models/appointme
 })
 export class AppointmentHistoryComponent implements OnInit {
 
-  allAppointments: Appointment[] = [];
-    filteredAppointments: Appointment[] = [];
-    paginatedAppointments: Appointment[] = [];
+  // Simplified data management - work directly with API response
+  appointments: any[] = [];
+  filteredAppointments: any[] = [];
   
-    currentPage: number = 1;
-    itemsPerPage: number = 5;
-    searchTerm: string = '';
+  // Pagination
+  currentPage: number = 1;
+  itemsPerPage: number = 5;
+  totalPagesCount: number = 0;
+  totalRecords: number = 0;
   
-    doctorName: string = 'Dr. Sarah Johnson';
+  // Search and filters
+  searchTerm: string = '';
+  statusFilter: string = '';
   
-     
-    isLoading: boolean = false;
-    errorMessage: string | null = null;
-    
-    // Nouvelle propriété pour suivre les rendez-vous développés
-    expandedAppointmentIds: Set<number> = new Set();
+  // UI state
+  isLoading: boolean = false;
+  errorMessage: string | null = null;
+  expandedAppointmentIds: Set<number> = new Set();
   
-    constructor(
-      private appointmentService: AppointmentService,
-      private cdr: ChangeDetectorRef,
-      private dialog: MatDialog,
-      private router: Router
-    ) {}
-  
-    ngOnInit(): void {
-      this.loadAppointmentHistory();
-    }
-  
-     loadAppointmentHistory(): void {
+  // Doctor specialty cache and loading state
+  doctorCache: Map<number, any> = new Map();
+  loadingDoctorIds: Set<number> = new Set();
+
+  constructor(
+    private patientAppointmentService: PatientAppointmentService,
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.loadAppointmentHistory();
+  }
+
+  loadAppointmentHistory(): void {
     this.isLoading = true;
     this.errorMessage = null;
     
-    // Ne passe plus de patientId - le backend utilise le premier patient
-    this.appointmentService.getAppointmentHistory().subscribe({
-      next: (data) => {
-        this.allAppointments = data.map(appointment => {
-          let parsedDate: string = appointment.date as string; // Par défaut, on garde la chaîne originale
-          if (typeof appointment.date === 'string') {
-            // Supprimer les suffixes ordinaux (st, nd, rd, th) avant de tenter l'analyse
-            const dateStringWithoutOrdinal = appointment.date.replace(/(\d+)(st|nd|rd|th)/, '$1');
-            const tempDate = new Date(dateStringWithoutOrdinal);
-            if (!isNaN(tempDate.getTime())) { // Vérifier si la conversion a réussi
-              parsedDate = tempDate.toISOString(); // Convertir Date en chaîne ISO
-            } else {
-              console.warn(`Impossible d'analyser la chaîne de date: "${appointment.date}". Utilisation de l'original ou pourrait apparaître comme invalide.`);
-            }
-} else if (appointment.date && Object.prototype.toString.call(appointment.date) === '[object Date]') {
-            parsedDate = (appointment.date as Date).toISOString(); // Convertir Date en chaîne ISO
-          }
-
-          return {
-            ...appointment,
-            // Ensure patientId and doctorId are present, defaulting if not found on the source object.
-            // This addresses the type error if the source 'appointment' objects from 'data'
-            // do not contain patientId or doctorId, which are required by the Appointment model.
-          
-            doctorId: (appointment as any).doctorId ?? -1,   // Using -1 as a default for missing ID
-            date: parsedDate, // Garantir que date est toujours une chaîne
-            status: this.mapServiceStatusToDomainStatus(appointment.status as string | undefined, 'Unknown')
-          };
-        });
-
-console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))); 
-        console.log('allAppointments (après mapping, 10 premiers):', JSON.stringify(this.allAppointments.slice(0, 10)));
+    this.patientAppointmentService.getAppointmentHistory().subscribe({
+      next: (response) => {
+        console.log('Raw API response:', response);
         
-        this.applyFiltersAndPagination();
-                  
-        if (this.paginatedAppointments) {
-          console.log('paginatedAppointments (première page):', JSON.stringify(this.paginatedAppointments));
-          console.log('Nombre dans paginatedAppointments:', this.paginatedAppointments.length);
-        }
-        console.log('currentPage:', this.currentPage, 'itemsPerPage:', this.itemsPerPage);
+        // Work directly with API response structure
+        this.appointments = response.data || [];
+        this.totalRecords = response.pagination?.total || this.appointments.length;
         
+        console.log('Appointments loaded:', this.appointments);
+        
+        // Auto-load doctor specialties for appointments without them
+        this.loadMissingDoctorSpecialties();
+        
+        this.applyFilters();
         this.isLoading = false;
+        
+        // Auto-load missing doctor specialties
+        this.loadMissingDoctorSpecialties();
+        
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Erreur lors de la récupération de l\'historique des rendez-vous:', error);
-        this.errorMessage = 'Échec du chargement de l\'historique des rendez-vous. Veuillez réessayer plus tard.';
+      error: (error: any) => {
+        console.error('Error loading appointment history:', error);
+        this.errorMessage = 'Failed to load appointment history. Please try again later.';
         this.isLoading = false;
-        this.allAppointments = [];
-        this.applyFiltersAndPagination();
+        this.appointments = [];
+        this.filteredAppointments = [];
         this.cdr.detectChanges(); 
       }
     });
   }
 
-
-  
-    applyFiltersAndPagination(): void {
-      let tempAppointments = this.allAppointments;
-      if (this.searchTerm.trim() !== '') {
-        tempAppointments = this.allAppointments.filter((appointment) =>
-          appointment.reason?.toLowerCase().includes(this.searchTerm.toLowerCase())
+  applyFilters(): void {
+    let filtered = [...this.appointments];
+    
+    // Apply search filter
+    if (this.searchTerm.trim() !== '') {
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter((appointment: any) => {
+        // Search across multiple fields - handle both mapped and raw API structure
+        const searchFields = [
+          appointment.reason_for_visit || appointment.reason,
+          appointment.provider,
+          appointment.doctorName,
+          appointment.patientName,
+          appointment.notes,
+          appointment.notes_by_patient,
+          appointment.notes_by_staff,
+          this.formatDate(appointment.date || appointment.appointment_datetime_start)
+        ];
+        
+        return searchFields.some(field => 
+          field && field.toString().toLowerCase().includes(searchLower)
         );
-      }
-      this.filteredAppointments = tempAppointments;
-      this.updatePaginatedAppointments();
-    }
-  
-    onSearchTermChange(): void {
-      this.currentPage = 1;
-      this.applyFiltersAndPagination();
-    }
-  
-    updatePaginatedAppointments(): void {
-      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-      const endIndex = startIndex + this.itemsPerPage;
-      this.paginatedAppointments = this.filteredAppointments.slice(
-        startIndex,
-        endIndex
-      );
-    }
-  
-    totalPages(): number {
-      return Math.ceil(this.filteredAppointments.length / this.itemsPerPage);
-    }
-  
-    totalPagesArray(): number[] {
-      const total = this.totalPages();
-      if (total === 0) return [];
-      return Array(total)
-        .fill(0)
-        .map((x, i) => i + 1);
-    }
-  
-    goToPage(page: number): void {
-      if (page >= 1 && page <= this.totalPages()) {
-        this.currentPage = page;
-        this.updatePaginatedAppointments();
-      }
-    }
-  
-    nextPage(): void {
-      if (this.currentPage < this.totalPages()) {
-        this.currentPage++;
-        this.updatePaginatedAppointments();
-      }
-    }
-  
-    previousPage(): void {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.updatePaginatedAppointments();
-      }
-    }
-  
-    openFilterModal(): void {
-      console.log('Filter button clicked');
-    }
-  
-    exportData(): void {
-      console.log('Export button clicked');
-    }
-  
-    trackByAppointmentId(index: number, appointment: Appointment): number {
-      return appointment.id;
-    }
-  
-    // Méthode pour obtenir la classe CSS du statut
-    getStatusClass(status: string | null | undefined): string {
-      if (!status) {
-        return '';
-      }
-      
-      switch (status.toLowerCase()) {
-        case 'confirmed':
-        case 'completed':
-          return 'bg-status-success/20 text-status-success border border-status-success/30';
-        case 'pending':
-          return 'bg-status-warning/20 text-status-warning border border-status-warning/30';
-        case 'cancelled':
-          return 'bg-status-urgent/20 text-status-urgent border border-status-urgent/30';
-        default:
-          return 'bg-hover text-text-muted border border-border';
-      }
+      });
     }
     
-    // Méthodes pour la vue détaillée
-    toggleAppointmentDetails(appointment: Appointment): void {
-      if (this.expandedAppointmentIds.has(appointment.id)) {
-        this.expandedAppointmentIds.delete(appointment.id);
-      } else {
-        this.expandedAppointmentIds.add(appointment.id);
-        
-        // Charger des détails supplémentaires si nécessaire
-        if (!appointment.doctorSpecialty) {
-          this.loadAppointmentDetails(appointment.id);
-        }
-      }
-    }
-  
-    isAppointmentExpanded(id: number): boolean {
-      return this.expandedAppointmentIds.has(id);
-    }
-  
-    loadAppointmentDetails(id: number): void {
-      // Charger des détails supplémentaires depuis l'API
-      this.appointmentService.getAppointmentDetails(id).subscribe(
-        (details: Partial<Omit<Appointment, 'status'> & { status?: string }>) => {
-          // Mettre à jour les détails du rendez-vous
-          const index = this.allAppointments.findIndex(a => a.id === id);
-          if (index !== -1) {
-            const existingAppointment = this.allAppointments[index];
-            const newStatus = this.mapServiceStatusToDomainStatus(details.status, existingAppointment.status);
-
-            this.allAppointments[index] = {
-              ...existingAppointment,
-              ...details, // Spread other properties from details
-              status: newStatus, // Override status with the correctly mapped and typed one
-              // S'assurer que les propriétés spécifiques sont correctement mises à jour
-              doctorSpecialty: details.doctorSpecialty || existingAppointment.doctorSpecialty || 'General Practice',
-              location: details.location || existingAppointment.location || 'Main Medical Center',
-              notes: details.notes || existingAppointment.notes || [],
-              followUp: typeof details.followUp === 'boolean' ? details.followUp : (existingAppointment.followUp || false)
-            };
-            
-            // Mettre à jour également dans les rendez-vous paginés
-            const pageIndex = this.paginatedAppointments.findIndex(a => a.id === id);
-            if (pageIndex !== -1) {
-              this.paginatedAppointments[pageIndex] = this.allAppointments[index];
-            }
-            
-            this.cdr.detectChanges();
-          }
-        },
-        error => {
-          console.error('Failed to load appointment details:', error);
-        }
+    // Apply status filter
+    if (this.statusFilter && this.statusFilter !== '') {
+      filtered = filtered.filter((appointment: any) => 
+        appointment.status?.toLowerCase() === this.statusFilter.toLowerCase()
       );
     }
-  
-    viewMedicalRecord(id: number): void {
-      // Naviguer vers la page du dossier médical
-      this.router.navigate(['/medical-records'], { queryParams: { appointmentId: id } });
+    
+    this.filteredAppointments = filtered;
+    this.updatePagination();
+  }
+
+  updatePagination(): void {
+    this.totalPagesCount = Math.ceil(this.filteredAppointments.length / this.itemsPerPage);
+    
+    // Ensure current page is valid
+    if (this.currentPage > this.totalPagesCount && this.totalPagesCount > 0) {
+      this.currentPage = this.totalPagesCount;
     }
-  
-    rescheduleAppointment(id: number): void {
-      // Naviguer vers la page de reprogrammation
-      this.router.navigate(['/appointments/reschedule', id]);
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
     }
-  
-    printConfirmation(id: number): void {
-      const appointmentIndex = this.paginatedAppointments.findIndex(a => a.id === id);
-      if (appointmentIndex !== -1) {
-        const appointment = this.paginatedAppointments[appointmentIndex];
-            const formattedDate = new Date(appointment.date).toLocaleDateString('fr-FR', {
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric'
-            });
-        // Créer une nouvelle fenêtre pour l'impression
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>Confirmation de Rendez-vous</title>
-                <style>
-                  @media print {
-                @page { margin: 1.5cm; }
-              }
-              * { box-sizing: border-box; }
+  }
+
+  getPaginatedAppointments(): any[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredAppointments.slice(startIndex, endIndex);
+  }
+
+  onSearchTermChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onStatusFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  totalPages(): number {
+    return this.totalPagesCount;
+  }
+
+  totalPagesArray(): number[] {
+    const total = this.totalPages();
+    if (total === 0) return [];
+    return Array(total).fill(0).map((x, i) => i + 1);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages()) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+
+  openFilterModal(): void {
+    console.log('Filter button clicked');
+  }
+
+  exportData(): void {
+    console.log('Export button clicked');
+  }
+
+  trackByAppointmentId(index: number, appointment: any): number {
+    return appointment.id;
+  }
+
+  // Status styling based on API response
+  getStatusClass(status: string | null | undefined): string {
+    if (!status) {
+      return 'bg-hover text-text-muted border border-border';
+    }
+    
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+      case 'completed':
+        return 'bg-status-success/20 text-status-success border border-status-success/30';
+      case 'pending':
+        return 'bg-status-warning/20 text-status-warning border border-status-warning/30';
+      case 'cancelled':
+        return 'bg-status-urgent/20 text-status-urgent border border-status-urgent/30';
+      default:
+        return 'bg-hover text-text-muted border border-border';
+    }
+  }
+
+  // Expanded appointment details with doctor specialty loading
+  toggleAppointmentDetails(appointment: any): void {
+    if (this.expandedAppointmentIds.has(appointment.id)) {
+      this.expandedAppointmentIds.delete(appointment.id);
+    } else {
+      this.expandedAppointmentIds.add(appointment.id);
+      
+      // Load doctor specialty when expanding details (Option 4)
+      const doctorId = this.getDoctorId(appointment);
+      if (doctorId) {
+        this.loadDoctorSpecialty(doctorId);
+      }
+    }
+  }
+
+  isAppointmentExpanded(id: number): boolean {
+    return this.expandedAppointmentIds.has(id);
+  }
+
+  // Option 4: Targeted doctor loading methods
+  loadDoctorSpecialty(doctorId: number): void {
+    if (this.doctorCache.has(doctorId) || this.loadingDoctorIds.has(doctorId)) {
+      return; // Already loaded or loading
+    }
+
+    this.loadingDoctorIds.add(doctorId);
+
+    this.patientAppointmentService.getDoctorById(doctorId).subscribe({
+      next: (doctor) => {
+        console.log('Doctor loaded via targeted method:', doctor);
+        this.doctorCache.set(doctorId, doctor);
+        this.loadingDoctorIds.delete(doctorId);
+        
+        // Update appointments with the loaded specialty
+        const specialty = doctor.doctor?.specialty || 'General Practice';
+        this.appointments.forEach(appointment => {
+          if (this.getDoctorId(appointment) === doctorId) {
+            appointment.doctorSpecialty = specialty;
+          }
+        });
+        
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading doctor specialty:', error);
+        this.loadingDoctorIds.delete(doctorId);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getDoctorSpecialty(doctorId: number | null): string {
+    if (!doctorId) return 'Not available';
+    
+    const doctor = this.doctorCache.get(doctorId);
+    if (doctor) {
+      // Handle API response structure: User -> doctor -> specialty
+      return doctor.doctor?.specialty || 
+             doctor.specialty || 
+             'General Practice';
+    }
+    
+    if (this.loadingDoctorIds.has(doctorId)) {
+      return 'Loading...';
+    }
+    
+    return 'Not available';
+  }
+
+  isDoctorLoading(doctorId: number | null): boolean {
+    if (!doctorId) return false;
+    return this.loadingDoctorIds.has(doctorId);
+  }
+
+  getDoctorId(appointment: any): number | null {
+    // Extract doctor user ID from appointment - this matches the user ID in available doctors
+    const doctorId = appointment.doctor_user_id || appointment.doctorId || null;
+    console.log('getDoctorId for appointment', appointment.id, ':', doctorId, 'from appointment:', appointment);
+    return doctorId;
+  }
+
+  // Auto-load doctor specialties for appointments that don't have them
+  loadMissingDoctorSpecialties(): void {
+    console.log('Loading missing doctor specialties...');
+    this.appointments.forEach(appointment => {
+      const doctorId = this.getDoctorId(appointment);
+      console.log('Appointment:', appointment.id, 'Doctor ID:', doctorId, 'Current specialty:', appointment.doctorSpecialty);
+      if (doctorId && !appointment.doctorSpecialty) {
+        console.log('Loading specialty for doctor ID:', doctorId);
+        this.loadDoctorSpecialty(doctorId);
+      }
+    });
+  }
+
+  // Helper methods for working with API data structure
+  getDoctorName(appointment: any): string {
+    return appointment.provider || 
+           appointment.doctorName || 
+           'Unknown Doctor';
+  }
+
+  getPatientName(appointment: any): string {
+    return appointment.patientName || 
+           'Unknown Patient';
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'Unknown Date';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  }
+
+  formatTime(timeString: string): string {
+    if (!timeString) return 'Unknown Time';
+    
+    try {
+      // Handle both "HH:mm:ss" and "HH:mm" formats, and already formatted times
+      if (timeString.includes('AM') || timeString.includes('PM')) {
+        return timeString; // Already formatted
+      }
+      
+      const timeParts = timeString.split(':');
+      if (timeParts.length >= 2) {
+        const hours = parseInt(timeParts[0]);
+        const minutes = timeParts[1];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        return `${displayHours}:${minutes} ${ampm}`;
+      }
+      return timeString;
+    } catch (error) {
+      return timeString;
+    }
+  }
+
+  // Action methods
+  viewMedicalRecord(id: number): void {
+    this.router.navigate(['/medical-records'], { queryParams: { appointmentId: id } });
+  }
+
+  rescheduleAppointment(id: number): void {
+    // Find the appointment to reschedule
+    const appointment = this.appointments.find(app => app.id === id);
+    if (!appointment) {
+      console.error('Appointment not found for reschedule:', id);
+      return;
+    }
+
+    // Open the reschedule modal
+    const dialogRef = this.dialog.open(RescheduleAppointmentComponent, {
+      width: '500px',
+      data: { appointment: appointment },
+      disableClose: false
+    });
+
+    // Handle dialog result
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('Appointment rescheduled:', result);
+        // Refresh the appointment list to show updated data
+        this.loadAppointmentHistory();
+      }
+    });
+  }
+
+  printConfirmation(appointment: any): void {
+    const formattedDate = this.formatDate(appointment.date);
+    const formattedTime = this.formatTime(appointment.time);
+    const doctorName = this.getDoctorName(appointment);
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment Confirmation</title>
+            <style>
               body { 
                 font-family: 'Helvetica Neue', Arial, sans-serif; 
-                padding: 0; 
+                padding: 40px;
                 margin: 0;
                 color: #333;
                 line-height: 1.6;
               }
-              .container {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 40px 30px;
-                border: 1px solid #e0e0e0;
-              } 
-                
               .header {
                 text-align: center;
                 margin-bottom: 30px;
@@ -303,16 +414,11 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
                 color: #3b82f6;
                 margin-bottom: 5px;
               }
-               h1 { 
+              h1 { 
                 color: #3b82f6; 
                 font-size: 28px;
                 margin: 0;
                 font-weight: 500;
-              }
-              .subtitle {
-                color: #666;
-                font-size: 16px;
-                margin-top: 5px;
               }
               .details {
                 background-color: #f8fafc;
@@ -321,7 +427,7 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
                 border-left: 5px solid #3b82f6;
                 margin: 30px 0;
               }
-                .detail-row {
+              .detail-row {
                 display: flex;
                 margin-bottom: 12px;
                 align-items: baseline;
@@ -336,205 +442,117 @@ console.log('Données brutes reçues (data):', JSON.stringify(data.slice(0, 10))
                 flex: 1;
                 font-size: 16px;
               }
-                .status {
-                display: inline-block;
-                padding: 4px 12px;
-                border-radius: 15px;
-                font-weight: 500;
-                background-color: #dcfce7;
-                color: #166534;
-              }
-              .instructions {
-                margin: 30px 0;
-                padding: 20px;
-                border: 1px dashed #d1d5db;
-                border-radius: 8px;
-              }
-              .instructions h2 {
-                margin-top: 0;
-                font-size: 18px;
-                color: #4b5563;
-              }
-                .instructions ul {
-                padding-left: 20px;
-              }
-              .instructions li {
-                margin-bottom: 8px;
-              }
-              .footer {
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #e5e7eb;
-                font-size: 14px;
-                color: #6b7280;
-                display: flex;
-                justify-content: space-between;
-              }
-              .qr-placeholder {
-                text-align: center;
-                margin-top: 20px;
-              }
-                .qr-code {
-                border: 1px solid #ddd;
-                padding: 10px;
-                display: inline-block;
-                background: white;
-              }
-              .qr-text {
-                font-size: 12px;
-                color: #666;
-                margin-top: 5px;
-              }      
-              </style>
-              </head>
-              <body>
-               <div class="container">
-              <div class="header">
-                <div class="logo">CENTRE MÉDICAL</div>
-                <h1>Confirmation de Rendez-vous</h1>
-                <p class="subtitle">Merci de conserver ce document pour votre visite</p>
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="logo">MEDICAL CENTER</div>
+              <h1>Appointment Confirmation</h1>
+            </div>
+            
+            <div class="details">
+              <div class="detail-row">
+                <span class="label">Date:</span>
+                <span class="value">${formattedDate}</span>
               </div>
-              
-              <div class="details">
-                <div class="detail-row">
-                  <span class="label">Date:</span>
-                  <span class="value">${formattedDate}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Heure:</span>
-                  <span class="value">${appointment.time}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Médecin:</span>
-                  <span class="value">${appointment.doctorName}</span>
-                </div>
-                ${appointment.doctorSpecialty ? 
-                  `<div class="detail-row">
-                    <span class="label">Spécialité:</span>
-                    <span class="value">${appointment.doctorSpecialty}</span>
-                  </div>` : ''}
-                <div class="detail-row">
-                  <span class="label">Statut:</span>
-                  <span class="value">
-                    <span class="status">Confirmé</span>
-                  </span>
-                </div>
-                 <div class="detail-row">
-                  <span class="label">Raison:</span>
-                  <span class="value">${appointment.reason || 'Non spécifié'}</span>
-                </div>
-                ${appointment.location ? 
-                  `<div class="detail-row">
-                    <span class="label">Lieu:</span>
-                    <span class="value">${appointment.location}</span>
-                  </div>` : ''}
-                <div class="detail-row">
-                  <span class="label">N° Rendez-vous:</span>
-                  <span class="value">APPT-${appointment.id}-${new Date().getFullYear()}</span>
-                </div>
+              <div class="detail-row">
+                <span class="label">Time:</span>
+                <span class="value">${formattedTime}</span>
               </div>
-              <div class="instructions">
-                <h2>Instructions importantes</h2>
-                <ul>
-                  <li>Veuillez arriver 15 minutes avant l'heure de votre rendez-vous.</li>
-                  <li>Apportez votre carte d'assurance et une pièce d'identité avec photo.</li>
-                  <li>Si vous prenez des médicaments, veuillez apporter une liste à jour.</li>
-                  <li>Pour toute annulation, veuillez nous contacter au moins 24 heures à l'avance.</li>
-                </ul>
+              <div class="detail-row">
+                <span class="label">Doctor:</span>
+                <span class="value">${doctorName}</span>
               </div>
-              
-               <div class="qr-placeholder">
-                <div class="qr-code">
-                  [QR Code]<br>
-                  APPT-${appointment.id}
-                </div>
-                <div class="qr-text">Présentez ce code lors de votre enregistrement</div>
+              <div class="detail-row">
+                <span class="label">Reason:</span>
+                <span class="value">${appointment.reason || 'Not specified'}</span>
               </div>
-              
-              <div class="footer">
-                <div>Centre Médical • 123 Rue de la Santé • Paris</div>
-                <div>Tél: 01 23 45 67 89</div>
+              <div class="detail-row">
+                <span class="label">Status:</span>
+                <span class="value">${appointment.status || 'Unknown'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Appointment ID:</span>
+                <span class="value">APPT-${appointment.id}</span>
               </div>
             </div>
-              </body>
-            </html>
-          `);
-          printWindow.document.close();
-          printWindow.print();
-        }
-      }
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
     }
-  
-    cancelAppointment(id: number): void {
-      if (confirm('Are you sure you want to cancel this appointment?')) {
-        this.appointmentService.cancelAppointment(id, 'Cancelled by patient').subscribe(
-          () => {
-            // Mettre à jour le statut du rendez-vous en local
-            const index = this.allAppointments.findIndex(a => a.id === id);
-            if (index !== -1) {
-              this.allAppointments[index].status = 'Cancelled';
-              this.allAppointments[index].cancelReason = 'Cancelled by patient';
-              
-              // Mettre à jour également dans les rendez-vous paginés
-              const pageIndex = this.paginatedAppointments.findIndex(a => a.id === id);
-              if (pageIndex !== -1) {
-                this.paginatedAppointments[pageIndex].status = 'Cancelled';
-                this.paginatedAppointments[pageIndex].cancelReason = 'Cancelled by patient';
-              }
-              
-              this.cdr.detectChanges();
-            }
-          },
-          error => {
-            console.error('Failed to cancel appointment:', error);
+  }
+
+  cancelAppointment(id: number): void {
+    if (confirm('Are you sure you want to cancel this appointment?')) {
+      this.patientAppointmentService.cancelMyAppointment(id, 'Cancelled by patient').subscribe({
+        next: () => {
+          // Update local status
+          const appointment = this.appointments.find(a => a.id === id);
+          if (appointment) {
+            appointment.status = 'cancelled';
+            appointment.notes = appointment.notes ? 
+              appointment.notes + '; Cancelled by patient' : 
+              'Cancelled by patient';
           }
-        );
-      }
-    }
-  
-    canReschedule(appointment: Appointment): boolean {
-      // Un rendez-vous peut être reprogrammé s'il est confirmé ou en attente
-      // et s'il n'est pas dans le passé
-      return ['Confirmed', 'Pending'].includes(appointment.status || '') && 
-             !this.isAppointmentInPast(appointment);
-    }
-  
-    canCancel(appointment: Appointment): boolean {
-      // Un rendez-vous peut être annulé s'il est confirmé ou en attente
-      // et s'il n'est pas dans le passé
-      return ['Confirmed', 'Pending'].includes(appointment.status || '') && 
-             !this.isAppointmentInPast(appointment);
-    }
-  
-    isAppointmentInPast(appointment: Appointment): boolean {
-      if (!appointment.date) return false;
-      
-      const appointmentDate = new Date(appointment.date);
-      const today = new Date();
-      // Set time to 00:00:00 for today to compare dates only, not times
-      today.setHours(0, 0, 0, 0); 
-      // Retourner true si le rendez-vous est dans le passé
-      return appointmentDate < today;
-    }
-
-    private mapServiceStatusToDomainStatus(
-      serviceStatus: string | undefined, 
-      currentStatus: Appointment['status']
-    ): Appointment['status'] {
-      if (serviceStatus === undefined || serviceStatus === null || serviceStatus.trim() === '') {
-        return currentStatus; // Use fallback status if serviceStatus is not provided
-      }
-      const validStatuses: ReadonlyArray<Appointment['status']> = ["Pending", "Confirmed", "Completed", "Cancelled", "Unknown"];
-      const normalizedServiceStatus = serviceStatus.trim();
-
-      for (const validStatus of validStatuses) {
-        if (validStatus.toLowerCase() === normalizedServiceStatus.toLowerCase()) {
-          return validStatus; // Return the matched status with correct casing
+          
+          this.applyFilters();
+          this.cdr.detectChanges();
+          
+          // Show success message
+          alert('Appointment cancelled successfully.');
+        },
+        error: (error: any) => {
+          console.error('Failed to cancel appointment:', error);
+          let errorMessage = 'Failed to cancel appointment. Please try again.';
+          
+          if (error.error && error.error.error) {
+            errorMessage = error.error.error;
+          } else if (error.error && error.error.message) {
+            errorMessage = error.error.message;
+          }
+          
+          alert(errorMessage);
         }
-      }
-      // If serviceStatus is provided but not recognized, default to 'Unknown'
-      return 'Unknown';
+      });
     }
-   
-  
+  }
+
+  canReschedule(appointment: any): boolean {
+    const status = appointment.status?.toLowerCase();
+    return ['confirmed', 'pending'].includes(status) && 
+           !this.isAppointmentInPast(appointment);
+  }
+
+  canCancel(appointment: any): boolean {
+    const status = appointment.status?.toLowerCase();
+    return ['confirmed', 'pending'].includes(status) && 
+           !this.isAppointmentInPast(appointment);
+  }
+
+  isAppointmentInPast(appointment: any): boolean {
+    if (!appointment.date && !appointment.startDateTime) return false;
+    
+    try {
+      const appointmentDate = new Date(appointment.date || appointment.startDateTime);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return appointmentDate < today;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Available status options for filter
+  getStatusOptions(): string[] {
+    const uniqueStatuses = [...new Set(
+      this.appointments
+        .map(apt => apt.status)
+        .filter(status => status)
+        .map(status => status.toLowerCase())
+    )];
+    
+    return uniqueStatuses.sort();
+  }
 }

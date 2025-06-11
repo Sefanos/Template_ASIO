@@ -21,11 +21,13 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { BookAppointmentComponent } from './components/book-appointment/book-appointment.component';
 import { AppointmentHistoryComponent } from './components/appointment-history/appointment-history.component';
+import { RescheduleAppointmentComponent } from './components/reschedule-appointment/reschedule-appointment.component';
  
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { SharedCalendarComponent } from './components/shared-calendar/shared-calendar.component';
+import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 
 
@@ -35,6 +37,7 @@ import { SharedCalendarComponent } from './components/shared-calendar/shared-cal
  
     BookAppointmentComponent,
     AppointmentHistoryComponent,
+    RescheduleAppointmentComponent,
     SharedCalendarComponent,
      
   ],
@@ -45,9 +48,20 @@ import { SharedCalendarComponent } from './components/shared-calendar/shared-cal
     FormsModule,
     ReactiveFormsModule,
     // Angular Material
-    FullCalendarModule
-
-]
+    MatCardModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatDialogModule,
+    MatTabsModule,
+    FlexLayoutModule,
+    FullCalendarModule,
+    // Shared Components
+    ConfirmationDialogComponent
+  ],
 })
 export class AppointmentsModule { 
 

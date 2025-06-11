@@ -124,3 +124,121 @@ export interface RegistrationResponse {
   message?: string;
   errors?: {[key: string]: string[]};
 }
+
+// Doctor Revenue Analytics Interfaces
+export interface DoctorRevenue {
+  doctor_id: number;
+  doctor_name: string;
+  total_revenue: number;
+  bill_count: number;
+  average_bill_amount: number;
+}
+
+export interface DoctorRevenueResponse {
+  success: boolean;
+  data: {
+    doctor_revenue: DoctorRevenue[];
+  };
+  message?: string;
+  errors?: {[key: string]: string[]};
+}
+
+export interface ServiceBreakdownResponse {
+  success: boolean;
+  data: {
+    service_breakdown: ServiceBreakdown[];
+  };
+  message?: string;
+  errors?: {[key: string]: string[]};
+}
+
+export interface ServiceBreakdown {
+  service_type: string;
+  count: number;
+  total_revenue: number;
+  average_price: number;
+  doctor_specialty?: string; // Added this optional property
+}
+
+export interface RevenueTimeframe {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  daily_breakdown?: PeriodRevenue[];
+  monthly_breakdown?: PeriodRevenue[];
+}
+
+export interface PeriodRevenue {
+  period: string | number;
+  amount: number;
+}
+
+export interface RevenueTimeframeResponse {
+  success: boolean;
+  data: RevenueTimeframe;
+  message?: string;
+  errors?: {[key: string]: string[]};
+}
+
+export interface BillItem {
+  id: number;
+  bill_id: number;
+  service_type: string;
+  description: string;
+  price: string;
+  quantity: number;
+  total: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Doctor {
+  id: number;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+  phone: string;
+  status: string;
+  deleted_at: string | null;
+  password_change_required: boolean;
+}
+
+export interface Patient {
+  id: number;
+  user_id: number;
+  registration_date: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface Bill {
+  id: number;
+  patient_id: number;
+  doctor_user_id: number;
+  bill_number: string;
+  amount: string;
+  issue_date: string;
+  payment_method: string;
+  description: string | null;
+  pdf_path: string | null;
+  created_by_user_id: number;
+  created_at: string;
+  updated_at: string;
+  patient: Patient;
+  doctor: Doctor;
+  items: BillItem[];
+}
+
+export interface BillsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    items: Bill[];
+  };
+}

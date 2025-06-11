@@ -10,6 +10,36 @@ export interface RevenueOverviewData {
   revenue_by_period: {period: string, amount: number}[];
 }
 
+export interface WeeklyRevenueData {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  daily_breakdown: {period: string, amount: number}[];
+}
+
+export interface MonthlyRevenueData {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  daily_breakdown: {period: string, amount: number}[];
+}
+
+export interface YearlyRevenueData {
+  total_revenue: number;
+  average_bill_amount: number;
+  bill_count: number;
+  start_date: string;
+  end_date: string;
+  monthly_breakdown: {period: number, amount: number}[];
+}
+
+// Combined type for generic handling
+export type RevenueData = WeeklyRevenueData | MonthlyRevenueData | YearlyRevenueData;
+
 export interface ServiceBreakdownData {
   service_breakdown: {
     service_breakdown: {
@@ -92,4 +122,26 @@ export interface FinancialResponse<T> {
   data: T;
   message?: string;
   errors?: {[key: string]: string[]};
+}
+
+// Revenue Timeline interfaces
+export interface RevenueTimelineData {
+  total_revenue: number;
+  period_revenue: number;
+  growth_rate: number;
+  average_bill_amount: number;
+  bill_count: number;
+  revenue_by_period: {
+    period: string;
+    amount: number;
+  }[];
+}
+
+export interface TimelineMetric {
+  period: string;
+  value: number;
+  displayValue: string;
+  percentage: number;
+  trend: number;
+  status: 'success' | 'warning' | 'urgent';
 }

@@ -4,10 +4,10 @@
     <button 
       *ngFor="let view of views" 
       (click)="setView(view.value)"
-      [class.bg-primary]="getCurrentViewSignal()() === view.value"
-      [class.text-white]="getCurrentViewSignal()() === view.value"
-      [class.bg-hover]="getCurrentViewSignal()() !== view.value"
-      [class.text-text]="getCurrentViewSignal()() !== view.value"
+      [class.bg-primary]="currentView() === view.value"
+      [class.text-white]="currentView() === view.value"
+      [class.bg-hover]="currentView() !== view.value"
+      [class.text-text]="currentView() !== view.value"
       class="px-3 py-1.5 rounded-button text-sm font-medium transition-colors"
       [attr.aria-label]="'Switch to ' + view.label + ' view'"
     >

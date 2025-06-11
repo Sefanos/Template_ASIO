@@ -78,7 +78,7 @@ export class TabAppointmentsComponent implements OnChanges {
       const query = this.searchQuery.toLowerCase();
       result = result.filter(appt => 
         appt.reason.toLowerCase().includes(query) ||
-        appt.doctorName.toLowerCase().includes(query) ||
+        appt.provider.toLowerCase().includes(query) ||
         appt.type.toLowerCase().includes(query)
       );
     }

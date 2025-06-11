@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { Role } from '../../../models/role.model';
 import { PaginatedRolesResponse, RoleService } from '../../../services/admin-service/role.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-roles',
@@ -34,7 +35,8 @@ export class RolesComponent implements OnInit {
   
   constructor(
     private roleService: RoleService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
   
   ngOnInit(): void {
@@ -195,7 +197,7 @@ export class RolesComponent implements OnInit {
     if (this.roleToDelete) {
       // Check if it's a protected role
       if (this.roleService.isProtectedRole(this.roleToDelete.code)) {
-        alert('System roles cannot be deleted.');
+        this.toastService.warning('System roles cannot be deleted.');
         this.cancelDelete();
         return;
       }
@@ -212,9 +214,9 @@ export class RolesComponent implements OnInit {
           
           // Handle 403 error for protected roles
           if (error.status === 403) {
-            alert('This role cannot be deleted. It may be a system role or in use by users.');
+            this.toastService.error('This role cannot be deleted. It may be a system role or in use by users.');
           } else {
-            alert('Failed to delete role. Please try again.');
+            this.toastService.error('Failed to delete role. Please try again.');
           }
           
           this.cancelDelete();

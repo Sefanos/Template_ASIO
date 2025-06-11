@@ -2,10 +2,10 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { SafeHtmlPipe } from './safe-html.pipe'; // Import du pipe
-
+import { SafeHtmlPipe } from './safe-html.pipe';
 import { ThemeService } from '../../../services/theme.service';
-import { AuthService } from '../../../core/auth/auth.service'; // Assurez-vous que le chemin est correc
+import { AuthService } from '../../../core/auth/auth.service';
+
 
 // Animation fade pour les menus et modales
 const fadeAnimation = trigger('fadeAnimation', [
@@ -26,21 +26,20 @@ const fadeAnimation = trigger('fadeAnimation', [
   imports: [
     RouterModule,
     CommonModule,
-    SafeHtmlPipe // Ajout du pipe aux imports
+    SafeHtmlPipe
   ],
   animations: [
     fadeAnimation
   ]
 })
 export class LayoutComponent implements OnInit {
-  // Le reste de votre code reste inchangé...
-  
   showLogoutModal = false;
   isSidebarCollapsed = false;
   showUserMenu = false;
-  showNotifications = false;  isDarkMode = false;
+  showNotifications = false;
+  isDarkMode = false;
   notificationCount = 3;
-  showHelpModal = false; // Propriété pour contrôler l'affichage de la modale d'aide
+  showHelpModal = false;
 
   // Données utilisateur
   userName = 'Omar Bennani';
@@ -58,7 +57,6 @@ export class LayoutComponent implements OnInit {
     { route: 'reminders', label: 'Rappels', icon: 'reminders', count: 1 },
     { route: 'profile', label: 'Profil', icon: 'profile', count: 0 }
   ];
-
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -71,7 +69,6 @@ export class LayoutComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Check viewport size for sidebar default state
     this.checkScreenSize();
   }
 
@@ -80,7 +77,6 @@ export class LayoutComponent implements OnInit {
     this.isSidebarCollapsed = window.innerWidth < 1024;
   }
 
-  // Méthode pour vérifier si la route est active
   isActive(route: string): boolean {
     return this.router.url.endsWith('/' + route) || this.router.url === '/' + route;
   }
@@ -92,50 +88,44 @@ export class LayoutComponent implements OnInit {
   toggleUserMenu(): void {
     this.showUserMenu = !this.showUserMenu;
     if (this.showUserMenu) {
-      this.showNotifications = false; // Close notifications if open
+      this.showNotifications = false;
     }
   }
 
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
     if (this.showNotifications) {
-      this.showUserMenu = false; // Close user menu if open
+      this.showUserMenu = false;
     }
   }
-  // Méthode pour basculer le mode sombre via le service
+
   toggleDarkMode(): void {
     this.themeService.toggleDarkMode();
   }
 
-  // Ouvre la modale de déconnexion
   openLogoutModal(): void {
     this.showLogoutModal = true;
     this.showUserMenu = false;
   }
 
-  // Ferme la modale de déconnexion
   closeLogoutModal(): void {
     this.showLogoutModal = false;
   }
 
-  // Confirme la déconnexion
   logout(): void {
-
     this.authService.logout();
     this.showLogoutModal = false;
-    // Logique de déconnexion (vider le token, etc.)
     this.router.navigate(['/login']);
   }
 
-  // Ouvre la modale d'aide
   openHelpModal(): void {
     this.showHelpModal = true;
-  }  // Ferme la modale d'aide
+  }
+
   closeHelpModal(): void {
     this.showHelpModal = false;
   }
 
-  // Obtenir l'icône SVG basée sur le nom
   getIcon(iconName: string): string {
     switch (iconName) {
       case 'dashboard':

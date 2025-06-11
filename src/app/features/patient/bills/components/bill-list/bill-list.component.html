@@ -1,15 +1,17 @@
+ 
 <div class="bg-card shadow-card rounded-card p-card-padding font-sans">
   <!-- Section des Filtres -->
   <div class="mb-card-margin p-card-padding border border-border rounded-card bg-background">
     <h3 class="text-section-header text-text mb-5">Filtrer les Factures</h3>
     <form (ngSubmit)="applyFilters()" #filterForm="ngForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-end">
-      <div>
+      <!-- Statut Filter Removed -->
+      <!-- <div>
         <label for="statusFilterList" class="block text-sm font-medium text-text-light mb-1.5">Statut</label>
         <select id="statusFilterList" name="statusFilterList" [(ngModel)]="filters.status" class="mt-1 block w-full py-2.5 px-3.5 border border-border bg-card rounded-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-text">
           <option value="">Tous</option>
           <option *ngFor="let statusOpt of statusOptions" [value]="statusOpt">{{ statusOpt | titlecase }}</option>
         </select>
-      </div>
+      </div> -->
       <div>
         <label for="dateFromFilterList" class="block text-sm font-medium text-text-light mb-1.5">Date d'émission (De)</label>
         <input type="date" id="dateFromFilterList" name="dateFromFilterList" [(ngModel)]="filters.date_from" class="mt-1 block w-full py-2.5 px-3.5 border border-border bg-card rounded-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-text">
@@ -18,7 +20,7 @@
         <label for="dateToFilterList" class="block text-sm font-medium text-text-light mb-1.5">Date d'émission (À)</label>
         <input type="date" id="dateToFilterList" name="dateToFilterList" [(ngModel)]="filters.date_to" class="mt-1 block w-full py-2.5 px-3.5 border border-border bg-card rounded-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-text">
       </div>
-      <div class="md:col-span-2 lg:col-span-1 flex space-x-3 mt-4 md:mt-0 lg:self-end">
+      <div class="md:col-span-1 lg:col-span-1 flex space-x-3 mt-4 md:mt-0 lg:self-end md:col-start-2 lg:col-start-3">
         <button type="submit" class="flex-1 inline-flex items-center justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-button text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-150">
           <span class="material-icons-outlined text-lg mr-2">filter_list</span>Appliquer
         </button>
@@ -60,11 +62,12 @@
         <tr *ngFor="let bill of billsResponse.data; trackBy: trackByBillId"
             [ngClass]="{'bg-primary/5 dark:bg-primary/10': bill.id === currentSelectedBillId }"
             class="hover:bg-hover dark:hover:bg-gray-700/30 transition-colors duration-150 cursor-pointer" (click)="viewBillDetails(bill)">
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text font-medium">#{{ bill.id }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text font-medium">{{ bill.bill_number }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.issue_date | date:'dd/MM/yyyy' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.doctor_name || 'N/A' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.doctor?.name || 'N/A' }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-text text-right font-medium">{{ bill.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm">
+          <!-- Status Column Removed -->
+          <!-- <td class="px-6 py-4 whitespace-nowrap text-sm">
             <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
                   [ngClass]="{
                     'bg-status-success/20 text-status-success': bill.status === 'paid',
@@ -74,17 +77,18 @@
                   }">
               {{ bill.status | titlecase }}
             </span>
-          </td>
+          </td> -->
           <td class="px-6 py-4 whitespace-nowrap text-sm text-center space-x-1">
             <button (click)="viewBillDetails(bill); $event.stopPropagation()" title="Voir détails" class="text-primary hover:text-primary-dark p-1.5 rounded-full hover:bg-primary/10 focus:outline-none transition-colors duration-150">
               <span class="material-icons-outlined text-xl">visibility</span>
             </button>
-            <button *ngIf="bill.pdf_link" (click)="downloadBillPdf(bill, $event); $event.stopPropagation()" title="Télécharger PDF" class="text-accent hover:text-accent-dark p-1.5 rounded-full hover:bg-accent/10 focus:outline-none transition-colors duration-150">
-              <span class="material-icons-outlined text-xl">download</span>
-            </button>
-            <span *ngIf="!bill.pdf_link" class="text-text-muted p-1.5 inline-block align-middle" title="PDF non disponible">
-                <span class="material-icons-outlined text-xl">file_download_off</span>
-            </span>
+
+                 <button *ngIf="bill.id" (click)="downloadBillPdf(bill, $event); $event.stopPropagation()" title="Télécharger Reçu" class="text-accent hover:text-accent-dark p-1.5 rounded-full hover:bg-accent/10 focus:outline-none transition-colors duration-150">
+            <span class="material-icons-outlined text-xl">download</span>
+          </button>
+            <!-- <span *ngIf="bill.pdf_path === null" class="text-text-muted p-1.5 inline-block align-middle" title="PDF non disponible"> -->
+                <!-- <span class="material-icons-outlined text-xl">file_download_off</span>
+            </span> -->
           </td>
         </tr>
       </tbody>
@@ -101,7 +105,8 @@
     <div>
       <p class="text-sm text-text-light">
         Page <span class="font-medium text-text">{{ billsResponse.current_page }}</span> sur <span class="font-medium text-text">{{ billsResponse.last_page }}</span>
-        <span class="hidden sm:inline"> - Affichage de {{ billsResponse.from }}-{{ billsResponse.to }} sur {{ billsResponse.total }}</span>
+        <span *ngIf="billsResponse.from && billsResponse.to" class="hidden sm:inline"> - Affichage de {{ billsResponse.from }}-{{ billsResponse.to }} sur {{ billsResponse.total }}</span>
+        <span *ngIf="!billsResponse.from || !billsResponse.to" class="hidden sm:inline"> - Total de {{ billsResponse.total }}</span>
       </p>
     </div>
     <nav class="relative z-0 inline-flex rounded-button shadow-sm -space-x-px" aria-label="Pagination">

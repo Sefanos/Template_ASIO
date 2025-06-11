@@ -66,7 +66,7 @@
           <!-- Appointment details -->
           <div>
             <div class="font-medium mb-1">{{ appointment.reason }}</div>
-            <div class="text-sm text-text-light">{{ appointment.type }} with {{ appointment.doctorName }}</div>
+            <div class="text-sm text-text-light">{{ appointment.type }} with {{ appointment.provider }}</div>
             <div *ngIf="appointment.notes" class="text-sm text-text mt-1">{{ appointment.notes }}</div>
           </div>
         </div>

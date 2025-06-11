@@ -4,7 +4,6 @@ import { delay } from 'rxjs/operators';
 import { Patient } from '../../models/patient.model';
 import { Note } from '../../models/note.model';
 import { Prescription } from '../../models/prescription.model';
-import { AppointmentStatus } from '../../models/appointment.model';
 
 @Injectable({
   providedIn: 'root'
@@ -102,63 +101,43 @@ export class PatientService {
       ],
       appointments: [
         {
-          date: '2025-05-07', reason: 'Annual checkup', status: AppointmentStatus.Completed,
+          date: '2025-05-07', reason: 'Annual checkup', status: 'completed',
           id: 1,
           time: '10:00 AM',
           type: 'Routine',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Sefanos'
         },
         {
           date: '2025-03-18', reason: 'Follow-up',
-          status: AppointmentStatus.Confirmed,
+          status: 'scheduled',
           id: 2,
           time: '02:30 PM',
           type: 'Follow-up',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Sefanos'
         },
         {
           date: '2025-01-05', reason: 'Urgent care',
-          status: AppointmentStatus.Pending,
+          status: 'completed',
           id: 3,
           time: '09:15 AM',
           type: 'Urgent',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Sefanos'
         },
         {
           date: '2024-12-01', reason: 'Consultation',
-          status: AppointmentStatus.Pending,
+          status: 'completed',
           id: 4,
           time: '11:00 AM',
           type: 'Consultation',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Sefanos'
         },
         {
           date: '2024-11-15', reason: 'Physical Exam',
-          status: AppointmentStatus.Completed,
+          status: 'completed',
           id: 5,
           time: '03:00 PM',
           type: 'Routine',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Sefanos'
         }
       ],
       timelineEvents: [
@@ -224,27 +203,19 @@ export class PatientService {
       appointments: [
         {
           date: '2025-05-02', reason: 'Follow-up',
-          status: AppointmentStatus.Completed,
+          status: 'completed',
           id: 6,
           time: '10:00 AM',
           type: 'Follow-up',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Davis'
         },
         {
           date: '2025-02-12', reason: 'Allergy consultation',
-          status: AppointmentStatus.Confirmed,
+          status: 'completed',
           id: 7,
           time: '11:30 AM',
           type: 'Consultation',
-          patientId: 0,
-          patientName: '',
-          doctorId: 0,
-          doctorName: '',
-          duration: 0
+          provider: 'Dr. Miller'
         }
       ],
       notes: [ // Added sample notes for Marie Laurent
@@ -381,13 +352,8 @@ export class PatientService {
         time, // Added time
         reason,
         type, // Added type
-        status: AppointmentStatus.Confirmed // New appointments are scheduled
-        ,
-        patientId: 0,
-        patientName: '',
-        doctorId: 0,
-        doctorName: '',
-        duration: 0
+        provider, // Added provider
+        status: 'scheduled' // New appointments are scheduled
       });
       return of(true).pipe(delay(300));
     }

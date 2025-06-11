@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/cor
 import { MedicalHistoryService } from '../../../core/patient/services/medical-history.service';
 import { PrescriptionService } from '../../../core/patient/services/prescription-service.service';
 import { LabResultService } from '../../../core/patient/services/lab-result-service.service';
+import { ToastService } from '../../../shared/services/toast.service';
  
 export interface MedicalRecordItem {
   id: string;
@@ -91,7 +92,8 @@ export class MedicalRecordComponent implements OnInit{
     private medicalHistoryService: MedicalHistoryService,
     private prescriptionService: PrescriptionService, // Injection de PrescriptionService
     private labResultService: LabResultService, // Inject LabResultService
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastService: ToastService
   ) { }
   
  
@@ -392,13 +394,13 @@ export class MedicalRecordComponent implements OnInit{
   exportRecords(): void {
     // Logique d'exportation à implémenter (par exemple, tous les filteredRecords)
     console.log('Exporting records...', this.filteredRecords);
-    alert('Exporting records functionality to be implemented.');
+    this.toastService.info('Exporting records functionality to be implemented.');
   }
 
   requestRecords(): void {
     // Logique de demande de dossiers à implémenter
     console.log('Requesting new records...');
-    alert('Requesting records functionality to be implemented.');
+    this.toastService.info('Requesting records functionality to be implemented.');
   }
 
   getRecordIconClass(type: MedicalRecordItem['type']): string {

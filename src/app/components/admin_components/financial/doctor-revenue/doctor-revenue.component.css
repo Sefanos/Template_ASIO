@@ -1,0 +1,12 @@
+.cursor-pointer {
+  cursor: pointer;
+}
+
+th.cursor-pointer:hover {
+  background-color: #f3f4f6;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

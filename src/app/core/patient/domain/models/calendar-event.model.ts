@@ -15,6 +15,8 @@ export interface MyCalendarEvent {
       resourceId?: string; // Pour lier à une légende/ressource
       patientEmail?: string;
       patientPhone?: string;
+      doctorName?: string;
+      doctorSpecialty?: string;
     };
   }
  

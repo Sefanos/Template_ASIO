@@ -1,1 +1,398 @@
-<p>reminders works!</p>
+<!-- Patient Notifications & Reminders Component -->
+<div class="max-w-4xl mx-auto p-4 space-y-6">
+  
+  <!-- Header Section -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Notifications & Reminders</h1>
+      <div class="flex items-center space-x-3">
+        <!-- Unread Badge -->
+        <div *ngIf="unreadCount > 0" class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+          {{ unreadCount }} New
+        </div>
+        <!-- Refresh Button -->
+        <button 
+          (click)="refresh()" 
+          class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Refresh">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8">
+        <button 
+          (click)="switchTab('notifications')"
+          [class]="selectedTab === 'notifications' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+          Notifications
+          <span *ngIf="unreadCount > 0" class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">
+            {{ unreadCount }}
+          </span>
+        </button>
+        <button 
+          (click)="switchTab('reminders')"
+          [class]="selectedTab === 'reminders' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+          Upcoming Reminders
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Notifications Tab -->
+  <div *ngIf="selectedTab === 'notifications'" class="space-y-4">
+    
+    <!-- Action Buttons -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900">Your Notifications</h3>
+        <div class="flex space-x-2">
+          <button 
+            *ngIf="unreadCount > 0"
+            (click)="markAllAsRead()"
+            class="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md text-sm font-medium transition-colors">
+            Mark All Read
+          </button>
+          <button 
+            (click)="clearReadNotifications()"
+            class="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-md text-sm font-medium transition-colors">
+            Clear Read
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p class="text-gray-500">Loading notifications...</p>
+    </div>
+
+    <!-- Notifications List -->
+    <div *ngIf="!isLoading && notifications.length > 0" class="space-y-3">
+      <div 
+        *ngFor="let notification of notifications" 
+        [class]="isUnread(notification) ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'bg-white'"
+        class="rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        
+        <div class="flex items-start justify-between">
+          <div class="flex items-start space-x-3 flex-1 min-w-0">
+            <!-- Notification Icon -->
+            <div [class]="getNotificationColorClass(notification)" class="mt-1 flex-shrink-0">
+              <svg *ngIf="getNotificationIcon(notification) === 'bell'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zm-10 0H0l5 5v-5z"></path>
+              </svg>
+              <svg *ngIf="getNotificationIcon(notification) === 'calendar'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <svg *ngIf="getNotificationIcon(notification) === 'alert-triangle'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.992-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <svg *ngIf="getNotificationIcon(notification) === 'pill'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+            </div>
+
+            <!-- Notification Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-1">
+                <h4 class="text-sm font-medium text-gray-900 truncate pr-2">
+                  {{ notification.title }}
+                </h4>
+                <span *ngIf="isUnread(notification)" class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full"></span>
+              </div>
+              <p class="text-sm text-gray-600 mt-1 mb-2">{{ notification.message }}</p>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-400">{{ getTimeAgo(notification.created_at) }}</span>
+                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
+                  {{ notification.type | titlecase }}
+                </span>
+              </div>
+              
+              <!-- Quick Action for Mobile/Unread - Show Mark as Read prominently for unread notifications -->
+              <div *ngIf="isUnread(notification)" class="mt-3 sm:hidden">
+                <button 
+                  (click)="markAsRead(notification.id)"
+                  [disabled]="isMarkingAsRead(notification.id)"
+                  class="w-full px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-2">
+                  <!-- Loading Spinner -->
+                  <div *ngIf="isMarkingAsRead(notification.id)" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <!-- Check Icon -->
+                  <svg *ngIf="!isMarkingAsRead(notification.id)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span>{{ isMarkingAsRead(notification.id) ? 'Marking...' : 'Mark as Read' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons - Desktop -->
+          <div class="hidden sm:flex items-center space-x-2 ml-4 flex-shrink-0">
+            <!-- Mark as Read Button - More Prominent -->
+            <button 
+              *ngIf="isUnread(notification)"
+              (click)="markAsRead(notification.id)"
+              [disabled]="isMarkingAsRead(notification.id)"
+              class="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 disabled:cursor-not-allowed rounded-md text-xs font-medium transition-colors duration-200 flex items-center space-x-1"
+              title="Mark as read">
+              <!-- Loading Spinner -->
+              <div *ngIf="isMarkingAsRead(notification.id)" class="animate-spin rounded-full h-3 w-3 border-2 border-blue-400 border-t-transparent"></div>
+              <!-- Check Icon -->
+              <svg *ngIf="!isMarkingAsRead(notification.id)" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>{{ isMarkingAsRead(notification.id) ? 'Marking...' : 'Mark Read' }}</span>
+            </button>
+            <!-- Delete Button - Styled to Match -->
+            <button 
+              (click)="deleteNotification(notification.id)"
+              class="px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 rounded-md text-xs font-medium transition-colors duration-200 flex items-center space-x-1"
+              title="Delete notification">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              <span>Delete</span>
+            </button>
+          </div>
+
+          <!-- Mobile Action Menu -->
+          <div class="sm:hidden">
+            <button 
+              (click)="deleteNotification(notification.id)"
+              class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+              title="Delete notification">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && notifications.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zm-10 0H0l5 5v-5z"></path>
+      </svg>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
+      <p class="text-gray-500">When you receive notifications, they'll appear here.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div class="flex items-center justify-between">
+        <button 
+          (click)="previousPage()" 
+          [disabled]="currentPage === 1"
+          class="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-colors">
+          Previous
+        </button>
+        <span class="text-sm text-gray-600">
+          Page {{ currentPage }} of {{ totalPages }}
+        </span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages"
+          class="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm font-medium transition-colors">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Reminders Tab -->
+  <div *ngIf="selectedTab === 'reminders'" class="space-y-4">
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoadingReminders" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p class="text-gray-500">Loading upcoming reminders...</p>
+    </div>
+
+    <!-- Upcoming Reminders List -->
+    <div *ngIf="!isLoadingReminders && upcomingReminders.length > 0" class="space-y-3">
+      <div 
+        *ngFor="let reminder of upcomingReminders" 
+        [class]="isReminderDueSoon(reminder.scheduled_for) ? 'bg-yellow-50 border-l-4 border-l-yellow-500' : 'bg-white'"
+        class="rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        
+        <div class="flex items-start justify-between">
+          <div class="flex items-start space-x-3 flex-1">
+            <!-- Reminder Icon -->
+            <div [class]="getReminderColorClass(reminder.reminder_type)" class="mt-1">
+              <svg *ngIf="getReminderIcon(reminder.reminder_type) === 'calendar'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <svg *ngIf="getReminderIcon(reminder.reminder_type) === 'pill'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+              <svg *ngIf="getReminderIcon(reminder.reminder_type) === 'user-check'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <svg *ngIf="getReminderIcon(reminder.reminder_type) === 'flask'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+              </svg>
+              <svg *ngIf="getReminderIcon(reminder.reminder_type) === 'credit-card'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+              </svg>
+              <svg *ngIf="getReminderIcon(reminder.reminder_type) === 'bell'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zm-10 0H0l5 5v-5z"></path>
+              </svg>
+            </div>
+
+            <!-- Reminder Content -->
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-medium text-gray-900">{{ reminder.reminder_type.replace('_', ' ') | titlecase }}</h4>
+                <div class="flex items-center space-x-2">
+                  <span *ngIf="isReminderDueSoon(reminder.scheduled_for)" class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                    Due Soon
+                  </span>
+                  <span class="text-xs text-gray-500">{{ reminder.time_until }}</span>
+                </div>
+              </div>
+              
+              <p class="text-sm text-gray-600 mb-3">{{ reminder.message }}</p>
+              
+              <!-- Appointment Details -->
+              <div *ngIf="reminder.appointment" class="bg-gray-50 rounded-lg p-3 space-y-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span class="font-medium text-gray-700">Date:</span>
+                    <span class="ml-2 text-gray-600">{{ reminder.appointment.date | date:'mediumDate' }}</span>
+                  </div>
+                  <div>
+                    <span class="font-medium text-gray-700">Time:</span>
+                    <span class="ml-2 text-gray-600">{{ reminder.appointment.time }}</span>
+                  </div>
+                  <div>
+                    <span class="font-medium text-gray-700">Type:</span>
+                    <span class="ml-2 text-gray-600">{{ reminder.appointment.type | titlecase }}</span>
+                  </div>
+                  <div>
+                    <span class="font-medium text-gray-700">Status:</span>
+                    <span class="ml-2 text-gray-600">{{ reminder.appointment.status | titlecase }}</span>
+                  </div>
+                  <div *ngIf="reminder.appointment.doctor" class="md:col-span-2">
+                    <span class="font-medium text-gray-700">Doctor:</span>
+                    <span class="ml-2 text-gray-600">
+                      Dr. {{ reminder.appointment.doctor.first_name }} {{ reminder.appointment.doctor.last_name }}
+                      <span *ngIf="reminder.appointment.doctor.specialization" class="text-gray-500">
+                        ({{ reminder.appointment.doctor.specialization }})
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Reminder Schedule Info -->
+              <div class="mt-3 flex items-center justify-between">
+                <span class="text-xs text-gray-500">
+                  Scheduled for: {{ formatReminderDate(reminder.scheduled_for) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingReminders && upcomingReminders.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+      <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No Upcoming Reminders</h3>
+      <p class="text-gray-500 mb-4">You don't have any upcoming reminders at the moment.</p>
+      <p class="text-sm text-gray-400">Reminders for appointments and medications will appear here when scheduled.</p>
+    </div>
+
+    <!-- Pagination for Reminders -->
+    <div *ngIf="!isLoadingReminders && upcomingReminders.length > 0 && reminderTotalPages > 1" class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-700">
+          Page {{ reminderCurrentPage }} of {{ reminderTotalPages }}
+        </p>
+        <div class="flex space-x-2">
+          <button 
+            (click)="previousPage()"
+            [disabled]="reminderCurrentPage <= 1"
+            class="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm transition-colors">
+            Previous
+          </button>
+          <button 
+            (click)="nextPage()"
+            [disabled]="reminderCurrentPage >= reminderTotalPages"
+            class="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm transition-colors">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div *ngIf="showConfirmModal" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+  <!-- Background overlay -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" (click)="closeConfirmModal()"></div>
+  
+  <!-- Modal container -->
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+    
+    <!-- Modal content -->
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-in slide-in-from-bottom-4 fade-in-0 duration-300">
+      <!-- Modal header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <!-- Warning icon -->
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.992-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          
+          <!-- Modal text -->
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+              {{ confirmTitle }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                {{ confirmMessage }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal actions -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <!-- Confirm button -->
+        <button 
+          type="button" 
+          (click)="handleConfirmAction()"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+          {{ confirmAction === 'delete' ? 'Delete' : 'Clear All' }}
+        </button>
+        
+        <!-- Cancel button -->
+        <button 
+          type="button" 
+          (click)="closeConfirmModal()"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

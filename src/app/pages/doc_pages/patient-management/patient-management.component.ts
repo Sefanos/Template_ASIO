@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { AppointmentStatus } from '../../../models/appointment.model';
 import { PatientService } from '../../../shared/services/patient.service';
 import { PatientSearchFilterComponent } from '../../../components/doc_components/patient-management/patient-search-filter/patient-search-filter.component';
 import { PatientListTableComponent, PatientTableRow } from '../../../components/doc_components/patient-management/patient-list-table/patient-list-table.component';
@@ -60,61 +59,60 @@ export class PatientManagementComponent implements OnInit {
   /**
    * Maps a Patient object to a simplified PatientTableRow for display in the table
    */
- private mapPatientToTableRow(patient: Patient): PatientTableRow {
-  // Determine the last visit date from appointments
-  let lastVisit = 'No visits';
-  let status = 'Active'; // Default status
-  
-  if (patient.appointments && patient.appointments.length > 0) {
-    // Sort appointments by date (most recent first)
-    const sortedAppointments = [...patient.appointments].sort((a, b) => {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
+  private mapPatientToTableRow(patient: Patient): PatientTableRow {
+    // Determine the last visit date from appointments
+    let lastVisit = 'No visits';
+    let status = 'Active'; // Default status
     
-    // Get the most recent appointment
-    const mostRecentAppointment = sortedAppointments[0];
-    
-    // Determine the "days ago" text for the last visit
-    const mostRecentDate = new Date(mostRecentAppointment.date);
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - mostRecentDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      lastVisit = 'Today';
-    } else if (diffDays === 1) {
-      lastVisit = 'Yesterday';
-    } else if (diffDays < 7) {
-      lastVisit = `${diffDays} days ago`;
-    } else if (diffDays < 30) {
-      lastVisit = `${Math.floor(diffDays / 7)} weeks ago`;
-    } else {
-      lastVisit = `${Math.floor(diffDays / 30)} months ago`;
+    if (patient.appointments && patient.appointments.length > 0) {
+      // Sort appointments by date (most recent first)
+      const sortedAppointments = [...patient.appointments].sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      
+      // Get the most recent appointment
+      const mostRecentAppointment = sortedAppointments[0];
+      
+      // Determine the "days ago" text for the last visit
+      const mostRecentDate = new Date(mostRecentAppointment.date);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - mostRecentDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        lastVisit = 'Today';
+      } else if (diffDays === 1) {
+        lastVisit = 'Yesterday';
+      } else if (diffDays < 7) {
+        lastVisit = `${diffDays} days ago`;
+      } else if (diffDays < 30) {
+        lastVisit = `${Math.floor(diffDays / 7)} weeks ago`;
+      } else {
+        lastVisit = `${Math.floor(diffDays / 30)} months ago`;
+      }
+      
+      // Set the status based on the most recent appointment status
+      if (mostRecentAppointment.status === 'scheduled') {
+        status = 'Follow up';
+      } else if (mostRecentAppointment.status === 'no-show') {
+        status = 'Missed Appointment';
+      }
     }
     
-    // FIXED: Use the actual enum values
-    if (mostRecentAppointment.status === AppointmentStatus.Confirmed || 
-        mostRecentAppointment.status === AppointmentStatus.Pending) {
-      status = 'Follow up';
-    } else if (mostRecentAppointment.status === AppointmentStatus.NoShow) {
-      status = 'Missed Appointment';
+    // Override status if there are other important conditions
+    if (patient.conditions && patient.conditions.some(c => c.severity === 'severe')) {
+      status = 'Critical';
+    } else if (patient.labResults && patient.labResults.some(lr => lr.status === 'abnormal')) {
+      status = 'Lab Results';
     }
+    
+    return {
+      id: patient.id,
+      name: patient.name,
+      lastVisit: lastVisit,
+      status: status
+    };
   }
-  
-  // Override status if there are other important conditions
-  if (patient.conditions && patient.conditions.some(c => c.severity === 'severe')) {
-    status = 'Critical';
-  } else if (patient.labResults && patient.labResults.some(lr => lr.status === 'abnormal')) {
-    status = 'Lab Results';
-  }
-  
-  return {
-    id: patient.id,
-    name: patient.name,
-    lastVisit: lastVisit,
-    status: status
-  };
-}
   
   get filteredPatients(): PatientTableRow[] {
     let result = this.patients;

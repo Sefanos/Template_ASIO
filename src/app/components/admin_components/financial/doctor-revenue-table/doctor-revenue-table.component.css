@@ -1,0 +1,8 @@
+.cursor-pointer {
+    cursor: pointer;
+  }
+  
+  /* Smooth hover transitions */
+  tr.hover\:bg-hover {
+    transition: background-color 0.15s ease-in-out;
+  }

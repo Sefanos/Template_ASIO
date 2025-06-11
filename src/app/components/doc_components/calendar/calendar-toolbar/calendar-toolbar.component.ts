@@ -1,11 +1,6 @@
-import { Component, inject, OnInit, Input, signal, effect } from '@angular/core';
+import { Component, inject, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CalendarContainerComponent } from '../calendar-container/calendar-container.component';
-
-interface ViewOption {
-  value: string;
-  label: string;
-}
+import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
 
 @Component({
   selector: 'app-calendar-toolbar',
@@ -14,194 +9,99 @@ interface ViewOption {
   templateUrl: './calendar-toolbar.component.html',
   styleUrls: ['./calendar-toolbar.component.css']
 })
-export class CalendarToolbarComponent implements OnInit {
-  @Input() currentView: string = 'timeGridWeek';
-  @Input() currentDate: Date = new Date();
+export class CalendarToolbarComponent {
+  private calendarService = inject(CalendarService);
   
-  private calendarContainer = inject(CalendarContainerComponent, { optional: true });
+  // Get reactive state from service
+  currentView = this.calendarService.currentView;
+  currentDate = this.calendarService.currentDate;
   
-  // Reactive state
-  private _currentView = signal<string>('timeGridWeek');
-  private _currentDate = signal<Date>(new Date());
-  
-  // Available views
-  views: ViewOption[] = [
-    { value: 'dayGridMonth', label: 'Month' },
-    { value: 'timeGridWeek', label: 'Week' },
-    { value: 'timeGridDay', label: 'Day' }
+  // Event emitter to notify parent component to open the new appointment modal
+  @Output() createAppointment = new EventEmitter<void>();
+    // View options (Resources view temporarily disabled until resource plugin is re-enabled)
+  views = [
+    { label: 'Month', value: 'dayGridMonth' },
+    { label: 'Week', value: 'timeGridWeek' },
+    { label: 'Day', value: 'timeGridDay' },
+    // { label: 'Resources', value: 'resourceTimeGridDay' }, // Temporarily disabled
+    { label: 'List', value: 'listWeek' }
   ];
   
-  constructor() {
-    // Set up effects to watch for changes from container - MOVED TO CONSTRUCTOR
-    if (this.calendarContainer) {
-      effect(() => {
-        const view = this.calendarContainer!.getCurrentView();
-        this._currentView.set(view);
-      });
-      
-      effect(() => {
-        const date = this.calendarContainer!.getCurrentDate();
-        this._currentDate.set(date);
-      });
-    }
-  }
-  
-  ngOnInit(): void {
-    // Initialize with current state from container
-    if (this.calendarContainer) {
-      this._currentView.set(this.calendarContainer.getCurrentView());
-      this._currentDate.set(this.calendarContainer.getCurrentDate());
-    } else {
-      // Fallback to input values
-      this._currentView.set(this.currentView);
-      this._currentDate.set(this.currentDate);
-    }
-  }
-  
-  // Get current view as signal
-  getCurrentViewSignal() {
-    return this._currentView;
-  }
-  
-  // Get current date as signal
-  getCurrentDateSignal() {
-    return this._currentDate;
-  }
-  
-  // Navigation methods
-  today(): void {
-    const todayDate = new Date();
-    this._currentDate.set(todayDate);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentDate(todayDate);
-    }
-  }
-  
-  prev(): void {
-    const prevDate = this.getPreviousDate();
-    this._currentDate.set(prevDate);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentDate(prevDate);
-    }
-  }
-  
-  next(): void {
-    const nextDate = this.getNextDate();
-    this._currentDate.set(nextDate);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentDate(nextDate);
-    }
-  }
-  
-  // View change method
+  // Set calendar view
   setView(view: string): void {
-    this._currentView.set(view);
-    if (this.calendarContainer) {
-      this.calendarContainer.setCurrentView(view);
-    }
+    this.calendarService.setCurrentView(view);
   }
   
-  // New appointment button
+  // Navigate to today
+  today(): void {
+    this.calendarService.setCurrentDate(new Date());
+  }
+  
+  // Create new appointment
   createNewAppointment(): void {
-    if (this.calendarContainer) {
-      this.calendarContainer.createNewAppointment();
-    }
+    this.createAppointment.emit();
   }
   
-  // Format current date for display
-  formatDate(): string {
-    const date = this._currentDate();
-    const view = this._currentView();
-    
-    switch (view) {
-      case 'dayGridMonth':
-        return date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long'
-        });
-      case 'timeGridWeek':
-        // Show week range
-        const weekStart = this.getWeekStart(date);
-        const weekEnd = this.getWeekEnd(date);
-        
-        if (weekStart.getMonth() === weekEnd.getMonth()) {
-          return `${weekStart.toLocaleDateString('en-US', { month: 'long' })} ${weekStart.getDate()}-${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
-        } else {
-          return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${weekStart.getFullYear()}`;
-        }
-      case 'timeGridDay':
-        return date.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-      default:
-        return date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-    }
-  }
-  
-  // Get today formatted for the today button
+  // Format today's date for the button (May 12)
   getTodayFormatted(): string {
     const today = new Date();
-    return today.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    return today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
   
-  // Helper methods for date navigation
-  private getPreviousDate(): Date {
-    const date = new Date(this._currentDate());
-    const view = this._currentView();
+  // Navigate to previous period
+  prev(): void {
+    const date = new Date(this.currentDate());
+    const view = this.currentView();
     
-    switch (view) {
-      case 'dayGridMonth':
-        date.setMonth(date.getMonth() - 1);
-        break;
-      case 'timeGridWeek':
-        date.setDate(date.getDate() - 7);
-        break;
-      case 'timeGridDay':
-        date.setDate(date.getDate() - 1);
-        break;
+    if (view === 'dayGridMonth') {
+      date.setMonth(date.getMonth() - 1);
+    } else if (view === 'timeGridWeek' || view === 'listWeek') {
+      date.setDate(date.getDate() - 7);
+    } else if (view === 'timeGridDay') {
+      date.setDate(date.getDate() - 1);
     }
-    return date;
-  }
-  
-  private getNextDate(): Date {
-    const date = new Date(this._currentDate());
-    const view = this._currentView();
     
-    switch (view) {
-      case 'dayGridMonth':
-        date.setMonth(date.getMonth() + 1);
-        break;
-      case 'timeGridWeek':
-        date.setDate(date.getDate() + 7);
-        break;
-      case 'timeGridDay':
-        date.setDate(date.getDate() + 1);
-        break;
+    this.calendarService.setCurrentDate(date);
+  }
+  
+  // Navigate to next period
+  next(): void {
+    const date = new Date(this.currentDate());
+    const view = this.currentView();
+    
+    if (view === 'dayGridMonth') {
+      date.setMonth(date.getMonth() + 1);
+    } else if (view === 'timeGridWeek' || view === 'listWeek') {
+      date.setDate(date.getDate() + 7);
+    } else if (view === 'timeGridDay') {
+      date.setDate(date.getDate() + 1);
     }
-    return date;
+    
+    this.calendarService.setCurrentDate(date);
   }
   
-  private getWeekStart(date: Date): Date {
-    const start = new Date(date);
-    const day = start.getDay();
-    const diff = start.getDate() - day;
-    start.setDate(diff);
-    return start;
-  }
-  
-  private getWeekEnd(date: Date): Date {
-    const end = this.getWeekStart(date);
-    end.setDate(end.getDate() + 6);
-    return end;
+  // Format date heading based on current view
+  formatDate(): string {
+    const date = this.currentDate();
+    const view = this.currentView();
+    
+    if (view === 'dayGridMonth') {
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } else if (view === 'timeGridWeek' || view === 'listWeek') {
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 6);
+      
+      const startMonth = date.toLocaleDateString('en-US', { month: 'short' });
+      const startDay = date.getDate();
+      const endMonth = endDate.toLocaleDateString('en-US', { month: 'short' });
+      const endDay = endDate.getDate();
+      const year = endDate.getFullYear();
+      
+      return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+    } else if (view === 'timeGridDay') {
+      return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    
+    return date.toLocaleDateString();
   }
 }

@@ -3,26 +3,33 @@
   <app-dashboard-header [title]="'FINANCIAL DASHBOARD'" [date]="currentDate"></app-dashboard-header>
 
   <!-- Revenue Overview Section -->
-  <app-revenue-overview class="mb-4 sm:mb-6 lg:mb-8"></app-revenue-overview>
-
-  <!-- Placeholder for future financial components -->
-  <div class="bg-card rounded-card shadow-card p-card-padding mb-4 sm:mb-6 lg:mb-8">
-    <h2 class="text-section-header text-text mb-4">Revenue Timeline</h2>
-    <div class="py-16 flex justify-center items-center text-text-muted">
-      Revenue timeline chart will be added here in the next component
-    </div>
+  <div class="mb-4 sm:mb-6 lg:mb-8">
+    <app-revenue-overview></app-revenue-overview>
   </div>
+
+  <!-- Revenue Timeline Section -->
+  <app-revenue-timeline class="mb-4 sm:mb-6 lg:mb-8"></app-revenue-timeline>
   
-  <!-- Placeholder for doctor revenue section -->
-  <div class="bg-card rounded-card shadow-card p-card-padding mb-4 sm:mb-6 lg:mb-8">
-    <h2 class="text-section-header text-text mb-4">Doctor Revenue Analysis</h2>
-    <div class="py-16 flex justify-center items-center text-text-muted">
-      Doctor revenue analysis will be added here in the next component
+  <!-- Doctor Revenue Analysis Section -->
+  <section class="mb-4 sm:mb-6 lg:mb-8">
+    <app-doctor-revenue></app-doctor-revenue>
+  </section>
+  
+  <!-- Doctor Revenue Table and Service Revenue Side-by-Side -->
+  <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
+    <!-- Doctor Revenue Table Section - takes more space -->
+    <div class="lg:w-2/3">
+      <app-doctor-revenue-table></app-doctor-revenue-table>
+    </div>
+    
+    <!-- Service Revenue Section - takes less space for the pie chart -->
+    <div class="lg:w-1/3">
+      <app-service-revenue></app-service-revenue>
     </div>
   </div>
   
   <!-- Placeholder for bills section -->
-  <div class="bg-card rounded-card shadow-card p-card-padding">
+  <div class="bg-card rounded-card shadow-card p-card-padding mb-4 sm:mb-6 lg:mb-8">
     <h2 class="text-section-header text-text mb-4">Recent Bills</h2>
     <div class="py-16 flex justify-center items-center text-text-muted">
       Recent bills table will be added here in the next component

@@ -5,37 +5,22 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ActiveSessionsResponse,
+  BillsResponse,
+  DoctorRevenueResponse,
+  RegistrationResponse,
+  RevenueTimeframeResponse,
   RoleStatsResponse,
+  ServiceBreakdownResponse,
   UserActivityResponse,
   UserStatsResponse
 } from '../models/analytics.model';
-
-export interface RegistrationMetrics {
-  total_registrations: number;
-  growth_rate: number;
-  average_daily: number;
-  peak_day: string;
-}
-
-export interface RegistrationData {
-  dates: string[];
-  counts: number[];
-  metrics: RegistrationMetrics;
-  timeframe: string;
-}
-
-export interface RegistrationResponse {
-  success: boolean;
-  data: RegistrationData;
-  message?: string;
-  errors?: {[key: string]: string[]};
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AnalyticsService {
   private apiUrl = `${environment.apiUrl}/analytics`;
+  private billsUrl = `${environment.apiUrl}/bills`;
   private cacheTime = 300000; // 5 minutes in milliseconds
   
   constructor(private http: HttpClient) { }
@@ -240,6 +225,147 @@ export class AnalyticsService {
           }
           
           return throwError(() => new Error('Failed to load registration statistics'));
+        })
+      );
+  }
+
+  /**
+   * Get doctor revenue analytics with date range filtering
+   * @param fromDate - Start date for filtering revenue data
+   * @param toDate - End date for filtering revenue data
+   * @param forceRefresh - Whether to bypass cache and force refresh
+   * @returns Observable with doctor revenue data
+   */
+  getDoctorRevenue(fromDate?: string, toDate?: string, forceRefresh: boolean = false): Observable<DoctorRevenueResponse> {
+    // Create cache key that includes date range
+    const cacheKey = `doctor-revenue-${fromDate || 'all'}-${toDate || 'all'}`;
+    const cachedData = this.getCachedData<DoctorRevenueResponse>(cacheKey);
+    
+    // Return cached data if available and not expired or refresh not forced
+    if (!forceRefresh && cachedData && !this.isCacheExpired(cacheKey)) {
+      return of(cachedData);
+    }
+    
+    // Build query parameters with date filters
+    let params = new HttpParams();
+    if (fromDate) {
+      params = params.set('from_date', fromDate);
+    }
+    if (toDate) {
+      params = params.set('to_date', toDate);
+    }
+    
+    return this.http.get<DoctorRevenueResponse>(`${this.apiUrl}/doctor-revenue`, { params })
+      .pipe(
+        tap(response => {
+          if (response.success) {
+            this.cacheData(cacheKey, response);
+          }
+        }),
+        catchError(error => {
+          console.error('Error fetching doctor revenue data:', error);
+          return throwError(() => new Error('Failed to load doctor revenue data'));
+        })
+      );
+  }
+  /**
+   * Get service breakdown analytics - Simplified version
+   * @returns Observable with service breakdown data
+   */
+  getServiceBreakdown(): Observable<ServiceBreakdownResponse> {
+    // Create a unique cache key
+    const cacheKey = 'service-breakdown-all';
+    const cachedData = this.getCachedData<ServiceBreakdownResponse>(cacheKey);
+    
+    // Return cached data if available and not expired
+    if (cachedData && !this.isCacheExpired(cacheKey)) {
+      return of(cachedData);
+    }
+    
+    return this.http.get<ServiceBreakdownResponse>(`${this.apiUrl}/services`)
+      .pipe(
+        tap(response => {
+          if (response.success) {
+            this.cacheData(cacheKey, response);
+          }
+        }),
+        catchError(error => {
+          console.error('Error fetching service breakdown data:', error);
+          return throwError(() => new Error('Failed to load service breakdown data'));
+        })
+      );
+  }
+
+  /**
+   * Get doctor revenue by timeframe (month/year)
+   * @param timeframe - The timeframe (month/year)
+   * @param period - The period (current/previous)
+   * @param doctorId - Optional doctor ID filter
+   * @param doctorName - Optional doctor name filter
+   * @returns Observable with revenue timeframe data
+   */
+  getDoctorRevenueByTimeframe(
+    timeframe: 'month' | 'year',
+    period: 'current' | 'previous' = 'current',
+    doctorId?: number,
+    doctorName?: string
+  ): Observable<RevenueTimeframeResponse> {
+    const cacheKey = `doctor-revenue-${timeframe}-${period}${doctorId ? '-id-' + doctorId : ''}${doctorName ? '-name-' + doctorName : ''}`;
+    const cachedData = this.getCachedData<RevenueTimeframeResponse>(cacheKey);
+    
+    // Return cached data if available and not expired
+    if (cachedData && !this.isCacheExpired(cacheKey)) {
+      return of(cachedData);
+    }
+    
+    let params = new HttpParams();
+    if (doctorId) {
+      params = params.set('doctor_id', doctorId);
+    }
+    if (doctorName) {
+      params = params.set('doctor_name', doctorName);
+    }
+    
+    return this.http.get<RevenueTimeframeResponse>(
+      `${this.apiUrl}/revenue/${timeframe}/${period}`,
+      { params }
+    ).pipe(
+      tap(response => {
+        if (response.success) {
+          this.cacheData(cacheKey, response);
+        }
+      }),
+      catchError(error => {
+        console.error(`Error fetching doctor ${timeframe} revenue data:`, error);
+        return throwError(() => new Error(`Failed to load doctor ${timeframe} revenue data`));
+      })
+    );
+  }
+
+  /**
+   * Get bills by doctor
+   * @param doctorId - Doctor ID to filter by
+   * @param doctorName - Doctor name to filter by
+   * @returns Observable with bills data
+   */
+  getBillsByDoctor(doctorId?: number, doctorName?: string): Observable<BillsResponse> {
+    if (!doctorId && !doctorName) {
+      return throwError(() => new Error('Either doctorId or doctorName must be provided'));
+    }
+    
+    let params = new HttpParams();
+    if (doctorId) {
+      params = params.set('doctor_id', doctorId);
+    }
+    if (doctorName) {
+      params = params.set('doctor_name', doctorName);
+    }
+    
+    return this.http.get<BillsResponse>(this.billsUrl, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching doctor bills:', error);
+          return throwError(() => new Error('Failed to load doctor bills'));
         })
       );
   }
