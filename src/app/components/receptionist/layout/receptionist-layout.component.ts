@@ -3,7 +3,6 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { SafeHtmlPipe } from './safe-html.pipe';
-import { ThemeService } from '../../../services/theme.service';
 import { AuthService } from '../../../core/auth/auth.service';
 
 // Animation fade pour les menus et modales
@@ -36,7 +35,6 @@ export class LayoutComponent implements OnInit {
   isSidebarCollapsed = false;
   showUserMenu = false;
   showNotifications = false;
-  isDarkMode = false;
   notificationCount = 3;
   showHelpModal = false;
 
@@ -58,15 +56,10 @@ export class LayoutComponent implements OnInit {
   ];
 
   constructor(
-    private router: Router, 
-    private route: ActivatedRoute, 
-    private themeService: ThemeService,
+    private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService
-  ) {
-    this.themeService.darkMode$.subscribe(isDark => {
-      this.isDarkMode = isDark;
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
     this.checkScreenSize();
@@ -97,10 +90,6 @@ export class LayoutComponent implements OnInit {
     if (this.showNotifications) {
       this.showUserMenu = false;
     }
-  }
-
-  toggleDarkMode(): void {
-    this.themeService.toggleDarkMode();
   }
 
   openLogoutModal(): void {
@@ -142,8 +131,6 @@ export class LayoutComponent implements OnInit {
         return `<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>`;
       case 'profile':
         return `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>`;
-      case 'logout':
-        return `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>`;
       default:
         return '';
     }
