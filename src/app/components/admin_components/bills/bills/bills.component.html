@@ -1,0 +1,402 @@
+<div class="container mx-auto p-4">
+  <!-- Error message -->
+  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <span class="font-bold">Error!</span> {{ error }}
+    <button (click)="error = null" class="float-right text-red-700">×</button>
+  </div>
+
+  <!-- Bills List View -->
+  <div *ngIf="!showBillForm && !showBillDetail">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Bills Management</h1>
+      <button (click)="openCreateForm()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Add New Bill
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow-md rounded p-4 mb-6">
+      <h2 class="text-lg font-semibold mb-2">Filters</h2>
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Search</label>
+          <input type="text" formControlName="search" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Bill number or patient...">
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">From Date</label>
+          <input type="date" formControlName="from_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">To Date</label>
+          <input type="date" formControlName="to_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Patient ID</label>
+          <input type="text" formControlName="patient_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Patient ID">
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Doctor ID</label>
+          <input type="text" formControlName="doctor_user_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Doctor ID">
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Payment Method</label>
+          <select formControlName="payment_method" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="">All</option>
+            <option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Service Type</label>
+          <select formControlName="service_type" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="">All</option>
+            <option *ngFor="let type of serviceTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Min Amount</label>
+          <input type="number" formControlName="amount_min" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Min Amount">
+        </div>
+        <div class="mb-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Max Amount</label>
+          <input type="number" formControlName="amount_max" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Max Amount">
+        </div>
+        <div class="md:col-span-2 lg:col-span-4 flex justify-end gap-2">
+          <button type="button" (click)="resetFilters()" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">
+            Reset
+          </button>
+          <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Apply
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Bills Table -->
+    <div class="bg-white shadow-md rounded mb-6 overflow-x-auto">
+      <table class="min-w-full bg-white">
+        <thead>
+          <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+            <th class="py-3 px-6 text-left">Bill #</th>
+            <th class="py-3 px-6 text-left">Issue Date</th>
+            <th class="py-3 px-6 text-left">Patient</th>
+            <th class="py-3 px-6 text-left">Doctor</th>
+            <th class="py-3 px-6 text-left">Payment Method</th>
+            <th class="py-3 px-6 text-right">Amount</th>
+            <th class="py-3 px-6 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 text-sm">
+          <tr *ngIf="loading" class="border-b border-gray-200 hover:bg-gray-100">
+            <td colspan="7" class="py-4 px-6 text-center">Loading...</td>
+          </tr>
+          <tr *ngIf="!loading && bills.length === 0" class="border-b border-gray-200 hover:bg-gray-100">
+            <td colspan="7" class="py-4 px-6 text-center">No bills found</td>
+          </tr>
+          <tr *ngFor="let bill of bills" class="border-b border-gray-200 hover:bg-gray-100">
+            <td class="py-3 px-6 text-left">{{ bill.bill_number }}</td>
+            <td class="py-3 px-6 text-left">{{ bill.issue_date | date: 'mediumDate' }}</td>
+            <td class="py-3 px-6 text-left">
+              <span *ngIf="bill.patient.name">{{ bill.patient.name }}</span>
+              <span *ngIf="!bill.patient.name">ID: {{ bill.patient.id }}</span>
+            </td>
+            <td class="py-3 px-6 text-left">{{ bill.doctor.name }}</td>
+            <td class="py-3 px-6 text-left">{{ bill.payment_method }}</td>
+            <td class="py-3 px-6 text-right">${{ formatCurrency(bill.amount) }}</td>
+            <td class="py-3 px-6 text-center">
+              <div class="flex item-center justify-center">
+                <button (click)="viewBillDetails(bill.id)" class="transform hover:text-blue-500 hover:scale-110 mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button (click)="openEditForm(bill)" class="transform hover:text-yellow-500 hover:scale-110 mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+                <button (click)="deleteBill(bill.id)" class="transform hover:text-red-500 hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+                <button *ngIf="bill.pdf_path" (click)="downloadPdf(bill.id)" class="transform hover:text-green-500 hover:scale-110 ml-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="pagination" class="flex justify-between items-center">
+      <div class="text-sm text-gray-700">
+        Showing {{ pagination.from || 0 }}-{{ pagination.to || 0 }} of {{ pagination.total }} items
+      </div>
+      <div class="flex space-x-1">
+        <button 
+          [disabled]="pagination.current_page === 1" 
+          (click)="goToPage(1)" 
+          [ngClass]="{'bg-gray-200': pagination.current_page === 1, 'bg-blue-500 hover:bg-blue-700 text-white': pagination.current_page !== 1}"
+          class="font-bold py-1 px-3 rounded">
+          First
+        </button>
+        <button 
+          [disabled]="pagination.current_page === 1" 
+          (click)="goToPage(pagination.current_page - 1)" 
+          [ngClass]="{'bg-gray-200': pagination.current_page === 1, 'bg-blue-500 hover:bg-blue-700 text-white': pagination.current_page !== 1}"
+          class="font-bold py-1 px-3 rounded">
+          Prev
+        </button>
+        <span class="py-1 px-3">Page {{ pagination.current_page }} of {{ pagination.last_page }}</span>
+        <button 
+          [disabled]="pagination.current_page === pagination.last_page" 
+          (click)="goToPage(pagination.current_page + 1)" 
+          [ngClass]="{'bg-gray-200': pagination.current_page === pagination.last_page, 'bg-blue-500 hover:bg-blue-700 text-white': pagination.current_page !== pagination.last_page}"
+          class="font-bold py-1 px-3 rounded">
+          Next
+        </button>
+        <button 
+          [disabled]="pagination.current_page === pagination.last_page" 
+          (click)="goToPage(pagination.last_page)" 
+          [ngClass]="{'bg-gray-200': pagination.current_page === pagination.last_page, 'bg-blue-500 hover:bg-blue-700 text-white': pagination.current_page !== pagination.last_page}"
+          class="font-bold py-1 px-3 rounded">
+          Last
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bill Detail View -->
+  <div *ngIf="showBillDetail && selectedBill" class="bg-white shadow-md rounded p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold">Bill #{{ selectedBill.bill_number }}</h2>
+      <div>
+        <button (click)="closeAllForms()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+          Back to List
+        </button>
+        <button (click)="openEditForm(selectedBill)" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2">
+          Edit
+        </button>
+        <button *ngIf="!selectedBill.pdf_path" (click)="generatePdf(selectedBill.id)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">
+          Generate PDF
+        </button>
+        <button *ngIf="selectedBill.pdf_path" (click)="downloadPdf(selectedBill.id)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+          Download PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <h3 class="text-lg font-semibold mb-2">Bill Information</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="text-gray-600">Issue Date:</div>
+          <div>{{ selectedBill.issue_date | date: 'mediumDate' }}</div>
+          
+          <div class="text-gray-600">Payment Method:</div>
+          <div>{{ selectedBill.payment_method }}</div>
+          
+          <div class="text-gray-600">Amount:</div>
+          <div>${{ formatCurrency(selectedBill.amount) }}</div>
+          
+          <div class="text-gray-600">Description:</div>
+          <div>{{ selectedBill.description || 'N/A' }}</div>
+          
+          <div class="text-gray-600">Created At:</div>
+          <div>{{ selectedBill.created_at | date: 'medium' }}</div>
+          
+          <div class="text-gray-600">Updated At:</div>
+          <div>{{ selectedBill.updated_at | date: 'medium' }}</div>
+        </div>
+      </div>
+      
+      <div>
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold mb-2">Patient Information</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="text-gray-600">ID:</div>
+            <div>{{ selectedBill.patient.id }}</div>
+            
+            <div class="text-gray-600">Name:</div>
+            <div>{{ selectedBill.patient.name || 'N/A' }}</div>
+            
+            <div class="text-gray-600">Email:</div>
+            <div>{{ selectedBill.patient.email || 'N/A' }}</div>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold mb-2">Doctor Information</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="text-gray-600">ID:</div>
+            <div>{{ selectedBill.doctor.id }}</div>
+            
+            <div class="text-gray-600">Name:</div>
+            <div>{{ selectedBill.doctor.name }}</div>
+            
+            <div class="text-gray-600">Email:</div>
+            <div>{{ selectedBill.doctor.email }}</div>
+            
+            <div class="text-gray-600">Specialty:</div>
+            <div>{{ selectedBill.doctor.specialty || 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="text-lg font-semibold mb-2">Bill Items</h3>
+    <div class="overflow-x-auto mb-4">
+      <table class="min-w-full bg-white">
+        <thead>
+          <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+            <th class="py-3 px-6 text-left">Service Type</th>
+            <th class="py-3 px-6 text-left">Description</th>
+            <th class="py-3 px-6 text-right">Price</th>
+            <th class="py-3 px-6 text-right">Quantity</th>
+            <th class="py-3 px-6 text-right">Total</th>
+            <th class="py-3 px-6 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 text-sm">
+          <tr *ngIf="!selectedBill.items || selectedBill.items.length === 0" class="border-b border-gray-200 hover:bg-gray-100">
+            <td colspan="6" class="py-4 px-6 text-center">No items found</td>
+          </tr>
+          <tr *ngFor="let item of selectedBill.items" class="border-b border-gray-200 hover:bg-gray-100">
+            <td class="py-3 px-6 text-left">{{ item.service_type }}</td>
+            <td class="py-3 px-6 text-left">{{ item.description }}</td>
+            <td class="py-3 px-6 text-right">${{ formatCurrency(item.price) }}</td>
+            <td class="py-3 px-6 text-right">{{ item.quantity || 1 }}</td>
+            <td class="py-3 px-6 text-right">${{ formatCurrency(item.total) }}</td>
+            <td class="py-3 px-6 text-center">
+              <button (click)="deleteBillItem(selectedBill.id, item.id)" class="transform hover:text-red-500 hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+          <tr class="border-b border-gray-200 bg-gray-50">
+            <td colspan="4" class="py-3 px-6 text-right font-bold">Total:</td>
+            <td class="py-3 px-6 text-right font-bold">${{ formatCurrency(selectedBill.amount) }}</td>
+            <td class="py-3 px-6"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bill Create/Edit Form -->
+  <div *ngIf="showBillForm" class="bg-white shadow-md rounded p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold">{{ isEditing ? 'Edit Bill' : 'Create New Bill' }}</h2>
+      <button (click)="closeAllForms()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+        Cancel
+      </button>
+    </div>
+
+    <form [formGroup]="billForm" (ngSubmit)="submitBillForm()">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-gray-700 text-sm font-bold mb-1">Patient ID *</label>
+          <input type="number" formControlName="patient_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Patient ID">
+          <div *ngIf="billForm.get('patient_id')?.invalid && billForm.get('patient_id')?.touched" class="text-red-500 text-xs italic">
+            Patient ID is required.
+          </div>
+        </div>
+        <div>
+          <label class="block text-gray-700 text-sm font-bold mb-1">Doctor ID *</label>
+          <input type="number" formControlName="doctor_user_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Doctor ID">
+          <div *ngIf="billForm.get('doctor_user_id')?.invalid && billForm.get('doctor_user_id')?.touched" class="text-red-500 text-xs italic">
+            Doctor ID is required.
+          </div>
+        </div>
+        <div>
+          <label class="block text-gray-700 text-sm font-bold mb-1">Issue Date *</label>
+          <input type="date" formControlName="issue_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+          <div *ngIf="billForm.get('issue_date')?.invalid && billForm.get('issue_date')?.touched" class="text-red-500 text-xs italic">
+            Issue date is required.
+          </div>
+        </div>
+        <div>
+          <label class="block text-gray-700 text-sm font-bold mb-1">Payment Method *</label>
+          <select formControlName="payment_method" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="">Select Payment Method</option>
+            <option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</option>
+          </select>
+          <div *ngIf="billForm.get('payment_method')?.invalid && billForm.get('payment_method')?.touched" class="text-red-500 text-xs italic">
+            Payment method is required.
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-gray-700 text-sm font-bold mb-1">Description</label>
+          <textarea formControlName="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="2" placeholder="Description (optional)"></textarea>
+        </div>
+        <div class="md:col-span-2">
+          <div class="flex items-center">
+            <input type="checkbox" formControlName="generate_pdf" class="mr-2">
+            <label class="text-gray-700 text-sm font-bold">Generate PDF</label>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="text-lg font-semibold mb-2">Bill Items</h3>
+      
+      <div formArrayName="items">
+        <div *ngFor="let item of itemsArray.controls; let i = index" [formGroupName]="i" class="grid grid-cols-12 gap-2 mb-2 items-start">
+          <div class="col-span-3">
+            <label class="block text-gray-700 text-sm font-bold mb-1">Service Type *</label>
+            <select formControlName="service_type" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <option value="">Select Type</option>
+              <option *ngFor="let type of serviceTypes" [value]="type">{{ type }}</option>
+            </select>
+            <div *ngIf="item.get('service_type')?.invalid && item.get('service_type')?.touched" class="text-red-500 text-xs italic">
+              Service type is required.
+            </div>
+          </div>
+          <div class="col-span-5">
+            <label class="block text-gray-700 text-sm font-bold mb-1">Description *</label>
+            <input type="text" formControlName="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Description">
+            <div *ngIf="item.get('description')?.invalid && item.get('description')?.touched" class="text-red-500 text-xs italic">
+              Description is required.
+            </div>
+          </div>
+          <div class="col-span-3">
+            <label class="block text-gray-700 text-sm font-bold mb-1">Price *</label>
+            <input type="number" formControlName="price" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Price" step="0.01">
+            <div *ngIf="item.get('price')?.invalid && item.get('price')?.touched" class="text-red-500 text-xs italic">
+              Valid price is required.
+            </div>
+          </div>
+          <div class="col-span-1 pt-6">
+            <button type="button" (click)="removeItem(i)" class="text-red-500 hover:text-red-700" [disabled]="itemsArray.length <= 1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-4">
+        <button type="button" (click)="addItem()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Add Item
+        </button>
+        <button type="submit" [disabled]="billForm.invalid || loading" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+          {{ isEditing ? 'Update Bill' : 'Create Bill' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loading overlay -->
+  <div *ngIf="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-4 rounded-lg shadow-lg">
+      <p class="text-lg">Loading...</p>
+    </div>
+  </div>
+</div>
