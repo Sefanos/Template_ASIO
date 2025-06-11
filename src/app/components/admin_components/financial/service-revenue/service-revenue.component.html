@@ -1,0 +1,71 @@
+<div class="bg-card rounded-card shadow-card">
+  <!-- Header -->
+  <div class="p-4 border-b border-border">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h2 class="text-section-header font-semibold text-text">Service Revenue Breakdown</h2>
+        <p class="text-xs text-text-muted mt-1">
+          Analysis of revenue by service type
+        </p>
+      </div>
+      
+      <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <!-- Display limit control -->
+        <select 
+          [(ngModel)]="limitCount" 
+          (ngModelChange)="applyFilters()"
+          class="px-3 py-2 rounded-button text-xs bg-background text-text border border-border">
+          <option [value]="5">Top 5 Services</option>
+          <option [value]="10">Top 10 Services</option>
+          <option [value]="15">Top 15 Services</option>
+          <option [value]="20">Top 20 Services</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Content -->
+  <div class="p-4">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="py-12 flex justify-center items-center">
+      <div class="animate-pulse text-text-muted">Loading service revenue data...</div>
+    </div>
+    
+    <!-- Error state -->
+    <div *ngIf="hasError" class="py-12 flex justify-center items-center">
+      <div class="text-status-urgent text-center">
+        <div class="mb-2">{{ errorMessage }}</div>
+        <button 
+          class="px-3 py-1 bg-background rounded-button text-text-muted hover:bg-hover text-xs"
+          (click)="loadServiceBreakdownData()">
+          Try Again
+        </button>
+      </div>
+    </div>
+    
+    <!-- Chart display - REMOVED SUMMARY STATS SECTION -->
+    <div *ngIf="!isLoading && !hasError && filteredServiceData.length > 0" class="space-y-4">
+      <!-- Single pie chart centered -->
+      <div class="flex justify-center">
+        <div class="bg-background rounded-input p-4" style="height: 400px; width: 100%; max-width: 600px;">
+          <div class="chart-container" style="position: relative; height:100%; width:100%">
+            <canvas #servicePercentageChart></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Empty state -->
+    <div *ngIf="!isLoading && !hasError && filteredServiceData.length === 0" 
+      class="py-12 flex justify-center items-center text-text-muted">
+      No service revenue data available
+    </div>
+  </div>
+  
+  <!-- Refresh button -->
+  <div class="p-4 border-t border-border">
+    <button (click)="loadServiceBreakdownData()" class="px-3 py-2 bg-secondary text-white rounded-button">
+      <i class="fas fa-sync-alt mr-1"></i> Refresh
+    </button>
+  </div>
+</div>

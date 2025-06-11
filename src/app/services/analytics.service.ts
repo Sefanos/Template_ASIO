@@ -268,14 +268,13 @@ export class AnalyticsService {
         })
       );
   }
-
   /**
-   * Get service breakdown analytics
-   * @param doctorSpecialty - Optional doctor specialty filter
+   * Get service breakdown analytics - Simplified version
    * @returns Observable with service breakdown data
    */
-  getServiceBreakdown(doctorSpecialty?: string): Observable<ServiceBreakdownResponse> {
-    const cacheKey = `service-breakdown${doctorSpecialty ? '-' + doctorSpecialty : ''}`;
+  getServiceBreakdown(): Observable<ServiceBreakdownResponse> {
+    // Create a unique cache key
+    const cacheKey = 'service-breakdown-all';
     const cachedData = this.getCachedData<ServiceBreakdownResponse>(cacheKey);
     
     // Return cached data if available and not expired
@@ -283,12 +282,7 @@ export class AnalyticsService {
       return of(cachedData);
     }
     
-    let params = new HttpParams();
-    if (doctorSpecialty) {
-      params = params.set('doctor_specialty', doctorSpecialty);
-    }
-    
-    return this.http.get<ServiceBreakdownResponse>(`${this.apiUrl}/services`, { params })
+    return this.http.get<ServiceBreakdownResponse>(`${this.apiUrl}/services`)
       .pipe(
         tap(response => {
           if (response.success) {
