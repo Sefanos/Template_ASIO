@@ -5,7 +5,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { SafeHtmlPipe } from './safe-html.pipe'; // Import du pipe
 
 import { ThemeService } from '../../../services/theme.service';
-
+import { AuthService } from '../../../core/auth/auth.service'; // Assurez-vous que le chemin est correc
 
 // Animation fade pour les menus et modales
 const fadeAnimation = trigger('fadeAnimation', [
@@ -59,8 +59,12 @@ export class LayoutComponent implements OnInit {
     { route: 'profile', label: 'Profil', icon: 'profile', count: 0 }
   ];
 
-
-  constructor(private router: Router, private route: ActivatedRoute, private themeService: ThemeService) {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private themeService: ThemeService,
+    private authService: AuthService
+  ) {
     this.themeService.darkMode$.subscribe(isDark => {
       this.isDarkMode = isDark;
     });

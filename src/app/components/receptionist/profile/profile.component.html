@@ -16,7 +16,7 @@
                (load)="onImageLoad($event)"/>
           <span *ngIf="!user?.photo">{{ user?.name?.charAt(0) || 'U' }}</span>
             <!-- Bouton crayon -->
-          <label class="absolute bottom-1 right-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded-full p-1 cursor-pointer shadow transition-opacity opacity-80 group-hover:opacity-100">
+          <label class="absolute bottom-1 right-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1 cursor-pointer shadow transition-opacity opacity-80 group-hover:opacity-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2a2.828 2.828 0 11-4-4 2.828 2.828 0 014 4zm-2 2l-6 6H5v-2l6-6z" />
             </svg>
@@ -94,21 +94,19 @@
         <div>          <label class="block text-sm font-medium text-gray-700">Nom complet</label>
           <input type="text" [(ngModel)]="editedUser.name" name="name" required
                  class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+        </div>        <div>          <label class="block text-sm font-medium text-gray-700">Email</label>
           <input type="email" [(ngModel)]="editedUser.email" name="email" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Téléphone</label>
+                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700 transition-colors" />
+        </div>        <div>          <label class="block text-sm font-medium text-gray-700">Téléphone</label>
           <input type="tel" [(ngModel)]="editedUser.phone" name="phone" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
+                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700 transition-colors" />
         </div>
         <div class="flex justify-end gap-3 mt-4">          <button type="button" (click)="closeEditModal()"
-                  class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded transition-colors">
+                  class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors">
             Annuler
           </button>
           <button type="submit"
-                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded shadow transition-colors">
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow transition-colors">
             Enregistrer
           </button>
         </div>
@@ -117,9 +115,9 @@
   </div>
 
   <!-- Modale Changement de mot de passe -->  <div *ngIf="isPasswordModalOpen" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl dark:shadow-slate-700/20 max-w-md w-full p-8 transition-colors">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-8 transition-colors">
       <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Changer le mot de passe</h3>
+        <h3 class="text-xl font-bold text-gray-800">Changer le mot de passe</h3>
         <button (click)="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -127,25 +125,22 @@
           </svg>
         </button>
       </div>
-      <form (ngSubmit)="changePassword()" class="space-y-5">
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe actuel</label>
+      <form (ngSubmit)="changePassword()" class="space-y-5">        <div>          <label class="block text-sm font-medium text-gray-700">Mot de passe actuel</label>
           <input type="password" [(ngModel)]="currentPassword" name="currentPassword" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nouveau mot de passe</label>
+                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700 transition-colors" />
+        </div>        <div>          <label class="block text-sm font-medium text-gray-700">Nouveau mot de passe</label>
           <input type="password" [(ngModel)]="newPassword" name="newPassword" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmer le nouveau mot de passe</label>
+                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700 transition-colors" />
+        </div>        <div>          <label class="block text-sm font-medium text-gray-700">Confirmer le nouveau mot de passe</label>
           <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
+                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700 transition-colors" />
         </div>
         <div class="flex justify-end gap-3 mt-4">          <button type="button" (click)="closePasswordModal()"
-                  class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded transition-colors">
+                  class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors">
             Annuler
           </button>
           <button type="submit"
-                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded shadow transition-colors">
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow transition-colors">
             Enregistrer
           </button>
         </div>
