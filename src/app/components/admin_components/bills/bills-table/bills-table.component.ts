@@ -37,11 +37,13 @@ export class BillsTableComponent implements OnInit, OnDestroy {
   sortBy: keyof Bill | 'patient_name' | 'doctor_name' = 'issue_date';
   sortDirection: 'asc' | 'desc' = 'desc';
   
-  // Pagination properties (client-side for search, server-side for data)
+  // Pagination properties
   currentPage = 1;
   itemsPerPage = 15;
   totalPages = 0;
+  totalItems = 0;
   maxPagesToShow = 5;
+  pageNumbers: number[] = [];
 
   // Delete confirmation modal
   showDeleteConfirmation = false;
@@ -69,6 +71,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(() => {
+      this.currentPage = 1; // Reset to first page when searching
       this.applyFilters();
     });
   }
@@ -82,7 +85,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       ['doctor_name', 'patient_name', 'amount', 'issue_date', 'created_at'];
     
     // Determine the sort field to use
-    let sortField: 'doctor_name' | 'patient_name' | 'amount' | 'issue_date' | 'created_at' = 'issue_date';
+    let sortField: 'doctor_name' | 'patient_name' | 'amount' | 'issue_date' | 'created_at' | undefined;
     
     if (this.sortBy === 'patient_name') {
       sortField = 'patient_name';
@@ -90,15 +93,23 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       sortField = 'doctor_name';
     } else if (validSortFields.includes(this.sortBy as any)) {
       sortField = this.sortBy as 'amount' | 'issue_date' | 'created_at';
+    } else {
+      sortField = 'issue_date';
     }
 
     const params: BillListParams = {
       sort_by: sortField,
       sort_order: this.sortDirection,
-      per_page: 1000 // Load more for client-side filtering
+      per_page: 1000 // FIXED: Load more data for versatile search
     };
 
-    // Add date filters to API params (server-side filtering for dates)
+    // Only add server pagination if no search term
+    if (!this.searchTerm.trim()) {
+      params.page = this.currentPage;
+      params.per_page = this.itemsPerPage;
+    }
+
+    // Add date filters to API params
     if (this.fromDate) {
       params.from_date = this.fromDate;
     }
@@ -106,16 +117,30 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       params.to_date = this.toDate;
     }
 
+    console.log('🔍 Loading bills with params:', params);
+
     this.billService.getBills(params).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (response: PaginatedResponse<Bill>) => {
+        console.log('✅ API Response received:', response.items?.length, 'bills');
         this.bills = response.items || [];
+        
+        // Set pagination info from server response
+        if (response.pagination) {
+          this.totalItems = response.pagination.total;
+          if (!this.searchTerm.trim()) {
+            this.totalPages = response.pagination.last_page;
+            this.currentPage = response.pagination.current_page;
+          }
+        }
+        
+        console.log('🔄 Applying filters...');
         this.applyFilters();
         this.isLoading = false;
       },
       error: (error: any) => {
-        console.error('Error loading bills:', error);
+        console.error('❌ Error loading bills:', error);
         this.hasError = true;
         this.errorMessage = error?.message || 'Failed to load bills';
         this.isLoading = false;
@@ -127,6 +152,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
   }
 
   onSearchInput(): void {
+    console.log('🔍 Search input changed:', this.searchTerm);
     this.searchSubject.next(this.searchTerm);
   }
 
@@ -135,8 +161,10 @@ export class BillsTableComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
+    console.log('🧹 Clearing search');
     this.searchTerm = '';
-    this.applyFilters();
+    this.currentPage = 1;
+    this.loadBills(); // Reload with server pagination
   }
 
   clearFilters(): void {
@@ -152,46 +180,82 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     this.loadBills();
   }
 
+  // FIXED: Your original working search logic with debugging
   private applyFilters(): void {
+    console.log('🔧 Starting applyFilters with', this.bills.length, 'bills');
     let filtered = [...this.bills];
 
-    // Apply versatile search filter (client-side)
+    // Apply versatile search filter
     if (this.searchTerm.trim()) {
       const searchLower = this.searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(bill =>
-        // Search in bill number
-        bill.bill_number.toLowerCase().includes(searchLower) ||
-        // Search in patient name
-        this.getPatientName(bill).toLowerCase().includes(searchLower) ||
-        // Search in doctor name
-        this.getDoctorName(bill).toLowerCase().includes(searchLower) ||
-        // Search in payment method
-        bill.payment_method.toLowerCase().includes(searchLower) ||
-        // Search in amount (convert to string)
-        bill.amount.toString().toLowerCase().includes(searchLower) ||
-        // Search in description if available
-        (bill.description && bill.description.toLowerCase().includes(searchLower))
-      );
+      console.log('🔍 Searching for:', searchLower);
+      
+      const originalCount = filtered.length;
+      filtered = filtered.filter(bill => {
+        const billNumber = bill.bill_number?.toLowerCase() || '';
+        const patientName = this.getPatientName(bill).toLowerCase();
+        const doctorName = this.getDoctorName(bill).toLowerCase();
+        const paymentMethod = bill.payment_method?.toLowerCase() || '';
+        const amount = bill.amount?.toString().toLowerCase() || '';
+        const description = bill.description?.toLowerCase() || '';
+
+        const matches = billNumber.includes(searchLower) ||
+                       patientName.includes(searchLower) ||
+                       doctorName.includes(searchLower) ||
+                       paymentMethod.includes(searchLower) ||
+                       amount.includes(searchLower) ||
+                       description.includes(searchLower);
+
+        return matches;
+      });
+      
+      console.log(`🎯 Search filtered from ${originalCount} to ${filtered.length} bills`);
     }
 
     this.filteredBills = filtered;
+    console.log('📊 Filtered bills count:', this.filteredBills.length);
+    
     this.updatePagination();
     this.updateDisplayedBills();
+    
+    console.log('📄 Final displayed bills:', this.displayedBills.length);
   }
 
   private updatePagination(): void {
-    this.totalPages = Math.ceil(this.filteredBills.length / this.itemsPerPage);
+    if (this.searchTerm.trim()) {
+      // Client-side pagination for search results
+      this.totalPages = Math.ceil(this.filteredBills.length / this.itemsPerPage);
+      console.log('📚 Search pagination - Total pages:', this.totalPages);
+    } else {
+      // Server-side pagination for non-search (already set from server)
+      console.log('📚 Server pagination - Total pages:', this.totalPages);
+    }
     
-    // Ensure current page is valid
-    if (this.currentPage > this.totalPages && this.totalPages > 0) {
-      this.currentPage = 1;
+    // Update page numbers array
+    this.pageNumbers = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    for (let i = startPage; i <= endPage; i++) {
+      this.pageNumbers.push(i);
     }
   }
 
   private updateDisplayedBills(): void {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    this.displayedBills = this.filteredBills.slice(startIndex, endIndex);
+    if (this.searchTerm.trim()) {
+      // Client-side pagination for search results
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      this.displayedBills = this.filteredBills.slice(startIndex, endIndex);
+      console.log(`📄 Search pagination: showing ${startIndex+1}-${Math.min(endIndex, this.filteredBills.length)} of ${this.filteredBills.length}`);
+    } else {
+      // Server-side pagination for non-search
+      this.displayedBills = this.bills;
+      console.log(`📄 Server pagination: showing ${this.displayedBills.length} bills`);
+    }
   }
 
   changeSort(column: keyof Bill | 'patient_name' | 'doctor_name'): void {
@@ -202,42 +266,8 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       this.sortDirection = 'asc';
     }
     
-    this.currentPage = 1; // Reset to first page when sorting
-    this.sortBills();
-    this.updateDisplayedBills();
-  }
-
-  private sortBills(): void {
-    this.filteredBills.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (this.sortBy) {
-        case 'patient_name':
-          aValue = this.getPatientName(a).toLowerCase();
-          bValue = this.getPatientName(b).toLowerCase();
-          break;
-        case 'doctor_name':
-          aValue = this.getDoctorName(a).toLowerCase();
-          bValue = this.getDoctorName(b).toLowerCase();
-          break;
-        case 'issue_date':
-          aValue = new Date(a.issue_date);
-          bValue = new Date(b.issue_date);
-          break;
-        case 'amount':
-          aValue = typeof a.amount === 'string' ? parseFloat(a.amount) : a.amount;
-          bValue = typeof b.amount === 'string' ? parseFloat(b.amount) : b.amount;
-          break;
-        default:
-          aValue = a[this.sortBy as keyof Bill];
-          bValue = b[this.sortBy as keyof Bill];
-      }
-
-      if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+    this.currentPage = 1;
+    this.loadBills();
   }
 
   getSortIndicator(field: string): string {
@@ -245,11 +275,19 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     return this.sortDirection === 'asc' ? '↑' : '↓';
   }
 
-  // Pagination methods - smooth client-side transitions
   changePage(page: number): void {
-    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-      this.currentPage = page;
-      this.updateDisplayedBills();
+    if (this.searchTerm.trim()) {
+      // Client-side pagination for search
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+        this.updateDisplayedBills();
+      }
+    } else {
+      // Server-side pagination for non-search
+      if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+        this.currentPage = page;
+        this.loadBills();
+      }
     }
   }
 
@@ -265,7 +303,6 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Smart pagination display like in users component
   get pagesToShow(): Array<number | string> {
     const pages: Array<number | string> = [];
     
@@ -274,34 +311,27 @@ export class BillsTableComponent implements OnInit, OnDestroy {
         pages.push(i);
       }
     } else {
-      // Always show first page
       pages.push(1);
       
-      // Calculate start and end of pages to show
       let start = Math.max(2, this.currentPage - Math.floor(this.maxPagesToShow / 2));
       let end = Math.min(this.totalPages - 1, start + this.maxPagesToShow - 3);
       
-      // Adjust if at the end
       if (end >= this.totalPages - 1) {
         start = Math.max(2, this.totalPages - this.maxPagesToShow + 2);
       }
       
-      // Show ellipsis if needed
       if (start > 2) {
         pages.push('...');
       }
       
-      // Add middle pages
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
       
-      // Show ellipsis if needed
       if (end < this.totalPages - 1) {
         pages.push('...');
       }
       
-      // Always show last page
       if (this.totalPages > 1) {
         pages.push(this.totalPages);
       }
@@ -328,7 +358,6 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: () => {
-        // Remove bill from local arrays
         this.bills = this.bills.filter(b => b.id !== this.billToDelete!.id);
         this.applyFilters();
         this.showDeleteConfirmation = false;
@@ -343,7 +372,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Utility methods
+  // Utility methods - UNCHANGED
   getPatientName(bill: Bill): string {
     return bill.patient?.user?.name || 
            bill.patient?.name || 
@@ -376,7 +405,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     }).format(numericAmount || 0);
   }
 
-  // Action methods
+  // Action methods - UNCHANGED
   viewBill(bill: Bill): void {
     this.selectedBillId = bill.id;
     this.showBillDetailModal = true;
@@ -411,16 +440,24 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Helper method to get display text for pagination
   getPaginationText(): string {
-    if (this.filteredBills.length === 0) {
-      return 'No bills found';
+    if (this.searchTerm.trim()) {
+      // For search results
+      if (this.filteredBills.length === 0) {
+        return 'No bills found';
+      }
+      const startItem = (this.currentPage - 1) * this.itemsPerPage + 1;
+      const endItem = Math.min(this.currentPage * this.itemsPerPage, this.filteredBills.length);
+      return `Showing ${startItem}-${endItem} of ${this.filteredBills.length} filtered bills`;
+    } else {
+      // For server results
+      if (this.totalItems === 0) {
+        return 'No bills found';
+      }
+      const startItem = (this.currentPage - 1) * this.itemsPerPage + 1;
+      const endItem = Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
+      return `Showing ${startItem}-${endItem} of ${this.totalItems} bills`;
     }
-    
-    const startItem = (this.currentPage - 1) * this.itemsPerPage + 1;
-    const endItem = Math.min(this.currentPage * this.itemsPerPage, this.filteredBills.length);
-    
-    return `Showing ${startItem}-${endItem} of ${this.filteredBills.length} bills`;
   }
 
   getRowNumber(index: number): number {
