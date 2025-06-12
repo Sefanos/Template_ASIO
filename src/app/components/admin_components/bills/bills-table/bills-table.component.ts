@@ -5,11 +5,12 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { Bill, BillListParams, PaginatedResponse } from '../../../../models/bill-management.model';
 import { BillManagementService } from '../../../../services/bill-management.service';
+import { BillDetailModalComponent } from '../bill-detail-modal/bill-detail-modal.component';
 
 @Component({
   selector: 'app-bills-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BillDetailModalComponent],
   templateUrl: './bills-table.component.html',
   styleUrl: './bills-table.component.css'
 })
@@ -46,6 +47,10 @@ export class BillsTableComponent implements OnInit, OnDestroy {
   showDeleteConfirmation = false;
   billToDelete: Bill | null = null;
 
+  // Bill detail modal
+  showBillDetailModal = false;
+  selectedBillId: number | null = null;
+
   constructor(private billService: BillManagementService) {}
 
   ngOnInit(): void {
@@ -77,7 +82,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       ['doctor_name', 'patient_name', 'amount', 'issue_date', 'created_at'];
     
     // Determine the sort field to use
-    let sortField: 'doctor_name' | 'patient_name' | 'amount' | 'issue_date' | 'created_at' | undefined;
+    let sortField: 'doctor_name' | 'patient_name' | 'amount' | 'issue_date' | 'created_at' = 'issue_date';
     
     if (this.sortBy === 'patient_name') {
       sortField = 'patient_name';
@@ -85,8 +90,6 @@ export class BillsTableComponent implements OnInit, OnDestroy {
       sortField = 'doctor_name';
     } else if (validSortFields.includes(this.sortBy as any)) {
       sortField = this.sortBy as 'amount' | 'issue_date' | 'created_at';
-    } else {
-      sortField = 'issue_date'; // Default fallback
     }
 
     const params: BillListParams = {
@@ -111,10 +114,10 @@ export class BillsTableComponent implements OnInit, OnDestroy {
         this.applyFilters();
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading bills:', error);
         this.hasError = true;
-        this.errorMessage = error.message || 'Failed to load bills';
+        this.errorMessage = error?.message || 'Failed to load bills';
         this.isLoading = false;
         this.bills = [];
         this.filteredBills = [];
@@ -330,14 +333,12 @@ export class BillsTableComponent implements OnInit, OnDestroy {
         this.applyFilters();
         this.showDeleteConfirmation = false;
         this.billToDelete = null;
-        // You could add a toast notification here
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error deleting bill:', error);
         this.showDeleteConfirmation = false;
         this.billToDelete = null;
-        // Show error message to user
-        alert('Failed to delete bill: ' + (error.message || 'Unknown error'));
+        alert('Failed to delete bill: ' + (error?.message || 'Unknown error'));
       }
     });
   }
@@ -377,9 +378,13 @@ export class BillsTableComponent implements OnInit, OnDestroy {
 
   // Action methods
   viewBill(bill: Bill): void {
-    // TODO: Navigate to bill detail component
-    console.log('View bill:', bill.id);
-    // Example: this.router.navigate(['/admin/bills', bill.id]);
+    this.selectedBillId = bill.id;
+    this.showBillDetailModal = true;
+  }
+
+  onBillDetailModalClose(): void {
+    this.showBillDetailModal = false;
+    this.selectedBillId = null;
   }
 
   downloadPdf(bill: Bill): void {
@@ -391,7 +396,7 @@ export class BillsTableComponent implements OnInit, OnDestroy {
     this.billService.downloadBillPdf(bill.id).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (blob) => {
+      next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -399,9 +404,9 @@ export class BillsTableComponent implements OnInit, OnDestroy {
         link.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error downloading PDF:', error);
-        alert('Failed to download PDF');
+        alert('Failed to download PDF: ' + (error?.message || 'Unknown error'));
       }
     });
   }

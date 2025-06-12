@@ -90,23 +90,25 @@ export interface Bill {
   created_by_user_id?: number; // Present in list view
   created_at: string;
   updated_at: string;
-  // Add nested patient structure
+  // Updated patient structure to match your API response
   patient?: {
     id: number;
-    user_id: number;
+    name: string;
+    email: string;
+    user_id?: number;
     user?: {
       id: number;
       name: string;
       email: string;
       phone?: string;
     }
-    name?: string; // In case patient has direct name property
   };
-  // Add nested doctor structure
+  // Updated doctor structure to match your API response
   doctor?: {
     id: number;
     name: string;
     email: string;
+    phone?: string;
     specialty?: string;
     doctor?: {
       id: number;
