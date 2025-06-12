@@ -14,7 +14,7 @@ import { DashboardComponent as docDashboard } from './pages/doc_pages/dashboard/
 import { PatientManagementComponent } from './pages/doc_pages/patient-management/patient-management.component';
 import { PatientRecordComponent } from './pages/doc_pages/patient-record/patient-record.component';
 import { PrescriptionComponent } from './pages/doc_pages/prescription/prescription.component';
-
+import { BillsManagmentComponent } from './pages/admin_pages/bills-managment/bills-managment.component';
 
 export const routes: Routes = [
   {
@@ -54,7 +54,8 @@ export const routes: Routes = [
       { path: 'user-page/:id', component: UserPageComponent },
       { path: 'roles', component: RolesComponent },
       { path: 'role/:id', component: RolePageComponent },
-      { path: 'financial-dashboard', component: FinancialDashboardComponent }
+      { path: 'financial-dashboard', component: FinancialDashboardComponent },
+      { path: 'bills-managment', component: BillsManagmentComponent }
     ]
   },
   {
