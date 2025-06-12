@@ -264,4 +264,12 @@
       </div>
     </div>
   </div>
+
+  <!-- Bill Detail Modal -->
+  <app-bill-detail-modal
+    [isOpen]="showBillDetailModal"
+    [billId]="selectedBillId"
+    (close)="onBillDetailModalClose()">
+  </app-bill-detail-modal>
+
 </div>
