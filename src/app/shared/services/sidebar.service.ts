@@ -74,7 +74,12 @@ export class SidebarService {
     {
       label: 'Financial Dashboard',
       route: '/admin/financial-dashboard',
-      icon: 'bar-chart-2'
+      icon: 'financial-dashboard'
+    },
+    {
+      label: 'Bills Management',
+      route: '/admin/bills-managment',
+      icon: 'file-text'
     }
   ];
 
