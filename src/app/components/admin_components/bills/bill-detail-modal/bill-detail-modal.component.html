@@ -3,10 +3,10 @@
   class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4"
   (click)="onBackdropClick($event)">
   
-  <div class="bg-white rounded-card shadow-card max-w-4xl w-full max-h-[90vh] overflow-hidden">
+  <div class="bg-white rounded-card shadow-card max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
     
-    <!-- Modal Header -->
-    <div class="p-6 border-b border-border bg-background">
+    <!-- Modal Header - Fixed -->
+    <div class="p-6 border-b border-border bg-background flex-shrink-0">
       <div class="flex justify-between items-center">
         <div>
           <h2 class="text-xl font-semibold text-text">Bill Details</h2>
@@ -24,11 +24,11 @@
       </div>
     </div>
 
-    <!-- Modal Content -->
-    <div class="max-h-[calc(90vh-140px)] overflow-y-auto">
+    <!-- Modal Content - Scrollable -->
+    <div class="flex-1 overflow-y-auto">
       
       <!-- Loading State -->
-      <div *ngIf="isLoading" class="p-12 flex justify-center items-center">
+      <div *ngIf="isLoading" class="p-12 flex justify-center items-center min-h-[400px]">
         <div class="text-center">
           <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
           <p class="text-text-muted">Loading bill details...</p>
@@ -36,7 +36,7 @@
       </div>
 
       <!-- Error State -->
-      <div *ngIf="hasError && !isLoading" class="p-12 flex justify-center items-center">
+      <div *ngIf="hasError && !isLoading" class="p-12 flex justify-center items-center min-h-[400px]">
         <div class="text-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-status-urgent mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -56,78 +56,79 @@
         
         <!-- Bill Summary Card -->
         <div class="bg-background rounded-card p-6 mb-6 border border-border">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Use responsive grid that stacks on smaller screens -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <!-- Patient Information -->
-            <div class="space-y-2">
+            <div class="space-y-3">
               <h3 class="text-sm font-medium text-text-muted uppercase tracking-wider">Patient Information</h3>
-              <div class="space-y-1">
-                <p class="font-semibold text-text text-lg">{{ getPatientName() }}</p>
-                <p class="text-text-muted" *ngIf="getPatientEmail()">
-                  <span class="inline-flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="space-y-2">
+                <p class="font-semibold text-text text-lg break-words">{{ getPatientName() }}</p>
+                <div *ngIf="getPatientEmail()" class="text-text-muted">
+                  <div class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2 2 0 002 2h0a2 2 0 002-2V12a4 4 0 10-8 0v1.5a2 2 0 002 2h0a2 2 0 002-2V12z" />
                     </svg>
-                    {{ getPatientEmail() }}
-                  </span>
-                </p>
+                    <span class="break-all text-sm">{{ getPatientEmail() }}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Doctor Information -->
-            <div class="space-y-2">
+            <div class="space-y-3">
               <h3 class="text-sm font-medium text-text-muted uppercase tracking-wider">Doctor Information</h3>
-              <div class="space-y-1">
-                <p class="font-semibold text-text text-lg">{{ getDoctorName() }}</p>
-                <p class="text-text-muted" *ngIf="billDetails.doctor?.specialty">
-                  <span class="inline-flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="space-y-2">
+                <p class="font-semibold text-text text-lg break-words">{{ getDoctorName() }}</p>
+                <div *ngIf="billDetails.doctor?.specialty" class="text-text-muted">
+                  <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {{ billDetails.doctor!.specialty }}
-                  </span>
-                </p>
-                <p class="text-text-muted" *ngIf="getDoctorPhone()">
-                  <span class="inline-flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <span class="text-sm">{{ billDetails.doctor!.specialty }}</span>
+                  </div>
+                </div>
+                <div *ngIf="getDoctorPhone()" class="text-text-muted">
+                  <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    {{ getDoctorPhone() }}
-                  </span>
-                </p>
+                    <span class="text-sm">{{ getDoctorPhone() }}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Bill Summary -->
-            <div class="space-y-2">
+            <div class="space-y-3">
               <h3 class="text-sm font-medium text-text-muted uppercase tracking-wider">Bill Summary</h3>
-              <div class="space-y-1">
-                <p class="text-text">
-                  <span class="text-text-muted">Issue Date:</span>
-                  <span class="font-medium ml-2">{{ formatDate(billDetails.issue_date) }}</span>
-                </p>
-                <p class="text-text">
-                  <span class="text-text-muted">Payment Method:</span>
-                  <span class="font-medium ml-2 capitalize">{{ billDetails.payment_method }}</span>
-                </p>
-                <p class="text-text">
-                  <span class="text-text-muted">Total Amount:</span>
-                  <span class="font-bold text-lg text-primary ml-2">{{ formatCurrency(billDetails.amount) }}</span>
-                </p>
+              <div class="space-y-2">
+                <div class="text-text">
+                  <div class="text-text-muted text-xs uppercase tracking-wide">Issue Date</div>
+                  <div class="font-medium">{{ formatDate(billDetails.issue_date) }}</div>
+                </div>
+                <div class="text-text">
+                  <div class="text-text-muted text-xs uppercase tracking-wide">Payment Method</div>
+                  <div class="font-medium capitalize">{{ billDetails.payment_method }}</div>
+                </div>
+                <div class="text-text">
+                  <div class="text-text-muted text-xs uppercase tracking-wide">Total Amount</div>
+                  <div class="font-bold text-xl text-primary">{{ formatCurrency(billDetails.amount) }}</div>
+                </div>
               </div>
             </div>
 
           </div>
 
           <!-- Description if available -->
-          <div *ngIf="billDetails.description" class="mt-6 pt-6 border-t border-border">
-            <h3 class="text-sm font-medium text-text-muted uppercase tracking-wider mb-2">Description</h3>
-            <p class="text-text">{{ billDetails.description }}</p>
+          <div *ngIf="billDetails.description" class="mt-8 pt-6 border-t border-border">
+            <h3 class="text-sm font-medium text-text-muted uppercase tracking-wider mb-3">Description</h3>
+            <p class="text-text leading-relaxed">{{ billDetails.description }}</p>
           </div>
         </div>
 
         <!-- Services/Items Section -->
-        <div class="bg-background rounded-card border border-border overflow-hidden">
+        <div class="bg-background rounded-card border border-border overflow-hidden mb-6">
           <div class="px-6 py-4 border-b border-border">
             <h3 class="text-lg font-semibold text-text">Services & Treatments</h3>
             <p class="text-sm text-text-muted">Detailed breakdown of all services provided</p>
@@ -154,7 +155,7 @@
                     </div>
                   </td>
                   <td class="px-6 py-4">
-                    <div class="text-sm text-text max-w-md">{{ item.description }}</div>
+                    <div class="text-sm text-text max-w-md leading-relaxed">{{ item.description }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right">
                     <div class="text-sm font-semibold text-text">{{ formatCurrency(item.price) }}</div>
@@ -180,19 +181,21 @@
       </div>
     </div>
 
-    <!-- Modal Footer -->
-    <div *ngIf="billDetails && !isLoading && !hasError" class="p-6 border-t border-border bg-background">
-      <div class="flex justify-between items-center">
+    <!-- Modal Footer - Fixed at bottom -->
+    <div *ngIf="billDetails && !isLoading && !hasError" class="p-6 border-t border-border bg-background flex-shrink-0">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="text-sm text-text-muted">
-          Created: {{ formatDate(billDetails.created_at) }}
-          <span *ngIf="billDetails.updated_at !== billDetails.created_at" class="ml-4">
-            Updated: {{ formatDate(billDetails.updated_at) }}
-          </span>
+          <div class="flex flex-wrap gap-4">
+            <span>Created: {{ formatDate(billDetails.created_at) }}</span>
+            <span *ngIf="billDetails.updated_at !== billDetails.created_at">
+              Updated: {{ formatDate(billDetails.updated_at) }}
+            </span>
+          </div>
         </div>
-        <div class="flex space-x-3">
+        <div class="flex space-x-3 w-full sm:w-auto">
           <button 
             (click)="downloadPdf()" 
-            class="px-4 py-2 bg-accent text-white rounded-button hover:bg-accent-dark transition-colors inline-flex items-center">
+            class="flex-1 sm:flex-none px-4 py-2 bg-accent text-white rounded-button hover:bg-accent-dark transition-colors inline-flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -200,7 +203,7 @@
           </button>
           <button 
             (click)="onClose()" 
-            class="px-4 py-2 bg-background text-text border border-border rounded-button hover:bg-hover transition-colors">
+            class="flex-1 sm:flex-none px-4 py-2 bg-background text-text border border-border rounded-button hover:bg-hover transition-colors">
             Close
           </button>
         </div>
