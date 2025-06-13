@@ -8,3 +8,65 @@ select {
   background-size: 1.2em auto;
   padding-right: 2.5rem;
 }
+
+/* Styles améliorés pour le chart Weekly Overview */
+.chart-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+#weekly-overview-chart {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+/* Assurer que le conteneur du graphique prend toute la largeur disponible */
+.grid-cols-1 > section {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Styles pour le conteneur de Weekly Overview */
+.weekly-overview-container {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 auto !important;
+}
+
+/* Styles spécifiques pour la section Weekly Overview */
+.weekly-overview-section {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Ajustement pour les écrans plus petits (mobile) */
+@media (max-width: 768px) {
+  .weekly-overview-container,
+  .weekly-overview-section,
+  .chart-container {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+/* Styles pour s'assurer que la section des statistiques s'ajuste correctement */
+.weekly-overview-section .grid {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  box-sizing: border-box !important;
+}

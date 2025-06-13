@@ -1,0 +1,65 @@
+<!-- Nouvelle structure pour la disposition des sections -->
+<!-- Grid principale avec 1 colonne -->
+<div class="grid grid-cols-1 gap-6 mb-8">
+  <!-- Première ligne: deux colonnes côte à côte pour Planning et Répartition -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Planning du Jour -->
+    <section class="bg-white border border-blue-100 rounded-2xl shadow p-6 flex flex-col w-full min-h-[340px]">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Planning du jour - Dr. Kamal Berrada</h3>
+        <button class="text-xs px-3 py-1 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 transition">Voir tout</button>
+      </div>
+      <ul class="divide-y divide-blue-50 mt-0">
+        <!-- Contenu du planning -->
+      </ul>
+    </section>
+    
+    <!-- Répartition des patients -->
+    <section class="bg-white border border-blue-100 rounded-2xl shadow p-6 flex flex-col w-full min-h-[340px]">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Répartition des patients</h3>
+        <select [(ngModel)]="demographicFilter" (change)="renderDemographicChart()" class="border border-blue-200 bg-white text-slate-800 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+          <option value="age">Par âge</option>
+          <option value="gender">Par genre</option>
+        </select>
+      </div>
+      <div class="flex flex-col md:flex-row items-center justify-center gap-6 flex-1">
+        <canvas id="demographic-chart" class="w-full max-w-[420px] h-56 md:h-64 mx-auto"></canvas>
+        <!-- Légende du graphique -->
+      </div>
+    </section>
+  </div>
+  
+  <!-- Weekly Overview - avec la même largeur que les deux sections du dessus combinées -->
+  <section class="bg-white border border-blue-100 rounded-2xl shadow p-0 flex flex-col w-full min-h-[340px]">
+    <div class="flex justify-between items-center mx-4 mt-4 mb-2">
+      <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Weekly Overview</h3>
+      <span class="date-range text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-lg">May 2 - May 8</span>
+    </div>
+    <div class="chart-container w-full flex-grow" style="height: 240px; width: 100%; margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;">
+      <canvas id="weekly-overview-chart" style="width: 100%; height: 100%; margin: 0; padding: 0; display: block;"></canvas>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mx-4 my-4">
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">TOTAL APPOINTMENTS</p>
+        <h4 class="text-2xl font-bold">32</h4>
+        <span class="text-green-500 text-xs">↑ 8%</span>
+      </div>
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">OPEN SLOTS</p>
+        <h4 class="text-2xl font-bold">5</h4>
+        <span class="text-green-500 text-xs">↑ 2%</span>
+      </div>
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">FOLLOW-UPS</p>
+        <h4 class="text-2xl font-bold">7</h4>
+        <span class="text-gray-500 text-xs">→ 0%</span>
+      </div>
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">NEW PATIENTS</p>
+        <h4 class="text-2xl font-bold">6</h4>
+        <span class="text-green-500 text-xs">↑ 12%</span>
+      </div>
+    </div>
+  </section>
+</div>

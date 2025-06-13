@@ -177,108 +177,108 @@
     </div>
   </div>
 
-  <!-- Disposition : Planning du jour + Répartition des patients côte à côte, Weekly Overview en dessous -->  <div class="grid grid-cols-1 gap-6 mb-8">    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Planning du Jour -->
-      <section class="bg-white border border-blue-100 rounded-2xl shadow p-6 flex flex-col w-full min-h-[340px]">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Planning du jour - Dr. Kamal Berrada</h3>
-          <button class="text-xs px-3 py-1 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 transition">Voir tout</button>
-        </div>
-        <ul class="divide-y divide-blue-50 mt-0">
-          <li *ngFor="let appointment of todayAppointmentsList; let i = index" class="flex items-center justify-between py-3 px-2 hover:bg-blue-50 rounded-xl transition">
-            <div class="flex items-center gap-4">
-              <ng-container *ngIf="appointment.photo; else defaultAvatar">
-                <img [src]="appointment.photo" alt="Photo patient" class="w-12 h-12 rounded-full object-cover border-2 border-blue-200 shadow-sm" (error)="onImageError($event)" />
-              </ng-container>
-              <ng-template #defaultAvatar>
-                <div class="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                  {{ appointment.initials }}
-                </div>
-              </ng-template>
-              <div>
-                <div class="font-semibold text-slate-800">{{ appointment.name }}</div>
-                <div class="text-xs text-slate-500">{{ appointment.type }} avec {{ appointment.doctor }}</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 min-w-[120px] justify-end">
-
-              <span class="font-semibold text-base text-slate-700 dark:text-slate-300">{{ appointment.time }}</span>
-              <span [ngClass]="{
-                'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800': appointment.status === 'completed',
-                'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800': appointment.status === 'upcoming',
-                'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800': appointment.status === 'late'
-              }" class="px-3 py-1 rounded-full text-xs font-semibold border">
-                {{ getStatusLabel(appointment.status) }}
-              </span>
-            </div>
-          </li>
-
-          <li *ngIf="todayAppointmentsList.length === 0" class="text-center text-slate-400 dark:text-slate-500 py-6">Aucun rendez-vous aujourd'hui.</li>
-        </ul>
-      </section>      <!-- Répartition des patients (déplacé ici) -->
-      <section class="bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-900/50 rounded-2xl shadow dark:shadow-slate-900/20 p-6 flex flex-col w-full min-h-[340px]">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold text-blue-700 dark:text-blue-400 tracking-tight">Répartition des patients</h3>
-          <select [(ngModel)]="demographicFilter" (change)="renderDemographicChart()" class="border border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-500 dark:focus:border-blue-700">
-            <option value="age">Par âge</option>
-            <option value="gender">Par genre</option>
-          </select>
-        </div>        <div class="flex flex-col md:flex-row items-center justify-center gap-6 flex-1">
-          <canvas id="demographic-chart" class="w-full max-w-[420px] h-56 md:h-64 mx-auto"></canvas>
-
-          <div class="flex flex-col gap-2 text-sm mt-4 md:mt-0 text-slate-700 dark:text-slate-300">
-
-            <ng-container *ngIf="demographicFilter === 'age'">
-              <div><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>0-18 ans : 18%</div>
-              <div><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>19-35 ans : 25%</div>
-              <div><span class="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>36-50 ans : 32%</div>
-              <div><span class="inline-block w-3 h-3 rounded-full bg-purple-500 mr-2"></span>51-65 ans : 15%</div>
-              <div><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>65+ ans : 10%</div>
-            </ng-container>
-            <ng-container *ngIf="demographicFilter === 'gender'">
-              <div><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>Femmes : 40% (499)</div>
-              <div><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-2"></span>Hommes : 60% (749)</div>
-            </ng-container>
-          </div>
-        </div>
-      </section>
-
-    </div>    <!-- Weekly Overview (déplacé après) -->
-    <section class="bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-900/50 rounded-2xl shadow dark:shadow-slate-900/20 p-6 flex flex-col w-full min-h-[340px]">
+  <!-- Disposition : Planning du jour + Répartition des patients côte à côte, Weekly Overview en dessous -->
+<div class="grid grid-cols-1 gap-6 mb-8">
+  <!-- Première ligne : Planning du jour + Répartition des patients côte à côte -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Planning du Jour -->
+    <section class="bg-white border border-blue-100 rounded-2xl shadow p-6 flex flex-col w-full min-h-[340px]">
       <div class="flex justify-between items-center mb-2">
-        <h3 class="text-lg font-semibold text-blue-700 dark:text-blue-400 tracking-tight">Weekly Overview</h3>
-        <span class="date-range text-xs text-gray-500 dark:text-gray-400">May 2 - May 8</span>
-
-      </div>      <div class="chart-container h-56 mb-0 w-full">
-        <canvas id="weekly-overview-chart" style="width:100% !important; height:100% !important; display:block;" class="w-full h-full"></canvas>
+        <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Planning du jour - Dr. Kamal Berrada</h3>
+        <button class="text-xs px-3 py-1 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 transition">Voir tout</button>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+      <ul class="divide-y divide-blue-50 mt-0">
+        <li *ngFor="let appointment of todayAppointmentsList; let i = index" class="flex items-center justify-between py-3 px-2 hover:bg-blue-50 rounded-xl transition">
+          <div class="flex items-center gap-4">
+            <ng-container *ngIf="appointment.photo; else defaultAvatar">
+              <img [src]="appointment.photo" alt="Photo patient" class="w-12 h-12 rounded-full object-cover border-2 border-blue-200 shadow-sm" (error)="onImageError($event)" />
+            </ng-container>
+            <ng-template #defaultAvatar>
+              <div class="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                {{ appointment.initials }}
+              </div>
+            </ng-template>
+            <div>
+              <div class="font-semibold text-slate-800">{{ appointment.name }}</div>
+              <div class="text-xs text-slate-500">{{ appointment.type }} avec {{ appointment.doctor }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 min-w-[120px] justify-end">
+            <span class="font-semibold text-base text-slate-700 dark:text-slate-300">{{ appointment.time }}</span>
+            <span [ngClass]="{
+              'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800': appointment.status === 'completed',
+              'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800': appointment.status === 'upcoming',
+              'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800': appointment.status === 'late'
+            }" class="px-3 py-1 rounded-full text-xs font-semibold border">
+              {{ getStatusLabel(appointment.status) }}
+            </span>
+          </div>
+        </li>
+        <li *ngIf="todayAppointmentsList.length === 0" class="text-center text-slate-400 dark:text-slate-500 py-6">Aucun rendez-vous aujourd'hui.</li>
+      </ul>
+    </section>
 
-        <div class="bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400">TOTAL APPOINTMENTS</p>
-          <h4 class="font-bold text-gray-800 dark:text-gray-200">32</h4>
-          <span class="change-indicator up text-green-500 text-xs">↑ 8%</span>
-        </div>
-        <div class="bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400">OPEN SLOTS</p>
-          <h4 class="font-bold text-gray-800 dark:text-gray-200">5</h4>
-          <span class="change-indicator down text-red-500 text-xs">↓ 2%</span>
-        </div>
-        <div class="bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400">FOLLOW-UPS</p>
-          <h4 class="font-bold text-gray-800 dark:text-gray-200">7</h4>
-          <span class="change-indicator neutral text-gray-500 dark:text-gray-400 text-xs">→ 0%</span>
-        </div>
-        <div class="bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400">NEW PATIENTS</p>
-          <h4 class="font-bold text-gray-800 dark:text-gray-200">6</h4>
-
-          <span class="change-indicator up text-green-500 text-xs">↑ 12%</span>
+    <!-- Répartition des patients -->
+    <section class="bg-white border border-blue-100 rounded-2xl shadow p-6 flex flex-col w-full min-h-[340px]">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Répartition des patients</h3>
+        <select [(ngModel)]="demographicFilter" (change)="renderDemographicChart()" class="border border-blue-200 bg-white text-slate-800 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+          <option value="age">Par âge</option>
+          <option value="gender">Par genre</option>
+        </select>
+      </div>
+      <div class="flex flex-col md:flex-row items-center justify-center gap-6 flex-1">
+        <canvas id="demographic-chart" class="w-full max-w-[420px] h-56 md:h-64 mx-auto"></canvas>
+        <div class="flex flex-col gap-2 text-sm mt-4 md:mt-0 text-slate-700">
+          <ng-container *ngIf="demographicFilter === 'age'">
+            <div><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>0-18 ans : 18%</div>
+            <div><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>19-35 ans : 25%</div>
+            <div><span class="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>36-50 ans : 32%</div>
+            <div><span class="inline-block w-3 h-3 rounded-full bg-purple-500 mr-2"></span>51-65 ans : 15%</div>
+            <div><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>65+ ans : 10%</div>
+          </ng-container>
+          <ng-container *ngIf="demographicFilter === 'gender'">
+            <div><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>Femmes : 40% (499)</div>
+            <div><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-2"></span>Hommes : 60% (749)</div>
+          </ng-container>
         </div>
       </div>
     </section>
   </div>
 
+  <!-- Deuxième ligne : Weekly Overview en pleine largeur -->
+  <section class="bg-white border border-blue-100 rounded-2xl shadow p-6 flex flex-col w-full min-h-[340px]">
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-lg font-semibold text-blue-700 tracking-tight">Weekly Overview</h3>
+      <span class="date-range text-xs text-gray-500">May 2 - May 8</span>
+    </div>
+    <div class="chart-container w-full" style="height: 240px;">
+      <canvas id="weekly-overview-chart"></canvas>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">TOTAL APPOINTMENTS</p>
+        <h4 class="text-2xl font-bold">32</h4>
+        <span class="text-green-500 text-xs">↑ 8%</span>
+      </div>
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">OPEN SLOTS</p>
+        <h4 class="text-2xl font-bold">5</h4>
+        <span class="text-green-500 text-xs">↑ 2%</span>
+      </div>
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">FOLLOW-UPS</p>
+        <h4 class="text-2xl font-bold">7</h4>
+        <span class="text-gray-500 text-xs">→ 0%</span>
+      </div>
+      <div class="stat-card bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">NEW PATIENTS</p>
+        <h4 class="text-2xl font-bold">6</h4>
+        <span class="text-green-500 text-xs">↑ 12%</span>
+      </div>
+    </div>
+  </section>
+</div>
   <!-- Formulaire : Nouveau RDV -->
   <div *ngIf="showAppointmentForm"
        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 dark:bg-slate-900/60 backdrop-blur-sm">
