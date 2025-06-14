@@ -35,6 +35,16 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   selectedResources: string[] = [];
   searchTerm: string = '';
   
+
+
+// Nouvelles propriétés pour l'amélioration de l'affichage des docteurs
+  doctorSearchTerm: string = '';
+  filteredResources: { id: string, title: string, eventColor: string, specialty?: string }[] = [];
+  groupedDoctors: { specialty: string, doctors: any[] }[] = [];
+  showGroupedView: boolean = false;
+  
+
+
   // Loading and error states
   loadingDoctors = false;
   loadingAppointments = false;
@@ -135,7 +145,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         
         this.resources = validDoctors.map(doctor => ({
           id: doctor.id.toString(),
-          title: `${doctor.name} (${doctor.doctor.specialty})`,
+          title: `${doctor.name}`,
           eventColor: this.generateRandomColor(),
           specialty: doctor.doctor.specialty
         }));
@@ -143,6 +153,12 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         console.log('Created doctor resources:', this.resources);
         this.loadingDoctors = false;
         
+            // Initialiser les filtres et groupes
+        this.filteredResources = [...this.resources];
+        this.groupDoctorsBySpecialty();
+        this.showGroupedView = this.resources.length > 5; // Grouper si plus de 5 docteurs
+        
+
         // Auto-select all doctors by default when page loads
         this.selectedResources = this.resources.map(resource => resource.id);
         console.log('Auto-selected all doctors:', this.selectedResources);
@@ -157,12 +173,87 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         
         // Fallback to empty resources
         this.resources = [];
+         this.filteredResources = [];
         this.selectedResources = [];
         
         // Still try to load appointments even if doctors failed
         this.loadAppointments();
       }
     });
+  }
+
+// Nouvelles méthodes pour la gestion améliorée des docteurs
+  filterDoctors(): void {
+    if (!this.doctorSearchTerm.trim()) {
+      this.filteredResources = [...this.resources];
+    } else {
+      const searchLower = this.doctorSearchTerm.toLowerCase();
+      this.filteredResources = this.resources.filter(resource => 
+        resource.title.toLowerCase().includes(searchLower) ||
+        (resource.specialty && resource.specialty.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Re-grouper les docteurs filtrés
+    if (this.showGroupedView) {
+      this.groupDoctorsBySpecialty();
+    }
+  }
+
+  groupDoctorsBySpecialty(): void {
+    const doctorsToGroup = this.doctorSearchTerm ? this.filteredResources : this.resources;
+    
+    const grouped = doctorsToGroup.reduce((acc, doctor) => {
+      const specialty = doctor.specialty || 'General Medicine';
+      if (!acc[specialty]) {
+        acc[specialty] = [];
+      }
+      acc[specialty].push(doctor);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    this.groupedDoctors = Object.keys(grouped)
+      .sort() // Trier les spécialités alphabétiquement
+      .map(specialty => ({
+        specialty,
+        doctors: grouped[specialty].sort((a, b) => a.title.localeCompare(b.title)) // Trier les docteurs par nom
+      }));
+  }
+
+  selectAllDoctors(): void {
+    const doctorsToSelect = this.doctorSearchTerm ? this.filteredResources : this.resources;
+    this.selectedResources = [...doctorsToSelect.map(r => r.id)];
+    this.filterAndSearchEvents();
+    this.toastService.success(`Selected all ${doctorsToSelect.length} doctors`);
+  }
+
+
+  deselectAllDoctors(): void {
+    this.selectedResources = [];
+    this.filterAndSearchEvents();
+    this.toastService.info('Deselected all doctors');
+  }
+
+    toggleGroupedView(): void {
+    this.showGroupedView = !this.showGroupedView;
+  }
+
+  trackByDoctorId(index: number, doctor: any): any {
+    return doctor.id;
+  }
+
+  trackBySpecialty(index: number, group: any): any {
+    return group.specialty;
+  }
+
+    // Méthode utilitaire pour obtenir le nombre de docteurs sélectionnés
+  getSelectedDoctorsCount(): number {
+    return this.selectedResources.length;
+  }
+
+  // Méthode utilitaire pour obtenir le nombre total de docteurs
+  getTotalDoctorsCount(): number {
+    return this.resources.length;
   }
 
   private generateRandomColor(): string {

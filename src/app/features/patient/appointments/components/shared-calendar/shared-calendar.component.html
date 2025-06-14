@@ -11,7 +11,7 @@
         <i class="far fa-calendar-check mr-2"></i> Today
       </button>
 
-      <div class="mini-calendar">
+<div class="mini-calendar">
         <div class="mini-calendar-header flex justify-between items-center mb-3 text-sm font-medium text-text">
           <button (click)="previousMiniMonth()" aria-label="Previous month" class="p-1.5 rounded-full hover:bg-hover focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-light hover:text-primary transition-colors"><i class="fas fa-chevron-left text-xs"></i></button>
           <span class="font-semibold text-card-title">{{ miniCalendarViewDate | date:'MMMM yyyy' }}</span>
@@ -30,7 +30,7 @@
                  'hover:bg-hover': !day.isSelected && day.isCurrentMonth,
                  'hover:bg-hover text-text-muted/60': !day.isSelected && !day.isCurrentMonth
                }"
-               (click)="selectMiniCalendarDate(day.date)"
+                (click)="selectMiniCalendarDate(day.date)"
                role="button"
                [attr.aria-label]="day.date | date:'longDate'">
             {{ day.dayOfMonth }}
@@ -38,24 +38,133 @@
         </div>
       </div>
 
+      <!-- Section des docteurs améliorée -->
       <div class="sidebar-section legends-filters pt-4 border-t border-border">
-        <h4 class="text-card-title font-display text-text mb-3">Your schedule</h4>  
-        <div class="space-y-2">
-          <div class="legend-item flex items-center" *ngFor="let resource of resources">
-            <label class="flex items-center space-x-2 text-sm text-text-light cursor-pointer group">
+        <!-- En-tête avec compteur et boutons d'action -->
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-card-title font-display text-text">Available Doctors</h4>
+          <span class="text-xs text-text-muted bg-hover px-2 py-1 rounded-full">
+            {{ getSelectedDoctorsCount() }}/{{ getTotalDoctorsCount() }}
+          </span>
+           </div>
+
+        <!-- Barre de recherche si plus de 3 docteurs -->
+        <div class="mb-3" *ngIf="resources && resources.length > 3">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="doctorSearchTerm"
+              (ngModelChange)="filterDoctors()"
+              placeholder="Search doctors..."
+              class="w-full pl-8 pr-3 py-2 text-xs border border-border rounded-input bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"
+            />
+            <i class="fas fa-search absolute left-2.5 top-2.5 text-text-muted text-xs"></i>
+            <button 
+              *ngIf="doctorSearchTerm"
+              (click)="doctorSearchTerm = ''; filterDoctors()"
+              class="absolute right-2.5 top-2.5 text-text-muted hover:text-text text-xs">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <!-- Boutons de basculement de vue si plus de 5 docteurs -->
+        <div class="flex items-center justify-between mb-3" *ngIf="resources && resources.length > 5">
+          <button 
+            (click)="toggleGroupedView()"
+            class="text-xs text-primary hover:text-primary-dark transition-colors flex items-center">
+            <i class="fas" [ngClass]="showGroupedView ? 'fa-list' : 'fa-layer-group'" class="mr-1"></i>
+            {{ showGroupedView ? 'List View' : 'Group by Specialty' }}
+          </button>
+        </div>
+ <!-- Vue groupée par spécialité -->
+        <div class="space-y-3" *ngIf="showGroupedView && groupedDoctors.length > 0">
+          <div *ngFor="let group of groupedDoctors; trackBy: trackBySpecialty" class="doctor-group">
+            <h5 class="text-xs font-medium text-text-muted uppercase tracking-wide mb-2 flex items-center">
+              <i class="fas fa-stethoscope mr-1.5 text-primary"></i>
+              {{ group.specialty }}
+              <span class="ml-2 text-text-muted/60">({{ group.doctors.length }})</span>
+            </h5>
+            <div class="space-y-2 ml-4">
+              <div class="legend-item flex items-center" *ngFor="let doctor of group.doctors; trackBy: trackByDoctorId">
+                <label class="flex items-center space-x-2 text-sm text-text-light cursor-pointer group w-full">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox h-4 w-4 text-primary rounded border-border focus:ring-primary focus:ring-offset-0 group-hover:border-primary/70 transition-colors"
+                    [checked]="selectedResources.includes(doctor.id)"
+                    (change)="toggleResource(doctor.id)"
+                  />
+                 <span class="legend-color-box w-3.5 h-3.5 rounded-sm inline-block flex-shrink-0" [style.backgroundColor]="doctor.eventColor"></span>
+                  <div class="flex flex-col flex-1 min-w-0">
+                    <span class="group-hover:text-text transition-colors truncate font-medium">Dr. {{ doctor.title }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+  <!-- Vue liste simple -->
+        <div class="space-y-2 max-h-64 overflow-y-auto" *ngIf="!showGroupedView">
+          <div class="legend-item flex items-center" *ngFor="let resource of (doctorSearchTerm ? filteredResources : resources); trackBy: trackByDoctorId">
+            <label class="flex items-center space-x-2 text-sm text-text-light cursor-pointer group w-full">
               <input
                 type="checkbox"
                 class="form-checkbox h-4 w-4 text-primary rounded border-border focus:ring-primary focus:ring-offset-0 group-hover:border-primary/70 transition-colors"
                 [checked]="selectedResources.includes(resource.id)"
                 (change)="toggleResource(resource.id)"
               />
-              <span class="legend-color-box w-3.5 h-3.5 rounded-sm inline-block" [style.backgroundColor]="resource.eventColor"></span>
-              <span class="group-hover:text-text transition-colors">{{ resource.title }}</span>
+              <span class="legend-color-box w-3.5 h-3.5 rounded-sm inline-block flex-shrink-0" [style.backgroundColor]="resource.eventColor"></span>
+              <div class="flex flex-col flex-1 min-w-0">
+                <span class="group-hover:text-text transition-colors truncate font-medium">Dr. {{ resource.title }}</span>
+                <span class="text-xs text-text-muted truncate" *ngIf="resource.specialty">{{ resource.specialty }}</span>
+              </div>
             </label>
           </div>
+           <!-- Message si aucun résultat -->
+          <div *ngIf="doctorSearchTerm && (!filteredResources || filteredResources.length === 0)" 
+               class="text-center py-4 text-text-muted text-sm">
+            <i class="fas fa-search text-text-muted/50 mb-2"></i>
+            <p>No doctors found matching "{{ doctorSearchTerm }}"</p>
+          </div>
+        </div>
+
+         <!-- Actions pour sélectionner/désélectionner tous -->
+        <div class="mt-4 pt-3 border-t border-border" *ngIf="resources && resources.length > 1">
+          <div class="flex justify-between items-center text-xs">
+            <button 
+              (click)="selectAllDoctors()" 
+              class="text-primary hover:text-primary-dark transition-colors flex items-center">
+              <i class="fas fa-check-double mr-1"></i>
+              Select All
+            </button>
+            <button 
+              (click)="deselectAllDoctors()" 
+              class="text-text-muted hover:text-text transition-colors flex items-center">
+              <i class="fas fa-times-circle mr-1"></i>
+              Clear All
+            </button>
+          </div>
+        </div>
+         <!-- État de chargement -->
+        <div *ngIf="loadingDoctors" class="flex items-center justify-center py-8 text-text-muted">
+          <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-sm">Loading doctors...</span>
+        </div>
+         <!-- Message d'erreur -->
+        <div *ngIf="doctorsError && !loadingDoctors" class="text-center py-4 text-status-urgent text-sm">
+          <i class="fas fa-exclamation-triangle mb-2"></i>
+          <p>{{ doctorsError }}</p>
+          <button 
+            (click)="loadAvailableDoctors()" 
+            class="mt-2 text-xs text-primary hover:text-primary-dark underline">
+            Try Again
+          </button>
         </div>
       </div>
     </div>
+
 
     <!-- Colonne de droite (Calendrier Principal) -->
     <div class="calendar-main-area flex-grow bg-card p-card-padding rounded-card shadow-card">
@@ -292,7 +401,7 @@
               Please select a doctor.
             </div>
           </div>
-
+ 
           <!-- Appointment Type -->
           <div class="form-group">
             <label for="appointmentType" class="block text-sm font-medium text-text-light mb-1.5">Appointment Type <span class="text-status-urgent">*</span></label>
