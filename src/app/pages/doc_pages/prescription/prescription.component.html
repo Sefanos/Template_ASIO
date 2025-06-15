@@ -1,22 +1,20 @@
 <div class="container mx-auto px-4 py-6 max-w-7xl">
-  <div class="flex flex-col">
-    <!-- Page Header -->
+  <div class="flex flex-col">    <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-dashboard-title">PRESCRIPTION MODULE</h1>
-      <p class="text-text-light mt-1">Create and manage patient prescriptions</p>
+      <h1 class="text-dashboard-title">MODULE ORDONNANCES</h1>
+      <p class="text-text-light mt-1">Créer et gérer les ordonnances des patients</p>
     </div>
     
     <!-- Patient Search - Only displayed when no patient is selected -->
     <div *ngIf="!patientId" class="card mb-6">
       <div class="flex flex-col">
-        <h3 class="card-title mb-4">Search for a patient</h3>
+        <h3 class="card-title mb-4">Rechercher un patient</h3>
         
         <div class="relative">
-          <div class="flex">
-            <input 
+          <div class="flex">            <input 
               type="text" 
               class="form-input flex-grow" 
-              placeholder="Search patients by name or ID..." 
+              placeholder="Rechercher des patients par nom ou ID..." 
               [(ngModel)]="searchQuery" 
               (input)="searchPatients()"
             />
@@ -25,20 +23,19 @@
               [disabled]="isSearching"
               (click)="searchPatients()"
             >
-              <span *ngIf="!isSearching">Search</span>
-              <span *ngIf="isSearching">Searching...</span>
+              <span *ngIf="!isSearching">Rechercher</span>
+              <span *ngIf="isSearching">Recherche...</span>
             </button>
           </div>
-          
-          <!-- Search results dropdown -->
+            <!-- Search results dropdown -->
           <div *ngIf="showSearchResults" class="absolute z-10 mt-1 w-full bg-white rounded-card shadow-lg border border-border">
             <div *ngIf="isSearching" class="p-4 text-center text-text-light">
               <div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary mr-2"></div>
-              Searching...
+              Recherche en cours...
             </div>
             
             <div *ngIf="!isSearching && noResultsFound" class="p-4 text-center text-text-light">
-              No patients found matching "{{ searchQuery }}"
+              Aucun patient trouvé correspondant à "{{ searchQuery }}"
             </div>
             
             <ul *ngIf="!isSearching && searchResults.length > 0" class="max-h-60 overflow-y-auto">
@@ -67,13 +64,12 @@
           [name]="patientName"
           [dob]="patientDob">
         </app-patient-info-header>
-        
-        <button 
+          <button 
           class="btn-secondary ml-2" 
-          title="Select a different patient"
+          title="Sélectionner un autre patient"
           (click)="clearPatient()"
         >
-          Change Patient
+          Changer de Patient
         </button>
       </div>
       

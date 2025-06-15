@@ -22,10 +22,9 @@
       <div *ngFor="let appointment of recentAppointments" class="bg-hover rounded-lg p-3">
         <div class="flex items-start justify-between">
           <div>
-            <div class="font-medium mb-1">{{ appointment.date }} {{ appointment.time }}</div>
-            <div class="text-sm text-text">{{ appointment.reason }}</div>
+            <div class="font-medium mb-1">{{ appointment.date }} {{ appointment.time }}</div>            <div class="text-sm text-text">{{ appointment.reason }}</div>
             <div class="text-xs text-text-light mt-1">
-              {{ appointment.type }} with {{ appointment.provider }}
+              {{ appointment.type }} avec {{ appointment.provider }}
             </div>
             <div *ngIf="appointment.notes" class="text-xs text-text mt-1">{{ appointment.notes }}</div>
           </div>
@@ -38,15 +37,14 @@
         </div>
       </div>
       
-      <!-- Added indication of showing limited appointments when there are more than 3 -->
-      <div *ngIf="appointments.length > 3" class="text-center text-sm text-text-light">
-        Showing most recent of {{ appointments.length }} appointments
+      <!-- Added indication of showing limited appointments when there are more than 3 -->      <div *ngIf="appointments.length > 3" class="text-center text-sm text-text-light">
+        Affichage des plus récents parmi {{ appointments.length }} rendez-vous
       </div>
     </div>
     
     <div class="mt-4">
       <button class="w-full text-center text-primary hover:text-primary-dark border border-primary hover:border-primary-dark rounded-button py-2 transition-colors">
-        Schedule New Appointment
+        Programmer un nouveau rendez-vous
       </button>
     </div>
   </div>

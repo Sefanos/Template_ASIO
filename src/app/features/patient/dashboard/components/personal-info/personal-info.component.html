@@ -9,8 +9,7 @@
       <div class="personal-info-details">
         <h3>{{ personalInfo.name }} {{ personalInfo.surname }}</h3>
         <div class="personal-info-meta">
-          <span><i class="fa fa-calendar"></i> {{ personalInfo.birthDate }}</span>
-          <span><i class="fa fa-tint"></i> Blood Type: {{ personalInfo.bloodType }}</span>
+          <span><i class="fa fa-calendar"></i> {{ personalInfo.birthDate }}</span>          <span><i class="fa fa-tint"></i> Groupe sanguin : {{ personalInfo.bloodType }}</span>
         </div>
       </div>
   
@@ -18,17 +17,16 @@
       <div class="emergency-contact">
         <strong>
           <i class="fa fa-bell" ></i> 
-          Emergency Contact</strong>
+          Contact d'urgence</strong>
         <p>{{ personalInfo.emergencyContact }}</p>
       </div>
     </div>
 
 
      <!-- NOUVELLE SECTION: Notifications -->
-     <div class="notifications-section card-style-container">
-      <div class="section-header">
+     <div class="notifications-section card-style-container">      <div class="section-header">
         <h3><i class="fa fa-bell"></i> Notifications</h3>
-        <button class="link-button">Mark All Read</button>
+        <button class="link-button">Tout marquer comme lu</button>
       </div>
       <div class="notification-list">
         <div class="notification-item">
@@ -36,86 +34,84 @@
             <i class="fa fa-calendar-check notification-icon appointment-icon"></i>
           </div>
           <div class="notification-content">
-            <h4>Appointment Reminder</h4>
-            <p>You have an appointment with Dr. Sarah Johnson tomorrow at 10:30 AM.</p>
+            <h4>Rappel de rendez-vous</h4>
+            <p>Vous avez un rendez-vous avec Dr. Sarah Johnson demain à 10h30.</p>
             <div class="notification-actions">
-              <button class="btn btn-sm btn-primary">Confirm</button>
-              <button class="btn btn-sm btn-secondary">Reschedule</button>
+              <button class="btn btn-sm btn-primary">Confirmer</button>
+              <button class="btn btn-sm btn-secondary">Reporter</button>
             </div>
           </div>
-          <span class="notification-time">1 hour ago</span>
+          <span class="notification-time">Il y a 1 heure</span>
         </div>
         <div class="notification-item">
           <div class="notification-icon-container">
             <i class="fa fa-file-medical-alt notification-icon results-icon"></i>
           </div>
           <div class="notification-content">
-            <h4>Test Results Available</h4>
-            <p>Your recent blood test results are ready to view.</p>
+            <h4>Résultats de tests disponibles</h4>
+            <p>Vos résultats de tests sanguins récents sont prêts à consulter.</p>
             <div class="notification-actions">
-              <button class="btn btn-sm btn-primary">View Results</button>
+              <button class="btn btn-sm btn-primary">Voir les résultats</button>
             </div>
           </div>
-          <span class="notification-time">2 days ago</span>
+          <span class="notification-time">Il y a 2 jours</span>
         </div>
       </div>
     </div>
 
-     <!-- Section des cartes -->
-  <div class="info-cards">
+     <!-- Section des cartes -->  <div class="info-cards">
     <div class="info-card">
-      <h4>Blood Pressure</h4>
+      <h4>Tension artérielle</h4>
       <p>{{ personalInfo.bloodPressure }}</p>
       <i class="fa fa-heart"></i>
     </div>
     <div class="info-card">
-      <h4>Last Appointment</h4>
+      <h4>Dernier rendez-vous</h4>
       <p>{{ personalInfo.lastAppointment }}</p>
       <i class="fa fa-calendar"></i>
     </div>
     <div class="info-card">
-      <h4>Next Appointment</h4>
+      <h4>Prochain rendez-vous</h4>
       <p>{{ personalInfo.nextAppointment }}</p>
       <i class="fa fa-line-chart"></i>
     </div>
     <div class="info-card">
-      <h4>Prescriptions</h4>
-      <p>{{ personalInfo.activePrescriptions }} active</p>
+      <h4>Ordonnances</h4>
+      <p>{{ personalInfo.activePrescriptions }} actives</p>
       <i class="fa fa-line-chart"></i>
     </div>
   </div>
 <!-- NOUVELLE SECTION: Rangée de cartes améliorées -->
 <div class="enhanced-cards-row">
-  <!-- Upcoming Appointment Card -->
-  <div class="enhanced-card upcoming-appointment-card card-style-container">
+  <!-- Upcoming Appointment Card -->  <div class="enhanced-card upcoming-appointment-card card-style-container">
     <div class="section-header">
-      <h4><i class="fa fa-calendar-alt"></i> Upcoming Appointment</h4>
-      <a href="#" class="view-all-link">View All</a>
+      <h4><i class="fa fa-calendar-alt"></i> Prochain rendez-vous</h4>
+      <a href="#" class="view-all-link">Voir tout</a>
     </div>
     <div class="appointment-details">
-      <h5>Regular Checkup</h5>
+      <h5>Contrôle de routine</h5>
       <p class="doctor-name"><i class="fa fa-user-md"></i> Dr. Sarah Johnson</p>
-      <p class="appointment-time"><i class="fa fa-clock"></i> May 15, 2025 &nbsp;&nbsp; <i class="fa fa-calendar-day"></i> 10:30 AM</p>
-      <span class="status-tag upcoming-tag">Upcoming</span>
+      <p class="appointment-time"><i class="fa fa-clock"></i> 15 mai 2025 &nbsp;&nbsp; <i class="fa fa-calendar-day"></i> 10h30</p>
+      <span class="status-tag upcoming-tag">À venir</span>
     </div>
     <div class="card-actions">
-      <button class="btn btn-secondary">Reschedule</button>
-      <button class="btn btn-danger">Cancel</button>
+      <button class="btn btn-secondary">Reporter</button>
+      <button class="btn btn-danger">Annuler</button>
     </div>
   </div>
    <!-- Recent Records Card -->
    <div class="enhanced-card recent-records-card card-style-container">
     <div class="section-header">
-      <h4><i class="fa fa-folder-open"></i> Recent Records</h4>
-      <a href="#" class="view-all-link">View All</a>
+      <h4><i class="fa fa-folder-open"></i> Dossiers récents</h4>
+      <a href="#" class="view-all-link">Voir tout</a>
     </div>
     <ul class="records-list">
       <li>
         <div class="record-info">
-          <p class="record-title">Blood Test Results</p>
-          <p class="record-date"><i class="fa fa-calendar-alt"></i> April 20, 2025</p>
+          <p class="record-title">Résultats de tests sanguins</p>
+          <p class="record-date"><i class="fa fa-calendar-alt"></i> 20 avril 2025</p>
         </div>
-        <span class="record-tag lab-result-tag">Lab Result</span>
+        <span class="record-tag lab-result-tag">Résultat de laboratoire</span>
       </li>
       <li>
         <div class="record-info">

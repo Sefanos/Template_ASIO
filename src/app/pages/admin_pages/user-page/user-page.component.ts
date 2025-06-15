@@ -359,16 +359,16 @@ export class UserPageComponent implements OnInit {
     
     const field = this.userForm.get(fieldName);
     if (field?.hasError('required')) {
-      return 'This field is required';
+      return 'Ce champ est requis';
     } else if (field?.hasError('email')) {
-      return 'Please enter a valid email address';
+      return 'Veuillez saisir une adresse email valide';
     } else if (field?.hasError('minlength')) {
-      return `Minimum length is ${field.getError('minlength').requiredLength} characters`;
+      return `La longueur minimum est de ${field.getError('minlength').requiredLength} caractères`;
     } else if (field?.hasError('passwordMismatch')) {
-      return 'Passwords do not match';
+      return 'Les mots de passe ne correspondent pas';
     }
     
-    return 'Invalid value';
+    return 'Valeur invalide';
   }
 
   isRoleSelected(roleId: number): boolean {

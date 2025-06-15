@@ -39,7 +39,7 @@ export class RescheduleAppointmentComponent implements OnInit {
         date: currentDate,
         time: currentTime,
         duration: this.data.appointment.duration || 30,
-        reason: 'Patient requested reschedule'
+        reason: 'Le patient a demandé une reprogrammation'
       });
     }
   }
@@ -62,22 +62,22 @@ export class RescheduleAppointmentComponent implements OnInit {
         reason: formValue.reason
       };
 
-      console.log('Rescheduling appointment with data:', rescheduleData);
+      console.log('Reprogrammation du rendez-vous avec les données:', rescheduleData);
 
       this.patientAppointmentService.rescheduleMyAppointment(this.data.appointment.id, rescheduleData)
         .subscribe({
           next: (updatedAppointment) => {
-            console.log('Appointment rescheduled successfully:', updatedAppointment);
-            this.successMessage = 'Appointment rescheduled successfully!';
+            console.log('Rendez-vous reprogrammé avec succès:', updatedAppointment);
+            this.successMessage = 'Rendez-vous reprogrammé avec succès !';
             this.isLoading = false;
             
-            // Close dialog after a short delay to show success message
+            // Fermer la boîte de dialogue après un court délai pour afficher le message de succès
             setTimeout(() => {
               this.dialogRef.close(updatedAppointment);
             }, 1500);
           },
           error: (error) => {
-            console.error('Error rescheduling appointment:', error);
+            console.error('Erreur lors de la reprogrammation du rendez-vous:', error);
             this.isLoading = false;
             
             if (error.error && error.error.error) {
@@ -85,7 +85,7 @@ export class RescheduleAppointmentComponent implements OnInit {
             } else if (error.error && error.error.message) {
               this.errorMessage = error.error.message;
             } else {
-              this.errorMessage = 'Failed to reschedule appointment. Please try again.';
+              this.errorMessage = 'Échec de la reprogrammation du rendez-vous. Veuillez réessayer.';
             }
           }
         });
@@ -145,13 +145,13 @@ export class RescheduleAppointmentComponent implements OnInit {
     const field = this.rescheduleForm.get(fieldName);
     if (field?.errors) {
       if (field.errors['required']) {
-        return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+        return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} est requis`;
       }
       if (field.errors['min']) {
-        return `Minimum value is ${field.errors['min'].min}`;
+        return `La valeur minimale est ${field.errors['min'].min}`;
       }
       if (field.errors['max']) {
-        return `Maximum value is ${field.errors['max'].max}`;
+        return `La valeur maximale est ${field.errors['max'].max}`;
       }
     }
     return '';

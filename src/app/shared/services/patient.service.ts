@@ -533,17 +533,16 @@ export class PatientService {
 
   /**
    * Extract frequency information from prescription instructions
-   */
-  private extractFrequencyFromInstructions(instructions: string): string {
+   */  private extractFrequencyFromInstructions(instructions: string): string {
     // Simple extraction of frequency patterns from instructions
-    if (instructions.toLowerCase().includes('once daily')) return 'Once daily';
-    if (instructions.toLowerCase().includes('twice daily')) return 'Twice daily';
-    if (instructions.toLowerCase().includes('three times daily')) return 'Three times daily';
-    if (instructions.toLowerCase().includes('four times daily')) return 'Four times daily';
-    if (instructions.toLowerCase().includes('as needed')) return 'As needed';
-    if (instructions.toLowerCase().includes('every morning')) return 'Every morning';
-    if (instructions.toLowerCase().includes('every evening')) return 'Every evening';
-    if (instructions.toLowerCase().includes('every hour')) return 'Every hour';
+    if (instructions.toLowerCase().includes('once daily')) return 'Une fois par jour';
+    if (instructions.toLowerCase().includes('twice daily')) return 'Deux fois par jour';
+    if (instructions.toLowerCase().includes('three times daily')) return 'Trois fois par jour';
+    if (instructions.toLowerCase().includes('four times daily')) return 'Quatre fois par jour';
+    if (instructions.toLowerCase().includes('as needed')) return 'Au besoin';
+    if (instructions.toLowerCase().includes('every morning')) return 'Chaque matin';
+    if (instructions.toLowerCase().includes('every evening')) return 'Chaque soir';
+    if (instructions.toLowerCase().includes('every hour')) return 'Toutes les heures';
     
     // Default fallback if no pattern is recognized
     return instructions;

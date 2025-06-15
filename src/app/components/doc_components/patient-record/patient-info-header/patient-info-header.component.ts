@@ -44,9 +44,8 @@ export class PatientInfoHeaderComponent implements OnInit, OnChanges, AfterViewI
       console.log('After view init, name:', this.displayName);
     }, 0);
   }
-  
-  private updateDisplayName(): void {
-    this.displayName = this.name || 'Unknown Patient';
+    private updateDisplayName(): void {
+    this.displayName = this.name || 'Patient Inconnu';
     // Force change detection
     this.cdr.detectChanges();
   }

@@ -63,9 +63,8 @@
             [ngClass]="{'bg-primary/5 dark:bg-primary/10': bill.id === currentSelectedBillId }"
             class="hover:bg-hover dark:hover:bg-gray-700/30 transition-colors duration-150 cursor-pointer" (click)="viewBillDetails(bill)">
           <td class="px-6 py-4 whitespace-nowrap text-sm text-text font-medium">{{ bill.bill_number }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.issue_date | date:'dd/MM/yyyy' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.doctor?.name || 'N/A' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text text-right font-medium">{{ bill.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.issue_date | date:'dd/MM/yyyy' }}</td>          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.doctor?.name || 'N/A' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text text-right font-medium">{{ bill.amount | currency:'MAD':'symbol':'1.2-2':'fr-FR' }}</td>
           <!-- Status Column Removed -->
           <!-- <td class="px-6 py-4 whitespace-nowrap text-sm">
             <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"

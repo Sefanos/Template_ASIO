@@ -3,7 +3,8 @@ import { CalendarOptions, EventClickArg, DateSelectArg, CalendarApi, ViewApi } f
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import interactionPlugin from '@fullcalendar/interaction'; // Pour la sélection de date, le clic sur événement
+import interactionPlugin from '@fullcalendar/interaction';
+import frLocale from '@fullcalendar/core/locales/fr'; // Import de la locale française
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { MyCalendarEvent } from '../../../../../core/patient/domain/models/calendar-event.model';
 import { PatientAppointmentService } from '../../../../../shared/services/patient-appointment.service';
@@ -28,35 +29,32 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
   public calendarApi!: CalendarApi;
 
-  doctorName = 'Available Doctors';
+  doctorName = 'Médecins disponibles';
   allCalendarEvents: MyCalendarEvent[] = [];
   calendarEvents: MyCalendarEvent[] = [];
   resources: { id: string, title: string, eventColor: string, specialty?: string }[] = [];
   selectedResources: string[] = [];
   searchTerm: string = '';
   
-
-
-// Nouvelles propriétés pour l'amélioration de l'affichage des docteurs
+  // Nouvelles propriétés pour l'amélioration de l'affichage des docteurs
   doctorSearchTerm: string = '';
   filteredResources: { id: string, title: string, eventColor: string, specialty?: string }[] = [];
   groupedDoctors: { specialty: string, doctors: any[] }[] = [];
   showGroupedView: boolean = false;
   
-
-
-  // Loading and error states
+  // États de chargement et d'erreur
   loadingDoctors = false;
   loadingAppointments = false;
   doctorsError: string | null = null;
-  // Add new loading states for operations
+  // Nouveaux états de chargement pour les opérations
   cancellingAppointment = false;
   reschedulingAppointment = false;
   isCalendarRefreshing = false;
 
-  miniCalendarViewDate: Date = new Date(2025, 4, 1); // May 1, 2025
+  miniCalendarViewDate: Date = new Date(2025, 4, 1); // 1er mai 2025
   miniCalendarDays: { date: Date, dayOfMonth: number, isCurrentMonth: boolean, isSelected: boolean }[] = [];
-  miniCalendarWeekDaysHeader = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  // En-têtes des jours en français pour le mini-calendrier (commençant par lundi)
+  miniCalendarWeekDaysHeader = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
   customToolbarTitle: string = '';
 
   isSubmitting: boolean = false;
@@ -66,6 +64,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
     initialView: 'timeGridWeek',
+    locale: frLocale, // Configuration de la locale française
     headerToolbar: false,
     weekends: true,
     editable: true, 
@@ -79,14 +78,44 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     contentHeight: 650,
     slotMinTime: '07:00:00',
     slotMaxTime: '19:00:00',
-    eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+    // Format d'heure français (24h)
+    eventTimeFormat: { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: false 
+    },
     displayEventTime: true,
     allDaySlot: false,
+    firstDay: 1, // Commencer la semaine par lundi (standard français)
     datesSet: (arg) => {
       if (this.calendarApi) {
         this.updateCustomToolbarTitle(arg.view);
       }
     },
+    // Textes personnalisés en français
+    buttonText: {
+      today: 'Aujourd\'hui',
+      month: 'Mois',
+      week: 'Semaine',
+      day: 'Jour',
+      list: 'Liste'
+    },
+    // Configuration des en-têtes de jours
+    dayHeaderFormat: { 
+      weekday: 'short' 
+    },
+    // Configuration des textes d'agenda
+    allDayText: 'Toute la journée',
+    moreLinkText: function(n) {
+      return '+ ' + n + ' autre(s)';
+    },
+    noEventsText: 'Aucun rendez-vous à afficher',
+    // Format des heures dans la grille
+    slotLabelFormat: {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: false
+    }
   };
 
   isEventModalOpen = false;
@@ -99,13 +128,13 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   selectedEndTimeForBooking: string | null = null;
   slotDurationMinutes = 30; 
 
-  // Available appointment types with descriptions
+  // Types de rendez-vous disponibles avec descriptions en français
   appointmentTypes = [
-    { value: 'consultation', label: 'General Consultation', description: 'Initial or routine medical consultation' },
-    { value: 'follow-up', label: 'Follow-up Visit', description: 'Follow-up appointment for ongoing treatment' },
-    { value: 'procedure', label: 'Medical Procedure', description: 'Scheduled medical procedure or treatment' },
-    { value: 'therapy', label: 'Therapy Session', description: 'Physical therapy or rehabilitation session' },
-    { value: 'emergency', label: 'Urgent Care', description: 'Urgent medical attention needed' }
+    { value: 'consultation', label: 'Consultation générale', description: 'Consultation médicale initiale ou de routine' },
+    { value: 'follow-up', label: 'Visite de suivi', description: 'Rendez-vous de suivi pour un traitement en cours' },
+    { value: 'procedure', label: 'Procédure médicale', description: 'Procédure médicale ou traitement programmé' },
+    { value: 'therapy', label: 'Séance de thérapie', description: 'Séance de kinésithérapie ou de rééducation' },
+    { value: 'emergency', label: 'Soins urgents', description: 'Attention médicale urgente nécessaire' }
   ];
 
   constructor(
@@ -127,7 +156,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Load doctors first, then appointments will be loaded after doctors are ready
+    // Charger d'abord les médecins, puis les rendez-vous seront chargés après que les médecins soient prêts
     this.loadAvailableDoctors();
     this.generateMiniCalendar();
   }
@@ -138,9 +167,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     
     this.patientAppointmentService.getAvailableDoctors().subscribe({
       next: (doctors) => {
-        console.log('Received doctors from API:', doctors);
+        console.log('Médecins reçus de l\'API:', doctors);
         
-        // Filter out users without doctor profile and create resources
+        // Filtrer les utilisateurs sans profil médecin et créer les ressources
         const validDoctors = doctors.filter(doctor => doctor.doctor !== null);
         
         this.resources = validDoctors.map(doctor => ({
@@ -150,39 +179,37 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
           specialty: doctor.doctor.specialty
         }));
         
-        console.log('Created doctor resources:', this.resources);
+        console.log('Ressources médecins créées:', this.resources);
         this.loadingDoctors = false;
-        
-            // Initialiser les filtres et groupes
+          // Initialiser les filtres et groupes
         this.filteredResources = [...this.resources];
         this.groupDoctorsBySpecialty();
-        this.showGroupedView = this.resources.length > 5; // Grouper si plus de 5 docteurs
-        
+        this.showGroupedView = false; // Vue liste par défaut
 
-        // Auto-select all doctors by default when page loads
+        // Auto-sélectionner tous les médecins par défaut au chargement de la page
         this.selectedResources = this.resources.map(resource => resource.id);
-        console.log('Auto-selected all doctors:', this.selectedResources);
+        console.log('Tous les médecins auto-sélectionnés:', this.selectedResources);
         
-        // Load appointments after doctors are ready
+        // Charger les rendez-vous après que les médecins soient prêts
         this.loadAppointments();
       },
       error: (error) => {
-        console.error('Error loading available doctors:', error);
-        this.doctorsError = 'Failed to load available doctors. Please try again.';
+        console.error('Erreur lors du chargement des médecins disponibles:', error);
+        this.doctorsError = 'Échec du chargement des médecins disponibles. Veuillez réessayer.';
         this.loadingDoctors = false;
         
-        // Fallback to empty resources
+        // Solution de repli vers des ressources vides
         this.resources = [];
-         this.filteredResources = [];
+        this.filteredResources = [];
         this.selectedResources = [];
         
-        // Still try to load appointments even if doctors failed
+        // Essayer quand même de charger les rendez-vous même si les médecins ont échoué
         this.loadAppointments();
       }
     });
   }
 
-// Nouvelles méthodes pour la gestion améliorée des docteurs
+  // Nouvelles méthodes pour la gestion améliorée des docteurs
   filterDoctors(): void {
     if (!this.doctorSearchTerm.trim()) {
       this.filteredResources = [...this.resources];
@@ -204,7 +231,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     const doctorsToGroup = this.doctorSearchTerm ? this.filteredResources : this.resources;
     
     const grouped = doctorsToGroup.reduce((acc, doctor) => {
-      const specialty = doctor.specialty || 'General Medicine';
+      const specialty = doctor.specialty || 'Médecine générale';
       if (!acc[specialty]) {
         acc[specialty] = [];
       }
@@ -224,17 +251,16 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     const doctorsToSelect = this.doctorSearchTerm ? this.filteredResources : this.resources;
     this.selectedResources = [...doctorsToSelect.map(r => r.id)];
     this.filterAndSearchEvents();
-    this.toastService.success(`Selected all ${doctorsToSelect.length} doctors`);
+    this.toastService.success(`Tous les ${doctorsToSelect.length} médecins sélectionnés`);
   }
-
 
   deselectAllDoctors(): void {
     this.selectedResources = [];
     this.filterAndSearchEvents();
-    this.toastService.info('Deselected all doctors');
+    this.toastService.info('Tous les médecins désélectionnés');
   }
 
-    toggleGroupedView(): void {
+  toggleGroupedView(): void {
     this.showGroupedView = !this.showGroupedView;
   }
 
@@ -246,7 +272,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     return group.specialty;
   }
 
-    // Méthode utilitaire pour obtenir le nombre de docteurs sélectionnés
+  // Méthode utilitaire pour obtenir le nombre de docteurs sélectionnés
   getSelectedDoctorsCount(): number {
     return this.selectedResources.length;
   }
@@ -267,62 +293,72 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   }
 
   loadAppointments(): void {
-    console.log('Loading appointments for calendar...');
+    console.log('Chargement des rendez-vous pour le calendrier...');
     this.loadingAppointments = true;
     this.isCalendarRefreshing = true;
     
-    // Load all appointments to display in calendar (not just upcoming)
+    // Charger tous les rendez-vous pour affichage dans le calendrier (pas seulement les prochains)
     this.patientAppointmentService.getMyAppointments().subscribe({
       next: (sharedAppointments) => {
-        console.log('Received appointments from API:', sharedAppointments);
-        // Convert shared appointments to patient model then to calendar events
+        console.log('Rendez-vous reçus de l\'API:', sharedAppointments);
+        // Convertir les rendez-vous partagés vers le modèle patient puis vers les événements de calendrier
         const patientAppointments = this.appointmentAdapter.toPatientModelArray(sharedAppointments);
-        console.log('Converted to patient appointments:', patientAppointments);
+        console.log('Convertis en rendez-vous patient:', patientAppointments);
         
         this.allCalendarEvents = patientAppointments.map(appointment => {
-          // Convert time format from "9:00 AM" to "09:00" format
+          // Convertir le format d'heure de "9:00 AM" vers le format "09:00"
           const convertedTime = this.convertTimeFormat(appointment.time);
           const startDateTime = `${appointment.date}T${convertedTime}`;
           const startDate = new Date(startDateTime);
-          const endDate = new Date(startDate.getTime() + 30 * 60000); // Add 30 minutes
+          const endDate = new Date(startDate.getTime() + 30 * 60000); // Ajouter 30 minutes
           
-          // Find the doctor resource to get specialty information
+          // Trouver la ressource médecin pour obtenir les informations de spécialité
           const doctorResource = this.resources.find(r => r.id === appointment.doctorId.toString());
           const doctorDisplayName = doctorResource ? 
             `${appointment.doctorName} (${doctorResource.specialty})` : 
-            (appointment.doctorName || 'Doctor');
+            (appointment.doctorName || 'Médecin');
           
-          const calendarEvent = {
+          const mapStatusToFrench = (englishStatus: string): 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed' | undefined => {
+            switch (englishStatus?.toLowerCase()) {
+              case 'en attente': return 'Pending';
+              case 'confirmé': return 'Confirmed';
+              case 'annulé': return 'Cancelled';
+              case 'terminé': return 'Completed';
+              default: return 'Pending';
+            }
+          };
+
+          const calendarEvent: MyCalendarEvent = {
             id: appointment.id.toString(),
-            title: `${appointment.reason || 'Appointment'} - ${doctorDisplayName}`,
+            title: `${appointment.reason || 'Rendez-vous'} - ${doctorDisplayName}`,
             start: startDate,
             end: endDate,
             backgroundColor: this.getStatusColor(appointment.status),
             borderColor: this.getStatusColor(appointment.status),
             extendedProps: {
-              resourceId: appointment.doctorId.toString(), // Use actual doctor ID
+              resourceId: appointment.doctorId.toString(), // Utiliser l'ID réel du médecin
               description: appointment.reason,
-              status: appointment.status as 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed',
+              status: mapStatusToFrench(appointment.status),
               doctorName: appointment.doctorName,
               doctorSpecialty: appointment.doctorSpecialty || doctorResource?.specialty
             }
           };
-          console.log('Created calendar event:', calendarEvent);
-          console.log('Original time:', appointment.time, 'Converted time:', convertedTime);
-          console.log('Event start date:', calendarEvent.start);
-          console.log('Event end date:', calendarEvent.end);
+          console.log('Événement de calendrier créé:', calendarEvent);
+          console.log('Heure originale:', appointment.time, 'Heure convertie:', convertedTime);
+          console.log('Date de début de l\'événement:', calendarEvent.start);
+          console.log('Date de fin de l\'événement:', calendarEvent.end);
           return calendarEvent;
         });
         
-        console.log('Calendar events created:', this.allCalendarEvents);
+        console.log('Événements de calendrier créés:', this.allCalendarEvents);
         this.loadingAppointments = false;
         this.isCalendarRefreshing = false;
         
-        // Only show events for selected doctors (none selected initially)
+        // Afficher seulement les événements pour les médecins sélectionnés (aucun sélectionné initialement)
         this.filterAndSearchEvents();
       },
       error: (error: any) => {
-        console.error('Error loading appointments for calendar:', error);
+        console.error('Erreur lors du chargement des rendez-vous pour le calendrier:', error);
         this.allCalendarEvents = [];
         this.loadingAppointments = false;
         this.isCalendarRefreshing = false;
@@ -332,7 +368,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   }
 
   private convertTimeFormat(timeStr: string): string {
-    // Convert "9:00 AM" to "09:00" format
+    // Convertir "9:00 AM" vers le format "09:00"
     try {
       const [time, period] = timeStr.split(' ');
       const [hours, minutes] = time.split(':');
@@ -346,17 +382,17 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       
       return `${hour24.toString().padStart(2, '0')}:${minutes}`;
     } catch (error) {
-      console.error('Error converting time format:', error);
-      return '09:00'; // Default fallback
+      console.error('Erreur lors de la conversion du format d\'heure:', error);
+      return '09:00'; // Solution de repli par défaut
     }
   }
 
   private getStatusColor(status: string): string {
     switch (status?.toLowerCase()) {
-      case 'confirmed': return '#28a745';
-      case 'pending': return '#ffc107';
-      case 'cancelled': return '#dc3545';
-      case 'completed': return '#6c757d';
+      case 'confirmé': return '#28a745';
+      case 'en attente': return '#ffc107';
+      case 'annulé': return '#dc3545';
+      case 'terminé': return '#6c757d';
       default: return '#3788d8';
     }
   }
@@ -365,46 +401,46 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     if (this.calendarComponent) {
       this.calendarApi = this.calendarComponent.getApi();
       this.updateCustomToolbarTitle(this.calendarApi.view);
-      console.log('Calendar API initialized');
-      // Reload appointments after calendar is ready
+      console.log('API de calendrier initialisée');
+      // Recharger les rendez-vous après que le calendrier soit prêt
       this.loadAppointments();
     }
   }
 
-  updateCustomToolbarTitle(view: ViewApi) { // Changed type to ViewApi for better type safety
-    if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek') { // dayGridWeek is not a standard FullCalendar view type, maybe custom?
-      const start = this.datePipe.transform(view.activeStart, 'MMM d');
-      const end = this.datePipe.transform(view.activeEnd, 'MMM d, yyyy');
+  updateCustomToolbarTitle(view: ViewApi) {
+    if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek') {
+      const start = this.datePipe.transform(view.activeStart, 'dd MMM', '', 'fr');
+      const end = this.datePipe.transform(view.activeEnd, 'dd MMM yyyy', '', 'fr');
       this.customToolbarTitle = `${start} - ${end}`;
     } else if (view.type === 'dayGridMonth') {
-      this.customToolbarTitle = this.datePipe.transform(view.currentStart, 'MMMM yyyy') || '';
+      this.customToolbarTitle = this.datePipe.transform(view.currentStart, 'MMMM yyyy', '', 'fr')?.replace(/^\w/, c => c.toUpperCase()) || '';
     } else if (view.type === 'timeGridDay') {
-      this.customToolbarTitle = this.datePipe.transform(view.currentStart, 'MMMM d, yyyy') || '';
+      this.customToolbarTitle = this.datePipe.transform(view.currentStart, 'EEEE dd MMMM yyyy', '', 'fr')?.replace(/^\w/, c => c.toUpperCase()) || '';
     } else {
-      this.customToolbarTitle = view.title; // Fallback to FullCalendar's default title
+      this.customToolbarTitle = view.title;
     }
-    this.cdr.detectChanges(); // Ensure view updates if title changes outside Angular's zone
+    this.cdr.detectChanges();
   }
 
   filterAndSearchEvents(): void {
-    console.log('Filtering events. All events:', this.allCalendarEvents);
-    console.log('Selected resources:', this.selectedResources);
+    console.log('Filtrage des événements. Tous les événements:', this.allCalendarEvents);
+    console.log('Ressources sélectionnées:', this.selectedResources);
     
     let filtered: MyCalendarEvent[] = [];
     
-    // If no doctors are selected, show no events (as per requirement)
+    // Si aucun médecin n'est sélectionné, n'afficher aucun événement (comme requis)
     if (this.selectedResources.length === 0) {
-      console.log('No doctors selected, showing no events');
+      console.log('Aucun médecin sélectionné, affichage d\'aucun événement');
       filtered = [];
     } else {
-      // Filter events by selected doctor resources
+      // Filtrer les événements par ressources médecin sélectionnées
       filtered = this.allCalendarEvents.filter(event =>
         this.selectedResources.includes(event.extendedProps?.resourceId || '')
       );
-      console.log('Events filtered by selected doctors:', filtered);
+      console.log('Événements filtrés par médecins sélectionnés:', filtered);
     }
     
-    // Apply search filter if search term is provided
+    // Appliquer le filtre de recherche si un terme de recherche est fourni
     if (this.searchTerm.trim() !== '') {
       const lowerSearchTerm = this.searchTerm.toLowerCase();
       filtered = filtered.filter(event =>
@@ -413,22 +449,22 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         (event.extendedProps?.doctorName && event.extendedProps.doctorName.toLowerCase().includes(lowerSearchTerm)) ||
         (event.extendedProps?.doctorSpecialty && event.extendedProps.doctorSpecialty.toLowerCase().includes(lowerSearchTerm))
       );
-      console.log('Events after search filter:', filtered);
+      console.log('Événements après filtre de recherche:', filtered);
     }
     
     this.calendarEvents = filtered;
-    console.log('Final filtered events for calendar:', this.calendarEvents);
+    console.log('Événements filtrés finaux pour le calendrier:', this.calendarEvents);
     
     if (this.calendarApi) {
-      console.log('Updating calendar with events');
+      console.log('Mise à jour du calendrier avec les événements');
       this.calendarApi.removeAllEvents();
-      // Instead of addEventSource, use addEvent for each individual event
+      // Au lieu d'addEventSource, utiliser addEvent pour chaque événement individuel
       this.calendarEvents.forEach(event => {
-        console.log('Adding event to calendar:', event);
+        console.log('Ajout d\'un événement au calendrier:', event);
         this.calendarApi.addEvent(event);
       });
     } else {
-      console.log('Calendar API not ready, setting events in options');
+      console.log('API de calendrier pas prête, définition des événements dans les options');
       this.calendarOptions.events = this.calendarEvents;
     }
   }
@@ -449,15 +485,19 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.miniCalendarDays = [];
     const firstDayOfMonth = new Date(this.miniCalendarViewDate.getFullYear(), this.miniCalendarViewDate.getMonth(), 1);
     const firstDayToDisplay = new Date(firstDayOfMonth);
-    firstDayToDisplay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay()); // Adjust to start of the week (Sunday)
+    
+    // Ajuster pour commencer par lundi (1) au lieu de dimanche (0)
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    const daysToSubtract = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
+    firstDayToDisplay.setDate(firstDayOfMonth.getDate() - daysToSubtract);
     
     const mainCalendarCurrentDate = this.calendarApi ? this.calendarApi.getDate() : new Date();
 
-    for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
+    for (let i = 0; i < 42; i++) { // 6 semaines * 7 jours
       const currentDay = new Date(firstDayToDisplay);
       currentDay.setDate(firstDayToDisplay.getDate() + i);
       this.miniCalendarDays.push({
-        date: new Date(currentDay), // Create a new Date object to avoid reference issues
+        date: new Date(currentDay),
         dayOfMonth: currentDay.getDate(),
         isCurrentMonth: currentDay.getMonth() === this.miniCalendarViewDate.getMonth(),
         isSelected: this.isSameDate(currentDay, mainCalendarCurrentDate)
@@ -473,7 +513,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
 
   previousMiniMonth(): void {
     this.miniCalendarViewDate.setMonth(this.miniCalendarViewDate.getMonth() - 1);
-    this.miniCalendarViewDate = new Date(this.miniCalendarViewDate); // Create new Date object to trigger change detection if needed
+    this.miniCalendarViewDate = new Date(this.miniCalendarViewDate);
     this.generateMiniCalendar();
   }
 
@@ -486,12 +526,9 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
   selectMiniCalendarDate(date: Date): void {
     if (this.calendarApi) {
       this.calendarApi.gotoDate(date);
-      // The datesSet callback in calendarOptions should handle updating the miniCalendar's selected state
-      // by calling generateMiniCalendar, which checks against calendarApi.getDate().
-      // Explicitly updating here can also work:
       this.miniCalendarDays.forEach(day => day.isSelected = this.isSameDate(day.date, date));
-      this.miniCalendarViewDate = new Date(date); // Sync mini-calendar view if needed
-      this.generateMiniCalendar(); // Re-generate to update selection
+      this.miniCalendarViewDate = new Date(date);
+      this.generateMiniCalendar();
     }
   }
 
@@ -499,8 +536,8 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     if (this.calendarApi) {
       this.calendarApi.today();
     }
-    this.miniCalendarViewDate = new Date(); // Set mini-calendar to current month
-    this.generateMiniCalendar(); // Regenerate to select today
+    this.miniCalendarViewDate = new Date();
+    this.generateMiniCalendar();
   }
 
   mainCalendarNext(): void { if (this.calendarApi) this.calendarApi.next(); }
@@ -520,23 +557,22 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
 
   handleDateSelect(selectInfo: DateSelectArg) {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Compare dates only, not time for past date check
+    today.setHours(0, 0, 0, 0);
 
     if (selectInfo.start < today) {
-      this.toastService.warning("You cannot select a past date or time.");
+      this.toastService.warning("Vous ne pouvez pas sélectionner une date ou heure passée.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
 
     if (this.isSlotOccupied(selectInfo.start, selectInfo.end)) {
-      this.toastService.warning("This time slot is already booked or blocked.");
+      this.toastService.warning("Ce créneau horaire est déjà réservé ou bloqué.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
 
-    // Check if we have available doctors
     if (this.resources.length === 0) {
-      this.toastService.error("No doctors are available. Please try again later.");
+      this.toastService.error("Aucun médecin n'est disponible. Veuillez réessayer plus tard.");
       if (this.calendarApi) this.calendarApi.unselect();
       return;
     }
@@ -552,7 +588,6 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       this.selectedEndTimeForBooking = this.datePipe.transform(defaultEndDate, 'HH:mm');
     }
 
-    // Reset form with default values
     this.bookingForm.reset({
       doctorId: '',
       appointmentType: 'consultation',
@@ -569,15 +604,14 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     
     if (this.bookingForm.invalid || !this.selectedDateForBooking || !this.selectedTimeForBooking) {
       this.bookingForm.markAllAsTouched();
-      this.errorMessage = 'Please fill in all required fields correctly.';
+      this.errorMessage = 'Veuillez remplir tous les champs requis correctement.';
       this.isSubmitting = false;
       return;
     }
 
-    // Get current user from auth service
     const currentUser = this.authService.currentUserValue;
     if (!currentUser) {
-      this.errorMessage = 'Please log in to book an appointment.';
+      this.errorMessage = 'Veuillez vous connecter pour prendre un rendez-vous.';
       this.isSubmitting = false;
       return;
     }
@@ -590,61 +624,51 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     endDate.setMinutes(endDate.getMinutes() + this.slotDurationMinutes);
 
     if (startDate < new Date()) {
-      this.errorMessage = "Cannot schedule appointment in the past.";
+      this.errorMessage = "Impossible de programmer un rendez-vous dans le passé.";
       this.isSubmitting = false;
       return;
     }
 
-    // Prepare appointment data for API according to backend requirements
-    // ✅ FIXED: Use 'reason' instead of 'reason_for_visit' to match backend expectations
     const appointmentData = {
       doctor_id: parseInt(formValue.doctorId),
       appointment_datetime_start: startDate.toISOString(),
       appointment_datetime_end: endDate.toISOString(),
       type: formValue.appointmentType,
-      reason: formValue.reasonForVisit, // ✅ FIXED: Changed from 'reason_for_visit' to 'reason'
+      reason: formValue.reasonForVisit,
       notes_by_patient: formValue.notes
-      // ✅ REMOVED: Manual patient contact info - using authenticated user instead
     };
 
-    console.log('Submitting appointment data:', appointmentData);
+    console.log('Soumission des données de rendez-vous:', appointmentData);
 
-    // Use the real API to book appointment
     this.patientAppointmentService.bookAppointment(appointmentData).subscribe({
       next: (response) => {
-        console.log('Appointment booked successfully:', response);
+        console.log('Rendez-vous réservé avec succès:', response);
         
-        this.toastService.success('Appointment booked successfully!');
+        this.toastService.success('Rendez-vous réservé avec succès !');
         
-        // Set calendar refreshing state and reload appointments to show the new one
         this.isCalendarRefreshing = true;
         this.loadAppointments();
         
-        // Close modal after a brief delay to show success message
         setTimeout(() => {
           this.closeBookingForm();
         }, 1000);
       },
       error: (error: any) => {
-        console.error('Error booking appointment:', error);
+        console.error('Erreur lors de la réservation du rendez-vous:', error);
         
-        // Handle specific error messages from the backend
-        // Prioritize the most specific error message available
         if (error.error && error.error.error) {
-          // This contains the most specific error (like appointment limits)
           this.errorMessage = error.error.error;
         } else if (error.error && error.error.message) {
           this.errorMessage = error.error.message;
         } else if (error.error && error.error.errors) {
-          // Handle validation errors
           const errors = Object.values(error.error.errors).flat();
-          this.errorMessage = Array.isArray(errors) ? errors.join(', ') : 'Validation failed.';
+          this.errorMessage = Array.isArray(errors) ? errors.join(', ') : 'Échec de la validation.';
         } else if (error.status === 422) {
-          this.errorMessage = 'Please check your appointment details and try again.';
+          this.errorMessage = 'Veuillez vérifier les détails de votre rendez-vous et réessayer.';
         } else if (error.status === 409) {
-          this.errorMessage = 'This time slot is no longer available. Please choose another time.';
+          this.errorMessage = 'Ce créneau horaire n\'est plus disponible. Veuillez choisir un autre horaire.';
         } else {
-          this.errorMessage = 'Failed to book appointment. Please try again.';
+          this.errorMessage = 'Échec de la réservation du rendez-vous. Veuillez réessayer.';
         }
         this.isSubmitting = false;
       }
@@ -674,8 +698,8 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.selectedEventDetails = {
       id: clickInfo.event.id,
       title: clickInfo.event.title,
-      start: clickInfo.event.start || new Date(), // Fallback if start is null
-      end: clickInfo.event.end ?? undefined, // Use nullish coalescing
+      start: clickInfo.event.start || new Date(),
+      end: clickInfo.event.end ?? undefined,
       allDay: clickInfo.event.allDay,
       extendedProps: clickInfo.event.extendedProps,
       backgroundColor: clickInfo.event.backgroundColor,
@@ -689,22 +713,19 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     this.selectedEventDetails = null;
   }
 
-  // Reschedule appointment functionality
   rescheduleAppointment(appointmentId: string | undefined): void {
     if (!appointmentId) {
-      console.error('No appointment ID provided for reschedule');
+      console.error('Aucun identifiant de rendez-vous fourni pour la reprogrammation');
       return;
     }
 
-    // Find the appointment details from allCalendarEvents
     const appointmentEvent = this.allCalendarEvents.find(event => event.id === appointmentId);
     if (!appointmentEvent) {
-      console.error('Appointment not found for reschedule:', appointmentId);
-      this.toastService.error('Appointment not found. Please refresh the page and try again.');
+      console.error('Rendez-vous non trouvé pour reprogrammer :', appointmentId);
+      this.toastService.error('Rendez-vous introuvable. Veuillez actualiser la page et réessayer.');
       return;
     }
 
-    // Convert calendar event to appointment object format expected by reschedule modal
     const appointment = {
       id: parseInt(appointmentId),
       date: appointmentEvent.start instanceof Date ? 
@@ -713,60 +734,51 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       time: appointmentEvent.start instanceof Date ? 
         appointmentEvent.start.toTimeString().slice(0, 5) : 
         new Date(appointmentEvent.start).toTimeString().slice(0, 5),
-      doctorName: appointmentEvent.extendedProps?.doctorName || 'Unknown Doctor',
-      reason: appointmentEvent.extendedProps?.description || 'Appointment',
-      status: appointmentEvent.extendedProps?.status || 'pending',
+      doctorName: appointmentEvent.extendedProps?.doctorName || 'Médecin inconnu',
+      reason: appointmentEvent.extendedProps?.description || 'Rendez-vous',
+      status: appointmentEvent.extendedProps?.status || 'en attente',
       doctorId: appointmentEvent.extendedProps?.resourceId ? 
         parseInt(appointmentEvent.extendedProps.resourceId) : null
     };
 
-    // Check if appointment can be rescheduled
     if (!this.canRescheduleAppointment(appointment)) {
       return;
     }
 
-    // Open the reschedule modal
     const dialogRef = this.dialog.open(RescheduleAppointmentComponent, {
       width: '500px',
       data: { appointment: appointment },
       disableClose: false
     });
 
-    // Handle dialog result
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.reschedulingAppointment = true;
-        console.log('Appointment rescheduled successfully:', result);
-        // Close the event details modal
+        console.log('Rendez-vous reprogrammé avec succès :', result);
         this.closeEventModal();
-        // Set calendar refreshing state and refresh the calendar to show updated appointment
         this.isCalendarRefreshing = true;
         this.loadAppointments();
-        // Show success message briefly
-        this.toastService.success('Appointment rescheduled successfully!');
+        this.toastService.success('Rendez-vous reprogrammé avec succès !');
         this.reschedulingAppointment = false;
       }
     });
   }
 
-    // Cancel appointment functionality with double confirmation
   cancelAppointment(appointmentId: string | undefined): void {
-    console.log('cancelAppointment method called with ID:', appointmentId);
+    console.log('Méthode cancelAppointment appelée avec l\'ID :', appointmentId);
     
     if (!appointmentId) {
-      console.error('No appointment ID provided for cancellation');
+      console.error('Aucun identifiant de rendez-vous fourni pour l\'annulation');
       return;
     }
 
-    // Find the appointment details from allCalendarEvents
     const appointmentEvent = this.allCalendarEvents.find(event => event.id === appointmentId);
     if (!appointmentEvent) {
-      console.error('Appointment not found for cancellation:', appointmentId);
-      this.toastService.error('Appointment not found. Please refresh the page and try again.');
+      console.error('Rendez-vous non trouvé pour l\'annulation:', appointmentId);
+      this.toastService.error('Rendez-vous introuvable. Veuillez actualiser la page et réessayer.');
       return;
     }
 
-    // Convert calendar event to appointment object for validation
     const appointment = {
       id: parseInt(appointmentId),
       date: appointmentEvent.start instanceof Date ? 
@@ -775,30 +787,24 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       time: appointmentEvent.start instanceof Date ? 
         appointmentEvent.start.toTimeString().slice(0, 5) : 
         new Date(appointmentEvent.start).toTimeString().slice(0, 5),
-      doctorName: appointmentEvent.extendedProps?.doctorName || 'Unknown Doctor',
-      reason: appointmentEvent.extendedProps?.description || 'Appointment',
-      status: appointmentEvent.extendedProps?.status || 'pending'
+      doctorName: appointmentEvent.extendedProps?.doctorName || 'Médecin inconnu',
+      reason: appointmentEvent.extendedProps?.description || 'Rendez-vous',
+      status: appointmentEvent.extendedProps?.status || 'en attente'
     };
 
-    // Check if appointment can be cancelled
     if (!this.canCancelAppointment(appointment)) {
       return;
     }
 
-    // Open Angular Material confirmation dialog
     const dialogData: ConfirmationDialogData = {
-      title: 'Cancel Appointment',
-      message: `Are you sure you want to cancel this appointment?\n\nDate: ${appointment.date}\nTime: ${appointment.time}\nDoctor: ${appointment.doctorName}\nReason: ${appointment.reason}\n\nThis action cannot be undone.`,
-      confirmText: 'Cancel Appointment',
-      cancelText: 'Keep Appointment',
+      title: 'Annuler le rendez-vous',
+      message: `Êtes-vous sûr de vouloir annuler ce rendez-vous ?\n\nDate: ${appointment.date}\nHeure: ${appointment.time}\nMédecin: ${appointment.doctorName}\nMotif: ${appointment.reason}\n\nCette action ne peut pas être annulée.`,
+      confirmText: 'Annuler le rendez-vous',
+      cancelText: 'Conserver le rendez-vous',
       needsReason: true,
-      reasonLabel: 'Cancellation Reason',
-      reasonPlaceholder: 'Please provide a reason for cancelling this appointment (this helps us improve our services)'
+      reasonLabel: 'Motif d\'annulation',
+      reasonPlaceholder: 'Veuillez fournir un motif pour l\'annulation de ce rendez-vous (cela nous aide à améliorer nos services)'
     };
-
-    console.log('🔍 About to open dialog with data:', dialogData);
-    console.log('🔍 Dialog service:', this.dialog);
-    console.log('🔍 ConfirmationDialogComponent:', ConfirmationDialogComponent);
 
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: dialogData,
@@ -808,136 +814,116 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
       restoreFocus: false
     });
 
-    console.log('🔍 Dialog reference created:', dialogRef);
-
     dialogRef.afterClosed().subscribe((result: ConfirmationDialogResult | undefined) => {
       if (result && result.confirmed) {
-        // Set loading state
         this.cancellingAppointment = true;
         
-        // Proceed with cancellation
-        console.log('Cancelling appointment:', appointmentId, 'Reason:', result.reason);
+        console.log('Annulation du rendez-vous:', appointmentId, 'Motif:', result.reason);
         
         this.patientAppointmentService.cancelMyAppointment(parseInt(appointmentId), result.reason!).subscribe({
           next: (success) => {
             this.cancellingAppointment = false;
             if (success) {
-              console.log('Appointment cancelled successfully');
-              // Close the event details modal
+              console.log('Rendez-vous annulé avec succès');
               this.closeEventModal();
-              // Set calendar refreshing state and refresh the calendar to show updated appointment
               this.isCalendarRefreshing = true;
               this.loadAppointments();
-              // Show success message
-              this.toastService.success('Appointment cancelled successfully!');
+              this.toastService.success('Rendez-vous annulé avec succès !');
             } else {
-              this.toastService.error('Failed to cancel appointment. Please try again.');
+              this.toastService.error('Échec de l\'annulation du rendez-vous. Veuillez réessayer.');
             }
           },
           error: (error: any) => {
             this.cancellingAppointment = false;
-            console.error('Error cancelling appointment:', error);
+            console.error('Erreur lors de l\'annulation du rendez-vous:', error);
             
-            // Handle specific error messages from the backend
             if (error.error && error.error.message) {
-              this.toastService.error('Failed to cancel appointment', error.error.message);
+              this.toastService.error('Échec de l\'annulation du rendez-vous', error.error.message);
             } else if (error.error && error.error.error) {
-              this.toastService.error('Failed to cancel appointment', error.error.error);
+              this.toastService.error('Échec de l\'annulation du rendez-vous', error.error.error);
             } else if (error.status === 422) {
-              this.toastService.error('Invalid cancellation request. Please check the appointment details.');
+              this.toastService.error('Demande d\'annulation invalide. Veuillez vérifier les détails du rendez-vous.');
             } else if (error.status === 404) {
-              this.toastService.error('Appointment not found. It may have already been cancelled or modified.');
+              this.toastService.error('Rendez-vous introuvable. Il a peut-être déjà été annulé ou modifié.');
             } else {
-              this.toastService.error('Failed to cancel appointment. Please try again later.');
+              this.toastService.error('Échec de l\'annulation du rendez-vous. Veuillez réessayer plus tard.');
             }
           }
         });
       }
     });
   }
-
-  // Helper method to check if reschedule button should be shown
   canShowRescheduleButton(): boolean {
     const status = this.selectedEventDetails?.extendedProps?.status;
-    return status != null && ['Confirmed', 'Pending'].includes(status);
+    return status != null && ['Confirmed', 'Pending', 'Confirmé', 'En attente'].includes(status);
   }
 
-  // Check if appointment can be rescheduled
   canRescheduleAppointment(appointment: any): boolean {
     const status = appointment.status?.toLowerCase();
-    if (!['confirmed', 'pending'].includes(status)) {
-      this.toastService.warning('Only confirmed or pending appointments can be rescheduled.');
+    if (!['confirmed', 'pending', 'confirmé', 'en attente'].includes(status)) {
+      this.toastService.warning('Seuls les rendez-vous confirmés ou en attente peuvent être reprogrammés.');
       return false;
     }
 
-    // Check if appointment is in the past
     try {
       const appointmentDate = new Date(`${appointment.date}T${appointment.time}`);
       const now = new Date();
       if (appointmentDate < now) {
-        this.toastService.warning('Cannot reschedule past appointments.');
+        this.toastService.warning('Impossible de reprogrammer les rendez-vous passés.');
         return false;
       }
     } catch (error) {
-      console.error('Error checking appointment date:', error);
-      this.toastService.error('Error checking appointment date. Please try again.');
+      console.error('Erreur lors de la vérification de la date du rendez-vous:', error);
+      this.toastService.error('Erreur lors de la vérification de la date du rendez-vous. Veuillez réessayer.');
       return false;
     }
 
     return true;
   }
-
-  // Helper method to check if cancel button should be shown
   canShowCancelButton(): boolean {
     const status = this.selectedEventDetails?.extendedProps?.status;
-    const canShow = status != null && ['Confirmed', 'Pending'].includes(status);
-    console.log('canShowCancelButton called - status:', status, 'canShow:', canShow);
+    const canShow = status != null && ['Confirmed', 'Pending', 'Confirmé', 'En attente'].includes(status);
+    console.log('canShowCancelButton appelé - statut:', status, 'canShow:', canShow);
     return canShow;
   }
 
-  // Check if appointment can be cancelled
   canCancelAppointment(appointment: any): boolean {
     const status = appointment.status?.toLowerCase();
-    if (!['confirmed', 'pending'].includes(status)) {
-      this.toastService.warning('Only confirmed or pending appointments can be cancelled.');
+    if (!['confirmed', 'pending', 'confirmé', 'en attente'].includes(status)) {
+      this.toastService.warning('Seuls les rendez-vous confirmés ou en attente peuvent être annulés.');
       return false;
     }
 
-    // Check if appointment is in the past
     try {
       const appointmentDate = new Date(`${appointment.date}T${appointment.time}`);
       const now = new Date();
       if (appointmentDate < now) {
-        this.toastService.warning('Cannot cancel past appointments.');
+        this.toastService.warning('Impossible d\'annuler les rendez-vous passés.');
         return false;
       }
     } catch (error) {
-      console.error('Error checking appointment date:', error);
-      this.toastService.error('Error checking appointment date. Please try again.');
+      console.error('Erreur lors de la vérification de la date du rendez-vous:', error);
+      this.toastService.error('Erreur lors de la vérification de la date du rendez-vous. Veuillez réessayer.');
       return false;
     }
 
     return true;
   }
 
-  // Helper method to get appointment type description
   getAppointmentTypeDescription(value: string): string {
     const type = this.appointmentTypes.find(t => t.value === value);
     return type ? type.description : '';
   }
 
-  // Helper method to get form control value safely
   getFormControlValue(controlName: string): any {
     return this.bookingForm.get(controlName)?.value || '';
   }
 
-  // Helper method to check if form control has specific error
   hasFormControlError(controlName: string, errorType: string): boolean {
     const control = this.bookingForm.get(controlName);
     return !!(control?.errors?.[errorType] && (control?.dirty || control?.touched));
   }
 
-  // Helper method to check if form control is invalid and touched/dirty
   isFormControlInvalid(controlName: string): boolean {
     const control = this.bookingForm.get(controlName);
     return !!(control?.invalid && (control?.dirty || control?.touched));

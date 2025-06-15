@@ -205,9 +205,8 @@
           </div>
   
           <hr class="border-t border-border" />
-           
-          <div>
-            <h3 class="font-display text-card-title text-primary mb-2">Current Medications</h3>
+             <div>
+            <h3 class="font-display text-card-title text-primary mb-2">Médicaments Actuels</h3>
             <div class="bg-hover p-3 rounded-lg">
               <div *ngIf="(medicalHistory?.currentMedications?.length ?? 0) > 0; else noCurrentMedications" class="flex flex-wrap gap-2">
                 <span *ngFor="let medication of medicalHistory.currentMedications" class="bg-accent/10 text-accent text-sm font-medium px-2.5 py-1 rounded-full">
@@ -215,14 +214,13 @@
                 </span>
               </div>
               <ng-template #noCurrentMedications>
-                <p class="text-text-muted italic">No current medications</p>
+                <p class="text-text-muted italic">Aucun médicament actuel</p>
               </ng-template>
             </div>
           </div>
   
           <hr class="border-t border-border" />
-           
-          <div>
+             <div>
             <h3 class="font-display text-card-title text-primary mb-2">Allergies</h3>
             <div class="bg-hover p-3 rounded-lg">
               <div *ngIf="(medicalHistory?.allergies?.length ?? 0) > 0; else noAllergies" class="flex flex-wrap gap-2">
@@ -231,7 +229,7 @@
                 </span>
               </div>
               <ng-template #noAllergies>
-                <p class="text-text-muted italic">No allergies</p>
+                <p class="text-text-muted italic">Aucune allergie</p>
               </ng-template>
             </div>
           </div>

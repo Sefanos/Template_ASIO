@@ -42,10 +42,10 @@
     <form [formGroup]="roleForm" (ngSubmit)="onSubmit()">
       <!-- Role Information Section -->
       <div class="mb-6">
-        <h2 class="text-section-header text-text mb-4">ROLE INFORMATION</h2>
+        <h2 class="text-section-header text-text mb-4">INFORMATIONS DU RÔLE</h2>
         
         <div class="mb-4">
-          <label for="name" class="block text-text-light mb-1 font-medium">Role Name: <span class="text-status-urgent">*</span></label>
+          <label for="name" class="block text-text-light mb-1 font-medium">Nom du rôle : <span class="text-status-urgent">*</span></label>
           <input 
             type="text" 
             id="name" 
@@ -53,9 +53,8 @@
             class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
             [class.border-status-urgent]="formSubmitted && roleForm.get('name')?.invalid"
             [placeholder]="isProtectedRole ? 'System role name cannot be changed' : 'Enter role name'"
-          >
-          <div *ngIf="formSubmitted && roleForm.get('name')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
-            Role name is required.
+          >          <div *ngIf="formSubmitted && roleForm.get('name')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
+            Le nom du rôle est requis.
           </div>
           <div *ngIf="roleForm.get('name')?.errors?.['nameExists']" class="text-status-urgent text-sm mt-1">
             This role name already exists.
@@ -66,12 +65,12 @@
         </div>
         
         <div class="mb-4">
-          <label for="description" class="block text-text-light mb-1 font-medium">Description:</label>
+          <label for="description" class="block text-text-light mb-1 font-medium">Description :</label>
           <textarea 
             id="description" 
             formControlName="description" 
             class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
-            placeholder="Enter role description"
+            placeholder="Saisissez la description du rôle"
           ></textarea>
         </div>
         
@@ -150,7 +149,7 @@
           class="px-4 py-2 border border-border rounded-button text-text hover:bg-gray-100"
           (click)="cancel()"
         >
-          Cancel
+          Annuler
         </button>
         <button 
           type="submit" 
@@ -163,7 +162,7 @@
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </span>
-          {{ isNewRole ? 'Create Role' : 'Save Changes' }}
+          {{ isNewRole ? 'Créer le rôle' : 'Enregistrer les modifications' }}
         </button>
       </div>
     </form>

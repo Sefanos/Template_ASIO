@@ -16,9 +16,9 @@ export class DashboardComponent implements OnInit {
     birthDate: '1990-01-01',
     bloodType: 'O+',
     gender: 'Male',
-    nationality: 'American',
+    nationality: 'Marocaine',
     // maritalStatus: 'Célibataire',
-    emergencyContact: '+1 234 567 890',
+    emergencyContact: '+212 661 234 567',
     registrationDate: '2023-01-15',
     bloodPressure: '120/80',
     lastAppointment: '15/04/2024',
@@ -47,7 +47,7 @@ export class DashboardComponent implements OnInit {
     fetchPersonalInfo(): void {
       // Simuler un appel API
        
-      console.log('Fetching personal info...');
+      console.log('Récupération des informations personnelles...');
     }
     setActiveTab(tab: string): void {
       this.activeTab = tab;

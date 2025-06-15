@@ -154,7 +154,7 @@ export class ProfileEditComponent implements OnInit {
       Object.values(this.form.controls).forEach(control => {
         control.markAsTouched();
       });
-      this.errorMessage = "Please correct the errors in the form.";
+      this.errorMessage = "Veuillez corriger les erreurs dans le formulaire.";
       return;
     }
 

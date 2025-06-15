@@ -26,10 +26,9 @@ export interface SidebarItem {
 @Injectable({
   providedIn: 'root'
 })
-export class SidebarService {
-  private readonly doctorMenu = [
+export class SidebarService {  private readonly doctorMenu = [
     {
-      label: 'Dashboard',
+      label: 'Tableau de bord',
       route: '/doctor/dashboard',
       icon: 'grid'
     },
@@ -39,68 +38,66 @@ export class SidebarService {
       icon: 'users'
     },
     {
-      label: 'Calendar',
+      label: 'Calendrier',
       route: '/doctor/calendar',
       icon: 'calendar'
     },
     {
-      label: 'Prescriptions',
+      label: 'Ordonnances',
       route: '/doctor/prescription',
       icon: 'heart'
     },
     {
-      label: 'AI Assistant',
+      label: 'Assistant IA',
       route: '/doctor/ai-diagnostic',
       icon: 'help-circle'
     }
   ];
-
   private readonly adminMenu = [
     {
-      label: 'Dashboard',
+      label: 'Tableau de bord',
       route: '/admin/dashboard',
       icon: 'grid'
     },
     {
-      label: 'Users List',
+      label: 'Liste des utilisateurs',
       route: '/admin/users',
       icon: 'users'
     },
     {
-      label: 'Roles & Permissions',
+      label: 'Rôles et permissions',
       route: '/admin/roles',
       icon: 'shield'
     },
     {
-      label: 'Financial Dashboard',
+      label: 'Tableau de bord financier',
       route: '/admin/financial-dashboard',
       icon: 'financial-dashboard'
     },
     {
-      label: 'Bills Management',
+      label: 'Gestion des factures',
       route: '/admin/bills-managment',
       icon: 'file-text'
     }
   ];
-
   private readonly patientMenu: SidebarItem[] = [
     {
-      label: 'Dashboard',
+      label: 'Tableau de bord',
       route: '/patient/dashboard',
       icon: 'grid'
     },
     {
-      label: 'Appointments',
+      label: 'Rendez-vous',
       route: '/patient/appointments',
       icon: 'calendar'
     },
     {
-      label: 'Medical Record',
+      label: 'Dossier médical',
       route: '/patient/medical-record',
       icon: 'heart' // Consider a different icon if 'heart' is too doctor-specific
     },
     {
-      label: 'Bills',
+      label: 'Factures',
       route: '/patient/bills',
       icon: 'file-text' // Example: using a file-text icon for bills
     },
@@ -110,12 +107,12 @@ export class SidebarService {
       icon: 'message-square' // Example: using a message-square icon for chat
     },
     {
-      label: 'Profile',
+      label: 'Profil',
       route: '/patient/profile',
       icon: 'user' // Example: using a user icon for profile
     },
     {
-      label: 'Reminders',
+      label: 'Rappels',
       route: '/patient/reminders',
       icon: 'bell' // Example: using a bell icon for reminders
     }
@@ -136,15 +133,14 @@ export class SidebarService {
         return []; // Return empty array for unknown roles
     }
   }
-
   getMenuTitle(role: string): string {
     switch (role?.toLowerCase()) {
       case 'admin':
-        return 'Admin Menu';
+        return 'Menu Administrateur';
       case 'doctor':
-        return 'Doctor Menu';
+        return 'Menu Médecin';
       case 'patient':
-        return 'Patient Menu';
+        return 'Menu Patient';
       default:
         return 'Navigation';
     }

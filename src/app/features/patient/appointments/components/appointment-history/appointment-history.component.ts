@@ -12,7 +12,7 @@ import { RescheduleAppointmentComponent } from '../reschedule-appointment/resche
 })
 export class AppointmentHistoryComponent implements OnInit {
 
-  // Simplified data management - work directly with API response
+  // Gestion simplifiée des données - travailler directement avec la réponse de l'API
   appointments: any[] = [];
   filteredAppointments: any[] = [];
   
@@ -22,16 +22,16 @@ export class AppointmentHistoryComponent implements OnInit {
   totalPagesCount: number = 0;
   totalRecords: number = 0;
   
-  // Search and filters
+  // Recherche et filtres
   searchTerm: string = '';
   statusFilter: string = '';
   
-  // UI state
+  // État de l'interface utilisateur
   isLoading: boolean = false;
   errorMessage: string | null = null;
   expandedAppointmentIds: Set<number> = new Set();
   
-  // Doctor specialty cache and loading state
+  // Cache des spécialités des médecins et état de chargement
   doctorCache: Map<number, any> = new Map();
   loadingDoctorIds: Set<number> = new Set();
 
@@ -52,28 +52,28 @@ export class AppointmentHistoryComponent implements OnInit {
     
     this.patientAppointmentService.getAppointmentHistory().subscribe({
       next: (response) => {
-        console.log('Raw API response:', response);
+        console.log('Réponse brute de l\'API:', response);
         
-        // Work directly with API response structure
+        // Travailler directement avec la structure de réponse de l'API
         this.appointments = response.data || [];
         this.totalRecords = response.pagination?.total || this.appointments.length;
         
-        console.log('Appointments loaded:', this.appointments);
+        console.log('Rendez-vous chargés:', this.appointments);
         
-        // Auto-load doctor specialties for appointments without them
+        // Charger automatiquement les spécialités des médecins pour les rendez-vous sans elles
         this.loadMissingDoctorSpecialties();
         
         this.applyFilters();
         this.isLoading = false;
         
-        // Auto-load missing doctor specialties
+        // Charger automatiquement les spécialités des médecins manquantes
         this.loadMissingDoctorSpecialties();
         
         this.cdr.detectChanges();
       },
       error: (error: any) => {
-        console.error('Error loading appointment history:', error);
-        this.errorMessage = 'Failed to load appointment history. Please try again later.';
+        console.error('Erreur lors du chargement de l\'historique des rendez-vous:', error);
+        this.errorMessage = 'Échec du chargement de l\'historique des rendez-vous. Veuillez réessayer plus tard.';
         this.isLoading = false;
         this.appointments = [];
         this.filteredAppointments = [];
@@ -85,11 +85,11 @@ export class AppointmentHistoryComponent implements OnInit {
   applyFilters(): void {
     let filtered = [...this.appointments];
     
-    // Apply search filter
+    // Appliquer le filtre de recherche
     if (this.searchTerm.trim() !== '') {
       const searchLower = this.searchTerm.toLowerCase();
       filtered = filtered.filter((appointment: any) => {
-        // Search across multiple fields - handle both mapped and raw API structure
+        // Rechercher dans plusieurs champs - gérer à la fois la structure mappée et la structure brute de l'API
         const searchFields = [
           appointment.reason_for_visit || appointment.reason,
           appointment.provider,
@@ -107,7 +107,7 @@ export class AppointmentHistoryComponent implements OnInit {
       });
     }
     
-    // Apply status filter
+    // Appliquer le filtre de statut
     if (this.statusFilter && this.statusFilter !== '') {
       filtered = filtered.filter((appointment: any) => 
         appointment.status?.toLowerCase() === this.statusFilter.toLowerCase()
@@ -121,7 +121,7 @@ export class AppointmentHistoryComponent implements OnInit {
   updatePagination(): void {
     this.totalPagesCount = Math.ceil(this.filteredAppointments.length / this.itemsPerPage);
     
-    // Ensure current page is valid
+    // S'assurer que la page actuelle est valide
     if (this.currentPage > this.totalPagesCount && this.totalPagesCount > 0) {
       this.currentPage = this.totalPagesCount;
     }
@@ -178,29 +178,33 @@ export class AppointmentHistoryComponent implements OnInit {
   }
 
   openFilterModal(): void {
-    console.log('Filter button clicked');
+    console.log('Bouton de filtre cliqué');
   }
 
   exportData(): void {
-    console.log('Export button clicked');
+    console.log('Bouton d\'exportation cliqué');
   }
 
   trackByAppointmentId(index: number, appointment: any): number {
     return appointment.id;
   }
 
-  // Status styling based on API response
+  // Style du statut basé sur la réponse de l'API
   getStatusClass(status: string | null | undefined): string {
     if (!status) {
       return 'bg-hover text-text-muted border border-border';
     }
     
     switch (status.toLowerCase()) {
+      case 'confirmé':
       case 'confirmed':
+      case 'terminé':
       case 'completed':
         return 'bg-status-success/20 text-status-success border border-status-success/30';
+      case 'en attente':
       case 'pending':
         return 'bg-status-warning/20 text-status-warning border border-status-warning/30';
+      case 'annulé':
       case 'cancelled':
         return 'bg-status-urgent/20 text-status-urgent border border-status-urgent/30';
       default:
@@ -208,14 +212,14 @@ export class AppointmentHistoryComponent implements OnInit {
     }
   }
 
-  // Expanded appointment details with doctor specialty loading
+  // Détails du rendez-vous étendu avec chargement de la spécialité du médecin
   toggleAppointmentDetails(appointment: any): void {
     if (this.expandedAppointmentIds.has(appointment.id)) {
       this.expandedAppointmentIds.delete(appointment.id);
     } else {
       this.expandedAppointmentIds.add(appointment.id);
       
-      // Load doctor specialty when expanding details (Option 4)
+      // Charger la spécialité du médecin lors de l'expansion des détails (Option 4)
       const doctorId = this.getDoctorId(appointment);
       if (doctorId) {
         this.loadDoctorSpecialty(doctorId);
@@ -227,22 +231,22 @@ export class AppointmentHistoryComponent implements OnInit {
     return this.expandedAppointmentIds.has(id);
   }
 
-  // Option 4: Targeted doctor loading methods
+  // Option 4: Méthodes de chargement ciblé des médecins
   loadDoctorSpecialty(doctorId: number): void {
     if (this.doctorCache.has(doctorId) || this.loadingDoctorIds.has(doctorId)) {
-      return; // Already loaded or loading
+      return; // Déjà chargé ou en cours de chargement
     }
 
     this.loadingDoctorIds.add(doctorId);
 
     this.patientAppointmentService.getDoctorById(doctorId).subscribe({
       next: (doctor) => {
-        console.log('Doctor loaded via targeted method:', doctor);
+        console.log('Médecin chargé via la méthode ciblée:', doctor);
         this.doctorCache.set(doctorId, doctor);
         this.loadingDoctorIds.delete(doctorId);
         
-        // Update appointments with the loaded specialty
-        const specialty = doctor.doctor?.specialty || 'General Practice';
+        // Mettre à jour les rendez-vous avec la spécialité chargée
+        const specialty = doctor.doctor?.specialty || 'Médecine générale';
         this.appointments.forEach(appointment => {
           if (this.getDoctorId(appointment) === doctorId) {
             appointment.doctorSpecialty = specialty;
@@ -252,7 +256,7 @@ export class AppointmentHistoryComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error loading doctor specialty:', error);
+        console.error('Erreur lors du chargement de la spécialité du médecin:', error);
         this.loadingDoctorIds.delete(doctorId);
         this.cdr.detectChanges();
       }
@@ -260,21 +264,21 @@ export class AppointmentHistoryComponent implements OnInit {
   }
 
   getDoctorSpecialty(doctorId: number | null): string {
-    if (!doctorId) return 'Not available';
+    if (!doctorId) return 'Non disponible';
     
     const doctor = this.doctorCache.get(doctorId);
     if (doctor) {
-      // Handle API response structure: User -> doctor -> specialty
+      // Gérer la structure de réponse de l'API: Utilisateur -> médecin -> spécialité
       return doctor.doctor?.specialty || 
              doctor.specialty || 
-             'General Practice';
+             'Médecine générale';
     }
     
     if (this.loadingDoctorIds.has(doctorId)) {
-      return 'Loading...';
+      return 'Chargement...';
     }
     
-    return 'Not available';
+    return 'Non disponible';
   }
 
   isDoctorLoading(doctorId: number | null): boolean {
@@ -283,69 +287,78 @@ export class AppointmentHistoryComponent implements OnInit {
   }
 
   getDoctorId(appointment: any): number | null {
-    // Extract doctor user ID from appointment - this matches the user ID in available doctors
+    // Extraire l'ID utilisateur du médecin du rendez-vous - cela correspond à l'ID utilisateur dans les médecins disponibles
     const doctorId = appointment.doctor_user_id || appointment.doctorId || null;
-    console.log('getDoctorId for appointment', appointment.id, ':', doctorId, 'from appointment:', appointment);
+    console.log('getDoctorId pour le rendez-vous', appointment.id, ':', doctorId, 'du rendez-vous:', appointment);
     return doctorId;
   }
 
-  // Auto-load doctor specialties for appointments that don't have them
+  // Charger automatiquement les spécialités des médecins pour les rendez-vous qui ne les ont pas
   loadMissingDoctorSpecialties(): void {
-    console.log('Loading missing doctor specialties...');
+    console.log('Chargement des spécialités de médecins manquantes...');
     this.appointments.forEach(appointment => {
       const doctorId = this.getDoctorId(appointment);
-      console.log('Appointment:', appointment.id, 'Doctor ID:', doctorId, 'Current specialty:', appointment.doctorSpecialty);
+      console.log('Rendez-vous:', appointment.id, 'ID médecin:', doctorId, 'Spécialité actuelle:', appointment.doctorSpecialty);
       if (doctorId && !appointment.doctorSpecialty) {
-        console.log('Loading specialty for doctor ID:', doctorId);
+        console.log('Chargement de la spécialité pour l\'ID médecin:', doctorId);
         this.loadDoctorSpecialty(doctorId);
       }
     });
   }
 
-  // Helper methods for working with API data structure
+  // Méthodes d'aide pour travailler avec la structure de données de l'API
   getDoctorName(appointment: any): string {
     return appointment.provider || 
            appointment.doctorName || 
-           'Unknown Doctor';
+           'Médecin inconnu';
   }
 
   getPatientName(appointment: any): string {
     return appointment.patientName || 
-           'Unknown Patient';
+           'Patient inconnu';
   }
 
   formatDate(dateString: string): string {
-    if (!dateString) return 'Unknown Date';
+    if (!dateString) return 'Date inconnue';
     
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString('fr-FR', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
     } catch (error) {
-      return 'Invalid Date';
+      return 'Date invalide';
     }
   }
 
   formatTime(timeString: string): string {
-    if (!timeString) return 'Unknown Time';
+    if (!timeString) return 'Heure inconnue';
     
     try {
-      // Handle both "HH:mm:ss" and "HH:mm" formats, and already formatted times
+      // Gérer les formats "HH:mm:ss" et "HH:mm", et les heures déjà formatées
       if (timeString.includes('AM') || timeString.includes('PM')) {
-        return timeString; // Already formatted
+        // Convertir du format 12h vers 24h
+        const [time, period] = timeString.split(' ');
+        const [hours, minutes] = time.split(':');
+        let hour24 = parseInt(hours);
+        
+        if (period.toUpperCase() === 'PM' && hour24 !== 12) {
+          hour24 += 12;
+        } else if (period.toUpperCase() === 'AM' && hour24 === 12) {
+          hour24 = 0;
+        }
+        
+        return `${hour24.toString().padStart(2, '0')}:${minutes}`;
       }
       
       const timeParts = timeString.split(':');
       if (timeParts.length >= 2) {
-        const hours = parseInt(timeParts[0]);
+        const hours = timeParts[0];
         const minutes = timeParts[1];
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = hours % 12 || 12;
-        return `${displayHours}:${minutes} ${ampm}`;
+        return `${hours}:${minutes}`;
       }
       return timeString;
     } catch (error) {
@@ -353,31 +366,31 @@ export class AppointmentHistoryComponent implements OnInit {
     }
   }
 
-  // Action methods
+  // Méthodes d'action
   viewMedicalRecord(id: number): void {
-    this.router.navigate(['/medical-records'], { queryParams: { appointmentId: id } });
+    this.router.navigate(['/dossiers-medicaux'], { queryParams: { appointmentId: id } });
   }
 
   rescheduleAppointment(id: number): void {
-    // Find the appointment to reschedule
+    // Trouver le rendez-vous à reprogrammer
     const appointment = this.appointments.find(app => app.id === id);
     if (!appointment) {
-      console.error('Appointment not found for reschedule:', id);
+      console.error('Rendez-vous non trouvé pour reprogrammer:', id);
       return;
     }
 
-    // Open the reschedule modal
+    // Ouvrir la modale de reprogrammation
     const dialogRef = this.dialog.open(RescheduleAppointmentComponent, {
       width: '500px',
       data: { appointment: appointment },
       disableClose: false
     });
 
-    // Handle dialog result
+    // Gérer le résultat de la boîte de dialogue
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        console.log('Appointment rescheduled:', result);
-        // Refresh the appointment list to show updated data
+        console.log('Rendez-vous reprogrammé:', result);
+        // Actualiser la liste des rendez-vous pour afficher les données mises à jour
         this.loadAppointmentHistory();
       }
     });
@@ -393,7 +406,7 @@ export class AppointmentHistoryComponent implements OnInit {
       printWindow.document.write(`
         <html>
           <head>
-            <title>Appointment Confirmation</title>
+            <title>Confirmation de rendez-vous</title>
             <style>
               body { 
                 font-family: 'Helvetica Neue', Arial, sans-serif; 
@@ -446,34 +459,34 @@ export class AppointmentHistoryComponent implements OnInit {
           </head>
           <body>
             <div class="header">
-              <div class="logo">MEDICAL CENTER</div>
-              <h1>Appointment Confirmation</h1>
+              <div class="logo">CENTRE MÉDICAL</div>
+              <h1>Confirmation de rendez-vous</h1>
             </div>
             
             <div class="details">
               <div class="detail-row">
-                <span class="label">Date:</span>
+                <span class="label">Date :</span>
                 <span class="value">${formattedDate}</span>
               </div>
               <div class="detail-row">
-                <span class="label">Time:</span>
+                <span class="label">Heure :</span>
                 <span class="value">${formattedTime}</span>
               </div>
               <div class="detail-row">
-                <span class="label">Doctor:</span>
+                <span class="label">Médecin :</span>
                 <span class="value">${doctorName}</span>
               </div>
               <div class="detail-row">
-                <span class="label">Reason:</span>
-                <span class="value">${appointment.reason || 'Not specified'}</span>
+                <span class="label">Motif :</span>
+                <span class="value">${appointment.reason || 'Non spécifié'}</span>
               </div>
               <div class="detail-row">
-                <span class="label">Status:</span>
-                <span class="value">${appointment.status || 'Unknown'}</span>
+                <span class="label">Statut :</span>
+                <span class="value">${appointment.status || 'Inconnu'}</span>
               </div>
               <div class="detail-row">
-                <span class="label">Appointment ID:</span>
-                <span class="value">APPT-${appointment.id}</span>
+                <span class="label">ID du rendez-vous :</span>
+                <span class="value">RDV-${appointment.id}</span>
               </div>
             </div>
           </body>
@@ -485,27 +498,27 @@ export class AppointmentHistoryComponent implements OnInit {
   }
 
   cancelAppointment(id: number): void {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-      this.patientAppointmentService.cancelMyAppointment(id, 'Cancelled by patient').subscribe({
+    if (confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) {
+      this.patientAppointmentService.cancelMyAppointment(id, 'Annulé par le patient').subscribe({
         next: () => {
-          // Update local status
+          // Mettre à jour le statut local
           const appointment = this.appointments.find(a => a.id === id);
           if (appointment) {
-            appointment.status = 'cancelled';
+            appointment.status = 'annulé';
             appointment.notes = appointment.notes ? 
-              appointment.notes + '; Cancelled by patient' : 
-              'Cancelled by patient';
+              appointment.notes + '; Annulé par le patient' : 
+              'Annulé par le patient';
           }
           
           this.applyFilters();
           this.cdr.detectChanges();
           
-          // Show success message
-          alert('Appointment cancelled successfully.');
+          // Afficher le message de succès
+          alert('Rendez-vous annulé avec succès.');
         },
         error: (error: any) => {
-          console.error('Failed to cancel appointment:', error);
-          let errorMessage = 'Failed to cancel appointment. Please try again.';
+          console.error('Échec de l\'annulation du rendez-vous:', error);
+          let errorMessage = 'Échec de l\'annulation du rendez-vous. Veuillez réessayer.';
           
           if (error.error && error.error.error) {
             errorMessage = error.error.error;
@@ -518,16 +531,17 @@ export class AppointmentHistoryComponent implements OnInit {
       });
     }
   }
-
   canReschedule(appointment: any): boolean {
     const status = appointment.status?.toLowerCase();
-    return ['confirmed', 'pending'].includes(status) && 
+    const validStatuses = ['confirmé', 'confirmed', 'en attente', 'pending'];
+    return validStatuses.includes(status) && 
            !this.isAppointmentInPast(appointment);
   }
 
   canCancel(appointment: any): boolean {
     const status = appointment.status?.toLowerCase();
-    return ['confirmed', 'pending'].includes(status) && 
+    const validStatuses = ['confirmé', 'confirmed', 'en attente', 'pending'];
+    return validStatuses.includes(status) && 
            !this.isAppointmentInPast(appointment);
   }
 
@@ -544,13 +558,22 @@ export class AppointmentHistoryComponent implements OnInit {
     }
   }
 
-  // Available status options for filter
+  // Options de statut disponibles pour le filtre
   getStatusOptions(): string[] {
     const uniqueStatuses = [...new Set(
       this.appointments
         .map(apt => apt.status)
         .filter(status => status)
-        .map(status => status.toLowerCase())
+        .map(status => {
+          // Mapper les statuts anglais vers français pour l'affichage
+          switch (status.toLowerCase()) {
+            case 'confirmed': return 'confirmé';
+            case 'pending': return 'en attente';
+            case 'cancelled': return 'annulé';
+            case 'completed': return 'terminé';
+            default: return status.toLowerCase();
+          }
+        })
     )];
     
     return uniqueStatuses.sort();

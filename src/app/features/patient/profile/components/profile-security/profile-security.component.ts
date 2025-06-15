@@ -52,9 +52,9 @@ export class ProfileSecurityComponent implements OnInit {
       this.passwordForm.markAllAsTouched();
       // Check specific errors for better user feedback if needed
       if (this.passwordForm.errors?.['passwordMismatch']) {
-          this.updateErrorMessage = 'New passwords do not match.';
+          this.updateErrorMessage = 'Les nouveaux mots de passe ne correspondent pas.';
       } else {
-          this.updateErrorMessage = 'Please correct the errors in the form.';
+          this.updateErrorMessage = 'Veuillez corriger les erreurs dans le formulaire.';
       }
       return;
     }
@@ -72,7 +72,7 @@ export class ProfileSecurityComponent implements OnInit {
       .subscribe({
         next: (response: BackendResponse<null>) => {
           if (response.success) {
-            this.updateSuccessMessage = response.message || 'Password changed successfully!';
+            this.updateSuccessMessage = response.message || 'Mot de passe changé avec succès !';
             this.passwordForm.reset();
             // Optionally, clear validators or re-initialize form if reset doesn't clear touched/dirty states as desired
             Object.keys(this.passwordForm.controls).forEach(key => {
@@ -85,7 +85,7 @@ export class ProfileSecurityComponent implements OnInit {
 
           } else {
             // Backend indicates failure but not an HTTP error (e.g., validation handled with success:false)
-            this.updateErrorMessage = response.message || 'Failed to change password.';
+            this.updateErrorMessage = response.message || 'Échec du changement de mot de passe.';
             if (response.errors) {
                 const firstErrorKey = Object.keys(response.errors)[0];
                 if (response.errors[firstErrorKey] && response.errors[firstErrorKey].length > 0) {
@@ -96,7 +96,7 @@ export class ProfileSecurityComponent implements OnInit {
         },
         error: (error: HttpErrorResponse) => {
           console.error('Error changing password:', error);
-          this.updateErrorMessage = error.error?.message || 'Failed to change password. Please try again.';
+          this.updateErrorMessage = error.error?.message || 'Échec du changement de mot de passe. Veuillez réessayer.';
           if (error.error?.errors) { // Laravel validation errors
             const firstErrorKey = Object.keys(error.error.errors)[0];
             if (error.error.errors[firstErrorKey] && error.error.errors[firstErrorKey].length > 0) {

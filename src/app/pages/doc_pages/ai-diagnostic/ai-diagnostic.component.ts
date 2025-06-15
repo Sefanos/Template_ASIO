@@ -36,9 +36,9 @@ export class AiDiagnosticComponent implements OnInit {
   errorMessage: string = '';
   
   conditionTypes = [
-    { value: 'melanoma', label: 'Skin Lesion Analysis (Melanoma)' },
-    { value: 'brain', label: 'Brain MRI Analysis' },
-    { value: 'pneumonia', label: 'Chest X-Ray Analysis (Pneumonia)' }
+    { value: 'melanoma', label: 'Analyse de Lésion Cutanée (Mélanome)' },
+    { value: 'brain', label: 'Analyse IRM Cérébrale' },
+    { value: 'pneumonia', label: 'Analyse Radiographie Thoracique (Pneumonie)' }
   ];
 
   constructor(
@@ -111,7 +111,7 @@ export class AiDiagnosticComponent implements OnInit {
 
   analyzeImage(): void {
     if (this.uploadForm.invalid) {
-      this.errorMessage = 'Please select an image and condition type.';
+      this.errorMessage = 'Veuillez sélectionner une image et un type de condition.';
       return;
     }
 
@@ -140,7 +140,7 @@ export class AiDiagnosticComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error during image analysis:', error);
-          this.errorMessage = error.error?.message || 'An error occurred during analysis. Please try again.';
+          this.errorMessage = error.error?.message || 'Une erreur est survenue pendant l\'analyse. Veuillez réessayer.';
         }
       });
   }

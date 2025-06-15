@@ -1,22 +1,20 @@
-<div class="bg-white rounded-card shadow-card p-card-padding mb-6">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-card-title text-primary font-semibold">Appointment History</h2>
+<div class="bg-white rounded-card shadow-card p-card-padding mb-6">  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-card-title text-primary font-semibold">Historique des rendez-vous</h2>
     <button 
       (click)="onScheduleNewAppointment()" 
       class="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-button text-sm transition-colors"
     >
-      Schedule New Appointment
+      Programmer un nouveau rendez-vous
     </button>
   </div>
   
   <!-- Search and filters -->
   <div class="flex flex-wrap gap-4 mb-6">
     <!-- Search bar -->
-    <div class="flex-1 min-w-[200px]">
-      <input 
+    <div class="flex-1 min-w-[200px]">      <input 
         type="text" 
         [(ngModel)]="searchQuery" 
-        placeholder="Search appointments..." 
+        placeholder="Rechercher des rendez-vous..." 
         class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
       >
     </div>
@@ -49,9 +47,8 @@
   </div>
   
   <!-- Appointments list -->
-  <div class="divide-y divide-border">
-    <div *ngIf="filteredAppointments.length === 0" class="text-center py-6 text-text-light">
-      No appointments found matching your filters.
+  <div class="divide-y divide-border">    <div *ngIf="filteredAppointments.length === 0" class="text-center py-6 text-text-light">
+      Aucun rendez-vous trouvé correspondant à vos filtres.
     </div>
     
     <div *ngFor="let appointment of paginatedAppointments" class="py-4">
@@ -66,7 +63,7 @@
           <!-- Appointment details -->
           <div>
             <div class="font-medium mb-1">{{ appointment.reason }}</div>
-            <div class="text-sm text-text-light">{{ appointment.type }} with {{ appointment.provider }}</div>
+            <div class="text-sm text-text-light">{{ appointment.type }} avec {{ appointment.provider }}</div>
             <div *ngIf="appointment.notes" class="text-sm text-text mt-1">{{ appointment.notes }}</div>
           </div>
         </div>
@@ -77,13 +74,12 @@
             {{ appointment.status | titlecase }}
           </span>
           
-          <!-- Action buttons -->
-          <div class="mt-2 flex gap-2">
+          <!-- Action buttons -->          <div class="mt-2 flex gap-2">
             <button class="text-primary hover:text-primary-dark text-sm">
-              Reschedule
+              Reporter
             </button>
             <button class="text-status-urgent hover:text-status-urgent/80 text-sm">
-              Cancel
+              Annuler
             </button>
           </div>
         </div>
@@ -121,10 +117,9 @@
     
     <button 
       (click)="changePage(currentPage + 1)" 
-      [disabled]="currentPage === totalPages"
-      class="px-3 py-1 border border-border rounded-button text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+      [disabled]="currentPage === totalPages"      class="px-3 py-1 border border-border rounded-button text-sm disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      Next
+      Suivant
     </button>
   </div>
 </div>

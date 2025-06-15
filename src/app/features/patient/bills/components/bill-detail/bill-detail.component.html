@@ -7,10 +7,9 @@
   </div>
 
   <!-- Informations Clés: Montant -->
-  <div class="grid grid-cols-1 sm:grid-cols-1 gap-6 mb-6 p-5 bg-primary/5 dark:bg-primary/10 rounded-lg"> <!-- Adjusted for single column if status is removed -->
-    <div>
+  <div class="grid grid-cols-1 sm:grid-cols-1 gap-6 mb-6 p-5 bg-primary/5 dark:bg-primary/10 rounded-lg"> <!-- Adjusted for single column if status is removed -->    <div>
       <dt class="text-xs font-medium text-primary uppercase tracking-wider">Montant Total</dt>
-      <dd class="mt-1 text-3xl font-semibold text-primary font-display">{{ bill.amount | currency:'EUR':'symbol':'1.2-2':'fr-FR' }}</dd>
+      <dd class="mt-1 text-3xl font-semibold text-primary font-display">{{ bill.amount | currency:'MAD':'symbol':'1.2-2':'fr-FR' }}</dd>
     </div>
     <!-- Status Display Removed -->
     <!-- <div class="sm:text-right">
@@ -80,11 +79,10 @@
         <tbody class="bg-card divide-y divide-border">
           <tr *ngFor="let item of bill.items" class="hover:bg-hover dark:hover:bg-gray-700/30 transition-colors">
             <td class="px-4 py-3 text-text text-left whitespace-normal">
-              <span class="font-medium">{{ item.service_type | titlecase }}</span>: {{ item.description | titlecase }}
-            </td>
+              <span class="font-medium">{{ item.service_type | titlecase }}</span>: {{ item.description | titlecase }}            </td>
             <td *ngIf="item.quantity !== undefined" class="px-4 py-3 text-text text-right">{{ item.quantity }}</td>
-            <td class="px-4 py-3 text-text text-right">{{ item.price | currency:'EUR':'symbol':'1.2-2':'fr-FR' }}</td>
-            <td class="px-4 py-3 text-text text-right font-semibold">{{ item.total | currency:'EUR':'symbol':'1.2-2':'fr-FR' }}</td>
+            <td class="px-4 py-3 text-text text-right">{{ item.price | currency:'MAD':'symbol':'1.2-2':'fr-FR' }}</td>
+            <td class="px-4 py-3 text-text text-right font-semibold">{{ item.total | currency:'MAD':'symbol':'1.2-2':'fr-FR' }}</td>
           </tr>
         </tbody>
       </table>

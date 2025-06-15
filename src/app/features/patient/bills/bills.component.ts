@@ -84,7 +84,7 @@ ngOnInit(): void {
     }
 this.summaryCards = [
       { title: 'Total des factures', value: totalCount, icon: 'receipt_long', colorClass: 'bg-blue-100 text-blue-600' },
-      { title: 'Montant total facturé', value: `${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}`, icon: 'payments', colorClass: 'bg-green-100 text-green-600' },
+      { title: 'Montant total facturé', value: `${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'MAD' })}`, icon: 'payments', colorClass: 'bg-green-100 text-green-600' },
       { title: 'Dernière facture émise', value: latestBillDate, icon: 'event_note', colorClass: 'bg-orange-100 text-orange-600' },
     ];
   }

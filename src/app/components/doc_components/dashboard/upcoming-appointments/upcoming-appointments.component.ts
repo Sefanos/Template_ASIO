@@ -17,19 +17,19 @@ export class UpcomingAppointmentsComponent {
     {
       time: '10:30',
       patientName: 'Jean Dupont',
-      appointmentType: 'Annual checkup',
+      appointmentType: 'Contrôle annuel',
       imageUrl: '/assets/placeholder-user.jpg'
     },
     {
       time: '11:15',
       patientName: 'Marie Laurent',
-      appointmentType: 'Follow-up',
+      appointmentType: 'Suivi',
       imageUrl: '/assets/placeholder-user.jpg'
     },
     {
       time: '13:00',
       patientName: 'Thomas Moreau',
-      appointmentType: 'Test results',
+      appointmentType: 'Résultats de tests',
       imageUrl: '/assets/placeholder-user.jpg'
     }
   ];

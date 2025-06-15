@@ -56,11 +56,10 @@ export class CurrentPrescriptionsComponent implements OnInit {
   editPrescription(prescription: Prescription): void {
     this.editRequested.emit(prescription);
   }
-  
-  cancelPrescription(prescription: Prescription): void {
+    cancelPrescription(prescription: Prescription): void {
     if (!prescription.id) return;
     
-    if (confirm(`Are you sure you want to cancel the prescription for ${prescription.medication}?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir annuler la prescription pour ${prescription.medication} ?`)) {
       this.patientService.cancelPrescription(prescription.id).subscribe({
         next: (success) => {
           if (success) {
@@ -69,13 +68,13 @@ export class CurrentPrescriptionsComponent implements OnInit {
             if (index !== -1) {
               this.prescriptions[index].status = 'cancelled';
             }
-            console.log('Prescription cancelled successfully');
+            console.log('Prescription annulée avec succès');
           } else {
-            console.error('Failed to cancel prescription');
+            console.error('Échec de l\'annulation de la prescription');
           }
         },
         error: (error) => {
-          console.error('Error cancelling prescription:', error);
+          console.error('Erreur lors de l\'annulation de la prescription:', error);
         }
       });
     }
@@ -95,10 +94,9 @@ export class CurrentPrescriptionsComponent implements OnInit {
         return 'bg-text/10 text-text';
     }
   }
-  
-  formatDate(dateString: string): string {
+    formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
+    return date.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'

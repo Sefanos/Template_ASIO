@@ -1,30 +1,30 @@
 <div class="reschedule-modal bg-card p-6 rounded-card max-w-md w-full">
   <div class="modal-header mb-6">
-    <h2 class="text-xl font-semibold text-text-primary mb-2">Reschedule Appointment</h2>
+    <h2 class="text-xl font-semibold text-text-primary mb-2">Reprogrammer le rendez-vous</h2>
     <p class="text-sm text-text-muted">
-      Current appointment: {{ appointmentInfo?.date }} at {{ appointmentInfo?.time }}
+      Rendez-vous actuel : {{ appointmentInfo?.date }} à {{ appointmentInfo?.time }}
       <br>
-      with {{ appointmentInfo?.doctorName || appointmentInfo?.provider }}
+      avec {{ appointmentInfo?.doctorName || appointmentInfo?.provider }}
     </p>
   </div>
 
-  <!-- Error Message -->
+  <!-- Message d'erreur -->
   <div *ngIf="errorMessage" class="error-message mb-4 p-3 rounded-button text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30">
     <i class="fas fa-exclamation-triangle mr-2"></i>
     {{ errorMessage }}
   </div>
 
-  <!-- Success Message -->
+  <!-- Message de succès -->
   <div *ngIf="successMessage" class="success-message mb-4 p-3 rounded-button text-sm bg-status-success/10 text-status-success border border-status-success/30">
     <i class="fas fa-check-circle mr-2"></i>
     {{ successMessage }}
   </div>
 
   <form [formGroup]="rescheduleForm" (ngSubmit)="onSubmit()" class="space-y-4">
-    <!-- Date Field -->
+    <!-- Champ Date -->
     <div class="form-group">
       <label for="date" class="block text-sm font-medium text-text-primary mb-2">
-        New Date <span class="text-status-urgent">*</span>
+        Nouvelle date <span class="text-status-urgent">*</span>
       </label>
       <input
         type="date"
@@ -39,10 +39,10 @@
       </div>
     </div>
 
-    <!-- Time Field -->
+    <!-- Champ Heure -->
     <div class="form-group">
       <label for="time" class="block text-sm font-medium text-text-primary mb-2">
-        New Time <span class="text-status-urgent">*</span>
+        Nouvelle heure <span class="text-status-urgent">*</span>
       </label>
       <input
         type="time"
@@ -56,10 +56,10 @@
       </div>
     </div>
 
-    <!-- Duration Field -->
+    <!-- Champ Durée -->
     <div class="form-group">
       <label for="duration" class="block text-sm font-medium text-text-primary mb-2">
-        Duration (minutes) <span class="text-status-urgent">*</span>
+        Durée (minutes) <span class="text-status-urgent">*</span>
       </label>
       <select
         id="duration"
@@ -70,25 +70,25 @@
         <option value="15">15 minutes</option>
         <option value="30">30 minutes</option>
         <option value="45">45 minutes</option>
-        <option value="60">1 hour</option>
-        <option value="90">1.5 hours</option>
-        <option value="120">2 hours</option>
+        <option value="60">1 heure</option>
+        <option value="90">1,5 heure</option>
+        <option value="120">2 heures</option>
       </select>
       <div *ngIf="isFieldInvalid('duration')" class="error-text text-xs text-status-urgent mt-1">
         {{ getFieldError('duration') }}
       </div>
     </div>
 
-    <!-- Reason Field -->
+    <!-- Champ Motif -->
     <div class="form-group">
       <label for="reason" class="block text-sm font-medium text-text-primary mb-2">
-        Reason for Reschedule <span class="text-status-urgent">*</span>
+        Motif de la reprogrammation <span class="text-status-urgent">*</span>
       </label>
       <textarea
         id="reason"
         formControlName="reason"
         rows="3"
-        placeholder="Please provide a reason for rescheduling..."
+        placeholder="Veuillez indiquer le motif de la reprogrammation..."
         class="w-full px-3 py-2 border border-border rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
         [class.border-status-urgent]="isFieldInvalid('reason')"
       ></textarea>
@@ -97,7 +97,7 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Boutons d'action -->
     <div class="form-actions flex justify-end space-x-3 mt-6 pt-4 border-t border-border">
       <button
         type="button"
@@ -105,7 +105,7 @@
         class="btn-secondary px-4 py-2 text-sm border border-border text-text-light rounded-button hover:bg-hover transition-colors duration-150"
         [disabled]="isLoading"
       >
-        Cancel
+        Annuler
       </button>
       <button
         type="submit"
@@ -114,7 +114,7 @@
       >
         <i *ngIf="isLoading" class="fas fa-spinner fa-spin mr-2"></i>
         <i *ngIf="!isLoading" class="fas fa-calendar-alt mr-2"></i>
-        {{ isLoading ? 'Rescheduling...' : 'Reschedule Appointment' }}
+        {{ isLoading ? 'Reprogrammation...' : 'Reprogrammer le rendez-vous' }}
       </button>
     </div>
   </form>

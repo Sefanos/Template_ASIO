@@ -7,10 +7,9 @@
   <input 
     type="text" 
     [(ngModel)]="searchTerm"
-    (ngModelChange)="onSearchChange()"
-    placeholder="Search appointments by patient name, doctor, type..." 
+    (ngModelChange)="onSearchChange()"    placeholder="Rechercher des rendez-vous par nom de patient, médecin, type..." 
     class="w-full pl-10 pr-10 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-    aria-label="Search appointments"
+    aria-label="Rechercher des rendez-vous"
   />
   <button 
     *ngIf="searchTerm"

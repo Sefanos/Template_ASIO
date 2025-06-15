@@ -20,9 +20,14 @@ export class AppointmentsComponent {
     currentDate = new Date();
 
     // Méthode pour formater la date avec suffixe ordinal
+    // formatDate(date: Date): string {
+    //   const day = date.getDate();
+    //   const suffix = ['th','st','nd','rd'][((day + 90) % 100 -10) % 10] || 'th';
+    //   return `${date.toLocaleDateString('en-US', { month: 'long' })} ${day}${suffix}, ${date.getFullYear()}`;
+    // }
+        // Méthode pour formater la date avec suffixe ordinal en français
     formatDate(date: Date): string {
       const day = date.getDate();
-      const suffix = ['th','st','nd','rd'][((day + 90) % 100 -10) % 10] || 'th';
-      return `${date.toLocaleDateString('en-US', { month: 'long' })} ${day}${suffix}, ${date.getFullYear()}`;
+      return `${day} ${date.toLocaleDateString('fr-FR', { month: 'long' })} ${date.getFullYear()}`;
     }
 }

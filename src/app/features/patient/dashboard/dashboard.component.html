@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
       <div>
         <h1 class="text-dashboard-title text-primary mb-2 sm:mb-0">Bienvenue sur votre tableau de bord</h1>
-        <p class="text-text-muted text-sm">{{ currentDate | date:'fullDate' }}</p>
+        <p class="text-text-muted text-sm">{{ currentDate | date:'fullDate':'':'fr' }}</p>
       </div>
       <!-- Bouton Nouveau Rendez-vous -->
       <button class="btn-primary mt-4 sm:mt-0 flex items-center">
@@ -25,18 +25,18 @@
         <div class="text-sm text-text-light space-y-1 sm:flex sm:space-x-4">
           <span class="flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-primary"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-            {{ personalInfo.birthDate | date:'longDate' }}
+            {{ personalInfo.birthDate | date:'longDate':'':'fr' }}
           </span>
           <span class="flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-primary"><path d="M10.75 3.922c-.38.113-.76.224-1.138.336C8.436 4.69 7.99 5.37 7.99 6.118c0 .91.735 1.642 1.643 1.642H10v2.25H8.643c-1.46 0-2.643-1.183-2.643-2.643 0-.748.447-1.428 1.172-1.864C6.41 5.12 5.76 4.51 5.76 3.643 5.76 2.56 6.576 1.75 7.643 1.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H10V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734a3.245 3.245 0 001.138-.336.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H13V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908v13.125a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V3.922z" /></svg>
-            Blood Type: {{ personalInfo.bloodType }}
+            Groupe sanguin: {{ personalInfo.bloodType }}
           </span>
         </div>
       </div>
       <div class="mt-4 sm:mt-0 sm:ml-auto text-sm bg-status-urgent/10 p-3 rounded-lg border border-status-urgent/30">
         <strong class="flex items-center text-status-urgent mb-1">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5"><path fill-rule="evenodd" d="M10 2a.75.75 0 01.75.75v1.25a.75.75 0 01-1.5 0V2.75A.75.75 0 0110 2zM8.305 4.43a.75.75 0 001.145-.71A7.493 7.493 0 0110 3.5c.349 0 .689.024 1.024.07a.75.75 0 00.22-1.484A8.994 8.994 0 0010 2c-.823 0-1.613.111-2.362.321a.75.75 0 00.667 1.108zm1.02 11.082a.75.75 0 00-1.145.71 7.493 7.493 0 01-.524 1.047.75.75 0 00.22 1.484 8.994 8.994 0 001.336.439c.823 0 1.613-.111 2.362-.321a.75.75 0 00-.667-1.108 7.493 7.493 0 01-1.024-.07.75.75 0 00-.524-1.047zM10 5a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 1.5a3 3 0 100 6 3 3 0 000-6z" clip-rule="evenodd" /></svg>
-          Emergency Contact
+          Contact d'urgence
         </strong>
         <p class="text-text-muted">{{ personalInfo.emergencyContact }}</p>
       </div>
@@ -49,7 +49,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M10 2a.75.75 0 01.75.75v1.25a.75.75 0 01-1.5 0V2.75A.75.75 0 0110 2zM8.305 4.43a.75.75 0 001.145-.71A7.493 7.493 0 0110 3.5c.349 0 .689.024 1.024.07a.75.75 0 00.22-1.484A8.994 8.994 0 0010 2c-.823 0-1.613.111-2.362.321a.75.75 0 00.667 1.108zm1.02 11.082a.75.75 0 00-1.145.71 7.493 7.493 0 01-.524 1.047.75.75 0 00.22 1.484 8.994 8.994 0 001.336.439c.823 0 1.613-.111 2.362-.321a.75.75 0 00-.667-1.108 7.493 7.493 0 01-1.024-.07.75.75 0 00-.524-1.047zM10 5a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 1.5a3 3 0 100 6 3 3 0 000-6z" clip-rule="evenodd" /></svg>
           Notifications
         </h3>
-        <button class="text-sm text-accent hover:text-accent-dark font-medium">Mark All Read</button>
+        <button class="text-sm text-accent hover:text-accent-dark font-medium">Tout marquer comme lu</button>
       </div>
       <div class="space-y-3">
         <div class="flex items-start space-x-3 p-3 bg-hover rounded-md">
@@ -57,27 +57,27 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
           </div>
           <div class="flex-1">
-            <h4 class="font-medium text-text">Appointment Reminder</h4>
-            <p class="text-sm text-text-light">You have an appointment with Dr. Sarah Johnson tomorrow at 10:30 AM.</p>
+            <h4 class="font-medium text-text">Rappel de rendez-vous</h4>
+            <p class="text-sm text-text-light">Vous avez un rendez-vous avec Dr. Sarah Johnson demain à 10h30.</p>
             <div class="mt-2 space-x-2">
-              <button class="btn-primary py-1 px-3 text-xs">Confirm</button>
-              <button class="btn-secondary py-1 px-3 text-xs">Reschedule</button>
+              <button class="btn-primary py-1 px-3 text-xs">Confirmer</button>
+              <button class="btn-secondary py-1 px-3 text-xs">Reporter</button>
             </div>
           </div>
-          <span class="text-xs text-text-muted ml-auto flex-shrink-0">1 hour ago</span>
+          <span class="text-xs text-text-muted ml-auto flex-shrink-0">Il y a 1 heure</span>
         </div>
         <div class="flex items-start space-x-3 p-3 bg-hover rounded-md">
           <div class="flex-shrink-0 bg-status-info/20 text-status-info rounded-full p-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.586l-1.72-1.72a.75.75 0 00-1.06 1.06l3 3a.75.75 0 001.06 0l3-3a.75.75 0 10-1.06-1.06l-1.72 1.72V2.75z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
           </div>
           <div class="flex-1">
-            <h4 class="font-medium text-text">Test Results Available</h4>
-            <p class="text-sm text-text-light">Your recent blood test results are ready to view.</p>
+            <h4 class="font-medium text-text">Résultats d'analyses disponibles</h4>
+            <p class="text-sm text-text-light">Vos résultats d'analyses sanguines récentes sont disponibles.</p>
             <div class="mt-2">
-              <button class="btn-primary py-1 px-3 text-xs">View Results</button>
+              <button class="btn-primary py-1 px-3 text-xs">Voir les résultats</button>
             </div>
           </div>
-          <span class="text-xs text-text-muted ml-auto flex-shrink-0">2 days ago</span>
+          <span class="text-xs text-text-muted ml-auto flex-shrink-0">Il y a 2 jours</span>
         </div>
       </div>
     </div>
@@ -86,7 +86,7 @@
   <!-- Grille pour les cartes de statistiques simples -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-card-margin my-6">
     <div class="card">  
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Blood Pressure</h4>
+      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Tension artérielle</h4>
       <p class="text-2xl font-semibold text-primary mb-1">{{ personalInfo.bloodPressure || 'N/A' }}</p>
       <div class="flex items-center text-text-light text-sm">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1 text-status-urgent"><path d="M10 3.5a.75.75 0 01.75.75V5h.75A2.75 2.75 0 0114.25 7.75v2.5A2.75 2.75 0 0111.5 13H10v1.25a.75.75 0 01-1.5 0V13H7.5A2.75 2.75 0 014.75 10.25v-2.5A2.75 2.75 0 017.5 5H8.25V3.75A.75.75 0 0110 3.5zM8.25 6.5V10h2.5V6.5H8.25z" /></svg>
@@ -94,119 +94,117 @@
       </div>
     </div>
     <div class="card">
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Last Appointment</h4>
+      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Dernier rendez-vous</h4>
       <p class="text-lg font-semibold text-primary mb-1">{{ personalInfo.lastAppointment}}</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-primary mt-1"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
     </div>
     <div class="card">
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Next Appointment</h4>
+      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Prochain rendez-vous</h4>
       <p class="text-lg font-semibold text-primary mb-1">{{ personalInfo.nextAppointment}}</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-primary mt-1"><path d="M2 10a.75.75 0 01.75-.75h1.548a1.75 1.75 0 001.696-1.003L8.27 3.72a.75.75 0 011.46 0l2.275 4.55a1.75 1.75 0 001.696 1.004h1.549a.75.75 0 010 1.5h-1.548a1.75 1.75 0 00-1.696 1.003l-2.275 4.55a.75.75 0 01-1.46 0l-2.275-4.55A1.75 1.75 0 004.298 10H2.75A.75.75 0 012 10z" /></svg>
     </div>
     <div class="card">
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Prescriptions</h4>
-      <p class="text-2xl font-semibold text-primary mb-1">{{ personalInfo.activePrescriptions || 0 }} <span class="text-base font-normal text-text-light">active</span></p>
+      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Ordonnances</h4>
+      <p class="text-2xl font-semibold text-primary mb-1">{{ personalInfo.activePrescriptions || 0 }} <span class="text-base font-normal text-text-light">actives</span></p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-primary mt-1"><path d="M10.75 3.922c-.38.113-.76.224-1.138.336C8.436 4.69 7.99 5.37 7.99 6.118c0 .91.735 1.642 1.643 1.642H10v2.25H8.643c-1.46 0-2.643-1.183-2.643-2.643 0-.748.447-1.428 1.172-1.864C6.41 5.12 5.76 4.51 5.76 3.643 5.76 2.56 6.576 1.75 7.643 1.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H10V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734a3.245 3.245 0 001.138-.336.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H13V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908v13.125a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V3.922z" /></svg>
     </div>
   </div>
 
   <!-- Rangée de cartes améliorées -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-card-margin mb-6">
-    <!-- Upcoming Appointment Card -->
+    <!-- Carte Prochain rendez-vous -->
     <div class="card">
       <div class="flex justify-between items-center mb-3">
         <h4 class="text-section-header text-primary flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-          Upcoming Appointment
+          Prochain rendez-vous
         </h4>
-        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">View All</a>
+        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">Voir tout</a>
       </div>
       <div class="space-y-1 mb-3">
-        <h5 class="font-semibold text-text text-lg">Regular Checkup</h5>
+        <h5 class="font-semibold text-text text-lg">Contrôle de routine</h5>
         <p class="text-sm text-text-light flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-5.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM10 12a5.99 5.99 0 00-4.793 2.39A6.483 6.483 0 0010 16.5a6.483 6.483 0 004.793-2.11A5.99 5.99 0 0010 12z" clip-rule="evenodd" /></svg>
           Dr. Sarah Johnson
         </p>
         <p class="text-sm text-text-light flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-          May 15, 2025 &nbsp;&nbsp;
+          15 mai 2025 &nbsp;&nbsp;
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 ml-1"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-          10:30 AM
+          10h30
         </p>
-        <span class="status-badge status-info inline-block mt-1">Upcoming</span>
+        <span class="status-badge status-info inline-block mt-1">À venir</span>
       </div>
       <div class="mt-4 flex space-x-2">
-        <button class="btn-secondary py-1 px-3 text-xs">Reschedule</button>
-        <button class="btn-urgent py-1 px-3 text-xs">Cancel</button>
+        <button class="btn-secondary py-1 px-3 text-xs">Reporter</button>
+        <button class="btn-urgent py-1 px-3 text-xs">Annuler</button>
       </div>
     </div>
 
-    <!-- Recent Records Card -->
+    <!-- Carte Dossiers récents -->
     <div class="card">
       <div class="flex justify-between items-center mb-3">
         <h4 class="text-section-header text-primary flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path d="M3.75 3A1.75 1.75 0 002 4.75v10.5c0 .966.784 1.75 1.75 1.75h7.063c.281.448.707.835 1.193 1.126A3.001 3.001 0 0018 17.25v-7.5a3.001 3.001 0 00-2.25-2.87V4.75A1.75 1.75 0 0014 3H3.75zM14.5 7a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-3 0V8.5a1.5 1.5 0 011.5-1.5z" /></svg>
-          Recent Records
+          Dossiers récents
         </h4>
-        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">View All</a>
+        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">Voir tout</a>
       </div>
       <ul class="space-y-2">
         <li class="flex justify-between items-center p-2.5 bg-hover rounded-md">
           <div>
-            <p class="font-medium text-text">Blood Test Results</p>
+            <p class="font-medium text-text">Résultats analyses sanguines</p>
             <p class="text-xs text-text-light flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 mr-1"><path fill-rule="evenodd" d="M4 1.75a.75.75 0 01.75-.75h6.5a.75.75 0 01.75.75V3h1.25A1.75 1.75 0 0115 4.75v8.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25v-8.5A1.75 1.75 0 012.75 3H4V1.75zM8 8a1 1 0 100-2 1 1 0 000 2zM5.25 8a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM5 11.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5z" clip-rule="evenodd" /></svg>
-              April 20, 2025
+              20 avril 2025
             </p>
           </div>
-          <span class="status-badge status-info">Lab Result</span>
+          <span class="status-badge status-info">Laboratoire</span>
         </li>
         <li class="flex justify-between items-center p-2.5 bg-hover rounded-md">
           <div>
-            <p class="font-medium text-text">Annual Physical Examination</p>
+            <p class="font-medium text-text">Examen médical annuel</p>
             <p class="text-xs text-text-light flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 mr-1"><path fill-rule="evenodd" d="M4 1.75a.75.75 0 01.75-.75h6.5a.75.75 0 01.75.75V3h1.25A1.75 1.75 0 0115 4.75v8.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25v-8.5A1.75 1.75 0 012.75 3H4V1.75zM8 8a1 1 0 100-2 1 1 0 000 2zM5.25 8a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM5 11.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5z" clip-rule="evenodd" /></svg>
-              March 15, 2025
+              15 mars 2025
             </p>
           </div>
-          <span class="status-badge status-success">Examination</span>
+          <span class="status-badge status-success">Examen</span>
         </li>
       </ul>
     </div>
 
-    <!-- Current Medications Card -->
+    <!-- Carte Médicaments actuels -->
     <div class="card">
       <div class="flex justify-between items-center mb-3">
         <h4 class="text-section-header text-primary flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path d="M10.75 3.922c-.38.113-.76.224-1.138.336C8.436 4.69 7.99 5.37 7.99 6.118c0 .91.735 1.642 1.643 1.642H10v2.25H8.643c-1.46 0-2.643-1.183-2.643-2.643 0-.748.447-1.428 1.172-1.864C6.41 5.12 5.76 4.51 5.76 3.643 5.76 2.56 6.576 1.75 7.643 1.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H10V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734a3.245 3.245 0 001.138-.336.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H13V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908v13.125a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V3.922z" /></svg>
-          Current Medications
+          Médicaments actuels
         </h4>
-        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">View History</a>
+        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">Voir l'historique</a>
       </div>
       <ul class="space-y-2">
         <li class="flex justify-between items-start p-2.5 bg-hover rounded-md">
           <div>
-            <p class="font-medium text-text">Amoxicillin</p>
-            <p class="text-sm text-text-light">500mg, 3 times daily</p>
-            <p class="text-xs text-text-muted">Prescribed by: Dr. Emily Carter</p>
+            <p class="font-medium text-text">Amoxicilline</p>
+            <p class="text-sm text-text-light">500mg, 3 fois par jour</p>
+            <p class="text-xs text-text-muted">Prescrit par: Dr. Emily Carter</p>
           </div>
-          <span class="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">4 days</span>
+          <span class="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">4 jours</span>
         </li>
         <li class="flex justify-between items-start p-2.5 bg-hover rounded-md">
           <div>
             <p class="font-medium text-text">Lisinopril</p>
-            <p class="text-sm text-text-light">10mg, Once daily</p>
-            <p class="text-xs text-text-muted">Prescribed by: Dr. John Smith</p>
+            <p class="text-sm text-text-light">10mg, Une fois par jour</p>
+            <p class="text-xs text-text-muted">Prescrit par: Dr. John Smith</p>
           </div>
-          <span class="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">12 days</span>
+          <span class="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">12 jours</span>
         </li>
       </ul>
     </div>
   </div>
 
- 
-
-  <!-- Health Stats Section -->
+  <!-- Section Statistiques de santé -->
   <div class="card mb-6">
     <div class="flex justify-between items-center mb-4">
       <div>
@@ -214,45 +212,44 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
             <path d="M2 10a.75.75 0 01.75-.75h1.548a1.75 1.75 0 001.696-1.003L8.27 3.72a.75.75 0 011.46 0l2.275 4.55a1.75 1.75 0 001.696 1.004h1.549a.75.75 0 010 1.5h-1.548a1.75 1.75 0 00-1.696 1.003l-2.275 4.55a.75.75 0 01-1.46 0l-2.275-4.55A1.75 1.75 0 004.298 10H2.75A.75.75 0 012 10z" />
           </svg>
-          Health Stats
+          Statistiques de santé
         </h3>
-        <p class="text-sm text-text-muted">Your recent health metrics</p>
+        <p class="text-sm text-text-muted">Vos indicateurs de santé récents</p>
       </div>
       <button class="text-sm text-accent hover:text-accent-dark font-medium">Voir plus</button>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <div class="p-4 bg-hover rounded-lg shadow">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-medium text-text">Blood Pressure</span>
+          <span class="text-sm font-medium text-text">Tension artérielle</span>
           <span class="text-sm font-semibold text-primary">120/80 mmHg</span>
         </div>
         <div class="w-full bg-border rounded-full h-2">
           <div class="bg-status-success h-2 rounded-full" style="width: 75%;"></div>
         </div>
-        <span class="text-xs text-text-muted mt-1 block">Last measured: May 5, 2025</span>
+        <span class="text-xs text-text-muted mt-1 block">Dernière mesure: 5 mai 2025</span>
       </div>
       <div class="p-4 bg-hover rounded-lg shadow">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-medium text-text">Heart Rate</span>
+          <span class="text-sm font-medium text-text">Rythme cardiaque</span>
           <span class="text-sm font-semibold text-primary">72 BPM</span>
         </div>
         <div class="w-full bg-border rounded-full h-2">
           <div class="bg-status-info h-2 rounded-full" style="width: 60%;"></div>
         </div>
-        <span class="text-xs text-text-muted mt-1 block">Last measured: May 5, 2025</span>
+        <span class="text-xs text-text-muted mt-1 block">Dernière mesure: 5 mai 2025</span>
       </div>
 
       <div class="p-4 bg-hover rounded-lg shadow">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-medium text-text">Weight</span>
-          <span class="text-sm font-semibold text-primary">165 lbs</span>
+          <span class="text-sm font-medium text-text">Poids</span>
+          <span class="text-sm font-semibold text-primary">75 kg</span>
         </div>
         <div class="w-full bg-border rounded-full h-2">
           <div class="bg-status-warning h-2 rounded-full" style="width: 50%;"></div>
         </div>
-        <span class="text-xs text-text-muted mt-1 block">Last measured: May 2, 2025</span>
+        <span class="text-xs text-text-muted mt-1 block">Dernière mesure: 2 mai 2025</span>
       </div>
     </div>
   </div>
-  </div>
- 
+</div>

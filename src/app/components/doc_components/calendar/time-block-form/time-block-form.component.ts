@@ -32,7 +32,7 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
   blockForm!: FormGroup;
   errorMessage: string = '';
   resources = this.calendarService.resources;
-  weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     // Patient search functionality
   patients: any[] = [];
   selectedPatient: any = null;

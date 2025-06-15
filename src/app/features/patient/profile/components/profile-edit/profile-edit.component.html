@@ -1,30 +1,29 @@
 <div class="profile-edit-container font-sans">
   <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-20 text-text-light bg-card p-card-padding rounded-card shadow-card">
     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-    <p class="text-body">Loading profile data...</p>
+    <p class="text-body">Chargement des données du profil...</p>
   </div>
 
   <div *ngIf="!isLoading" class="profile-content bg-card p-card-padding rounded-card shadow-card">
     <div class="flex justify-between items-center mb-6 pb-4 border-b border-border">
-        <h2 class="text-section-header font-display text-text">Edit Profile</h2>
-        <button (click)="navigateToView()" class="text-sm font-medium py-2 px-3 rounded-button border border-border text-text-light hover:bg-hover focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1 transition-colors duration-150">
-            Cancel
-        </button>
+      <h2 class="text-section-header font-display text-text">Modifier le profil</h2>
+      <button (click)="navigateToView()" class="text-sm font-medium py-2 px-3 rounded-button border border-border text-text-light hover:bg-hover focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1 transition-colors duration-150">
+        Annuler
+      </button>
     </div>
-
 
     <!-- General Form Success/Error Messages -->
     <div *ngIf="profileUpdateSuccess" class="p-3.5 rounded-button mb-5 text-sm bg-status-success/10 text-status-success border border-status-success/30 flex items-center">
-      <i class="fas fa-check-circle mr-2"></i> Profile updated successfully!
+      <i class="fas fa-check-circle mr-2"></i> Profil mis à jour avec succès !
     </div>
     <div *ngIf="profileUpdateError || (errorMessage && !profileUpdateSuccess)" class="p-3.5 rounded-button mb-5 text-sm bg-status-urgent/10 text-status-urgent border border-status-urgent/30 flex items-center">
-      <i class="fas fa-exclamation-circle mr-2"></i> {{ errorMessage || 'Failed to update profile.' }}
+      <i class="fas fa-exclamation-circle mr-2"></i> {{ errorMessage || 'Échec de la mise à jour du profil.' }}
     </div>
 
     <div class="profile-sections grid grid-cols-1 lg:grid-cols-12 gap-card-margin">
       <!-- Profile Image Section -->
       <div class="profile-image-section lg:col-span-4 xl:col-span-3 bg-hover p-card-padding rounded-card">
-        <h3 class="text-card-title font-display text-text mb-4">Profile Picture</h3>
+        <h3 class="text-card-title font-display text-text mb-4">Photo de profil</h3>
         <div class="profile-image-container flex flex-col items-center">
           <div class="image-preview w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center mb-4 border-2 border-border shadow-sm">
             <img *ngIf="imagePreview" [src]="imagePreview" alt="Profile preview" class="w-full h-full object-cover" />
@@ -43,7 +42,7 @@
               class="hidden"
             >
             <button type="button" (click)="fileInput.click()" class="w-full sm:w-auto flex-grow justify-center text-sm font-medium py-2 px-4 rounded-button border border-primary text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-colors duration-150">
-              Choose File
+              Choisir un fichier
             </button>
             <button
               type="button"
@@ -56,18 +55,18 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Uploading...
+                Téléchargement...
               </span>
-              <span *ngIf="!isUploadingImage">Upload</span>
+              <span *ngIf="!isUploadingImage">Télécharger</span>
             </button>
           </div>
 
           <!-- Image Upload Success/Error Messages -->
           <div *ngIf="imageUpdateSuccess" class="w-full mt-3 p-3 rounded-button text-xs bg-status-success/10 text-status-success border border-status-success/30 flex items-center">
-            <i class="fas fa-check-circle mr-1.5"></i> Profile image updated!
+            <i class="fas fa-check-circle mr-1.5"></i> Image de profil mise à jour !
           </div>
           <div *ngIf="imageUpdateError || imageErrorMessage" class="w-full mt-3 p-3 rounded-button text-xs bg-status-urgent/10 text-status-urgent border border-status-urgent/30 flex items-center">
-            <i class="fas fa-exclamation-circle mr-1.5"></i> {{ imageErrorMessage || 'Failed to upload image.' }}
+            <i class="fas fa-exclamation-circle mr-1.5"></i> {{ imageErrorMessage || 'Échec du téléchargement de l\'image.' }}
           </div>
         </div>
       </div>
@@ -76,27 +75,27 @@
       <div class="profile-form-section lg:col-span-8 xl:col-span-9">
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-8">
           <div class="form-section">
-            <h3 class="text-card-title font-display text-text mb-5 pb-3 border-b border-border">Personal Information</h3>
+            <h3 class="text-card-title font-display text-text mb-5 pb-3 border-b border-border">Informations personnelles</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <div class="form-group">
-                <label for="name" class="block text-sm font-medium text-text-light mb-1.5">First Name <span class="text-status-urgent">*</span></label>
+                <label for="name" class="block text-sm font-medium text-text-light mb-1.5">Prénom <span class="text-status-urgent">*</span></label>
                 <input type="text" id="name" formControlName="name"
                        class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
                        [ngClass]="{'border-border focus:border-primary focus:ring-primary': !form.get('name')?.invalid || !form.get('name')?.touched,
                                    'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': form.get('name')?.invalid && form.get('name')?.touched}">
                 <div *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="text-xs text-status-urgent mt-1">
-                  First name is required.
+                  Le prénom est requis.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="surname" class="block text-sm font-medium text-text-light mb-1.5">Last Name <span class="text-status-urgent">*</span></label>
+                <label for="surname" class="block text-sm font-medium text-text-light mb-1.5">Nom <span class="text-status-urgent">*</span></label>
                 <input type="text" id="surname" formControlName="surname"
                        class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
                        [ngClass]="{'border-border focus:border-primary focus:ring-primary': !form.get('surname')?.invalid || !form.get('surname')?.touched,
                                    'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': form.get('surname')?.invalid && form.get('surname')?.touched}">
                 <div *ngIf="form.get('surname')?.invalid && form.get('surname')?.touched" class="text-xs text-status-urgent mt-1">
-                  Last name is required.
+                  Le nom est requis.
                 </div>
               </div>
 
@@ -107,73 +106,77 @@
                        [ngClass]="{'border-border focus:border-primary focus:ring-primary': !form.get('email')?.invalid || !form.get('email')?.touched,
                                    'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': form.get('email')?.invalid && form.get('email')?.touched}">
                 <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="text-xs text-status-urgent mt-1">
-                  <span *ngIf="form.get('email')?.errors?.['required']">Email is required.</span>
-                  <span *ngIf="form.get('email')?.errors?.['email']">Please enter a valid email address.</span>
+                  <span *ngIf="form.get('email')?.errors?.['required']">L'email est requis.</span>
+                  <span *ngIf="form.get('email')?.errors?.['email']">Veuillez saisir une adresse email valide.</span>
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="birthdate" class="block text-sm font-medium text-text-light mb-1.5">Date of Birth <span class="text-status-urgent">*</span></label>
+                <label for="birthdate" class="block text-sm font-medium text-text-light mb-1.5">Date de naissance <span class="text-status-urgent">*</span></label>
                 <input type="date" id="birthdate" formControlName="birthdate"
                        class="w-full p-2.5 border rounded-input text-body text-text focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
                        [ngClass]="{'border-border focus:border-primary focus:ring-primary': !form.get('birthdate')?.invalid || !form.get('birthdate')?.touched,
                                    'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': form.get('birthdate')?.invalid && form.get('birthdate')?.touched}">
                 <div *ngIf="form.get('birthdate')?.invalid && form.get('birthdate')?.touched" class="text-xs text-status-urgent mt-1">
-                  Date of birth is required.
+                  La date de naissance est requise.
                 </div>
               </div>
             </div>
           </div>
 
           <div class="form-section pt-6 border-t border-border">
-            <h3 class="text-card-title font-display text-text mb-5 pb-3 border-b border-border">Additional Information</h3>
+            <h3 class="text-card-title font-display text-text mb-5 pb-3 border-b border-border">Informations supplémentaires</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <div class="form-group">
-                <label for="gender" class="block text-sm font-medium text-text-light mb-1.5">Gender</label>
+                <label for="gender" class="block text-sm font-medium text-text-light mb-1.5">Genre</label>
                 <select id="gender" formControlName="gender" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none bg-white">
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer_not_to_say">Prefer not to say</option>
+                  <option value="">Sélectionnez le genre</option>
+                  <option value="male">Homme</option>
+                  <option value="female">Femme</option>
+                  <option value="other">Autre</option>
+                  <option value="prefer_not_to_say">Préfère ne pas dire</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="bloodType" class="block text-sm font-medium text-text-light mb-1.5">Blood Type</label>
+                <label for="bloodType" class="block text-sm font-medium text-text-light mb-1.5">Groupe sanguin</label>
                 <select id="bloodType" formControlName="bloodType" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none bg-white">
-                  <option value="">Select blood type</option>
-                  <option value="A+">A+</option> <option value="A-">A-</option>
-                  <option value="B+">B+</option> <option value="B-">B-</option>
-                  <option value="AB+">AB+</option> <option value="AB-">AB-</option>
-                  <option value="O+">O+</option> <option value="O-">O-</option>
+                  <option value="">Sélectionnez le groupe sanguin</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="maritalStatus" class="block text-sm font-medium text-text-light mb-1.5">Marital Status</label>
+                <label for="maritalStatus" class="block text-sm font-medium text-text-light mb-1.5">Statut matrimonial</label>
                 <select id="maritalStatus" formControlName="maritalStatus" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none bg-white">
-                  <option value="">Select marital status</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="divorced">Divorced</option>
-                  <option value="widowed">Widowed</option>
+                  <option value="">Sélectionnez le statut matrimonial</option>
+                  <option value="single">Célibataire</option>
+                  <option value="married">Marié(e)</option>
+                  <option value="divorced">Divorcé(e)</option>
+                  <option value="widowed">Veuf/Veuve</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="nationality" class="block text-sm font-medium text-text-light mb-1.5">Nationality</label>
+                <label for="nationality" class="block text-sm font-medium text-text-light mb-1.5">Nationalité</label>
                 <input type="text" id="nationality" formControlName="nationality" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70">
               </div>
 
               <div class="form-group sm:col-span-2">
-                <label for="address" class="block text-sm font-medium text-text-light mb-1.5">Address</label>
+                <label for="address" class="block text-sm font-medium text-text-light mb-1.5">Adresse</label>
                 <textarea id="address" formControlName="address" rows="3" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70 min-h-[80px]"></textarea>
               </div>
 
               <div class="form-group sm:col-span-2">
-                <label for="emergencyContact" class="block text-sm font-medium text-text-light mb-1.5">Emergency Contact</label>
-                <input type="text" id="emergencyContact" formControlName="emergencyContact" placeholder="Name and phone number (e.g., Jane Doe 555-1234)" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70">
+                <label for="emergencyContact" class="block text-sm font-medium text-text-light mb-1.5">Contact d'urgence</label>
+                <input type="text" id="emergencyContact" formControlName="emergencyContact" placeholder="Nom et numéro de téléphone (ex: Jane Doe 555-1234)" class="w-full p-2.5 border border-border rounded-input text-body text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70">
               </div>
             </div>
           </div>
@@ -186,9 +189,9 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Saving...
+                Enregistrement...
               </span>
-              <span *ngIf="!isSubmitting">Save Changes</span>
+              <span *ngIf="!isSubmitting">Enregistrer les modifications</span>
             </button>
           </div>
         </form>

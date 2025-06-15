@@ -1,14 +1,12 @@
-<div class="page-container font-sans text-text bg-background min-h-screen p-4 md:p-6 lg:p-8">
-  <div class="page-header mb-card-margin p-card-padding bg-card rounded-card shadow-card">
-    <h2 class="text-section-header font-display text-text mb-1">Schedule a New Appointment</h2>
-    <p class="text-body text-text-light">Choose an available time slot with {{ doctorName }}</p>
+<div class="page-container font-sans text-text bg-background min-h-screen p-4 md:p-6 lg:p-8">  <div class="page-header mb-card-margin p-card-padding bg-card rounded-card shadow-card">
+    <h2 class="text-section-header font-display text-text mb-1">Planifier un nouveau rendez-vous</h2>
+    <p class="text-body text-text-light">Choisissez un créneau disponible avec {{ doctorName }}</p>
   </div>
 
   <div class="calendar-layout-container flex flex-col lg:flex-row gap-card-margin">
     <!-- Colonne de gauche (Sidebar) -->
-    <div class="calendar-sidebar lg:w-[300px] xl:w-[320px] shrink-0 bg-card p-card-padding rounded-card shadow-card space-y-6">
-      <button class="today-button w-full flex items-center justify-center py-2.5 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-colors duration-150 text-sm font-medium" (click)="goToToday()">
-        <i class="far fa-calendar-check mr-2"></i> Today
+    <div class="calendar-sidebar lg:w-[300px] xl:w-[320px] shrink-0 bg-card p-card-padding rounded-card shadow-card space-y-6">      <button class="today-button w-full flex items-center justify-center py-2.5 px-4 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-colors duration-150 text-sm font-medium" (click)="goToToday()">
+        <i class="far fa-calendar-check mr-2"></i> Aujourd'hui
       </button>
 
 <div class="mini-calendar">
@@ -42,7 +40,7 @@
       <div class="sidebar-section legends-filters pt-4 border-t border-border">
         <!-- En-tête avec compteur et boutons d'action -->
         <div class="flex items-center justify-between mb-3">
-          <h4 class="text-card-title font-display text-text">Available Doctors</h4>
+          <h4 class="text-card-title font-display text-text">Médecins disponibles</h4>
           <span class="text-xs text-text-muted bg-hover px-2 py-1 rounded-full">
             {{ getSelectedDoctorsCount() }}/{{ getTotalDoctorsCount() }}
           </span>
@@ -55,7 +53,7 @@
               type="text"
               [(ngModel)]="doctorSearchTerm"
               (ngModelChange)="filterDoctors()"
-              placeholder="Search doctors..."
+              placeholder="Rechercher des médecins..."
               class="w-full pl-8 pr-3 py-2 text-xs border border-border rounded-input bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"
             />
             <i class="fas fa-search absolute left-2.5 top-2.5 text-text-muted text-xs"></i>
@@ -73,9 +71,10 @@
             (click)="toggleGroupedView()"
             class="text-xs text-primary hover:text-primary-dark transition-colors flex items-center">
             <i class="fas" [ngClass]="showGroupedView ? 'fa-list' : 'fa-layer-group'" class="mr-1"></i>
-            {{ showGroupedView ? 'List View' : 'Group by Specialty' }}
+            {{ showGroupedView ? 'Vue liste' : 'Grouper par spécialité' }}
           </button>
         </div>
+        
  <!-- Vue groupée par spécialité -->
         <div class="space-y-3" *ngIf="showGroupedView && groupedDoctors.length > 0">
           <div *ngFor="let group of groupedDoctors; trackBy: trackBySpecialty" class="doctor-group">
@@ -95,7 +94,7 @@
                   />
                  <span class="legend-color-box w-3.5 h-3.5 rounded-sm inline-block flex-shrink-0" [style.backgroundColor]="doctor.eventColor"></span>
                   <div class="flex flex-col flex-1 min-w-0">
-                    <span class="group-hover:text-text transition-colors truncate font-medium">Dr. {{ doctor.title }}</span>
+                    <span class="group-hover:text-text transition-colors truncate font-medium">  {{ doctor.title }}</span>
                   </div>
                 </label>
               </div>
@@ -114,7 +113,7 @@
               />
               <span class="legend-color-box w-3.5 h-3.5 rounded-sm inline-block flex-shrink-0" [style.backgroundColor]="resource.eventColor"></span>
               <div class="flex flex-col flex-1 min-w-0">
-                <span class="group-hover:text-text transition-colors truncate font-medium">Dr. {{ resource.title }}</span>
+                <span class="group-hover:text-text transition-colors truncate font-medium"> {{ resource.title }}</span>
                 <span class="text-xs text-text-muted truncate" *ngIf="resource.specialty">{{ resource.specialty }}</span>
               </div>
             </label>
@@ -123,7 +122,7 @@
           <div *ngIf="doctorSearchTerm && (!filteredResources || filteredResources.length === 0)" 
                class="text-center py-4 text-text-muted text-sm">
             <i class="fas fa-search text-text-muted/50 mb-2"></i>
-            <p>No doctors found matching "{{ doctorSearchTerm }}"</p>
+            <p>Aucun médecin trouvé correspondant à "{{ doctorSearchTerm }}"</p>
           </div>
         </div>
 
@@ -134,13 +133,13 @@
               (click)="selectAllDoctors()" 
               class="text-primary hover:text-primary-dark transition-colors flex items-center">
               <i class="fas fa-check-double mr-1"></i>
-              Select All
+              Tout sélectionner
             </button>
             <button 
               (click)="deselectAllDoctors()" 
               class="text-text-muted hover:text-text transition-colors flex items-center">
               <i class="fas fa-times-circle mr-1"></i>
-              Clear All
+              Tout effacer
             </button>
           </div>
         </div>
@@ -150,7 +149,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span class="text-sm">Loading doctors...</span>
+          <span class="text-sm">Chargement des médecins...</span>
         </div>
          <!-- Message d'erreur -->
         <div *ngIf="doctorsError && !loadingDoctors" class="text-center py-4 text-status-urgent text-sm">
@@ -159,7 +158,7 @@
           <button 
             (click)="loadAvailableDoctors()" 
             class="mt-2 text-xs text-primary hover:text-primary-dark underline">
-            Try Again
+            Réessayer
           </button>
         </div>
       </div>
@@ -169,9 +168,8 @@
     <!-- Colonne de droite (Calendrier Principal) -->
     <div class="calendar-main-area flex-grow bg-card p-card-padding rounded-card shadow-card">
       <div class="main-calendar-toolbar flex flex-col md:flex-row justify-between items-center mb-5 gap-3 md:gap-4">
-        <div class="toolbar-left flex items-center space-x-1">
-          <button (click)="mainCalendarPrev()" title="Previous period" aria-label="Previous period" class="p-2 rounded-button hover:bg-hover text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50 focus:text-primary transition-colors"><i class="fas fa-chevron-left"></i></button>
-          <button (click)="mainCalendarNext()" title="Next period" aria-label="Next period" class="p-2 rounded-button hover:bg-hover text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50 focus:text-primary transition-colors"><i class="fas fa-chevron-right"></i></button>
+        <div class="toolbar-left flex items-center space-x-1">          <button (click)="mainCalendarPrev()" title="Période précédente" aria-label="Période précédente" class="p-2 rounded-button hover:bg-hover text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50 focus:text-primary transition-colors"><i class="fas fa-chevron-left"></i></button>
+          <button (click)="mainCalendarNext()" title="Période suivante" aria-label="Période suivante" class="p-2 rounded-button hover:bg-hover text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50 focus:text-primary transition-colors"><i class="fas fa-chevron-right"></i></button>
           <span class="calendar-title text-card-title font-display text-text ml-2" aria-live="polite">{{ customToolbarTitle }}</span>
         </div>
         <div class="toolbar-center w-full md:w-auto md:flex-grow md:max-w-xs relative">
@@ -180,17 +178,15 @@
             </div>
             <input
             type="text"
-            class="search-appointments-input w-full pl-10 pr-4 py-2 border border-border rounded-input text-sm text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"
-            placeholder="Search appointments"
+            class="search-appointments-input w-full pl-10 pr-4 py-2 border border-border rounded-input text-sm text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70"            placeholder="Rechercher des rendez-vous"
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchTermChange()"
-            aria-label="Search appointments"
+            aria-label="Rechercher des rendez-vous"
           />
         </div>
-        <div class="toolbar-right flex items-center space-x-1 bg-hover p-0.5 rounded-button">
-          <button (click)="changeMainCalendarView('timeGridDay')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridDay' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridDay'">Day</button>
-          <button (click)="changeMainCalendarView('timeGridWeek')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridWeek' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridWeek'">Week</button>
-          <button (click)="changeMainCalendarView('dayGridMonth')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'dayGridMonth' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'dayGridMonth'">Month</button>
+        <div class="toolbar-right flex items-center space-x-1 bg-hover p-0.5 rounded-button">          <button (click)="changeMainCalendarView('timeGridDay')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridDay' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridDay'">Jour</button>
+          <button (click)="changeMainCalendarView('timeGridWeek')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridWeek' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridWeek'">Semaine</button>
+          <button (click)="changeMainCalendarView('dayGridMonth')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'dayGridMonth' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'dayGridMonth'">Mois</button>
         </div>
       </div>
       <div class="fc-theme-standard relative"> <!-- Wrapper for FullCalendar theme compatibility -->
@@ -201,7 +197,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span class="text-sm text-text-light font-medium">Refreshing calendar...</span>
+            <span class="text-sm text-text-light font-medium">Actualisation du calendrier...</span>
           </div>
         </div>
         <full-calendar #calendar [options]="calendarOptions"></full-calendar>
@@ -215,9 +211,8 @@
     <div class="modal-content event-details-modal bg-card rounded-card shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" (click)="$event.stopPropagation()">
       
       <!-- Modal Header -->
-      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
-        <h3 class="text-section-header font-display text-text">Appointment Details</h3>
-        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeEventModal()" aria-label="Close event details">
+      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">        <h3 class="text-section-header font-display text-text">Détails du rendez-vous</h3>
+        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeEventModal()" aria-label="Fermer les détails du rendez-vous">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -231,7 +226,7 @@
             <i class="fas fa-calendar-check text-lg"></i>
           </div>
           <div class="flex-1">
-            <h4 class="text-card-title font-semibold text-text mb-1">{{ selectedEventDetails.title || 'Appointment' }}</h4>
+            <h4 class="text-card-title font-semibold text-text mb-1">{{ selectedEventDetails.title || 'Rendez-vous' }}</h4>
             <div class="flex items-center space-x-2">
               <span class="status-badge inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
                     [ngClass]="{
@@ -241,7 +236,7 @@
                       'bg-hover text-text-muted': !['Confirmed', 'Pending', 'Cancelled', 'Completed'].includes(selectedEventDetails.extendedProps?.status ?? '')
                     }">
                 <i class="fas fa-circle text-xs mr-1"></i>
-                {{ selectedEventDetails.extendedProps?.status || 'Scheduled' }}
+                {{ selectedEventDetails.extendedProps?.status || 'Planifié' }}
               </span>
             </div>
           </div>
@@ -253,14 +248,13 @@
           <!-- Date & Time -->
           <div class="bg-hover/50 rounded-md p-3">
             <div class="flex items-center space-x-2 mb-2">
-              <i class="fas fa-clock text-primary"></i>
-              <span class="font-medium text-text-light">Date & Time</span>
+              <i class="fas fa-clock text-primary"></i>              <span class="font-medium text-text-light">Date et Heure</span>
             </div>
             <p class="text-text">
-              <strong>Start:</strong> {{ selectedEventDetails.start | date:'EEEE, MMMM d, yyyy \'at\' h:mm a' }}
+              <strong>Début :</strong> {{ selectedEventDetails.start | date:'EEEE, MMMM d, yyyy \'à\' h:mm a' }}
             </p>
             <p class="text-text" *ngIf="selectedEventDetails.end">
-              <strong>End:</strong> {{ selectedEventDetails.end | date:'h:mm a' }}
+              <strong>Fin :</strong> {{ selectedEventDetails.end | date:'h:mm a' }}
             </p>
           </div>
 
@@ -268,7 +262,7 @@
           <div class="bg-hover/50 rounded-md p-3" *ngIf="selectedEventDetails.extendedProps?.doctorName">
             <div class="flex items-center space-x-2 mb-2">
               <i class="fas fa-user-md text-primary"></i>
-              <span class="font-medium text-text-light">Doctor</span>
+              <span class="font-medium text-text-light">Médecin</span>
             </div>
             <p class="text-text">{{ selectedEventDetails.extendedProps?.doctorName }}</p>
             <p class="text-text-light text-sm" *ngIf="selectedEventDetails.extendedProps?.doctorSpecialty">
@@ -280,7 +274,7 @@
           <div class="bg-hover/50 rounded-md p-3" *ngIf="selectedEventDetails.extendedProps?.description">
             <div class="flex items-center space-x-2 mb-2">
               <i class="fas fa-clipboard-list text-primary"></i>
-              <span class="font-medium text-text-light">Reason for Visit</span>
+              <span class="font-medium text-text-light">Motif de la visite</span>
             </div>
             <p class="text-text whitespace-pre-line">{{ selectedEventDetails.extendedProps?.description }}</p>
           </div>
@@ -289,7 +283,7 @@
           <div class="bg-hover/50 rounded-md p-3" *ngIf="selectedEventDetails.extendedProps?.patientEmail || selectedEventDetails.extendedProps?.patientPhone">
             <div class="flex items-center space-x-2 mb-2">
               <i class="fas fa-address-card text-primary"></i>
-              <span class="font-medium text-text-light">Contact Information</span>
+              <span class="font-medium text-text-light">Informations de contact</span>
             </div>
             <p class="text-text" *ngIf="selectedEventDetails.extendedProps?.patientEmail">
               <i class="fas fa-envelope text-text-light mr-2"></i>
@@ -311,7 +305,7 @@
             type="button"
             (click)="closeEventModal()"
             class="btn-secondary py-2 px-4 text-sm font-medium rounded-button border border-border text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors">
-            Close
+            Fermer
           </button>
           
           <button 
@@ -325,7 +319,7 @@
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <i *ngIf="!cancellingAppointment" class="fas fa-ban mr-2"></i>
-            {{ cancellingAppointment ? 'Cancelling...' : 'Cancel Appointment' }}
+            {{ cancellingAppointment ? 'Annulation...' : 'Annuler le rendez-vous' }}
           </button>
           
           <button 
@@ -339,7 +333,7 @@
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <i *ngIf="!reschedulingAppointment" class="fas fa-calendar-alt mr-2"></i>
-            {{ reschedulingAppointment ? 'Rescheduling...' : 'Reschedule' }}
+            {{ reschedulingAppointment ? 'Reprogrammation...' : 'Reprogrammer' }}
           </button>
         </div>
       </div>
@@ -350,14 +344,12 @@
   <!-- Modal/Formulaire de Réservation -->
   <div class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 transition-opacity duration-300" *ngIf="isBookingFormOpen" (click)="closeBookingForm()">
     <div class="modal-content booking-form-modal bg-card rounded-card shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 ease-out" (click)="$event.stopPropagation()">
-      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">
-        <h3 class="text-section-header font-display text-text">Book Appointment</h3>
-        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeBookingForm()" aria-label="Close booking form"><i class="fas fa-times"></i></button>
+      <div class="modal-header flex justify-between items-center p-card-padding border-b border-border">        <h3 class="text-section-header font-display text-text">Réserver un rendez-vous</h3>
+        <button class="close-modal-button text-2xl text-text-muted hover:text-text p-1 -mr-2 focus:outline-none rounded-full hover:bg-hover transition-colors" (click)="closeBookingForm()" aria-label="Fermer le formulaire de réservation"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body p-card-padding overflow-y-auto">
-        <div class="appointment-time-info mb-5 p-3 bg-hover rounded-md text-sm text-text" *ngIf="selectedDateForBooking && selectedTimeForBooking">
-          <p><strong class="font-medium text-text-light">Date:</strong> {{ selectedDateForBooking | date:'MMMM d, yyyy' }}</p>
-          <p><strong class="font-medium text-text-light">Time:</strong> {{ selectedTimeForBooking }} - {{ selectedEndTimeForBooking }}</p>
+        <div class="appointment-time-info mb-5 p-3 bg-hover rounded-md text-sm text-text" *ngIf="selectedDateForBooking && selectedTimeForBooking">          <p><strong class="font-medium text-text-light">Date :</strong> {{ selectedDateForBooking | date:'MMMM d, yyyy' }}</p>
+          <p><strong class="font-medium text-text-light">Heure :</strong> {{ selectedTimeForBooking }} - {{ selectedEndTimeForBooking }}</p>
         </div>
 
         <form [formGroup]="bookingForm" (ngSubmit)="submitNewAppointment()" class="space-y-4">
@@ -375,14 +367,13 @@
 
           <!-- Doctor Selection -->
           <div class="form-group">
-            <label for="doctorId" class="block text-sm font-medium text-text-light mb-1.5">Select Doctor <span class="text-status-urgent">*</span></label>
+            <label for="doctorId" class="block text-sm font-medium text-text-light mb-1.5">Sélectionner un médecin <span class="text-status-urgent">*</span></label>
             <select id="doctorId" formControlName="doctorId" required
                     class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none"
                     [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('doctorId')?.invalid || !bookingForm.get('doctorId')?.touched,
                                 'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('doctorId')?.invalid && (bookingForm.get('doctorId')?.dirty || bookingForm.get('doctorId')?.touched)}"
-                    [disabled]="loadingDoctors">
-              <option value="" *ngIf="!loadingDoctors">Choose a doctor</option>
-              <option value="" *ngIf="loadingDoctors">Loading doctors...</option>
+                    [disabled]="loadingDoctors">              <option value="" *ngIf="!loadingDoctors">Choisir un médecin</option>
+              <option value="" *ngIf="loadingDoctors">Chargement des médecins...</option>
               <option *ngFor="let doctor of resources" [value]="doctor.id">
                 {{ doctor.title }}
               </option>
@@ -392,19 +383,19 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Loading available doctors...
+              Chargement des médecins disponibles...
             </div>
             <div *ngIf="doctorsError && !loadingDoctors" class="text-xs text-status-urgent mt-1">
               {{ doctorsError }}
             </div>
             <div *ngIf="bookingForm.get('doctorId')?.invalid && (bookingForm.get('doctorId')?.dirty || bookingForm.get('doctorId')?.touched)" class="text-xs text-status-urgent mt-1">
-              Please select a doctor.
+              Veuillez sélectionner un médecin.
             </div>
           </div>
  
           <!-- Appointment Type -->
           <div class="form-group">
-            <label for="appointmentType" class="block text-sm font-medium text-text-light mb-1.5">Appointment Type <span class="text-status-urgent">*</span></label>
+            <label for="appointmentType" class="block text-sm font-medium text-text-light mb-1.5">Type de rendez-vous <span class="text-status-urgent">*</span></label>
             <select id="appointmentType" formControlName="appointmentType" required
                     class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none">
               <option *ngFor="let type of appointmentTypes" [value]="type.value" [title]="type.description">
@@ -417,17 +408,15 @@
           </div>
 
           <!-- Reason for Visit -->
-          <div class="form-group">
-            <label for="reasonForVisit" class="block text-sm font-medium text-text-light mb-1.5">Reason for Visit <span class="text-status-urgent">*</span></label>
-            <input type="text" id="reasonForVisit" formControlName="reasonForVisit" placeholder="e.g., Annual checkup, Follow-up consultation, specific symptoms" required
+          <div class="form-group">            <label for="reasonForVisit" class="block text-sm font-medium text-text-light mb-1.5">Motif de la visite <span class="text-status-urgent">*</span></label>
+            <input type="text" id="reasonForVisit" formControlName="reasonForVisit" placeholder="ex: Contrôle annuel, Consultation de suivi, symptômes spécifiques" required
                    class="w-full p-2.5 border rounded-input text-body text-text bg-white focus:ring-1 focus:outline-none placeholder:text-text-muted/70"
                    [ngClass]="{'border-border focus:border-primary focus:ring-primary': !bookingForm.get('reasonForVisit')?.invalid || !bookingForm.get('reasonForVisit')?.touched,
-                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('reasonForVisit')?.invalid && (bookingForm.get('reasonForVisit')?.dirty || bookingForm.get('reasonForVisit')?.touched)}">          <div *ngIf="isFormControlInvalid('reasonForVisit')" class="text-xs text-status-urgent mt-1">
-            <div *ngIf="hasFormControlError('reasonForVisit', 'required')">Please provide a reason for your visit.</div>
-            <div *ngIf="hasFormControlError('reasonForVisit', 'minlength')">Reason must be at least 10 characters.</div>
-            <div *ngIf="hasFormControlError('reasonForVisit', 'maxlength')">Reason cannot exceed 500 characters.</div>
+                               'border-status-urgent focus:border-status-urgent focus:ring-status-urgent': bookingForm.get('reasonForVisit')?.invalid && (bookingForm.get('reasonForVisit')?.dirty || bookingForm.get('reasonForVisit')?.touched)}">          <div *ngIf="isFormControlInvalid('reasonForVisit')" class="text-xs text-status-urgent mt-1">            <div *ngIf="hasFormControlError('reasonForVisit', 'required')">Veuillez indiquer le motif de votre visite.</div>
+            <div *ngIf="hasFormControlError('reasonForVisit', 'minlength')">Le motif doit contenir au moins 10 caractères.</div>
+            <div *ngIf="hasFormControlError('reasonForVisit', 'maxlength')">Le motif ne peut pas dépasser 500 caractères.</div>
           </div>          <div class="text-xs text-text-muted mt-1" *ngIf="getFormControlValue('reasonForVisit')">
-            {{ getFormControlValue('reasonForVisit').length || 0 }}/500 characters
+            {{ getFormControlValue('reasonForVisit').length || 0 }}/500 caractères
           </div>
           </div>
 
@@ -435,35 +424,33 @@
           <div class="form-section border-t border-border pt-4 mt-6">
             <div class="flex items-center p-3 bg-primary/10 border border-primary/20 rounded-md">
               <i class="fas fa-info-circle text-primary mr-2"></i>
-              <span class="text-sm text-primary">This appointment will be booked using your account information.</span>
+              <span class="text-sm text-primary">Ce rendez-vous sera réservé avec les informations de votre compte.</span>
             </div>
           </div>
 
           <!-- Additional Notes -->
-          <div class="form-group">
-            <label for="notes" class="block text-sm font-medium text-text-light mb-1.5">Additional Notes (Optional)</label>
-            <textarea id="notes" formControlName="notes" rows="3" placeholder="Any additional information about your appointment"
+          <div class="form-group">            <label for="notes" class="block text-sm font-medium text-text-light mb-1.5">Notes supplémentaires (Optionnel)</label>
+            <textarea id="notes" formControlName="notes" rows="3" placeholder="Toute information supplémentaire concernant votre rendez-vous"
                       class="w-full p-2.5 border border-border rounded-input text-body text-text bg-white focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-text-muted/70 min-h-[80px]"></textarea>
             <div class="text-xs text-text-muted mt-1" *ngIf="getFormControlValue('notes')">
-              {{ getFormControlValue('notes').length || 0 }}/1000 characters
+              {{ getFormControlValue('notes').length || 0 }}/1000 caractères
             </div>
             <div *ngIf="hasFormControlError('notes', 'maxlength')" class="text-xs text-status-urgent mt-1">
-              Notes cannot exceed 1000 characters.
+              Les notes ne peuvent pas dépasser 1000 caractères.
             </div>
           </div>
 
           <div class="modal-actions flex justify-end mt-6 pt-4 border-t border-border space-x-3">
             <button type="button" (click)="closeBookingForm()" class="text-sm font-medium py-2.5 px-5 rounded-button border border-border text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card transition-colors duration-150">
-              Cancel
+              Annuler
             </button>
-            <button type="submit" class="text-sm font-medium py-2.5 px-5 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150" [disabled]="bookingForm.invalid || isSubmitting">
-              <span *ngIf="!isSubmitting">Book Appointment</span>
+            <button type="submit" class="text-sm font-medium py-2.5 px-5 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150" [disabled]="bookingForm.invalid || isSubmitting">              <span *ngIf="!isSubmitting">Réserver le rendez-vous</span>
               <span *ngIf="isSubmitting" class="flex items-center justify-center">
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Booking...
+                Réservation...
               </span>
             </button>
           </div>
@@ -472,3 +459,4 @@
     </div>
   </div>
 </div>
+ 
