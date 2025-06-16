@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ActiveSessionsResponse,
@@ -21,9 +21,119 @@ import {
 export class AnalyticsService {
   private apiUrl = `${environment.apiUrl}/analytics`;
   private billsUrl = `${environment.apiUrl}/bills`;
-  private cacheTime = 300000; // 5 minutes in milliseconds
+  
+  // Enhanced caching system
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private defaultCacheTimeout = 5 * 60 * 1000; // 5 minutes
+  private sessionsCacheTimeout = 30 * 1000; // 30 seconds for active sessions
   
   constructor(private http: HttpClient) { }
+  
+  /**
+   * Check if cached data is still valid
+   */
+  private isCacheValid(key: string, customTimeout?: number): boolean {
+    const cached = this.cache.get(key);
+    if (!cached) return false;
+    
+    const timeout = customTimeout || this.defaultCacheTimeout;
+    const isValid = (Date.now() - cached.timestamp) < timeout;
+    
+    if (!isValid) {
+      this.cache.delete(key); // Clean up expired cache
+    }
+    return isValid;
+  }
+
+  /**
+   * Get cached data
+   */
+  private getCachedData<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    return cached?.data || null;
+  }
+
+  /**
+   * Set cached data
+   */
+  private setCachedData<T>(key: string, data: T): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  /**
+   * Generate cache key with parameters
+   */
+  private generateCacheKey(base: string, params?: Record<string, any>): string {
+    if (!params) return base;
+    
+    const paramString = Object.entries(params)
+      .filter(([_, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
+    
+    return paramString ? `${base}-${paramString}` : base;
+  }
+
+  /**
+   * Clear specific cache or all cache
+   */
+  public clearCache(key?: string): void {
+    if (key) {
+      this.cache.delete(key);
+      console.log(`🗑️ Cleared analytics cache for: ${key}`);
+    } else {
+      this.cache.clear();
+      console.log('🗑️ Cleared all analytics cache');
+    }
+  }
+
+  /**
+   * Force refresh specific data type
+   */
+  public refreshData(dataType: string, params?: any): Observable<any> {
+    // Clear relevant cache entries
+    const cacheKeys = Array.from(this.cache.keys()).filter(key => key.startsWith(dataType));
+    cacheKeys.forEach(key => this.cache.delete(key));
+    
+    // Refetch data based on type
+    switch (dataType) {
+      case 'active-sessions':
+        return this.getCurrentActiveSessions();
+      case 'user-activity':
+        return this.getUserActivity(params?.timeframe);
+      case 'user-stats':
+        return this.getUserStats(params?.timeframe, true);
+      case 'role-stats':
+        return this.getRoleStats(true);
+      case 'registrations':
+        return this.getUserRegistrations(params?.timeframe);
+      case 'doctor-revenue':
+        return this.getDoctorRevenue(params?.fromDate, params?.toDate, true);
+      case 'service-breakdown':
+        return this.getServiceBreakdown();
+      default:
+        throw new Error('Invalid data type for refresh');
+    }
+  }
+
+  /**
+   * Handle HTTP errors consistently
+   */
+  private handleError(error: any, context: string): Observable<never> {
+    console.error(`Error in ${context}:`, error);
+    
+    let errorMessage = `Failed to load ${context}`;
+    
+    if (error.status === 403) {
+      errorMessage = 'Permission denied: analytics:view permission required';
+    } else if (error.status === 401) {
+      errorMessage = 'Authentication expired';
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
+    }
+
+    return throwError(() => new Error(errorMessage));
+  }
   
   /**
    * Get current active user sessions
@@ -31,24 +141,26 @@ export class AnalyticsService {
    */
   getCurrentActiveSessions(): Observable<ActiveSessionsResponse> {
     const cacheKey = 'active-sessions';
-    const cachedData = this.getCachedData<ActiveSessionsResponse>(cacheKey);
     
-    // Return cached data if available and not expired (30 seconds cache)
-    if (cachedData && !this.isCacheExpired(cacheKey, 30000)) {
+    // Check cache first (with shorter timeout for real-time data)
+    const cachedData = this.getCachedData<ActiveSessionsResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey, this.sessionsCacheTimeout)) {
+      console.log('📦 Using cached active sessions data');
       return of(cachedData);
     }
+
+    console.log('🔄 Loading fresh active sessions data...');
     
     return this.http.get<ActiveSessionsResponse>(`${this.apiUrl}/active-sessions`)
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch active sessions');
         }),
-        catchError(error => {
-          console.error('Error fetching current active sessions:', error);
-          return throwError(() => error);
-        })
+        catchError(error => this.handleError(error, 'active sessions'))
       );
   }
   
@@ -58,35 +170,29 @@ export class AnalyticsService {
    * @returns Observable with user activity data
    */
   getUserActivity(timeframe: string = '30d'): Observable<UserActivityResponse> {
-    const params = new HttpParams().set('timeframe', timeframe);
-    const cacheKey = `user-activity-${timeframe}`;
-    const cachedData = this.getCachedData<UserActivityResponse>(cacheKey);
+    const cacheKey = this.generateCacheKey('user-activity', { timeframe });
     
-    // Return cached data if available and not expired
-    if (cachedData && !this.isCacheExpired(cacheKey, this.cacheTime)) {
+    // Check cache first
+    const cachedData = this.getCachedData<UserActivityResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey)) {
+      console.log(`📦 Using cached user activity data for ${timeframe}`);
       return of(cachedData);
     }
+
+    console.log(`🔄 Loading fresh user activity data for ${timeframe}...`);
+    
+    const params = new HttpParams().set('timeframe', timeframe);
     
     return this.http.get<UserActivityResponse>(`${this.apiUrl}/user-activity`, { params })
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch user activity data');
         }),
-        catchError(error => {
-          console.error('Error fetching user activity data:', error);
-          
-          // Handle different error types
-          if (error.status === 403) {
-            return throwError(() => new Error('Permission denied: analytics:view permission required'));
-          } else if (error.status === 401) {
-            // Could integrate with auth service to refresh token here
-            return throwError(() => new Error('Authentication expired'));
-          }
-          
-          return throwError(() => error);
-        })
+        catchError(error => this.handleError(error, 'user activity'))
       );
   }
   
@@ -97,60 +203,59 @@ export class AnalyticsService {
    * @returns Observable with user statistics data
    */
   getUserStats(timeframe: string = 'month', forceRefresh: boolean = false): Observable<UserStatsResponse> {
-    const cacheKey = `user-stats-${timeframe}`;
-    const cachedData = this.getCachedData<UserStatsResponse>(cacheKey);
+    const cacheKey = this.generateCacheKey('user-stats', { timeframe });
     
-    // Return cached data if available and not expired or refresh not forced
-    if (!forceRefresh && cachedData && !this.isCacheExpired(cacheKey)) {
-      return of(cachedData);
+    // Check cache first (unless forcing refresh)
+    if (!forceRefresh) {
+      const cachedData = this.getCachedData<UserStatsResponse>(cacheKey);
+      if (cachedData && this.isCacheValid(cacheKey)) {
+        console.log(`📦 Using cached user stats for ${timeframe}`);
+        return of(cachedData);
+      }
     }
+
+    console.log(`🔄 Loading fresh user stats for ${timeframe}...`);
     
     const params = new HttpParams().set('timeframe', timeframe);
     
     return this.http.get<UserStatsResponse>(`${this.apiUrl}/users`, { params })
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch user statistics');
         }),
-        catchError(error => {
-          console.error('Error fetching user statistics:', error);
-          
-          if (error.status === 403) {
-            return throwError(() => new Error('Permission denied: analytics:view permission required'));
-          } else if (error.status === 401) {
-            return throwError(() => new Error('Authentication expired'));
-          }
-          
-          return throwError(() => new Error('Failed to load user statistics'));
-        })
+        catchError(error => this.handleError(error, 'user statistics'))
       );
   }
   
   /**
-   * Alternative method if you prefer the more specific endpoint
+   * Alternative method for user status counts
    */
   getUserStatusCounts(): Observable<UserStatsResponse> {
     const cacheKey = 'user-status-counts';
-    const cachedData = this.getCachedData<UserStatsResponse>(cacheKey);
     
-    // Return cached data if available and not expired
-    if (cachedData && !this.isCacheExpired(cacheKey)) {
+    // Check cache first
+    const cachedData = this.getCachedData<UserStatsResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey)) {
+      console.log('📦 Using cached user status counts');
       return of(cachedData);
     }
+
+    console.log('🔄 Loading fresh user status counts...');
     
     return this.http.get<UserStatsResponse>(`${this.apiUrl.replace('/analytics', '')}/users/counts-by-status`)
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch user status counts');
         }),
-        catchError(error => {
-          console.error('Error fetching user status counts:', error);
-          return throwError(() => new Error('Failed to load user status counts'));
-        })
+        catchError(error => this.handleError(error, 'user status counts'))
       );
   }
   
@@ -161,31 +266,28 @@ export class AnalyticsService {
    */
   getRoleStats(forceRefresh: boolean = false): Observable<RoleStatsResponse> {
     const cacheKey = 'role-stats';
-    const cachedData = this.getCachedData<RoleStatsResponse>(cacheKey);
     
-    // Return cached data if available and not expired or refresh not forced
-    if (!forceRefresh && cachedData && !this.isCacheExpired(cacheKey)) {
-      return of(cachedData);
+    // Check cache first (unless forcing refresh)
+    if (!forceRefresh) {
+      const cachedData = this.getCachedData<RoleStatsResponse>(cacheKey);
+      if (cachedData && this.isCacheValid(cacheKey)) {
+        console.log('📦 Using cached role stats');
+        return of(cachedData);
+      }
     }
+
+    console.log('🔄 Loading fresh role stats...');
     
     return this.http.get<RoleStatsResponse>(`${this.apiUrl}/roles`)
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch role statistics');
         }),
-        catchError(error => {
-          console.error('Error fetching role statistics:', error);
-          
-          if (error.status === 403) {
-            return throwError(() => new Error('Permission denied: analytics:view permission required'));
-          } else if (error.status === 401) {
-            return throwError(() => new Error('Authentication expired'));
-          }
-          
-          return throwError(() => new Error('Failed to load role statistics'));
-        })
+        catchError(error => this.handleError(error, 'role statistics'))
       );
   }
   
@@ -195,37 +297,29 @@ export class AnalyticsService {
    * @returns Observable with registration data
    */
   getUserRegistrations(timeframe: string = '30d'): Observable<RegistrationResponse> {
-    const cacheKey = `registrations-${timeframe}`;
+    const cacheKey = this.generateCacheKey('registrations', { timeframe });
     
-    // If you have a caching mechanism, use it
-    if (this.getCachedData && !this.isCacheExpired) {
-      const cachedData = this.getCachedData<RegistrationResponse>(cacheKey);
-      if (cachedData && !this.isCacheExpired(cacheKey)) {
-        return of(cachedData);
-      }
+    // Check cache first
+    const cachedData = this.getCachedData<RegistrationResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey)) {
+      console.log(`📦 Using cached registration data for ${timeframe}`);
+      return of(cachedData);
     }
+
+    console.log(`🔄 Loading fresh registration data for ${timeframe}...`);
     
     const params = new HttpParams().set('timeframe', timeframe);
     
     return this.http.get<RegistrationResponse>(`${this.apiUrl}/user-registrations`, { params })
       .pipe(
-        tap(response => {
-          // If you have a caching mechanism, use it
-          if (response.success && this.cacheData) {
-            this.cacheData(cacheKey, response);
+        map(response => {
+          if (response.success) {
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch registration statistics');
         }),
-        catchError((error: any) => {
-          console.error('Error fetching user registration data:', error);
-          
-          if (error.status === 403) {
-            return throwError(() => new Error('Permission denied: analytics:view permission required'));
-          } else if (error.status === 401) {
-            return throwError(() => new Error('Authentication expired'));
-          }
-          
-          return throwError(() => new Error('Failed to load registration statistics'));
-        })
+        catchError(error => this.handleError(error, 'registration statistics'))
       );
   }
 
@@ -237,62 +331,62 @@ export class AnalyticsService {
    * @returns Observable with doctor revenue data
    */
   getDoctorRevenue(fromDate?: string, toDate?: string, forceRefresh: boolean = false): Observable<DoctorRevenueResponse> {
-    // Create cache key that includes date range
-    const cacheKey = `doctor-revenue-${fromDate || 'all'}-${toDate || 'all'}`;
-    const cachedData = this.getCachedData<DoctorRevenueResponse>(cacheKey);
+    const cacheKey = this.generateCacheKey('doctor-revenue', { fromDate, toDate });
     
-    // Return cached data if available and not expired or refresh not forced
-    if (!forceRefresh && cachedData && !this.isCacheExpired(cacheKey)) {
-      return of(cachedData);
+    // Check cache first (unless forcing refresh)
+    if (!forceRefresh) {
+      const cachedData = this.getCachedData<DoctorRevenueResponse>(cacheKey);
+      if (cachedData && this.isCacheValid(cacheKey)) {
+        console.log(`📦 Using cached doctor revenue data`);
+        return of(cachedData);
+      }
     }
+
+    console.log('🔄 Loading fresh doctor revenue data...');
     
-    // Build query parameters with date filters
     let params = new HttpParams();
-    if (fromDate) {
-      params = params.set('from_date', fromDate);
-    }
-    if (toDate) {
-      params = params.set('to_date', toDate);
-    }
+    if (fromDate) params = params.set('from_date', fromDate);
+    if (toDate) params = params.set('to_date', toDate);
     
     return this.http.get<DoctorRevenueResponse>(`${this.apiUrl}/doctor-revenue`, { params })
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch doctor revenue data');
         }),
-        catchError(error => {
-          console.error('Error fetching doctor revenue data:', error);
-          return throwError(() => new Error('Failed to load doctor revenue data'));
-        })
+        catchError(error => this.handleError(error, 'doctor revenue'))
       );
   }
+
   /**
-   * Get service breakdown analytics - Simplified version
+   * Get service breakdown analytics
    * @returns Observable with service breakdown data
    */
   getServiceBreakdown(): Observable<ServiceBreakdownResponse> {
-    // Create a unique cache key
-    const cacheKey = 'service-breakdown-all';
-    const cachedData = this.getCachedData<ServiceBreakdownResponse>(cacheKey);
+    const cacheKey = 'service-breakdown';
     
-    // Return cached data if available and not expired
-    if (cachedData && !this.isCacheExpired(cacheKey)) {
+    // Check cache first
+    const cachedData = this.getCachedData<ServiceBreakdownResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey)) {
+      console.log('📦 Using cached service breakdown data');
       return of(cachedData);
     }
+
+    console.log('🔄 Loading fresh service breakdown data...');
     
     return this.http.get<ServiceBreakdownResponse>(`${this.apiUrl}/services`)
       .pipe(
-        tap(response => {
+        map(response => {
           if (response.success) {
-            this.cacheData(cacheKey, response);
+            this.setCachedData(cacheKey, response);
+            return response;
           }
+          throw new Error('Failed to fetch service breakdown data');
         }),
-        catchError(error => {
-          console.error('Error fetching service breakdown data:', error);
-          return throwError(() => new Error('Failed to load service breakdown data'));
-        })
+        catchError(error => this.handleError(error, 'service breakdown'))
       );
   }
 
@@ -310,35 +404,33 @@ export class AnalyticsService {
     doctorId?: number,
     doctorName?: string
   ): Observable<RevenueTimeframeResponse> {
-    const cacheKey = `doctor-revenue-${timeframe}-${period}${doctorId ? '-id-' + doctorId : ''}${doctorName ? '-name-' + doctorName : ''}`;
-    const cachedData = this.getCachedData<RevenueTimeframeResponse>(cacheKey);
+    const cacheKey = this.generateCacheKey(`doctor-revenue-${timeframe}-${period}`, { doctorId, doctorName });
     
-    // Return cached data if available and not expired
-    if (cachedData && !this.isCacheExpired(cacheKey)) {
+    // Check cache first
+    const cachedData = this.getCachedData<RevenueTimeframeResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey)) {
+      console.log(`📦 Using cached ${timeframe} revenue data for ${period}`);
       return of(cachedData);
     }
+
+    console.log(`🔄 Loading fresh ${timeframe} revenue data for ${period}...`);
     
     let params = new HttpParams();
-    if (doctorId) {
-      params = params.set('doctor_id', doctorId);
-    }
-    if (doctorName) {
-      params = params.set('doctor_name', doctorName);
-    }
+    if (doctorId) params = params.set('doctor_id', doctorId.toString());
+    if (doctorName) params = params.set('doctor_name', doctorName);
     
     return this.http.get<RevenueTimeframeResponse>(
       `${this.apiUrl}/revenue/${timeframe}/${period}`,
       { params }
     ).pipe(
-      tap(response => {
+      map(response => {
         if (response.success) {
-          this.cacheData(cacheKey, response);
+          this.setCachedData(cacheKey, response);
+          return response;
         }
+        throw new Error(`Failed to fetch ${timeframe} revenue data`);
       }),
-      catchError(error => {
-        console.error(`Error fetching doctor ${timeframe} revenue data:`, error);
-        return throwError(() => new Error(`Failed to load doctor ${timeframe} revenue data`));
-      })
+      catchError(error => this.handleError(error, `${timeframe} revenue`))
     );
   }
 
@@ -353,61 +445,28 @@ export class AnalyticsService {
       return throwError(() => new Error('Either doctorId or doctorName must be provided'));
     }
     
+    const cacheKey = this.generateCacheKey('bills-by-doctor', { doctorId, doctorName });
+    
+    // Check cache first
+    const cachedData = this.getCachedData<BillsResponse>(cacheKey);
+    if (cachedData && this.isCacheValid(cacheKey)) {
+      console.log('📦 Using cached bills by doctor data');
+      return of(cachedData);
+    }
+
+    console.log('🔄 Loading fresh bills by doctor data...');
+    
     let params = new HttpParams();
-    if (doctorId) {
-      params = params.set('doctor_id', doctorId);
-    }
-    if (doctorName) {
-      params = params.set('doctor_name', doctorName);
-    }
+    if (doctorId) params = params.set('doctor_id', doctorId.toString());
+    if (doctorName) params = params.set('doctor_name', doctorName);
     
     return this.http.get<BillsResponse>(this.billsUrl, { params })
       .pipe(
-        catchError(error => {
-          console.error('Error fetching doctor bills:', error);
-          return throwError(() => new Error('Failed to load doctor bills'));
-        })
+        map(response => {
+          this.setCachedData(cacheKey, response);
+          return response;
+        }),
+        catchError(error => this.handleError(error, 'doctor bills'))
       );
-  }
-  
-  /**
-   * Store data in localStorage with timestamp
-   */
-  private cacheData<T>(key: string, data: T): void {
-    const cacheItem = {
-      data,
-      timestamp: new Date().getTime()
-    };
-    localStorage.setItem(key, JSON.stringify(cacheItem));
-  }
-  
-  /**
-   * Retrieve cached data from localStorage
-   */
-  private getCachedData<T>(key: string): T | null {
-    const cacheItem = localStorage.getItem(key);
-    if (!cacheItem) return null;
-    
-    try {
-      return JSON.parse(cacheItem).data;
-    } catch (e) {
-      console.warn('Error parsing cached data', e);
-      return null;
-    }
-  }
-  
-  /**
-   * Check if cached data has expired
-   */
-  private isCacheExpired(key: string, maxAgeMs: number = this.cacheTime): boolean {
-    const cacheItem = localStorage.getItem(key);
-    if (!cacheItem) return true;
-    
-    try {
-      const { timestamp } = JSON.parse(cacheItem);
-      return (new Date().getTime() - timestamp) > maxAgeMs;
-    } catch (e) {
-      return true;
-    }
   }
 }
