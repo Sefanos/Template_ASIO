@@ -23,8 +23,13 @@
     </div>
   </div>
   
+  <!-- Loading state -->
+  <div *ngIf="loading" class="flex justify-center my-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+  
   <!-- Role List Table -->
-  <div class="bg-white rounded-card shadow-card p-card-padding">
+  <div *ngIf="!loading" class="bg-white rounded-card shadow-card p-card-padding">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-section-header text-text">ROLE LIST</h2>
       <div class="flex space-x-2">
@@ -63,7 +68,7 @@
             class="border-b border-border hover:bg-hover transition-colors">
             <td class="px-4 py-3">{{ role.id }}</td>
             <td class="px-4 py-3">
-              <span [class]="isProtectedRole(role) ? 
+              <span [class]="isSystemRole(role) ? 
                 'font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800' : 
                 'font-medium'">
                 {{ role.name }}
@@ -88,8 +93,9 @@
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
                 </button>
+                <!-- Only show delete button for non-system roles -->
                 <button 
-                  *ngIf="!isProtectedRole(role)"
+                  *ngIf="!isSystemRole(role)"
                   (click)="confirmDelete(role)" 
                   class="text-status-urgent hover:text-red-700 transition-colors"
                   title="Delete role"

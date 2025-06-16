@@ -130,12 +130,17 @@ export class RoleService {
 
   // Get all permissions
   getPermissions(): Observable<Permission[]> {
-    return this.http.get<any>(`${this.permissionsUrl}`).pipe(
+    // Request 200 permissions to get all in one request
+    const params = new HttpParams().set('per_page', '200');
+    
+    return this.http.get<any>(`${this.permissionsUrl}`, { params }).pipe(
       map(response => {
         if (response.success && response.data) {
           // Handle both direct data and paginated data
           const permissions = Array.isArray(response.data) ? 
             response.data : (response.data.items || []);
+          
+          console.log(`Loaded ${permissions.length} permissions from API`);
           return permissions;
         }
         return [];
@@ -184,19 +189,26 @@ export class RoleService {
   
   // Helper method to map API response to frontend Role model
   private mapRoleFromApi(apiRole: any): Role {
+    // Extract permission IDs correctly
+    let permissionIds: number[] = [];
+    
+    if (apiRole.permissions && Array.isArray(apiRole.permissions)) {
+      permissionIds = apiRole.permissions.map((p: any) => p.id);
+      console.log(`Extracted ${permissionIds.length} permission IDs from role`);
+    }
+    
     return {
       id: apiRole.id,
       name: apiRole.name,
       code: apiRole.code || '',
       description: apiRole.description || '',
-      // Handle both direct permissionIds and nested permissions array
-      permissionIds: apiRole.permissionIds || 
-        (apiRole.permissions ? apiRole.permissions.map((p: any) => p.id) : []),
+      permissionIds: permissionIds,
+      permissionsCount: permissionIds.length,
       createdAt: apiRole.created_at,
       updatedAt: apiRole.updated_at
     };
   }
-
+  
   // Check if a role is a protected system role
   isProtectedRole(roleCode: string): boolean {
     const protectedRoles = ['admin', 'patient', 'doctor', 'receptionist', 'nurse'];

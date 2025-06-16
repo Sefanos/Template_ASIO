@@ -24,7 +24,6 @@ export class RolePageComponent implements OnInit {
   currentRole: Role | null = null;
   loading = false;
   errorMessage: string | null = null;
-  isProtectedRole = false;
   
   constructor(
     private fb: FormBuilder,
@@ -109,6 +108,13 @@ export class RolePageComponent implements OnInit {
   // Load role with permissions for editing
   loadRoleWithPermissions(roleId: number): void {
     this.loading = true;
+    
+    // FIRST, clear any existing permissions controls
+    const permissionGroup = this.roleForm.get('permissions') as FormGroup;
+    Object.keys(permissionGroup.controls).forEach(key => {
+      permissionGroup.removeControl(key);
+    });
+    
     forkJoin({
       role: this.roleService.getRole(roleId),
       permissions: this.roleService.getPermissions(),
@@ -120,41 +126,32 @@ export class RolePageComponent implements OnInit {
         this.categories = Object.keys(result.permissionsByCategory);
         this.currentRole = result.role || null;
         
+        console.log(`Loaded ${this.permissions.length} permissions and ${this.categories.length} categories`);
+        
         if (this.currentRole) {
-          // Check if this is a protected role
-          this.isProtectedRole = this.roleService.isProtectedRole(this.currentRole.code);
-          
-          // Log the permissions found in the current role
-          console.log('Current role permissions:', this.currentRole.permissionIds);
-          
           // Ensure permissionIds is always an array
           if (!this.currentRole.permissionIds) {
             this.currentRole.permissionIds = [];
           }
           
-          // Initialize all permissions controls first
-          const permissionGroup = this.roleForm.get('permissions') as FormGroup;
+          console.log(`Current role has ${this.currentRole.permissionIds.length} permissions`);
+          
+          // Set form values
+          this.roleForm.patchValue({
+            name: this.currentRole.name,
+            description: this.currentRole.description || ''
+          });
+          
+          // IMPORTANT: Create form controls for ALL permissions BEFORE template renders
           this.permissions.forEach(permission => {
-            // Check if this permission is included in the role's permissions
             const isChecked = this.currentRole?.permissionIds?.includes(permission.id) || false;
-            
-            // Add a control for this permission
             permissionGroup.addControl(
               permission.id.toString(), 
               this.fb.control(isChecked)
             );
           });
           
-          // Then set the form values
-          this.roleForm.patchValue({
-            name: this.currentRole.name,
-            description: this.currentRole.description || ''
-          });
-          
-          // Disable name field for protected roles
-          if (this.isProtectedRole) {
-            this.roleForm.get('name')?.disable();
-          }
+          console.log(`Created ${Object.keys(permissionGroup.controls).length} permission form controls`);
         } else {
           this.errorMessage = 'Role not found.';
           setTimeout(() => this.router.navigate(['/admin/roles']), 2000);
@@ -194,7 +191,7 @@ export class RolePageComponent implements OnInit {
     const roleData: Role = {
       id: this.roleId || 0,
       name: formValues.name,
-      code: this.isProtectedRole ? this.currentRole?.code || roleCode : roleCode,
+      code: roleCode,
       description: formValues.description,
       permissionIds: permissionIds,
       createdAt: this.currentRole?.createdAt || new Date().toISOString(),
@@ -208,7 +205,7 @@ export class RolePageComponent implements OnInit {
         next: (updatedRole) => {
           console.log('Role created with response:', updatedRole);
           
-          // Check if all permissions were saved
+          // Check for permission mismatch
           if (updatedRole.permissionIds && 
               permissionIds.length !== updatedRole.permissionIds.length) {
             
@@ -218,12 +215,10 @@ export class RolePageComponent implements OnInit {
             
             console.log('Permissions not saved by backend:', notSaved);
             
-            // Show warning
             const savedCount = updatedRole.permissionIds.length;
             const selectedCount = permissionIds.length;
             this.errorMessage = `Note: Only ${savedCount} of ${selectedCount} selected permissions were applied.`;
             
-            // Don't navigate immediately so user can see the message
             setTimeout(() => {
               this.router.navigate(['/admin/roles'], { state: { refreshRoles: true } });
             }, 2500);
@@ -242,7 +237,7 @@ export class RolePageComponent implements OnInit {
         next: (updatedRole) => {
           console.log('Role updated with response:', updatedRole);
           
-          // Check if all permissions were saved
+          // Check for permission mismatch
           if (updatedRole.permissionIds && 
               permissionIds.length !== updatedRole.permissionIds.length) {
             
@@ -252,12 +247,10 @@ export class RolePageComponent implements OnInit {
             
             console.log('Permissions not saved by backend:', notSaved);
             
-            // Show warning
             const savedCount = updatedRole.permissionIds.length;
             const selectedCount = permissionIds.length;
             this.errorMessage = `Note: Only ${savedCount} of ${selectedCount} selected permissions were applied.`;
             
-            // Don't navigate immediately so user can see the message
             setTimeout(() => {
               this.router.navigate(['/admin/roles'], { state: { refreshRoles: true } });
             }, 2500);
@@ -277,7 +270,7 @@ export class RolePageComponent implements OnInit {
   // Handle API errors
   private handleApiError(error: any): void {
     if (error.status === 403) {
-      this.errorMessage = 'You do not have permission to perform this action, or this is a protected system role.';
+      this.errorMessage = 'You do not have permission to perform this action.';
     } else if (error.status === 422 && error.error?.errors) {
       // Validation errors
       const errorMessages = [];
@@ -321,7 +314,10 @@ export class RolePageComponent implements OnInit {
   
   getPermissionControl(id: number): AbstractControl | null {
     const permissionsGroup = this.roleForm.get('permissions') as FormGroup;
-    return permissionsGroup?.get(id.toString());
+    if (!permissionsGroup) return null;
+    
+    const controlName = id.toString();
+    return permissionsGroup.get(controlName);
   }
   
   isPermissionSelected(id: number): boolean {
@@ -349,12 +345,18 @@ export class RolePageComponent implements OnInit {
     const permissionsGroup = this.roleForm.get('permissions') as FormGroup;
     
     permissions.forEach(permission => {
-      if (!permissionsGroup.get(permission.id.toString())) {
-        permissionsGroup.addControl(permission.id.toString(), this.fb.control(true));
+      const controlName = permission.id.toString();
+      const control = permissionsGroup.get(controlName);
+      
+      if (control) {
+        control.setValue(true);
       } else {
-        permissionsGroup.get(permission.id.toString())?.setValue(true);
+        // If control doesn't exist, create it
+        permissionsGroup.addControl(controlName, this.fb.control(true));
       }
     });
+    
+    console.log(`Selected all permissions in ${category}:`, permissions.length);
   }
   
   deselectAllInCategory(category: string): void {
@@ -362,12 +364,55 @@ export class RolePageComponent implements OnInit {
     const permissionsGroup = this.roleForm.get('permissions') as FormGroup;
     
     permissions.forEach(permission => {
-      if (!permissionsGroup.get(permission.id.toString())) {
-        permissionsGroup.addControl(permission.id.toString(), this.fb.control(false));
+      const controlName = permission.id.toString();
+      const control = permissionsGroup.get(controlName);
+      
+      if (control) {
+        control.setValue(false);
       } else {
-        permissionsGroup.get(permission.id.toString())?.setValue(false);
+        // If control doesn't exist, create it
+        permissionsGroup.addControl(controlName, this.fb.control(false));
       }
     });
+    
+    console.log(`Deselected all permissions in ${category}:`, permissions.length);
+  }
+  
+  // Method to select ALL permissions
+  selectAllPermissions(): void {
+    const permissionsGroup = this.roleForm.get('permissions') as FormGroup;
+    if (!permissionsGroup) return;
+    
+    this.permissions.forEach(permission => {
+      const controlName = permission.id.toString();
+      const control = permissionsGroup.get(controlName);
+      
+      if (control) {
+        control.setValue(true);
+      } else {
+        permissionsGroup.addControl(controlName, this.fb.control(true));
+      }
+    });
+    
+    console.log(`Selected all ${this.permissions.length} permissions`);
+  }
+  
+  deselectAllPermissions(): void {
+    const permissionsGroup = this.roleForm.get('permissions') as FormGroup;
+    if (!permissionsGroup) return;
+    
+    this.permissions.forEach(permission => {
+      const controlName = permission.id.toString();
+      const control = permissionsGroup.get(controlName);
+      
+      if (control) {
+        control.setValue(false);
+      } else {
+        permissionsGroup.addControl(controlName, this.fb.control(false));
+      }
+    });
+    
+    console.log('Deselected all permissions');
   }
   
   cancel(): void {
