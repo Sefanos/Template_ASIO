@@ -17,16 +17,6 @@
     <p>{{ errorMessage }}</p>
   </div>
   
-  <!-- Protected role warning -->
-  <div *ngIf="isProtectedRole" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-6 rounded">
-    <div class="flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-      <p>This is a system protected role. You can update permissions but name and code cannot be changed.</p>
-    </div>
-  </div>
-  
   <!-- Loading indicator -->
   <div *ngIf="loading" class="fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-5 rounded-lg shadow-lg text-center">
@@ -52,7 +42,7 @@
             formControlName="name" 
             class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
             [class.border-status-urgent]="formSubmitted && roleForm.get('name')?.invalid"
-            [placeholder]="isProtectedRole ? 'System role name cannot be changed' : 'Enter role name'"
+            placeholder="Enter role name"
           >
           <div *ngIf="formSubmitted && roleForm.get('name')?.errors?.['required']" class="text-status-urgent text-sm mt-1">
             Role name is required.
@@ -102,43 +92,62 @@
           </div>
         </div>
         
-        <div *ngFor="let category of categories" class="mb-6 border rounded-lg p-4 shadow-sm">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="text-lg font-medium">{{ category }}</h3>
-            <div class="flex space-x-2">
-              <span class="text-sm text-text-muted">{{ getCategoryPermissionCount(category).selected }}/{{ getCategoryPermissionCount(category).total }}</span>
-              <button 
-                type="button" 
-                (click)="selectAllInCategory(category)"
-                class="text-xs text-primary hover:text-primary-dark"
-              >
-                Select All
-              </button>
-              <button 
-                type="button" 
-                (click)="deselectAllInCategory(category)"
-                class="text-xs text-text-muted hover:text-text"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div *ngFor="let permission of permissionsByCategory[category]" class="flex items-start bg-white p-2 border border-gray-100 rounded">
-              <input 
-                type="checkbox" 
-                [id]="'permission_' + permission.id" 
-                [formControlName]="permission.id"
-                class="mt-1 mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              >
-              <div>
-                <label [for]="'permission_' + permission.id" class="block font-medium text-text">
-                  {{ permission.name }}
-                </label>
-                <p class="text-xs text-text-muted">{{ permission.description }}</p>
+        <!-- Add these buttons above your permission categories -->
+        <div class="mb-3" *ngIf="!loading && permissions.length > 0">
+          <button type="button" class="btn btn-sm btn-success me-2" (click)="selectAllPermissions()">
+            Select All Permissions
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" (click)="deselectAllPermissions()">
+            Deselect All Permissions
+          </button>
+        </div>
+        
+        <div *ngIf="!loading && permissions.length > 0" class="permissions-section">
+          <div *ngFor="let category of categories" class="permission-category mb-6 border rounded-lg p-4 shadow-sm">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">{{ category }}</h3>
+              <div class="flex space-x-2">
+                <span class="text-sm text-text-muted">{{ getCategoryPermissionCount(category).selected }}/{{ getCategoryPermissionCount(category).total }}</span>
+                <button 
+                  type="button" 
+                  (click)="selectAllInCategory(category)"
+                  class="text-xs text-primary hover:text-primary-dark"
+                >
+                  Select All
+                </button>
+                <button 
+                  type="button" 
+                  (click)="deselectAllInCategory(category)"
+                  class="text-xs text-text-muted hover:text-text"
+                >
+                  Clear
+                </button>
               </div>
             </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div *ngFor="let permission of permissionsByCategory[category]" class="flex items-start bg-white p-2 border border-gray-100 rounded">
+                <input 
+                  type="checkbox" 
+                  [id]="'permission_' + permission.id" 
+                  [formControlName]="permission.id"
+                  class="mt-1 mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                >
+                <div>
+                  <label [for]="'permission_' + permission.id" class="block font-medium text-text">
+                    {{ permission.name }}
+                  </label>
+                  <p class="text-xs text-text-muted">{{ permission.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add this loading check to your template -->
+        <div *ngIf="loading" class="text-center">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
         </div>
       </div>
