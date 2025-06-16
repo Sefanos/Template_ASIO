@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NavigationEnd, Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, filter, Subject, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { Role } from '../../../models/role.model';
 import { PaginatedRolesResponse, RoleService } from '../../../services/admin-service/role.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -13,7 +13,7 @@ import { ToastService } from '../../../shared/services/toast.service';
   imports: [CommonModule, FormsModule],
   templateUrl: './roles.component.html'
 })
-export class RolesComponent implements OnInit, OnDestroy {
+export class RolesComponent implements OnInit {
   searchQuery: string = '';
   roles: Role[] = [];
   showDeleteConfirmation = false;
@@ -25,7 +25,7 @@ export class RolesComponent implements OnInit, OnDestroy {
   
   // Pagination variables
   currentPage = 1;
-  pageSize = 15;
+  pageSize = 15; // Matching backend default
   totalItems = 0;
   totalPages = 0;
   maxPagesToShow = 5;
@@ -35,7 +35,6 @@ export class RolesComponent implements OnInit, OnDestroy {
   sortDirection: 'asc' | 'desc' = 'asc';
   
   private searchSubject = new Subject<string>();
-  private subscriptions: Subscription[] = [];
   
   constructor(
     private roleService: RoleService,
@@ -45,46 +44,24 @@ export class RolesComponent implements OnInit, OnDestroy {
   
   ngOnInit(): void {
     this.loadRoles();
-    this.setupSubscriptions();
-  }
-  
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
-  
-  private setupSubscriptions(): void {
-    // Subscribe to role changes from service
-    const roleChangedSub = this.roleService.roleChanged.subscribe(() => {
-      console.log('Role changed event received, refreshing data');
-      this.loadRoles();
-    });
-    this.subscriptions.push(roleChangedSub);
     
     // Setup search debouncing
-    const searchSub = this.searchSubject.pipe(
+    this.searchSubject.pipe(
       debounceTime(400),
       distinctUntilChanged()
     ).subscribe(() => {
-      this.currentPage = 1;
+      this.currentPage = 1; // Reset to first page on new search
       this.loadRoles();
     });
-    this.subscriptions.push(searchSub);
     
-    // Listen for navigation events
-    const routerSub = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      if (event.url.includes('/admin/roles')) {
-        console.log('Detected navigation to roles page, refreshing data');
-        this.loadRoles();
-      }
-    });
-    this.subscriptions.push(routerSub);
+    // Check if we just came back from editing a role
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation?.extras?.state && navigation.extras.state['refreshRoles']) {
+      console.log('Detected return from role editing, refreshing list');
+      this.loadRoles();
+    }
   }
   
-  /**
-   * Load roles data (always fresh)
-   */
   loadRoles(): void {
     this.loading = true;
     console.log('Loading roles with params:', {
@@ -103,44 +80,27 @@ export class RolesComponent implements OnInit, OnDestroy {
       this.sortDirection
     ).subscribe({
       next: (response: PaginatedRolesResponse) => {
-        this.handleRolesResponse(response);
+        console.log('API response:', response);
+        this.roles = response.items;
+        this.totalItems = response.pagination.total;
+        this.totalPages = response.pagination.total_pages;
+        this.currentPage = response.pagination.current_page;
+        this.pageSize = response.pagination.per_page;
+        this.loading = false;
+        
+        if (this.roles.length === 0) {
+          console.warn('No roles returned from API');
+        } else {
+          console.log(`Loaded ${this.roles.length} roles`);
+        }
       },
-      error: (error) => this.handleRolesError(error)
+      error: (error) => {
+        console.error('Error loading roles:', error);
+        this.roles = [];
+        this.loading = false;
+        this.toastService.error('Failed to load roles. Please try again.');
+      }
     });
-  }
-  
-  /**
-   * Force refresh roles data
-   */
-  refreshRoles(showToast: boolean = true): void {
-    console.log('Manual refresh triggered');
-    this.roleService.clearAllRoleCaches();
-    this.loadRoles();
-    
-    if (showToast) {
-      this.toastService.success('Roles data refreshed');
-    }
-  }
-  
-  // Helper method to handle roles response
-  private handleRolesResponse(response: PaginatedRolesResponse): void {
-    console.log('API response:', response);
-    this.roles = response.items;
-    this.totalItems = response.pagination.total;
-    this.totalPages = response.pagination.total_pages;
-    this.currentPage = response.pagination.current_page;
-    this.pageSize = response.pagination.per_page;
-    this.loading = false;
-    
-    console.log(`Loaded ${this.roles.length} roles`);
-  }
-  
-  // Helper method to handle roles error
-  private handleRolesError(error: any): void {
-    console.error('Error loading roles:', error);
-    this.roles = [];
-    this.loading = false;
-    this.toastService.error('Failed to load roles. Please try again.');
   }
   
   onSearchInput(): void {
@@ -153,28 +113,36 @@ export class RolesComponent implements OnInit, OnDestroy {
       return [];
     }
     
+    // Create a copy to avoid mutating the original array
     const sortedRoles = [...this.roles];
     
+    // Sort the roles to put system roles first
     return sortedRoles.sort((a, b) => {
       const aIsSystem = this.isSystemRole(a);
       const bIsSystem = this.isSystemRole(b);
       
+      // If both are system roles or both are not, sort by name
       if (aIsSystem === bIsSystem) {
+        // For system roles, sort according to predefined order
         if (aIsSystem) {
           const aIndex = this.getSystemRoleIndex(a);
           const bIndex = this.getSystemRoleIndex(b);
           return aIndex - bIndex;
         }
+        // For regular roles, just sort by name
         return a.name.localeCompare(b.name);
       }
       
+      // Put system roles first
       return aIsSystem ? -1 : 1;
     });
   }
   
-  // Check if a role is a system role
+  // Check if a role is a system role (admin, nurse, etc.)
   isSystemRole(role: Role): boolean {
     if (!role || !role.name) return false;
+    
+    // Case-insensitive check of role name
     const lowercaseName = role.name.toLowerCase();
     return this.systemRoles.some(sr => lowercaseName === sr || lowercaseName.includes(sr));
   }
@@ -189,7 +157,7 @@ export class RolesComponent implements OnInit, OnDestroy {
         return i;
       }
     }
-    return 999;
+    return 999; // Not found, put at the end
   }
   
   get pagesToShow(): (number | string)[] {
@@ -241,13 +209,14 @@ export class RolesComponent implements OnInit, OnDestroy {
   
   sortRoles(field: string): void {
     if (this.sortBy === field) {
+      // Toggle direction if already sorting by this field
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
       this.sortBy = field;
-      this.sortDirection = 'asc';
+      this.sortDirection = 'asc'; // Default to ascending when changing field
     }
     
-    this.currentPage = 1;
+    this.currentPage = 1; // Reset to first page when sorting
     this.loadRoles();
   }
   
@@ -287,6 +256,7 @@ export class RolesComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error deleting role:', error);
           
+          // Handle 403 error
           if (error.status === 403) {
             this.toastService.error('This role cannot be deleted. It may be in use by users.');
           } else {
@@ -301,24 +271,22 @@ export class RolesComponent implements OnInit, OnDestroy {
   }
   
   getPermissionCount(role: Role): number {
-    // Always use the fresh permissionIds length
-    if (role.permissionIds && Array.isArray(role.permissionIds)) {
-      return role.permissionIds.length;
-    }
-    
-    // Fallback checks
+    // First check for explicit permissions count property
     if ((role as any).permissionsCount !== undefined) {
       return (role as any).permissionsCount;
     }
     
+    // Then check API's permissions_count
     if ((role as any).permissions_count !== undefined) {
       return (role as any).permissions_count;
     }
     
-    return 0;
+    // Fallback to length of permissionIds array if available
+    return role.permissionIds?.length || 0;
   }
   
   exportRoleData(): void {
+    // Export role list functionality
     console.log('Exporting role data');
     // TODO: Implement export functionality
   }

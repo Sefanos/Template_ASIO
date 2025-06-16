@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { EventEmitter, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -20,73 +20,15 @@ export interface PaginatedRolesResponse {
   providedIn: 'root'
 })
 export class RoleService {
-  private apiUrl = `${environment.apiUrl}/roles`;
+  private apiUrl = `${environment.apiUrl}/roles`; // Using environment API URL
   private permissionsUrl = `${environment.apiUrl}/permissions`;
-  
-  // Add cache system but exclude permissions
-  private cache = new Map<string, { data: any; timestamp: number }>();
-  private cacheTimeout = 5 * 60 * 1000; // 5 minutes in milliseconds
   
   constructor(private http: HttpClient) { }
 
   // Add a property to store the last updated role
   private lastUpdatedRole: Role | null = null;
 
-  // Add an event emitter to broadcast role changes
-  public roleChanged = new EventEmitter<number | null>();
-
-  /**
-   * Cache utility methods
-   */
-  private isCacheValid(key: string): boolean {
-    const cached = this.cache.get(key);
-    if (!cached) return false;
-    
-    const isValid = (Date.now() - cached.timestamp) < this.cacheTimeout;
-    if (!isValid) {
-      this.cache.delete(key); // Clean up expired cache
-    }
-    return isValid;
-  }
-
-  private getCachedData<T>(key: string): T | null {
-    if (this.isCacheValid(key)) {
-      console.log(`🔄 Using cached data for: ${key}`);
-      const cached = this.cache.get(key);
-      return cached?.data || null;
-    }
-    return null;
-  }
-
-  private setCachedData<T>(key: string, data: T): void {
-    console.log(`💾 Caching data for: ${key}`);
-    this.cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  /**
-   * Public method to clear cache
-   */
-  public clearCache(key?: string): void {
-    if (key) {
-      this.cache.delete(key);
-      console.log(`🗑️ Cleared cache for: ${key}`);
-    } else {
-      this.cache.clear();
-      console.log('🗑️ Cleared all role service cache');
-    }
-  }
-
-  /**
-   * Clear all role-related caches
-   */
-  public clearAllRoleCaches(): void {
-    this.clearCache();
-    console.log('🗑️ Cleared all role-related caches');
-  }
-
-  /**
-   * Get all roles with pagination (ALWAYS fresh data for roles list)
-   */
+  // Get all roles with pagination
   getRoles(
     page: number = 1, 
     perPage: number = 15,
@@ -94,14 +36,11 @@ export class RoleService {
     sortBy: string = 'name',
     sortDirection: 'asc' | 'desc' = 'asc'
   ): Observable<PaginatedRolesResponse> {
-    console.log('🔄 Loading fresh roles data...');
-    
     let params = new HttpParams()
       .set('page', page.toString())
       .set('per_page', perPage.toString())
       .set('sort_by', sortBy)
-      .set('sort_direction', sortDirection)
-      .set('_t', Date.now().toString()); // Cache busting
+      .set('sort_direction', sortDirection);
       
     if (search) {
       params = params.append('search', search);
@@ -110,12 +49,10 @@ export class RoleService {
     return this.http.get<any>(`${this.apiUrl}`, { params }).pipe(
       map(response => {
         if (response.success && response.data) {
-          const rolesData = {
+          return {
             items: response.data.items.map((role: any) => this.mapRoleFromApi(role)),
             pagination: response.data.pagination
           };
-          
-          return rolesData;
         }
         return {
           items: [],
@@ -131,31 +68,24 @@ export class RoleService {
     );
   }
 
-  /**
-   * Get a role by ID (ALWAYS fresh data)
-   */
+  // Get a role by ID
   getRole(id: number): Observable<Role | undefined> {
-    console.log(`🔄 Loading fresh data for role ID ${id}...`);
-    
     // Add cache-busting query parameter
-    const timestamp = Date.now();
-    const url = `${this.apiUrl}/${id}?_t=${timestamp}`;
+    const timestamp = new Date().getTime();
+    const url = `${this.apiUrl}/${id}?_=${timestamp}`;
     
     return this.http.get<any>(url).pipe(
       map(response => {
         console.log('API response for getRole:', response);
         if (response.success && response.data) {
-          const roleData = this.mapRoleFromApi(response.data);
-          return roleData;
+          return this.mapRoleFromApi(response.data);
         }
         return undefined;
       })
     );
   }
 
-  /**
-   * Add a new role
-   */
+  // Add a new role
   addRole(role: Role): Observable<Role> {
     const roleData = this.mapRoleForApi(role);
     
@@ -165,23 +95,14 @@ export class RoleService {
       map(response => {
         console.log('API response for role creation:', response);
         if (response.success && response.data) {
-          const newRole = this.mapRoleFromApi(response.data);
-          this.lastUpdatedRole = newRole;
-          
-          // Clear caches and emit event
-          this.clearAllRoleCaches();
-          this.roleChanged.emit(newRole.id);
-          
-          return newRole;
+          return this.mapRoleFromApi(response.data);
         }
         throw new Error(response.message || 'Failed to create role');
       })
     );
   }
 
-  /**
-   * Update an existing role
-   */
+  // Update an existing role
   updateRole(role: Role): Observable<Role> {
     const roleData = this.mapRoleForApi(role);
     
@@ -191,48 +112,31 @@ export class RoleService {
       map(response => {
         console.log('API response for role update:', response);
         if (response.success && response.data) {
-          const updatedRole = this.mapRoleFromApi(response.data);
-          this.lastUpdatedRole = updatedRole;
-          
-          // Clear caches and emit event
-          this.clearAllRoleCaches();
-          this.roleChanged.emit(updatedRole.id);
-          
-          return updatedRole;
+          return this.mapRoleFromApi(response.data);
         }
         throw new Error(response.message || 'Failed to update role');
       })
     );
   }
 
-  /**
-   * Delete a role
-   */
+  // Delete a role
   deleteRole(id: number): Observable<boolean> {
     return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(
       map(response => {
-        if (response.success) {
-          this.clearAllRoleCaches();
-          this.roleChanged.emit(null);
-        }
         return response.success || false;
       })
     );
   }
 
-  /**
-   * Get all permissions (ALWAYS fresh data)
-   */
+  // Get all permissions
   getPermissions(): Observable<Permission[]> {
-    console.log('🔄 Loading fresh permissions data...');
-    
-    const params = new HttpParams()
-      .set('per_page', '200')
-      .set('_t', Date.now().toString()); // Cache busting
+    // Request 200 permissions to get all in one request
+    const params = new HttpParams().set('per_page', '200');
     
     return this.http.get<any>(`${this.permissionsUrl}`, { params }).pipe(
       map(response => {
         if (response.success && response.data) {
+          // Handle both direct data and paginated data
           const permissions = Array.isArray(response.data) ? 
             response.data : (response.data.items || []);
           
@@ -244,15 +148,9 @@ export class RoleService {
     );
   }
 
-  /**
-   * Get permissions grouped by category (ALWAYS fresh data)
-   */
+  // Get permissions grouped by category - now using the groups endpoint
   getPermissionsByCategory(): Observable<{[group: string]: Permission[]}> {
-    console.log('🔄 Loading fresh permission categories data...');
-    
-    const params = new HttpParams().set('_t', Date.now().toString());
-    
-    return this.http.get<any>(`${this.permissionsUrl}/groups`, { params }).pipe(
+    return this.http.get<any>(`${this.permissionsUrl}/groups`).pipe(
       map(response => {
         if (response.success && response.data) {
           return response.data;
@@ -262,13 +160,10 @@ export class RoleService {
     );
   }
 
-  /**
-   * Check if role name already exists
-   */
+  // Check if role name already exists
   checkRoleNameExists(name: string, excludeId?: number): Observable<boolean> {
     let params = new HttpParams()
-      .set('name', name)
-      .set('_t', Date.now().toString());
+      .set('name', name);
       
     if (excludeId) {
       params = params.append('excludeId', excludeId.toString());
@@ -281,25 +176,20 @@ export class RoleService {
     );
   }
   
-  /**
-   * Refresh permissions data
-   */
-  refreshPermissions(): Observable<Permission[]> {
-    return this.getPermissions();
-  }
-  
   // Helper method to map frontend Role model to API format
   private mapRoleForApi(role: Role): any {
+    // Make sure we're sending the data in the format the API expects
     return {
       name: role.name,
       code: role.code,
       description: role.description,
-      permissions: role.permissionIds
+      permissions: role.permissionIds  // Make sure the key is 'permissions'
     };
   }
   
   // Helper method to map API response to frontend Role model
   private mapRoleFromApi(apiRole: any): Role {
+    // Extract permission IDs correctly
     let permissionIds: number[] = [];
     
     if (apiRole.permissions && Array.isArray(apiRole.permissions)) {
