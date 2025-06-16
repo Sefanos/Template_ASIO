@@ -1,49 +1,81 @@
 <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-5 border border-border shadow-sm hover:shadow-card-hover transition-shadow duration-300">
-  <h3 class="text-card-title text-primary uppercase text-sm sm:text-base mb-2 sm:mb-3 lg:mb-4">NEW PATIENTS</h3>
-  <div class="flex justify-between items-start mb-3 sm:mb-4 lg:mb-6">
-    <div>
-      <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-text">58</p>
-      <p class="text-xs sm:text-sm text-text-light">This month</p>
-    </div>
-    <div class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs font-medium bg-status-success/10 text-status-success rounded-full flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1">
-        <path d="m5 12 7-7 7 7"></path>
-        <path d="M12 19V5"></path>
-      </svg>
-      15% increase
+  <!-- Header with View Toggle -->
+  <div class="flex justify-between items-center mb-2 sm:mb-3 lg:mb-4">
+    <h3 class="text-card-title text-primary uppercase text-sm sm:text-base">NEW PATIENTS</h3>
+    
+    <!-- View Mode Toggle -->
+    <div class="flex bg-gray-100 rounded-lg p-1">
+      <button 
+        (click)="setViewMode('personal')"
+        [class]="currentView === 'personal' ? 'bg-white shadow-sm text-primary' : 'text-gray-600'"
+        class="px-2 py-1 text-xs rounded-md transition-all duration-200 font-medium">
+        My Patients
+      </button>
+      <button 
+        (click)="setViewMode('platform')"
+        [class]="currentView === 'platform' ? 'bg-white shadow-sm text-primary' : 'text-gray-600'"
+        class="px-2 py-1 text-xs rounded-md transition-all duration-200 font-medium">
+        Platform
+      </button>
     </div>
   </div>
-  
-  <div class="h-20 sm:h-22 lg:h-24">
-    <div class="flex items-end justify-between h-full">
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-primary rounded-t-sm" style="height: 30px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">Nov</div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+    <span class="ml-2 text-sm text-gray-600">Loading data...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="text-center py-4">
+    <div class="text-red-500 text-sm">{{ error }}</div>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && !error">
+    <!-- Stats Display -->
+    <div class="flex justify-between items-start mb-3 sm:mb-4 lg:mb-6">
+      <div>
+        <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-text">{{ newPatientsCount }}</p>
+        <p class="text-xs sm:text-sm text-text-light">
+          {{ currentView === 'platform' ? 'Platform total' : 'My patients' }} this month
+        </p>
+        <p class="text-xs text-text-muted mt-1">
+          Total: {{ currentPatientCount }}
+        </p>
       </div>
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-primary rounded-t-sm" style="height: 40px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">Dec</div>
+      <div class="px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs font-medium bg-status-success/10 text-status-success rounded-full flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1">
+          <path d="m5 12 7-7 7 7"></path>
+          <path d="M12 19V5"></path>
+        </svg>
+        {{ growthPercentage }}% increase
       </div>
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-primary rounded-t-sm" style="height: 25px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">Jan</div>
+    </div>
+      <!-- Chart Display -->
+    <div class="h-20 sm:h-22 lg:h-24">
+      <div class="flex items-end justify-between h-full">
+        <div *ngFor="let data of chartData" class="flex flex-col items-center">
+          <div 
+            class="w-4 sm:w-5 lg:w-6 rounded-t-sm transition-all duration-300"
+            [class]="data.isCurrent ? 'bg-primary-dark' : 'bg-primary'"
+            [style.height.px]="getBarHeight(data.count)">
+          </div>
+          <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">{{ data.month }}</div>
+          <div class="text-xs text-text-light">{{ data.count }}</div>
+        </div>
       </div>
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-primary rounded-t-sm" style="height: 50px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">Feb</div>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-primary rounded-t-sm" style="height: 45px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">Mar</div>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-primary rounded-t-sm" style="height: 55px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted">Apr</div>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="w-4 sm:w-5 lg:w-6 bg-status-success rounded-t-sm" style="height: 60px"></div>
-        <div class="text-xs mt-0.5 sm:mt-1 text-text-muted font-bold">May</div>
-      </div>
+    </div>
+
+    <!-- View Mode Info -->
+    <div class="mt-3 pt-2 border-t border-border">
+      <p class="text-xs text-text-muted text-center">
+        <span *ngIf="currentView === 'platform'" class="text-blue-600">
+          🌐 Showing platform-wide statistics across all doctors        </span>
+        <span *ngIf="currentView === 'personal'" class="text-green-600">
+          👨‍⚕️ Showing your personal patient statistics
+        </span>
+      </p>
     </div>
   </div>
 </div>

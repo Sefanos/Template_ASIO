@@ -1,36 +1,47 @@
 <!-- Dashboard Header -->
 <div class="max-w-full px-2 sm:px-4 lg:px-6">
-  <app-dashboard-header [title]="'DOCTOR DASHBOARD'" [date]="currentDate"></app-dashboard-header>
+  <app-dashboard-header 
+    [title]="'DOCTOR DASHBOARD'" 
+    [date]="currentDate"
+    (refresh)="onRefreshDashboard()">
+  </app-dashboard-header>
+
+  <!-- Cache Status Indicator (Optional - can be removed) -->
+  <div class="mb-2 text-xs text-gray-500 flex items-center gap-1">
+    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+    </svg>
+    Data cached for faster loading • Refreshes automatically every 5 minutes
+  </div>
 
   <!-- Top Statistics Cards -->
   <section class="mb-4 sm:mb-6 lg:mb-8">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
       <app-stat-card 
         title="TODAY'S APPOINTMENTS" 
-        badge="8 Total" 
+        [badge]="appointmentBadge" 
         badgeType="primary" 
         [items]="appointmentStats" 
-        linkText="View All" 
-        linkUrl="/appointments">
+        linkText="" 
+        linkUrl="#">
       </app-stat-card>
       
       <app-stat-card 
         title="PATIENT QUEUE" 
-        badge="1 Emergency" 
-        badgeType="urgent" 
+        [badge]="queueBadge" 
+        [badgeType]="queueBadgeType" 
         [items]="queueStats" 
-        linkText="Manage" 
-        linkUrl="/queue">
+        linkText="" 
+        linkUrl="#">
       </app-stat-card>
       
       <app-stat-card 
         title="PENDING TASKS" 
-        badge="7 Tasks" 
-        badgeType="warning" 
+        [badge]="taskBadge" 
+        [badgeType]="taskBadgeType" 
         [items]="taskStats" 
-        linkText="Review All" 
-        linkUrl="/tasks"
-        class="sm:col-span-2 lg:col-span-1">
+        linkText="" 
+        linkUrl="#">
       </app-stat-card>
     </div>
   </section>
@@ -50,10 +61,8 @@
       <app-upcoming-appointments></app-upcoming-appointments>
       <app-notifications></app-notifications>
     </div>
-  </section>
-
-  <!-- Weekly Overview Section -->
-  <app-weekly-overview class="mb-4 sm:mb-6 lg:mb-8 block"></app-weekly-overview>
+  </section>  <!-- Simple Weekly Overview (CSS-based chart) -->
+  <app-simple-weekly-overview class="mb-4 sm:mb-6 lg:mb-8 block"></app-simple-weekly-overview>
 
   <!-- AI Diagnostic Assistant Section -->
   <app-ai-assistant></app-ai-assistant>
