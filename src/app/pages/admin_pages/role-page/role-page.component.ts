@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Permission, Role } from '../../../models/role.model';
 import { RoleService } from '../../../services/admin-service/role.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-role-page',
@@ -24,12 +25,14 @@ export class RolePageComponent implements OnInit {
   currentRole: Role | null = null;
   loading = false;
   errorMessage: string | null = null;
+  usingCachedData = false;
   
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private toastService: ToastService
   ) {
     this.roleForm = this.createForm();
   }
@@ -75,6 +78,56 @@ export class RolePageComponent implements OnInit {
     });
   }
   
+  /**
+   * Refresh permissions data
+   */
+  refreshPermissions(): void {
+    this.loading = true;
+    
+    forkJoin({
+      permissions: this.roleService.refreshPermissions(),
+      permissionsByCategory: this.roleService.getPermissionsByCategory()
+    }).subscribe({
+      next: (result) => {
+        this.permissions = result.permissions;
+        this.permissionsByCategory = result.permissionsByCategory;
+        this.categories = Object.keys(result.permissionsByCategory);
+        
+        // Re-initialize permission controls
+        this.initializePermissionControls();
+        
+        this.loading = false;
+        this.toastService.success('Permissions refreshed');
+      },
+      error: (error) => {
+        console.error('Error refreshing permissions:', error);
+        this.errorMessage = 'Failed to refresh permissions. Please try again.';
+        this.loading = false;
+      }
+    });
+  }
+  
+  // Initialize permission controls with current selection state
+  private initializePermissionControls(): void {
+    const permissionGroup = this.roleForm.get('permissions') as FormGroup;
+    
+    // Clear existing controls
+    Object.keys(permissionGroup.controls).forEach(key => {
+      permissionGroup.removeControl(key);
+    });
+    
+    // Add controls for all permissions
+    this.permissions.forEach(permission => {
+      const isChecked = this.currentRole?.permissionIds?.includes(permission.id) || false;
+      permissionGroup.addControl(
+        permission.id.toString(), 
+        this.fb.control(isChecked)
+      );
+    });
+    
+    console.log(`Created ${Object.keys(permissionGroup.controls).length} permission form controls`);
+  }
+  
   // Load permissions only for new role
   loadPermissionsOnly(): void {
     this.loading = true;
@@ -96,6 +149,9 @@ export class RolePageComponent implements OnInit {
           );
         });
         this.loading = false;
+        
+        // We know we're always using fresh permission data now
+        this.usingCachedData = false;
       },
       error: (error) => {
         console.error('Error loading permissions:', error);
@@ -157,6 +213,9 @@ export class RolePageComponent implements OnInit {
           setTimeout(() => this.router.navigate(['/admin/roles']), 2000);
         }
         this.loading = false;
+        
+        // We know we're always using fresh permission data now
+        this.usingCachedData = false;
       },
       error: (error) => {
         console.error('Error loading role data:', error);
@@ -175,17 +234,15 @@ export class RolePageComponent implements OnInit {
       return;
     }
     
-    const formValues = this.roleForm.getRawValue(); // Use getRawValue to include disabled fields
+    const formValues = this.roleForm.getRawValue();
     const permissionsObj = formValues.permissions || {};
     
-    // Convert permissions object to array of IDs
     const permissionIds = Object.keys(permissionsObj)
       .filter(key => permissionsObj[key])
       .map(key => parseInt(key, 10));
     
     console.log('Selected permissions:', permissionIds);
     
-    // Generate a code from the name (lowercase, no spaces)
     const roleCode = formValues.name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w-]/g, '');
     
     const roleData: Role = {
@@ -205,25 +262,19 @@ export class RolePageComponent implements OnInit {
         next: (updatedRole) => {
           console.log('Role created with response:', updatedRole);
           
-          // Check for permission mismatch
           if (updatedRole.permissionIds && 
               permissionIds.length !== updatedRole.permissionIds.length) {
-            
-            const notSaved = permissionIds.filter(id => 
-              !updatedRole.permissionIds?.includes(id)
-            );
-            
-            console.log('Permissions not saved by backend:', notSaved);
             
             const savedCount = updatedRole.permissionIds.length;
             const selectedCount = permissionIds.length;
             this.errorMessage = `Note: Only ${savedCount} of ${selectedCount} selected permissions were applied.`;
             
             setTimeout(() => {
-              this.router.navigate(['/admin/roles'], { state: { refreshRoles: true } });
+              this.router.navigate(['/admin/roles']);
             }, 2500);
           } else {
-            this.router.navigate(['/admin/roles'], { state: { refreshRoles: true } });
+            this.toastService.success(`Role "${updatedRole.name}" created successfully`);
+            this.router.navigate(['/admin/roles']);
           }
         },
         error: (error) => {
@@ -237,25 +288,19 @@ export class RolePageComponent implements OnInit {
         next: (updatedRole) => {
           console.log('Role updated with response:', updatedRole);
           
-          // Check for permission mismatch
           if (updatedRole.permissionIds && 
               permissionIds.length !== updatedRole.permissionIds.length) {
-            
-            const notSaved = permissionIds.filter(id => 
-              !updatedRole.permissionIds?.includes(id)
-            );
-            
-            console.log('Permissions not saved by backend:', notSaved);
             
             const savedCount = updatedRole.permissionIds.length;
             const selectedCount = permissionIds.length;
             this.errorMessage = `Note: Only ${savedCount} of ${selectedCount} selected permissions were applied.`;
             
             setTimeout(() => {
-              this.router.navigate(['/admin/roles'], { state: { refreshRoles: true } });
+              this.router.navigate(['/admin/roles']);
             }, 2500);
           } else {
-            this.router.navigate(['/admin/roles'], { state: { refreshRoles: true } });
+            this.toastService.success(`Role "${updatedRole.name}" updated successfully`);
+            this.router.navigate(['/admin/roles']);
           }
         },
         error: (error) => {
