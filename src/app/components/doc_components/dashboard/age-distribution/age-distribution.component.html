@@ -1,50 +1,123 @@
 <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-5 border border-border shadow-sm hover:shadow-card-hover transition-shadow duration-300">
-  <h3 class="text-card-title text-primary uppercase text-sm sm:text-base mb-2 sm:mb-3 lg:mb-4">AGE DISTRIBUTION</h3>
-  <div class="space-y-2 sm:space-y-3">
-    <div>
-      <div class="flex justify-between text-xs sm:text-sm mb-0.5 sm:mb-1">
-        <span class="text-text-light">0-18 years</span>
-        <span class="font-medium">18%</span>
-      </div>
-      <div class="h-1.5 sm:h-2 bg-hover rounded-full">
-        <div class="h-1.5 sm:h-2 bg-status-info rounded-full" style="width: 18%"></div>
-      </div>
-    </div>
-    <div>
-      <div class="flex justify-between text-xs sm:text-sm mb-0.5 sm:mb-1">
-        <span class="text-text-light">19-35 years</span>
-        <span class="font-medium">25%</span>
-      </div>
-      <div class="h-1.5 sm:h-2 bg-hover rounded-full">
-        <div class="h-1.5 sm:h-2 bg-status-success rounded-full" style="width: 25%"></div>
+  <!-- Header -->
+  <div class="flex justify-between items-start mb-2 sm:mb-3 lg:mb-4">
+    <h3 class="text-card-title text-primary uppercase text-sm sm:text-base">AGE DISTRIBUTION</h3>
+    
+    <!-- Dynamic Stats -->
+    <div *ngIf="!isLoading && ageData" class="text-right">
+      <div class="text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 bg-primary/10 text-primary rounded-full">
+        Avg: {{ ageData.average_age }} years
       </div>
     </div>
-    <div>
-      <div class="flex justify-between text-xs sm:text-sm mb-0.5 sm:mb-1">
-        <span class="text-text-light">36-50 years</span>
-        <span class="font-medium">32%</span>
-      </div>
-      <div class="h-1.5 sm:h-2 bg-hover rounded-full">
-        <div class="h-1.5 sm:h-2 bg-primary rounded-full" style="width: 32%"></div>
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 bg-gray-100 text-gray-500 rounded-full animate-pulse">
+      Loading...
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <span class="ml-2 text-sm text-gray-600">Loading age data...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="text-center py-4">
+    <div class="text-red-500 text-sm mb-2">{{ error }}</div>
+    <button (click)="refreshData()" class="text-blue-600 text-sm hover:text-blue-800 font-medium">
+      Try Again
+    </button>
+  </div>
+
+  <!-- Chart Content -->
+  <div *ngIf="!isLoading && !error && ageData">
+    <!-- CSS Bar Chart -->
+    <div class="mb-4">
+      <div class="h-48 relative">
+        <!-- Y-axis labels -->
+        <div class="absolute left-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
+          <span>{{ getMaxValue() }}</span>
+          <span>{{ getYAxisLabel(0.75) }}</span>
+          <span>{{ getYAxisLabel(0.5) }}</span>
+          <span>{{ getYAxisLabel(0.25) }}</span>
+          <span>0</span>
+        </div>
+        
+        <!-- Chart area -->
+        <div class="ml-8 h-full relative">
+          <!-- Grid lines -->
+          <div class="absolute inset-0 flex flex-col justify-between">
+            <div class="border-t border-gray-100"></div>
+            <div class="border-t border-gray-100"></div>
+            <div class="border-t border-gray-100"></div>
+            <div class="border-t border-gray-100"></div>
+            <div class="border-t border-gray-200"></div>
+          </div>
+          
+          <!-- Bars -->
+          <div class="h-full flex items-end justify-around gap-2 pt-2">
+            <div *ngFor="let group of getAgeGroups(); trackBy: trackByLabel" 
+                 class="flex-1 flex flex-col items-center group relative">
+              <!-- Bar -->
+              <div class="w-full max-w-12 relative">
+                <div class="w-full rounded-t-md transition-all duration-700 hover:opacity-80 cursor-pointer relative overflow-hidden"
+                     [style.height.px]="getMaxValue() > 0 ? (group.value / getMaxValue()) * 160 : 0"
+                     [style.background-color]="group.color">
+                  <!-- Animated fill effect -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-transparent to-white opacity-10"></div>
+                </div>
+                
+                <!-- Tooltip on hover -->
+                <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                  {{ group.value }} patients ({{ group.percentage }}%)
+                </div>
+              </div>
+              
+              <!-- X-axis label -->
+              <div class="mt-2 text-xs text-gray-600 text-center">
+                {{ group.label }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div>
-      <div class="flex justify-between text-xs sm:text-sm mb-0.5 sm:mb-1">
-        <span class="text-text-light">51-65 years</span>
-        <span class="font-medium">15%</span>
+    
+    <!-- Age Statistics -->
+    <div class="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+      <div class="text-center">
+        <div class="text-lg font-bold text-primary">{{ ageData.total_patients }}</div>
+        <div class="text-xs text-gray-500">Total Patients</div>
       </div>
-      <div class="h-1.5 sm:h-2 bg-hover rounded-full">
-        <div class="h-1.5 sm:h-2 bg-status-warning rounded-full" style="width: 15%"></div>
+      <div class="text-center">
+        <div class="text-lg font-bold text-green-600">{{ ageData.average_age }}</div>
+        <div class="text-xs text-gray-500">Average Age</div>
       </div>
     </div>
-    <div>
-      <div class="flex justify-between text-xs sm:text-sm mb-0.5 sm:mb-1">
-        <span class="text-text-light">65+ years</span>
-        <span class="font-medium">10%</span>
-      </div>
-      <div class="h-1.5 sm:h-2 bg-hover rounded-full">
-        <div class="h-1.5 sm:h-2 bg-status-urgent rounded-full" style="width: 10%"></div>
-      </div>
+
+    <!-- Empty State -->
+    <div *ngIf="ageData.total_patients === 0" class="text-center py-4">
+      <div class="text-gray-500 text-sm">No age data available</div>
+    </div>
+  </div>
+  
+  <!-- Footer Actions -->
+  <div class="pt-2 mt-2 border-t border-border" *ngIf="!isLoading && ageData">
+    <div class="flex justify-between items-center">
+      <span class="text-xs text-gray-500">
+        Last updated: {{ currentDate }}
+      </span>
+      
+      <!-- Refresh Button -->
+      <button 
+        (click)="refreshData()"
+        class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
+        title="Refresh data">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
     </div>
   </div>
 </div>

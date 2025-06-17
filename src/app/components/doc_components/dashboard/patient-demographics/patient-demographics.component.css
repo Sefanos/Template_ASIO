@@ -1,0 +1,36 @@
+/* Optional: Add smooth transitions and hover effects */
+.doughnut-chart {
+  transition: transform 0.2s ease-in-out;
+}
+
+.doughnut-chart:hover {
+  transform: scale(1.02);
+}
+
+/* Progress bars animation */
+.progress-bar {
+  animation: fillProgress 1s ease-out;
+}
+
+@keyframes fillProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width);
+  }
+}
+
+/* Loading animation enhancement */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

@@ -91,6 +91,53 @@ export interface DashboardStats {
   appointmentStats: AppointmentStats;
 }
 
+// ✅ NEW: Patient Demographics Interfaces
+export interface GenderDemographics {
+  male: number;
+  female: number;
+  other: number;
+  not_specified: number;
+  total_patients: number;
+  percentages: {
+    male: number;
+    female: number;
+    other: number;
+    not_specified?: number;
+  };
+}
+
+export interface AgeDemographics {
+  age_groups: {
+    '0-17': number;
+    '18-30': number;
+    '31-45': number;
+    '46-60': number;
+    '61-75': number;
+    '76+': number;
+  };
+  total_patients: number;
+  average_age: number;
+  percentages: {
+    '0-17': number;
+    '18-30': number;
+    '31-45': number;
+    '46-60': number;
+    '61-75': number;
+    '76+': number;
+  };
+}
+
+export interface DemographicsOverview {
+  overview: {
+    total_patients: number;
+    new_this_month: number;
+    growth_rate: number;
+  };
+  gender_distribution: GenderDemographics;
+  age_distribution: AgeDemographics;
+  generated_at: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -424,8 +471,88 @@ export class DoctorDashboardService {
           stats.appointmentStats = appointmentStats;
           checkCompletion();
         },
-        error: handleError
-      });
+        error: handleError      });
     });
+  }
+
+  /**
+   * ✅ NEW: Get gender demographics for doctor's patients
+   */
+  getGenderDemographics(): Observable<GenderDemographics> {
+    const cacheKey = 'gender-demographics';
+    
+    // Check cache first
+    const cachedData = this.getCachedData<GenderDemographics>(cacheKey);
+    if (cachedData) {
+      return of(cachedData);
+    }
+
+    return this.http.get<ApiResponse<GenderDemographics>>(`${this.apiUrl}/doctor/patients/demographics/gender`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          const demographics = response.data;
+          this.setCachedData(cacheKey, demographics);
+          return demographics;
+        }
+        throw new Error(response.message || 'Failed to get gender demographics');
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * ✅ NEW: Get age demographics for doctor's patients
+   */
+  getAgeDemographics(): Observable<AgeDemographics> {
+    const cacheKey = 'age-demographics';
+    
+    // Check cache first
+    const cachedData = this.getCachedData<AgeDemographics>(cacheKey);
+    if (cachedData) {
+      return of(cachedData);
+    }
+
+    return this.http.get<ApiResponse<AgeDemographics>>(`${this.apiUrl}/doctor/patients/demographics/age`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          const demographics = response.data;
+          this.setCachedData(cacheKey, demographics);
+          return demographics;
+        }
+        throw new Error(response.message || 'Failed to get age demographics');
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * ✅ NEW: Get complete demographics overview for doctor's patients
+   */
+  getDemographicsOverview(): Observable<DemographicsOverview> {
+    const cacheKey = 'demographics-overview';
+    
+    // Check cache first
+    const cachedData = this.getCachedData<DemographicsOverview>(cacheKey);
+    if (cachedData) {
+      return of(cachedData);
+    }
+
+    return this.http.get<ApiResponse<DemographicsOverview>>(`${this.apiUrl}/doctor/patients/demographics/overview`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          const overview = response.data;
+          this.setCachedData(cacheKey, overview);
+          return overview;
+        }
+        throw new Error(response.message || 'Failed to get demographics overview');
+      }),
+      catchError(this.handleError)
+    );
   }
 }
