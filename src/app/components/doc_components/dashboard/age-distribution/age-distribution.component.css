@@ -1,0 +1,62 @@
+/* Bar chart animations */
+.bar-animate {
+  animation: growBar 0.8s ease-out forwards;
+  transform-origin: bottom;
+}
+
+@keyframes growBar {
+  from {
+    height: 0;
+    opacity: 0.5;
+  }
+  to {
+    height: var(--bar-height);
+    opacity: 1;
+  }
+}
+
+/* Hover effects */
+.group:hover .bar-animate {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Tooltip positioning */
+.group {
+  position: relative;
+}
+
+/* Grid lines styling */
+.grid-line {
+  border-top: 1px solid #f3f4f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .chart-container {
+    height: 200px;
+  }
+  
+  .bar-width {
+    max-width: 2rem;
+  }
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease-in-out;
+}

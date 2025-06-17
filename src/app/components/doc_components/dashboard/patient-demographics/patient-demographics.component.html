@@ -1,49 +1,147 @@
 <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-5 border border-border shadow-sm hover:shadow-card-hover transition-shadow duration-300">
+  <!-- Header -->
   <div class="flex justify-between items-start mb-2 sm:mb-3 lg:mb-4">
     <h3 class="text-card-title text-primary uppercase text-sm sm:text-base">PATIENT DEMOGRAPHICS</h3>
-    <span class="text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 bg-primary/10 text-primary rounded-full">
-      1,248 Total
+    
+    <!-- Dynamic Total -->
+    <span *ngIf="!isLoading && genderData" class="text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 bg-primary/10 text-primary rounded-full">
+      {{ genderData.total_patients | number }} Total
     </span>
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 bg-gray-100 text-gray-500 rounded-full animate-pulse">
+      Loading...
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <span class="ml-2 text-sm text-gray-600">Loading demographics...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="text-center py-4">
+    <div class="text-red-500 text-sm mb-2">{{ error }}</div>
+    <button (click)="refreshData()" class="text-blue-600 text-sm hover:text-blue-800 font-medium">
+      Try Again
+    </button>
+  </div>
+
+  <!-- Chart Content -->
+  <div *ngIf="!isLoading && !error && genderData && genderData.total_patients > 0">
+    <!-- CSS Doughnut Chart -->
+    <div class="flex justify-center mb-6">
+      <div class="relative w-48 h-48">
+        <!-- Doughnut Chart using CSS -->
+        <div class="relative w-full h-full rounded-full overflow-hidden" 
+             [style.background]="getConicGradient()">
+          <!-- Inner circle to create doughnut effect -->
+          <div class="absolute inset-6 bg-white rounded-full flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-600">{{ genderData.total_patients }}</div>
+              <div class="text-sm text-gray-500">Patients</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend with percentages -->
+    <div class="space-y-3">
+      <!-- Male (Blue) -->
+      <div *ngIf="genderData.male > 0" class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+          <span class="text-sm">Male</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-20 bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                 [style.width.%]="genderData.percentages.male || 0"></div>
+          </div>
+          <span class="text-sm font-medium min-w-[4rem] text-right">
+            {{ genderData.percentages.male || 0 }}% ({{ genderData.male | number }})
+          </span>
+        </div>
+      </div>
+      
+      <!-- Female (Pink) -->
+      <div *ngIf="genderData.female > 0" class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-pink-500"></span>
+          <span class="text-sm">Female</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-20 bg-gray-200 rounded-full h-2">
+            <div class="bg-pink-500 h-2 rounded-full transition-all duration-300" 
+                 [style.width.%]="genderData.percentages.female || 0"></div>
+          </div>
+          <span class="text-sm font-medium min-w-[4rem] text-right">
+            {{ genderData.percentages.female || 0 }}% ({{ genderData.female | number }})
+          </span>
+        </div>
+      </div>
+      
+      <!-- Other (Green) -->
+      <div *ngIf="genderData.other > 0" class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-green-500"></span>
+          <span class="text-sm">Other</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-20 bg-gray-200 rounded-full h-2">
+            <div class="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                 [style.width.%]="genderData.percentages.other || 0"></div>
+          </div>
+          <span class="text-sm font-medium min-w-[4rem] text-right">
+            {{ genderData.percentages.other || 0 }}% ({{ genderData.other | number }})
+          </span>
+        </div>
+      </div>
+      
+      <!-- Not Specified (Gray) -->
+      <div *ngIf="genderData.not_specified > 0" class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+          <span class="text-sm">Not Specified</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-20 bg-gray-200 rounded-full h-2">
+            <div class="bg-gray-400 h-2 rounded-full transition-all duration-300" 
+                 [style.width.%]="genderData.percentages.not_specified || 0"></div>
+          </div>
+          <span class="text-sm font-medium min-w-[4rem] text-right">
+            {{ genderData.percentages.not_specified || 0 }}% ({{ genderData.not_specified | number }})
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && !error && genderData && genderData.total_patients === 0" class="text-center py-8">
+    <div class="text-gray-500">No patient data available</div>
   </div>
   
-  <div class="flex justify-center mb-2 sm:mb-3 lg:mb-4">
-    <div class="relative">
-      <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full border-6 sm:border-8 border-primary-light/20 flex items-center justify-center">
-        <span class="text-sm sm:text-base lg:text-lg font-bold text-primary">1,248</span>
-      </div>
-      <div class="absolute inset-0 flex items-center justify-center">
-        <svg class="w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36 -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#E0E0FF" stroke-width="12" />
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#2C6EAA" stroke-width="12" stroke-dasharray="251.2" stroke-dashoffset="150.72" /> <!-- Women: 40% -->
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#F0B86C" stroke-width="12" stroke-dasharray="251.2" stroke-dashoffset="75.36" stroke-dashoffset="125.6" /> <!-- Men: 60% -->
+  <!-- Footer -->
+  <div class="pt-3 mt-4 border-t border-border" *ngIf="!isLoading && genderData">
+    <div class="flex justify-between items-center">
+      <a href="#" class="text-primary hover:text-primary-dark font-medium text-sm inline-flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-      </div>
+      </a>
+      
+      <!-- Refresh Button -->
+      <button 
+        (click)="refreshData()"
+        class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
+        title="Refresh data">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
     </div>
-  </div>
-  
-  <div class="space-y-2 sm:space-y-3">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-1.5 sm:gap-2">
-        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-primary"></span>
-        <span class="text-xs sm:text-sm">Women</span>
-      </div>
-      <span class="text-xs sm:text-sm font-medium">40% (499)</span>
-    </div>
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-1.5 sm:gap-2">
-        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-status-warning"></span>
-        <span class="text-xs sm:text-sm">Men</span>
-      </div>
-      <span class="text-xs sm:text-sm font-medium">60% (749)</span>
-    </div>
-  </div>
-  
-  <div class="pt-2 mt-2 sm:pt-3 sm:mt-3 border-t border-border">
-    <a href="#" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm inline-flex items-center">
-      View Demographics
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-      </svg>
-    </a>
   </div>
 </div>
