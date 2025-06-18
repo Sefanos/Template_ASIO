@@ -1,87 +1,243 @@
-<!-- Patient List Table -->
-<div class="bg-white rounded-card shadow-card p-card-padding">
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="text-section-header text-text">PATIENT LIST</h2>
+<!-- Patient List Table Component -->
+<div class="bg-white rounded-lg shadow">
+  <!-- Table Header with Export Button -->
+  <div class="flex justify-between items-center p-4 border-b border-gray-200">
+    <h2 class="text-lg font-semibold text-gray-900">
+      {{ activeTab === 'my-patients' ? 'My Patients' : 'All Patients' }}
+    </h2>
     <button 
-      (click)="onExportData()" 
-      class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-button transition-colors"
-    >
+      (click)="exportData.emit()"
+      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
       Export
     </button>
   </div>
-  
-  <!-- Loading Spinner -->
-  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
-    <div class="loading-spinner"></div>
-    <span class="ml-3 text-text-light">Loading patient data...</span>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex items-center justify-center py-12">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <span class="ml-3 text-gray-600">Loading patients...</span>
   </div>
-  
+
   <!-- Patient Table (shown when not loading) -->
   <div *ngIf="!isLoading" class="overflow-x-auto">
-    <table class="min-w-full">
-      <thead>
-        <tr class="border-b border-border">
-          <th class="px-4 py-3 text-left text-text font-semibold">ID</th>
-          <th class="px-4 py-3 text-left text-text font-semibold">Patient Name</th>
-          <th class="px-4 py-3 text-left text-text font-semibold">Last Visit</th>
-          <th class="px-4 py-3 text-left text-text font-semibold">Status</th>
-          <th class="px-4 py-3 text-left text-text font-semibold">Actions</th>
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16" 
+              *ngIf="activeTab === 'my-patients'">Age</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" 
+              *ngIf="activeTab === 'my-patients'">Last Visit</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" 
+              *ngIf="activeTab === 'my-patients'">Appointments</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Details</th>
         </tr>
       </thead>
       
       <!-- Empty state message if no patients -->
-      <tbody *ngIf="patients.length === 0">
+      <tbody *ngIf="patients.length === 0" class="bg-white divide-y divide-gray-200">
         <tr>
-          <td colspan="5" class="px-4 py-8 text-center text-text-light">
-            No patients found. Try adjusting your filters.
+          <td [attr.colspan]="activeTab === 'my-patients' ? 7 : 4" 
+              class="px-6 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center">
+              <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              <p class="text-lg font-medium text-gray-900 mb-2">No patients found</p>
+              <p class="text-gray-500">Try adjusting your search criteria or filters.</p>
+            </div>
           </td>
         </tr>
       </tbody>
       
       <!-- Patient list when patients are available -->
-      <tbody *ngIf="patients.length > 0">
-        <tr *ngFor="let patient of patients" 
-          class="border-b border-border hover:bg-hover transition-colors cursor-pointer"
-          (click)="onGoToPatientRecord(patient.id)">
-          <td class="px-4 py-3">{{ patient.id }}</td>
-          <td class="px-4 py-3">{{ patient.name }}</td>
-          <td class="px-4 py-3">{{ patient.lastVisit }}</td>
-          <td class="px-4 py-3">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium status-badge" 
-              [ngClass]="{
-                'bg-status-success bg-opacity-10 text-status-success': patient.status === 'Active',
-                'bg-status-warning bg-opacity-10 text-status-warning': patient.status === 'Follow up',
-                'bg-status-urgent bg-opacity-10 text-status-urgent': patient.status === 'Critical',
-                'bg-status-info bg-opacity-10 text-status-info': patient.status === 'Lab Results'
-              }">
-              {{ patient.status }}
-            </span>
-          </td>
-          <td class="px-4 py-3" (click)="$event.stopPropagation()">
-            <div class="flex space-x-2">
-              <button 
-                (click)="onViewPatient(patient.id, $event)" 
-                class="text-primary hover:text-primary-dark transition-colors"
-                title="View patient"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
+      <tbody *ngIf="patients.length > 0" class="bg-white divide-y divide-gray-200">        <ng-container *ngFor="let patient of patients">
+          <!-- Main Patient Row - Now fully clickable -->
+          <tr 
+            class="hover:bg-gray-50 transition-colors cursor-pointer"
+            [class.bg-blue-50]="isRowExpanded(patient.id)"
+            (click)="onToggleExpansion(patient.id)"
+          >
+            <!-- Patient Name Column -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10">
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
+                    <span class="text-sm font-medium text-white">
+                      {{ getPatientInitials(patient.name) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ patient.name }}</div>
+                  <div class="text-sm text-gray-500">{{ patient.email }}</div>
+                </div>
+                <!-- Alert indicator for my patients -->
+                <div *ngIf="activeTab === 'my-patients' && patient.hasAlerts" 
+                     class="ml-3 flex-shrink-0">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    {{ patient.alertsCount }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Age Column (My Patients Only) -->
+            <td *ngIf="activeTab === 'my-patients'" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {{ patient.age }} yrs
+              </span>
+            </td>
+            
+            <!-- Phone Column -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <a [href]="'tel:' + patient.phone" class="text-blue-600 hover:text-blue-900">
+                {{ patient.phone }}
+              </a>
+            </td>
+            
+            <!-- Status Column -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                [ngClass]="{
+                  'bg-green-100 text-green-800': patient.status === 'Active',
+                  'bg-yellow-100 text-yellow-800': patient.status === 'Inactive',
+                  'bg-red-100 text-red-800': patient.status === 'Suspended'
+                }">
+                {{ patient.status }}
+              </span>
+            </td>
+            
+            <!-- Last Visit Column (My Patients Only) -->
+            <td *ngIf="activeTab === 'my-patients'" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {{ patient.lastVisit }}
+            </td>
+            
+            <!-- Appointments Column (My Patients Only) -->
+            <td *ngIf="activeTab === 'my-patients'" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <div class="text-sm text-gray-900">{{ patient.appointmentsInfo }}</div>
+            </td>
+              <!-- Actions Column -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" (click)="$event.stopPropagation()">
+              <div class="flex space-x-2">
+                <button 
+                  (click)="onViewPatient(patient.id, $event)" 
+                  class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                  [title]="activeTab === 'my-patients' ? 'View patient details' : 'View patient (read-only)'"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+              <!-- Details Toggle Column -->            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <div class="flex items-center justify-center">
+                <svg 
+                  class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                  [class.rotate-180]="isRowExpanded(patient.id)"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-              </button>
-              <button 
-                (click)="onMessagePatient(patient.id, $event)" 
-                class="text-primary hover:text-primary-dark transition-colors"
-                title="Message patient"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
+              </div>
+            </td>          </tr>
+          
+          <!-- Expandable Details Row -->
+          <tr *ngIf="isRowExpanded(patient.id)" class="bg-gray-50 border-b border-gray-200">
+            <td [attr.colspan]="activeTab === 'my-patients' ? 7 : 4" class="px-4 py-4">
+              <!-- My Patients - Rich Details -->
+              <div *ngIf="activeTab === 'my-patients' && patient.expandedData" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Personal Information -->
+                <div class="bg-white p-3 rounded-lg border">
+                  <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                    </svg>
+                    Personal Information
+                  </h4>
+                  <div class="space-y-1 text-sm">
+                    <div><span class="text-gray-500">Gender:</span> {{ patient.expandedData.personalInfo?.gender | titlecase }}</div>
+                    <div><span class="text-gray-500">Birth Date:</span> {{ patient.expandedData.personalInfo?.birthdate | date:'mediumDate' }}</div>
+                    <div><span class="text-gray-500">Registration:</span> {{ patient.expandedData.registrationDate | date:'mediumDate' }}</div>
+                  </div>
+                </div>
+                
+                <!-- Appointment Summary -->
+                <div class="bg-white p-3 rounded-lg border">
+                  <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Appointment Summary
+                  </h4>
+                  <div class="space-y-1 text-sm">
+                    <div><span class="text-gray-500">Total Appointments:</span> {{ patient.expandedData.totalAppointments }}</div>
+                    <div><span class="text-gray-500">Upcoming:</span> {{ patient.expandedData.upcomingAppointments }}</div>
+                    <div *ngIf="patient.expandedData.criticalAlerts > 0" class="text-red-600">
+                      <span class="text-gray-500">Critical Alerts:</span> {{ patient.expandedData.criticalAlerts }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="bg-white p-3 rounded-lg border">
+                  <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
+                    </svg>
+                    Quick Actions
+                  </h4>                  <div class="space-y-2">
+                    <button 
+                      (click)="onScheduleAppointment(patient.id); $event.stopPropagation()"
+                      class="w-full text-left text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center p-2 rounded hover:bg-blue-50">
+                      📅 Schedule Appointment
+                    </button>
+                    <button 
+                      (click)="onViewPatient(patient.id, $event); $event.stopPropagation()"
+                      class="w-full text-left text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center p-2 rounded hover:bg-blue-50">
+                      📋 View Medical History
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- All Patients - Basic Details -->
+              <div *ngIf="activeTab === 'all-patients' && patient.expandedData" class="bg-white p-4 rounded-lg border">
+                <h4 class="font-medium text-gray-900 mb-3">Patient Information</h4>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span class="text-gray-500">Registration Date:</span>
+                    <p class="font-medium">{{ patient.expandedData.registrationDate | date:'mediumDate' }}</p>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">Patient ID:</span>
+                    <p class="font-medium">#{{ patient.id }}</p>
+                  </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                  <button 
+                    (click)="onViewPatient(patient.id, $event)"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View Full Details →
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
       </tbody>
     </table>
   </div>
@@ -92,34 +248,55 @@
       <button 
         (click)="changePage(currentPage - 1)" 
         [disabled]="currentPage === 1"
-        class="px-3 py-1 rounded-button border border-border text-text disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
       >
-        Prev
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
       </button>
       
-      <ng-container *ngFor="let page of pagesToShow">
-        <ng-container *ngIf="page === '...'">
-          <span class="px-3 py-1">{{ page }}</span>
-        </ng-container>
-        
-        <ng-container *ngIf="page !== '...'">
-          <button 
-            (click)="changePage(+page)" 
-            [class.bg-primary]="currentPage === page"
-            [class.text-white]="currentPage === page"
-            class="px-3 py-1 rounded-button border border-border"
-          >
-            {{ page }}
-          </button>
-        </ng-container>
-      </ng-container>
+      <!-- First page -->
+      <button 
+        *ngIf="pagesToShow[0] > 1"
+        (click)="changePage(1)" 
+        class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+        1
+      </button>
+      
+      <!-- Ellipsis -->
+      <span *ngIf="pagesToShow[0] > 2" class="px-2 py-2 text-gray-500">...</span>
+      
+      <!-- Page numbers -->
+      <button 
+        *ngFor="let page of pagesToShow"
+        (click)="changePage(page)" 
+        [class.bg-blue-600]="page === currentPage"
+        [class.text-white]="page === currentPage"
+        [class.text-gray-700]="page !== currentPage"
+        [class.hover:bg-gray-50]="page !== currentPage"
+        class="px-3 py-2 rounded-lg border border-gray-300 transition-colors">
+        {{ page }}
+      </button>
+      
+      <!-- Ellipsis -->
+      <span *ngIf="pagesToShow[pagesToShow.length - 1] < totalPages - 1" class="px-2 py-2 text-gray-500">...</span>
+      
+      <!-- Last page -->
+      <button 
+        *ngIf="pagesToShow[pagesToShow.length - 1] < totalPages"
+        (click)="changePage(totalPages)" 
+        class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+        {{ totalPages }}
+      </button>
       
       <button 
         (click)="changePage(currentPage + 1)" 
         [disabled]="currentPage === totalPages"
-        class="px-3 py-1 rounded-button border border-border text-text disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
       >
-        Next
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
       </button>
     </nav>
   </div>
