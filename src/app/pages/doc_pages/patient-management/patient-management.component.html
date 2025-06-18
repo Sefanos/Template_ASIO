@@ -1,23 +1,150 @@
 <div class="container mx-auto p-6">
   <h1 class="text-dashboard-title text-text mb-6">PATIENT MANAGEMENT</h1>
   
-  <!-- Search and Filter Component -->
+  <!-- ✅ Tab Navigation -->
+  <div class="mb-6">
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <!-- My Patients Tab -->
+        <button
+          (click)="switchTab('my-patients')"
+          [class]="activeTab === 'my-patients' ? 
+            'border-primary text-primary' : 
+            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            My Patients
+            <span *ngIf="myPatients.length > 0" 
+                  class="ml-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
+              {{ myPatients.length }}
+            </span>
+          </div>
+        </button>
+        
+        <!-- All Patients Tab -->
+        <button
+          (click)="switchTab('all-patients')"
+          [class]="activeTab === 'all-patients' ? 
+            'border-primary text-primary' : 
+            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            All Patients
+            <span *ngIf="allPatients.length > 0" 
+                  class="ml-2 bg-gray-500 text-white text-xs px-2 py-1 rounded-full">
+              {{ allPatients.length }}
+            </span>
+          </div>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ✅ Tab Context Info -->
+  <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+    <div *ngIf="activeTab === 'my-patients'" class="flex items-center text-sm text-gray-700">
+      <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      </svg>
+      <span class="font-medium">My Patients:</span>
+      <span class="ml-1">Patients assigned to you with full medical details and management access</span>
+    </div>
+    
+    <div *ngIf="activeTab === 'all-patients'" class="flex items-center text-sm text-gray-700">
+      <svg class="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span class="font-medium">All Patients:</span>
+      <span class="ml-1">System-wide patient directory with read-only access for reference</span>
+    </div>
+  </div>
+
+  <!-- ✅ Search and Filter Component -->
   <app-patient-search-filter
     [(searchQuery)]="searchQuery"
-    [(filters)]="filters"
-  ></app-patient-search-filter>
+    [activeTab]="activeTab"
+    (searchChange)="onSearchChange()"
+    (filtersChange)="onFiltersChange($event)">
+  </app-patient-search-filter>
   
-  <!-- Patient List Table Component -->
-  <app-patient-list-table
-    [patients]="paginatedPatients"
-    [currentPage]="currentPage"
-    [pageSize]="pageSize"
-    [totalPages]="totalPages"
-    [pagesToShow]="pagesToShow"
-    [isLoading]="isLoading"
-    (pageChange)="changePage($event)"
-    (viewPatient)="viewPatient($event)"
-    (messagePatient)="messagePatient($event)"
-    (exportData)="exportPatientData()"
-  ></app-patient-list-table>
+  <!-- ✅ Loading State -->
+  <div *ngIf="(isLoading.myPatients && activeTab === 'my-patients') || (isLoading.allPatients && activeTab === 'all-patients')" 
+       class="flex items-center justify-center py-12">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p class="text-gray-600 font-medium">
+        {{ activeTab === 'my-patients' ? 'Loading your patients...' : 'Loading all patients...' }}
+      </p>
+      <p class="text-gray-500 text-sm mt-1">Please wait while we fetch the data</p>
+    </div>
+  </div>
+
+  <!-- ✅ Patient List Table Component -->
+  <div *ngIf="!(isLoading.myPatients && activeTab === 'my-patients') && !(isLoading.allPatients && activeTab === 'all-patients')">    <!-- Results Summary -->
+    <div class="mb-4 flex justify-between items-center">      <div class="text-sm text-gray-600">
+        <span *ngIf="activeTab === 'my-patients'">
+          Showing {{ myPatientsPagination.from || 1 }} - {{ myPatientsPagination.to || displayedPatients.length }} of {{ myPatientsPagination.total }} 
+          <span class="font-medium">assigned patients</span>
+          <span class="text-gray-400 ml-2">(Page {{ myPatientsPagination.current_page }} of {{ myPatientsPagination.last_page }})</span>
+        </span>        <span *ngIf="activeTab === 'all-patients'">
+          Showing {{ allPatientsPagination.from || 1 }} - {{ allPatientsPagination.to || displayedPatients.length }} of {{ allPatientsPagination.total }} 
+          <span class="font-medium">system patients</span>
+          <span class="text-gray-400 ml-2">(Page {{ allPatientsPagination.current_page }} of {{ allPatientsPagination.last_page }})</span>
+        </span>
+      </div>
+      
+      <!-- Refresh Button -->
+      <button 
+        (click)="refreshCurrentTab()"
+        class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+        title="Refresh current tab">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </button>
+    </div>    <app-patient-list-table
+      [patients]="displayedPatients"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalPages]="totalPages"
+      [pagesToShow]="pagesToShow"
+      [isLoading]="false"
+      [activeTab]="activeTab"
+      [expandedRows]="expandedRows"
+      (pageChange)="changePage($event)"
+      (viewPatient)="viewPatient($event)"
+      (messagePatient)="messagePatient($event)"
+      (toggleExpansion)="toggleRowExpansion($event)"
+      (exportData)="exportPatientData()">
+    </app-patient-list-table>
+  </div>
+  <!-- ✅ Empty State -->
+  <div *ngIf="!(isLoading.myPatients && activeTab === 'my-patients') && !(isLoading.allPatients && activeTab === 'all-patients') && displayedPatients.length === 0"
+       class="text-center py-12">
+    <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+      <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+      </svg>
+    </div>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">
+      {{ activeTab === 'my-patients' ? 'No assigned patients found' : 'No patients found' }}
+    </h3>
+    <p class="text-gray-500 mb-4">
+      {{ activeTab === 'my-patients' ? 
+          'You don\'t have any patients assigned yet, or they don\'t match your search criteria.' : 
+          'No patients in the system match your search criteria.' }}
+    </p>
+    <button 
+      *ngIf="searchQuery || filters.status || filters.gender"
+      (click)="searchQuery = ''; filters = { status: '', gender: '', ageRange: [0, 100] }; onSearchChange()"
+      class="text-primary hover:text-primary-dark font-medium">
+      Clear filters
+    </button>
+  </div>
 </div>
