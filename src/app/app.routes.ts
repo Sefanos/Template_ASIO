@@ -33,10 +33,11 @@ export const routes: Routes = [
     data: { roles: ['doctor'] },
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: docDashboard },
+      { path: 'dashboard', component: docDashboard },      
       { path: 'patients', component: PatientManagementComponent },
       { path: 'calendar', component: AppointmentCalendarComponent },
-      { path: 'patient/:id', component: PatientRecordComponent },
+      // { path: 'patient/:id', component: PatientRecordComponent },
+      { path: 'patient-record/:patientId', component: PatientRecordComponent, data: { breadcrumb: 'Patient Record' } },
       { path: 'prescription', component: PrescriptionComponent },
       { path: 'ai-diagnostic', component: AiDiagnosticComponent },
     ]

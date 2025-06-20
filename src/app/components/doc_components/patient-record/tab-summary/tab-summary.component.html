@@ -1,22 +1,22 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <!-- Vital Signs Card -->
-  <app-vital-signs-card [vitals]="vitals"></app-vital-signs-card>
+  <!-- Vital Signs Card with Real Data -->
+  <app-vital-signs-card [vitals]="displayVitals"></app-vital-signs-card>
   
-  <!-- Medications Card -->
-  <app-medications-card [medications]="medications"></app-medications-card>
+  <!-- Medications Card with Real Data -->
+  <app-medications-card [medications]="displayMedications"></app-medications-card>
   
-  <!-- Medical History Card -->
-  <app-medical-history-card [conditions]="conditions"></app-medical-history-card>
+  <!-- Medical History Card with Real Data -->
+  <app-medical-history-card [conditions]="displayConditions"></app-medical-history-card>
   
-  <!-- Lab Results Card -->
+  <!-- Lab Results Card with Real Data -->
   <app-lab-results-card [labResults]="labResults"></app-lab-results-card>
   
-  <!-- Appointment History Card -->
+  <!-- Appointment History Card with Real Data -->
   <app-appointment-history-card [appointments]="appointments"></app-appointment-history-card>
   
-  <!-- Doctor Notes Card - Fixed to properly pass notes data -->
+  <!-- Doctor Notes Card with Real Data -->
   <app-doctor-notes-card 
-    [patientId]="patient?.id"
-    [notes]="patientNotes"
+    [patientId]="patientId || patient?.id"
+    [notes]="displayNotes"
   ></app-doctor-notes-card>
 </div>

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Patient } from '../../../../models/patient.model';
 
 // Interface for the transformed patient data displayed in the table
@@ -40,7 +40,11 @@ export class PatientListTableComponent {
   @Output() messagePatient = new EventEmitter<string>();
   @Output() toggleExpansion = new EventEmitter<string>();
   @Output() exportData = new EventEmitter<void>();
-    changePage(page: number): void {
+  
+  constructor(private router: Router) {} // Add Router injection
+
+  changePage(page: number): void {
+
     this.pageChange.emit(page);
   }
   
@@ -52,8 +56,9 @@ export class PatientListTableComponent {
     event.stopPropagation();
     this.messagePatient.emit(id);
   }
-  
-  onGoToPatientRecord(id: string): void {
+    onGoToPatientRecord(id: string, event: Event): void {
+    event.stopPropagation(); // Prevent row toggling
+
     this.viewPatient.emit(id);
   }
   
@@ -63,36 +68,73 @@ export class PatientListTableComponent {
   isRowExpanded(patientId: string): boolean {
     return this.expandedRows.has(+patientId); // Convert string to number
   }
-  
+
+  /**
+   * Check if medical columns should be shown (for My Patients tab)
+   */
+  get showMedicalColumns(): boolean {
+    return this.activeTab === 'my-patients';
+  }
+
+  /**
+   * TrackBy function for ngFor to improve performance
+   */
+  trackByPatientId(index: number, patient: PatientTableRow): string {
+    return patient.id;
+  }
+
   /**
    * Toggle row expansion when clicking anywhere on the row
    */
-  onToggleExpansion(patientId: string): void {
-    const id = +patientId; // Convert string to number
-    if (this.expandedRows.has(id)) {
-      this.expandedRows.delete(id);
+  toggleRowExpansion(patientId: number): void {
+    if (this.expandedRows.has(patientId)) {
+      this.expandedRows.delete(patientId);
     } else {
-      this.expandedRows.add(id);
+      this.expandedRows.add(patientId);
     }
-    this.toggleExpansion.emit(patientId);
   }
-  
+
+  /**
+   * Generate patient initials for avatar
+   */
+  getPatientInitials(name: string): string {
+    return name
+      .split(' ')
+      .map(n => n.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  }
+
   onExportData(): void {
     this.exportData.emit();
   }
 
-  getPatientInitials(name: string): string {
-    return name.split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  /**
+   * Navigate to calendar for scheduling appointment
+   */
+  onScheduleAppointment(patientId: string, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/doctor/calendar'], { 
+      queryParams: { 
+        patientId: patientId,
+        action: 'schedule'
+      } 
+    });
   }
 
-  onScheduleAppointment(id: string): void {
-    // Navigate to calendar/scheduling page with patient ID
-    // You can implement this to navigate to your calendar component
-    console.log('Scheduling appointment for patient:', id);
-    // Example: this.router.navigate(['/doctor/calendar'], { queryParams: { patientId: id } });
+  /**
+   * Handle row click - toggle expansion (make entire row clickable)
+   */
+  onRowClick(patient: PatientTableRow, event: Event): void {
+    // Don't expand if clicking on action buttons
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.closest('button')) {
+      return;
+    }
+    
+    const patientId = parseInt(patient.id);
+    this.toggleRowExpansion(patientId);
+
   }
 }

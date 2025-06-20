@@ -12,6 +12,17 @@ export class PatientInfoHeaderComponent implements OnInit, OnChanges, AfterViewI
   @Input() name: string = 'Unknown Patient';
   @Input() dob: string = '';
   @Input() phone: string = '';
+  @Input() email: string = '';
+  @Input() age: number | undefined;
+  @Input() gender: string | undefined;
+  
+  // New medical statistics inputs
+  @Input() totalAppointments: number | undefined;
+  @Input() upcomingAppointments: number | undefined;
+  @Input() activeMedications: number | undefined;
+  @Input() activeAlerts: number | undefined;
+  @Input() lastVisit: string | null | undefined;
+  @Input() nextAppointment: string | undefined;
   
   // For tracking state
   displayName: string = '';

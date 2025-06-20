@@ -1,79 +1,133 @@
-<div class="bg-white rounded-card shadow-card h-full">
-  <div class="p-card-padding border-b border-border">
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
+  <div class="p-4 border-b border-gray-200">
     <div class="flex items-center justify-between">
-      <h3 class="text-card-title text-primary font-semibold">Lab Results</h3>
-      <button class="text-primary hover:text-primary-dark">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
-          <circle cx="12" cy="12" r="1"></circle>
-          <circle cx="19" cy="12" r="1"></circle>
-          <circle cx="5" cy="12" r="1"></circle>
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
         </svg>
-      </button>
+        Lab Results
+      </h3>
+      <div class="flex items-center space-x-2">
+        <span *ngIf="getAbnormalResultsCount() > 0" 
+              class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+          {{ getAbnormalResultsCount() }} Abnormal
+        </span>
+        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          {{ labResults.length }} Results
+        </span>
+      </div>
     </div>
   </div>
   
-  <div class="p-card-padding">
-    <div *ngIf="!recentLabResults || recentLabResults.length === 0" class="text-center py-6 text-text-light">
-      No lab results available.
+  <div class="p-4">
+    <!-- No Data State -->
+    <div *ngIf="!hasLabResults" class="text-center py-8">
+      <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+      </svg>
+      <p class="text-gray-500 text-sm">No lab results available</p>
+      <button class="mt-3 text-sm text-indigo-600 hover:text-indigo-800">
+        Order Lab Tests
+      </button>
     </div>
     
-    <div *ngIf="recentLabResults && recentLabResults.length > 0">
-      <div class="mb-3">
-        <div class="text-sm font-medium">Most Recent Results</div>
+    <!-- Lab Results List -->
+    <div *ngIf="hasLabResults" class="space-y-3">
+      <!-- Critical Results Alert -->
+      <div *ngIf="getCriticalResultsCount() > 0" 
+           class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-red-800 font-medium">
+            {{ getCriticalResultsCount() }} Critical Result{{ getCriticalResultsCount() > 1 ? 's' : '' }} Require Attention
+          </span>
+        </div>
       </div>
       
-      <div class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead>
-            <tr class="text-xs text-text-light border-b border-border">
-              <th class="py-2 text-left">Test</th>
-              <th class="py-2 text-left">Value</th>
-              <th class="py-2 text-left">Date</th>
-              <th class="py-2 text-left">Status</th>
-              <th class="py-2 text-left">Trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let result of recentLabResults" class="border-b border-border/50">
-              <td class="py-2">
-                <div class="font-medium">{{ result.name }}</div>
-                <div class="text-xs text-text-light">Ref: {{ result.referenceRange }}</div>
-              </td>
-              <td class="py-2">
-                <span [ngClass]="getStatusClass(result.status)">
-                  {{ result.value }} {{ result.unit }}
-                </span>
-              </td>
-              <td class="py-2 text-sm">
-                {{ result.date | date:'MM/dd/yyyy' }}
-              </td>
-              <td class="py-2">
-                <span 
-                  class="text-xs px-2 py-0.5 rounded-full"
-                  [ngClass]="{
-                    'bg-status-success/10 text-status-success': result.status === 'normal',
-                    'bg-status-warning/10 text-status-warning': result.status === 'abnormal',
-                    'bg-status-urgent/10 text-status-urgent': result.status === 'critical'
-                  }"
-                >
-                  {{ result.status | titlecase }}
-                </span>
-              </td>
-              <td class="py-2">
-                <div *ngIf="result.trend" class="flex items-center" [ngClass]="getTrendClass(result.trend)">
-                  <span [innerHTML]="getTrendIcon(result.trend)"></span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Individual Lab Results -->
+      <div *ngFor="let result of displayLabResults" 
+           class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+        
+        <!-- Result Header -->
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex-1">
+            <div class="flex items-center mb-2">
+              <h4 class="text-lg font-semibold text-gray-900">{{ getTestName(result) }}</h4>
+              <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full border {{ getStatusColor(getStatus(result)) }}">
+                {{ getStatusIcon(getStatus(result)) }} {{ getStatus(result) | titlecase }}
+              </span>
+              <span *ngIf="isRecentResult(result)" 
+                    class="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                Recent
+              </span>
+            </div>
+            <div class="text-sm text-gray-600">
+              <span class="font-medium">Ordered:</span> {{ getOrderedDate(result) | date:'MMM d, yyyy' }}
+              <span *ngIf="getResultDate(result)" class="ml-4">
+                <span class="font-medium">Result:</span> {{ getResultDate(result) | date:'MMM d, yyyy' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Result Details -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+          <!-- Result Value -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs font-medium text-gray-600 mb-1">Result</div>
+            <div class="text-lg font-bold text-gray-900">
+              {{ getResult(result) }}
+              <span *ngIf="getUnits(result)" class="text-sm text-gray-600 ml-1">{{ getUnits(result) }}</span>
+            </div>
+          </div>
+          
+          <!-- Reference Range -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs font-medium text-gray-600 mb-1">Reference Range</div>
+            <div class="text-sm font-medium text-gray-900">{{ getReferenceRange(result) }}</div>
+          </div>
+          
+          <!-- Lab Info -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs font-medium text-gray-600 mb-1">Laboratory</div>
+            <div class="text-sm font-medium text-gray-900">{{ getLab(result) }}</div>
+          </div>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+          <div>
+            <span class="font-medium">Ordered by:</span> {{ getOrderedBy(result) }}
+          </div>
+          <div class="flex space-x-4">
+            <button class="text-indigo-600 hover:text-indigo-800 font-medium">
+              View Details
+            </button>
+            <button class="text-gray-600 hover:text-gray-800 font-medium">
+              Download Report
+            </button>
+          </div>
+        </div>
       </div>
       
-      <div class="mt-4">
-        <button class="w-full text-center text-primary hover:text-primary-dark border border-primary hover:border-primary-dark rounded-button py-2 transition-colors">
-          View All Lab Results
+      <!-- View All Results Button -->
+      <div *ngIf="labResults.length > 5" class="text-center pt-4">
+        <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+          View All Lab Results ({{ labResults.length }})
         </button>
       </div>
+    </div>
+    
+    <!-- Order New Tests Button -->
+    <div class="mt-4 pt-4 border-t border-gray-200">
+      <button class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors duration-200">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Order New Lab Tests
+      </button>
     </div>
   </div>
 </div>

@@ -24,13 +24,45 @@ import { DoctorNotesCardComponent } from '../doctor-notes-card/doctor-notes-card
   templateUrl: './tab-summary.component.html',
 })
 export class TabSummaryComponent implements OnChanges {
-  @Input() patient: any = null; // Initialize with default value
-  @Input() vitals: any[] = []; // Initialize with empty array
-  @Input() medications: any[] = []; // Initialize with empty array
-  @Input() conditions: any[] = []; // Initialize with empty array
-  @Input() labResults: any[] = []; // Initialize with empty array
-  @Input() appointments: any[] = []; // Initialize with empty array
-  @Input() patientNotes: any[] = []; // Add missing patientNotes input
+  // Legacy inputs for backward compatibility
+  @Input() patient: any = null;
+  @Input() vitals: any[] = [];
+  @Input() medications: any[] = [];
+  @Input() conditions: any[] = [];
+  @Input() labResults: any[] = [];
+  @Input() appointments: any[] = [];
+  @Input() patientNotes: any[] = [];
+  
+  // New inputs for real API data
+  @Input() patientId: number | null = null;
+  @Input() medicalSummary: any = null;
+  @Input() patientInfo: any = null;
+  @Input() recentVitals: any[] = [];
+  @Input() activeMedications: any[] = [];
+  @Input() medicalHistory: any[] = [];
+  @Input() recentNotes: any[] = [];
+  @Input() activeAlerts: any[] = [];
+  
+  // Computed properties for display
+  get displayVitals(): any[] {
+    return this.recentVitals?.length > 0 ? this.recentVitals : this.vitals;
+  }
+  
+  get displayMedications(): any[] {
+    return this.activeMedications?.length > 0 ? this.activeMedications : this.medications;
+  }
+  
+  get displayConditions(): any[] {
+    return this.medicalHistory?.length > 0 ? this.medicalHistory : this.conditions;
+  }
+  
+  get displayNotes(): any[] {
+    return this.recentNotes?.length > 0 ? this.recentNotes : this.patientNotes;
+  }
+  
+  get displayAlerts(): any[] {
+    return this.activeAlerts || [];
+  }
   
   constructor(private cdr: ChangeDetectorRef) {}
   
@@ -43,12 +75,12 @@ export class TabSummaryComponent implements OnChanges {
     if (changedInputs.length > 0) {
       console.log('TabSummaryComponent data status:', {
         patient: this.patient ? 'present' : 'missing',
-        vitals: this.vitals?.length || 0,
-        medications: this.medications?.length || 0,
-        conditions: this.conditions?.length || 0,
-        labResults: this.labResults?.length || 0,
-        appointments: this.appointments?.length || 0,
-        patientNotes: this.patientNotes?.length || 0
+        recentVitals: this.recentVitals?.length || 0,
+        activeMedications: this.activeMedications?.length || 0,
+        medicalHistory: this.medicalHistory?.length || 0,
+        recentNotes: this.recentNotes?.length || 0,
+        activeAlerts: this.activeAlerts?.length || 0,
+        medicalSummary: this.medicalSummary ? 'present' : 'missing'
       });
     }
     
