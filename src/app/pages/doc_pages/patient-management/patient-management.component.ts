@@ -307,18 +307,59 @@ export class PatientManagementComponent implements OnInit, OnDestroy {
       this.expandedRows.add(id);
     }
   }
-  
-  isRowExpanded(patientId: string): boolean {
+    isRowExpanded(patientId: string): boolean {
     return this.expandedRows.has(parseInt(patientId));
   }
-  
   // ✅ Action Methods
   viewPatient(patientId: string): void {
+    console.log('viewPatient method called with ID:', patientId);
+    console.log('Patient ID type:', typeof patientId);
+    console.log('Active tab:', this.activeTab);
+    
+    if (!patientId || patientId.trim() === '') {
+      console.error('No patient ID provided');
+      alert('Error: No patient ID provided');
+      return;
+    }
+    
+    // Validate patient ID is numeric
+    const numericId = parseInt(patientId, 10);
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('Invalid patient ID format:', patientId);
+      alert('Error: Invalid patient ID format');
+      return;
+    }
+    
+    // Verify patient exists in current list before navigating
+    const patientExists = this.displayedPatients.some(p => p.id === patientId);
+    if (!patientExists) {
+      console.error('Patient not found in current list:', patientId);
+      alert('Error: Patient not found in current list');
+      return;
+    }
+    
     if (this.activeTab === 'my-patients') {
-      // Navigate to full patient details (doctor has full access)
-      this.router.navigate(['/doctor/patients', patientId]);
+      // Navigate to full patient medical records (doctor has full access)
+      const navigationPath = ['/doctor/patient-record', patientId];
+      console.log('Navigating to:', navigationPath);
+      
+      this.router.navigate(navigationPath).then(
+        (success) => {
+          if (success) {
+            console.log('Navigation successful');
+          } else {
+            console.error('Navigation failed');
+            alert('Error: Failed to navigate to patient record');
+          }
+        }
+      ).catch(error => {
+        console.error('Navigation error:', error);
+        alert('Error: Navigation failed - ' + error.message);
+      });
     } else {
-      // Show read-only modal for non-assigned patients
+      // For "All Patients" tab, just show basic information in a modal
+      // since doctors have limited access to patients not assigned to them
+      console.log('Opening modal for patient ID:', patientId);
       this.showPatientDetailsModal(parseInt(patientId));
     }
   }

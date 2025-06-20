@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './patient-not-found.component.html',
 })
 export class PatientNotFoundComponent {
+  @Input() errorMessage: string = 'Patient not found';
   @Output() goBack = new EventEmitter<void>();
   
   onGoBack(): void {

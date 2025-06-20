@@ -1,6 +1,31 @@
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {LabResult} from '../../../../models/patient-record.model';
+
+// Updated interface to match real API data structure
+interface ApiLabResult {
+  id: number;
+  testName: string;
+  result: string;
+  units: string;
+  referenceRange: string;
+  status: string;
+  orderedDate: string;
+  resultDate: string;
+  orderedBy: string;
+  lab: string;
+  isAbnormal: boolean;
+}
+
+// Legacy interface for backward compatibility
+interface LabResult {
+  id: number;
+  name: string;
+  value: string;
+  unit: string;
+  status: 'normal' | 'abnormal' | 'critical' | 'pending';
+  date: string;
+  notes?: string;
+}
 
 @Component({
   selector: 'app-lab-results-card',
@@ -9,7 +34,7 @@ import {LabResult} from '../../../../models/patient-record.model';
   templateUrl: './lab-results-card.component.html',
 })
 export class LabResultsCardComponent implements OnChanges {
-  @Input() labResults: LabResult[] = [];
+  @Input() labResults: any[] = []; // Accept both old and new format
   
   constructor(private cdr: ChangeDetectorRef) {}
   
@@ -21,78 +46,89 @@ export class LabResultsCardComponent implements OnChanges {
     }
   }
   
-  get recentLabResults(): LabResult[] {
-    if (!this.labResults || this.labResults.length === 0) {
-      return [];
-    }
-    
-    // Group by name and get most recent result for each type
-    const groupedResults = this.labResults.reduce((acc, curr) => {
-      if (!acc[curr.name] || new Date(curr.date) > new Date(acc[curr.name].date)) {
-        acc[curr.name] = curr;
-      }
-      return acc;
-    }, {} as {[key: string]: LabResult});
-    
-    return Object.values(groupedResults).sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    ).slice(0, 5); // Return most recent 5 results
+  get displayLabResults(): any[] {
+    return this.labResults.slice(0, 5); // Show latest 5 results
   }
   
-  getStatusClass(status: string): string {
-    switch(status) {
-      case 'normal':
-        return 'text-status-success';
-      case 'abnormal':
-        return 'text-status-warning';
-      case 'critical':
-        return 'text-status-urgent';
-      default:
-        return 'text-text';
-    }
+  get hasLabResults(): boolean {
+    return this.labResults && this.labResults.length > 0;
   }
   
-  getTrendIcon(trend?: string): string {
-    if (!trend) return '';
-    
-    switch(trend) {
-      case 'up':
-        return `
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
-            <path d="m18 9-6-6-6 6"/>
-            <path d="M12 3v18"/>
-          </svg>
-        `;
-      case 'down':
-        return `
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
-            <path d="m6 15 6 6 6-6"/>
-            <path d="M12 3v18"/>
-          </svg>
-        `;
-      case 'stable':
-        return `
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
-            <path d="M3 12h18"/>
-          </svg>
-        `;
-      default:
-        return '';
+  // Helper methods for lab result data
+  getTestName(result: any): string {
+    return result.testName || result.name || 'Unknown Test';
+  }
+  
+  getResult(result: any): string {
+    return result.result || result.value || 'N/A';
+  }
+  
+  getUnits(result: any): string {
+    return result.units || result.unit || '';
+  }
+  
+  getReferenceRange(result: any): string {
+    return result.referenceRange || result.normalRange || 'N/A';
+  }
+  
+  getStatus(result: any): string {
+    if (result.isAbnormal) return 'abnormal';
+    return result.status || 'normal';
+  }
+  
+  getStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'abnormal': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'normal': return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   }
   
-  getTrendClass(trend?: string): string {
-    if (!trend) return '';
-    
-    switch(trend) {
-      case 'up':
-        return 'text-status-warning';
-      case 'down':
-        return 'text-status-info';
-      case 'stable':
-        return 'text-status-success';
-      default:
-        return '';
+  getStatusIcon(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'critical': return '⚠️';
+      case 'abnormal': return '⚡';
+      case 'normal': return '✅';
+      case 'pending': return '⏳';
+      default: return '📋';
     }
+  }
+  
+  getOrderedDate(result: any): string {
+    return result.orderedDate || result.date || '';
+  }
+  
+  getResultDate(result: any): string {
+    return result.resultDate || result.date || '';
+  }
+  
+  getOrderedBy(result: any): string {
+    return result.orderedBy || result.doctor || 'Unknown Doctor';
+  }
+  
+  getLab(result: any): string {
+    return result.lab || result.laboratory || 'Unknown Lab';
+  }
+  
+  isRecentResult(result: any): boolean {
+    const resultDate = new Date(this.getResultDate(result));
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return resultDate > thirtyDaysAgo;
+  }
+  
+  getCriticalResultsCount(): number {
+    return this.labResults.filter(result => 
+      this.getStatus(result).toLowerCase() === 'critical'
+    ).length;
+  }
+  
+  getAbnormalResultsCount(): number {
+    return this.labResults.filter(result => 
+      this.getStatus(result).toLowerCase() === 'abnormal' || 
+      this.getStatus(result).toLowerCase() === 'critical'
+    ).length;
   }
 }

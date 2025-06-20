@@ -1,117 +1,138 @@
-<div class="bg-white rounded-card shadow-card h-full">
-    <div class="p-card-padding border-b border-border">
-      <div class="flex items-center justify-between">
-        <h3 class="text-card-title text-primary font-semibold">Vital Signs</h3>
-        <button class="text-primary hover:text-primary-dark">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="19" cy="12" r="1"></circle>
-            <circle cx="5" cy="12" r="1"></circle>
-          </svg>
-        </button>
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
+  <div class="p-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        </svg>
+        Vital Signs
+      </h3>
+      <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+        {{ vitals.length || 0 }} Readings
+      </span>
+    </div>
+  </div>
+  
+  <div class="p-4">
+    <!-- No Data State -->
+    <div *ngIf="!vitals || vitals.length === 0" class="text-center py-8">
+      <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      <p class="text-gray-500 text-sm">No vital signs data available</p>
+    </div>
+    
+    <!-- Latest Vitals Summary -->
+    <div *ngIf="latestVitals" class="mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-medium text-gray-700">Latest Reading</h4>
+        <span class="text-xs text-gray-500">
+          {{ getRecordedDate(latestVitals) | date:'MMM d, yyyy h:mm a' }}
+        </span>
+      </div>
+      
+      <!-- Vital Signs Grid -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <!-- Blood Pressure -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-gray-600">Blood Pressure</span>
+            <span class="text-xs px-2 py-1 rounded-full {{ getBPStatusColor(getBPStatus(getSystolic(latestVitals), getDiastolic(latestVitals))) }}">
+              {{ getBPStatus(getSystolic(latestVitals), getDiastolic(latestVitals)) | titlecase }}
+            </span>
+          </div>
+          <div class="text-lg font-bold text-gray-900">
+            {{ getSystolic(latestVitals) }}/{{ getDiastolic(latestVitals) }}
+          </div>
+          <div class="text-xs text-gray-500">mmHg</div>
+        </div>
+        
+        <!-- Pulse Rate -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-gray-600">Pulse Rate</span>
+          </div>
+          <div class="text-lg font-bold text-gray-900">{{ getPulse(latestVitals) }}</div>
+          <div class="text-xs text-gray-500">bpm</div>
+        </div>
+        
+        <!-- Temperature -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-gray-600">Temperature</span>
+            <span class="text-xs px-2 py-1 rounded-full {{ getTemperatureStatusColor(getTemperatureStatus(getTemperature(latestVitals))) }}">
+              {{ getTemperatureStatus(getTemperature(latestVitals)) | titlecase }}
+            </span>
+          </div>
+          <div class="text-lg font-bold text-gray-900">{{ getTemperatureDisplay(latestVitals) }}</div>
+        </div>
+        
+        <!-- Oxygen Saturation -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-gray-600">O2 Saturation</span>
+            <span class="text-xs px-2 py-1 rounded-full {{ getO2SatStatusColor(getO2SatStatus(latestVitals.oxygenSaturation || 0)) }}">
+              {{ getO2SatStatus(latestVitals.oxygenSaturation || 0) | titlecase }}
+            </span>
+          </div>
+          <div class="text-lg font-bold text-gray-900">{{ latestVitals.oxygenSaturation || 'N/A' }}%</div>
+        </div>
+      </div>
+      
+      <!-- Additional Measurements -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <!-- Weight -->
+        <div class="bg-blue-50 rounded-lg p-3">
+          <div class="text-xs font-medium text-blue-600 mb-1">Weight</div>
+          <div class="text-sm font-bold text-blue-900">{{ getWeightDisplay(latestVitals) }}</div>
+        </div>
+        
+        <!-- Height -->
+        <div class="bg-blue-50 rounded-lg p-3">
+          <div class="text-xs font-medium text-blue-600 mb-1">Height</div>
+          <div class="text-sm font-bold text-blue-900">{{ getHeightDisplay(latestVitals) }}</div>
+        </div>
+      </div>
+      
+      <!-- Recorded By -->
+      <div class="bg-gray-50 rounded-lg p-2">
+        <div class="text-xs text-gray-600">
+          <span class="font-medium">Recorded by:</span> {{ getRecordedBy(latestVitals) }}
+        </div>
       </div>
     </div>
     
-    <div class="p-card-padding">
-      <div *ngIf="!latestVitals" class="text-center py-6 text-text-light">
-        No vital signs data available.
-      </div>
-      
-      <div *ngIf="latestVitals">
-        <div class="text-sm text-text-light mb-3">
-          Last recorded: {{ latestVitals.date | date:'MMM d, yyyy' }}
-        </div>
-        
-        <!-- Blood Pressure -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <div class="bg-hover rounded-lg p-3">
-            <div class="text-sm text-text-light mb-1">Blood Pressure</div>
-            <div class="flex items-baseline">
-              <span class="text-xl font-bold"
-                [ngClass]="{
-                  'text-status-urgent': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'crisis' || getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'low',
-                  'text-status-warning': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'high',
-                  'text-status-info': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'elevated',
-                  'text-success': getBPStatus(latestVitals.systolic, latestVitals.diastolic) === 'normal'
-                }"
-              >
-                {{ latestVitals.systolic }}/{{ latestVitals.diastolic }}
-              </span>
-              <span class="text-sm text-text-light ml-1">mmHg</span>
+    <!-- Recent Readings Timeline -->
+    <div *ngIf="displayVitals.length > 1" class="border-t border-gray-200 pt-4">
+      <h4 class="text-sm font-medium text-gray-700 mb-3">Recent Readings</h4>
+      <div class="space-y-2">
+        <div *ngFor="let vital of displayVitals.slice(1, 4)" class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+          <div class="flex items-center space-x-3">
+            <div class="text-xs text-gray-500">
+              {{ getRecordedDate(vital) | date:'MMM d' }}
+            </div>
+            <div class="text-sm font-medium">
+              {{ getSystolic(vital) }}/{{ getDiastolic(vital) }}
+            </div>
+            <div class="text-sm text-gray-600">
+              {{ getPulse(vital) }} bpm
             </div>
           </div>
-          
-          <!-- Pulse -->
-          <div class="bg-hover rounded-lg p-3">
-            <div class="text-sm text-text-light mb-1">Pulse</div>
-            <div class="flex items-baseline">
-              <span class="text-xl font-bold">{{ latestVitals.pulse }}</span>
-              <span class="text-sm text-text-light ml-1">bpm</span>
-            </div>
-          </div>
-        </div>
-        
-      <!-- Temperature and Respiratory Rate -->
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div class="bg-hover rounded-lg p-3">
-          <div class="text-sm text-text-light mb-1">Temperature</div>
-          <div class="flex items-baseline">
-            <span class="text-xl font-bold"
-              [ngClass]="{
-                'text-status-warning': getTemperatureStatus(latestVitals.temperature) === 'high',
-                'text-success': getTemperatureStatus(latestVitals.temperature) === 'normal',
-                'text-status-info': getTemperatureStatus(latestVitals.temperature) === 'low'
-              }"
-            >
-              {{ latestVitals.temperature }}
-            </span>
-            <span class="text-sm text-text-light ml-1">°C</span>
-          </div>
-        </div>
-        
-        <!-- Respiratory Rate -->
-        <div class="bg-hover rounded-lg p-3">
-          <div class="text-sm text-text-light mb-1">Respiratory Rate</div>
-          <div class="flex items-baseline">
-            <span class="text-xl font-bold">{{ latestVitals.respiratoryRate }}</span>
-            <span class="text-sm text-text-light ml-1">breaths/min</span>
+          <div class="text-xs text-gray-500">
+            {{ getRecordedBy(vital) }}
           </div>
         </div>
       </div>
-      
-      <!-- O2 Saturation and Weight/Height -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-hover rounded-lg p-3">
-          <div class="text-sm text-text-light mb-1">O₂ Saturation</div>
-          <div class="flex items-baseline">
-            <span class="text-xl font-bold"
-              [ngClass]="{
-                'text-status-urgent': getO2SatStatus(latestVitals.oxygenSaturation) === 'low',
-                'text-status-warning': getO2SatStatus(latestVitals.oxygenSaturation) === 'borderline',
-                'text-success': getO2SatStatus(latestVitals.oxygenSaturation) === 'normal'
-              }"
-            >
-              {{ latestVitals.oxygenSaturation }}
-            </span>
-            <span class="text-sm text-text-light ml-1">%</span>
-          </div>
-        </div>
-        
-        <!-- Weight and Height -->
-        <div class="bg-hover rounded-lg p-3">
-          <div class="text-sm text-text-light mb-1">Weight / Height</div>
-          <div class="flex items-baseline">
-            <span class="text-xl font-bold">{{ latestVitals.weight }} kg / {{ latestVitals.height }} cm</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- View BP Chart button -->
-      <div class="mt-4">
-        <button class="w-full text-center text-primary hover:text-primary-dark border border-primary hover:border-primary-dark rounded-button py-2 transition-colors">
-          View BP Chart
-        </button>
-      </div>
+    </div>
+    
+    <!-- View All Button -->
+    <div class="mt-4 pt-4 border-t border-gray-200">
+      <button class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors duration-200">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        View All Vital Signs ({{ vitals.length }})
+      </button>
     </div>
   </div>
 </div>

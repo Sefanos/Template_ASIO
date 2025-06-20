@@ -1,17 +1,51 @@
 <div class="container mx-auto p-6">
-  <!-- Loading Indicator (if needed) -->
-  <div *ngIf="patientId && !patient" class="flex justify-center items-center h-64">
+  <!-- Breadcrumb Navigation -->
+  <nav class="mb-6" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-gray-500">
+      <li>
+        <a routerLink="/doctor/patients" 
+           class="hover:text-primary-600 transition-colors duration-200">
+          Patient Management
+        </a>
+      </li>
+      <li>/</li>
+      <li class="text-gray-900 font-medium">
+        {{ patient?.name || 'Patient Record' }}
+      </li>
+    </ol>
+  </nav>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="flex justify-center items-center h-64">
     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
   </div>
   
   <!-- Error State - Patient Not Found -->
-  <div *ngIf="patientId && !patient && !loading">
-    <app-patient-not-found (goBack)="goBackToPatientList()"></app-patient-not-found>
+  <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+    <app-patient-not-found 
+      [errorMessage]="errorMessage"
+      (goBack)="goBackToPatientList()">
+    </app-patient-not-found>
   </div>
   
   <!-- Patient Record Content -->
-  <div *ngIf="patient">
+  <div *ngIf="patient && !loading && !error">
     <!-- Header with back button and actions -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Patient Medical Record</h1>
+      <button
+        (click)="refreshPatientData()"
+        [disabled]="loading"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        <svg class="w-4 h-4 mr-2" [class.animate-spin]="loading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M4 20l5-5m11-6l-5 5"></path>
+        </svg>
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+
+    <!-- Patient Record Header Component -->
     <app-patient-record-header 
       (goBack)="goBackToPatientList()"
       (toggleQuickNote)="toggleQuickNoteForm()"
@@ -35,16 +69,19 @@
     
     <!-- Patient Alerts -->
     <app-patient-alerts
+      *ngIf="patient"
       [allergies]="patient.allergies || []"
       [alerts]="patient.alerts || []"
-    ></app-patient-alerts>
-    
-    <!-- Patient Info Header - Enhanced to ensure name displays with debugging -->
+    ></app-patient-alerts>    <!-- Patient Info Header - Enhanced with real medical statistics -->
     <app-patient-info-header
+      *ngIf="patient"
       [patientId]="patient.id"
-      [name]="patient.name || 'Amine Zeta'"
+      [name]="patient.name || 'Unknown Patient'"
       [dob]="patient.dob || 'N/A'"
       [phone]="patient.phone || 'N/A'"
+      [email]="patient.email || 'N/A'"
+      [age]="patientInfo?.age"
+      [gender]="patientInfo?.gender"
       (newPrescription)="newPrescription()"
       (scheduleAppointment)="scheduleAppointment()"
       (sendMessage)="sendMessage()"
@@ -57,17 +94,20 @@
     ></app-patient-tabs>
     
     <!-- Tab Content -->
-    <div [ngSwitch]="activeTab" class="mt-6">
-      <!-- Summary Tab -->
+    <div [ngSwitch]="activeTab" class="mt-6">      <!-- Summary Tab with Real API Data -->
       <app-tab-summary 
         *ngSwitchCase="'summary'"
         [patient]="patient"
-        [vitals]="vitals"
-        [medications]="medications"
-        [conditions]="conditions"
-        [labResults]="labResults"
-        [appointments]="appointments"
-        [patientNotes]="patientNotes"
+        [patientId]="patientId"
+        [medicalSummary]="medicalSummary"
+        [patientInfo]="patientInfo"
+        [recentVitals]="patient.vitalSigns || []"
+        [activeMedications]="patient.medications || []"
+        [medicalHistory]="patient.conditions || []"
+        [labResults]="patient.labResults || []"
+        [recentNotes]="patient.notes || []"
+        [activeAlerts]="patient.alerts || []"
+        [appointments]="patient.appointments || []"
       ></app-tab-summary>
       
       <!-- Timeline Tab -->

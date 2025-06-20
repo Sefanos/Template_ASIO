@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +31,13 @@ import {
 } from '../../../models/patient-record.model';
 import { PatientService } from '../../../shared/services/patient.service';
 import { PatientDataUtilsService } from '../../../shared/services/patient-data-utils.service';
+import { 
+  PatientMedicalService, 
+  PatientMedicalSummary, 
+  PatientInfo, 
+  MedicalOverview,
+  TimelineEvent as MedicalTimelineEvent 
+} from '../../../services/doc-services/patient-medical.service';
 
 @Component({
   selector: 'app-patient-record',
@@ -58,11 +65,20 @@ export class PatientRecordComponent implements OnInit {
   // Page state
   patientId: number | null = null;
   patient: Patient | null = null;
+  patientInfo: PatientInfo | null = null;
+  medicalSummary: MedicalOverview | null = null;
   activeTab: string = 'summary';
   quickNote: string = '';
   showQuickNoteForm: boolean = false;
   showPrintOptions: boolean = false;
-  loading: boolean = true; 
+  loading: boolean = true;
+  error: boolean = false;
+  errorMessage: string = '';
+    // Breadcrumbs
+  breadcrumbs = [
+    { label: 'Patient Management', route: '/doctor/patients' },
+    { label: 'Medical Record', route: null, current: true }
+  ];
 
   // Transformed data for components
   vitals: VitalSign[] = [];
@@ -73,17 +89,16 @@ export class PatientRecordComponent implements OnInit {
   timelineEvents: TimelineEvent[] = [];
   patientNotes: Note[] = [];
   
-  
-  // Inject services using modern Angular DI pattern
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private patientService = inject(PatientService);
-  private dataUtils = inject(PatientDataUtilsService);
-  private cdr = inject(ChangeDetectorRef);
-  
-  constructor() {}
-  
-  ngOnInit(): void {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private patientService: PatientService, 
+    private patientMedicalService: PatientMedicalService,
+    private dataUtils: PatientDataUtilsService,
+    private cdr: ChangeDetectorRef
+  ) {}
+    ngOnInit(): void {
+    console.log('PatientRecordComponent initialized');
     this.loadPatientData();
   }
 
@@ -91,44 +106,193 @@ export class PatientRecordComponent implements OnInit {
    * Load patient data from the route parameters
    */
   private loadPatientData(): void {
-    this.route.paramMap.subscribe(params => {
-      const idParam = params.get('id');
+    this.route.paramMap.subscribe((params) => {
+      const idParam = params.get('patientId');
+      console.log('Route patientId parameter:', idParam);
+      
       if (idParam) {
         this.patientId = parseInt(idParam, 10);
+        
+        if (isNaN(this.patientId)) {
+          console.error('Invalid patient ID:', idParam);
+          this.error = true;
+          this.errorMessage = 'Invalid patient ID provided';
+          this.loading = false;
+          return;
+        }
+          console.log('Loading medical data for patient ID:', this.patientId);
         this.loading = true;
-        
-        // First try to get data from service
-        this.patientService.getPatientById(this.patientId)
-          .subscribe({
-            next: (patient) => {
-              if (patient) {
-                this.patient = patient;
-                this.processPatientData();
+          // Load the patient medical summary from our new service
+        this.patientMedicalService.getPatientMedicalSummary(this.patientId, true) // Force refresh to avoid cache issues
+          .subscribe({            next: (response: any) => {
+              console.log('Received API response (after service transformation):', response);
+              
+              // The service already transforms the response and extracts the data
+              // So 'response' here is the actual medical summary data, not the wrapped response
+              const summary = response;
+              
+              if (summary) {
+                // Store the raw API response data with more flexible field mapping
+                this.patientInfo = summary.basic_info || summary.patient || summary;
+                this.medicalSummary = summary.statistics || summary.stats || summary;
+                
+                console.log('Patient info extracted:', this.patientInfo);
+                console.log('Medical summary extracted:', this.medicalSummary);
+                
+                // Create a patient object from the medical summary
+                const transformedPatient = this.transformPatientFromSummary(summary);
+                
+                if (transformedPatient) {
+                  this.patient = transformedPatient;
+                  console.log('Successfully transformed patient:', transformedPatient);
+                  // Also process additional data for child components
+                  this.processPatientData();
+                } else {
+                  console.error('Failed to transform patient data - creating fallback patient');
+                  // Create a fallback patient object
+                  this.patient = {
+                    id: this.patientId,
+                    name: 'Patient ' + this.patientId,
+                    email: '',
+                    phone: '',
+                    gender: '',
+                    dob: '',
+                    address: '',
+                    photo: '',
+                    status: 'Active',
+                    allergies: [],
+                    conditions: [],
+                    medications: [],
+                    alerts: [],
+                    vitalSigns: [],
+                    labResults: [],
+                    notes: [],
+                    appointments: [],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  } as Patient;
+                  this.processPatientData();
+                }
               } else {
-                // Fallback to using sample patient if service returns null
-                console.log('Using sample patient data as fallback');
-        
+                console.error('No medical summary data returned for patient');
+                this.error = true;
+                this.errorMessage = 'Could not load patient data';
+                this.loading = false;
               }
-            },
-            error: (err) => {
-              console.error('Error loading patient data:', err);
+            },            error: (err: any) => {
+              console.error('Error loading patient medical data:', err);
+              
+              // Handle different types of errors
+              if (err.status === 404) {
+                this.error = true;
+                this.errorMessage = 'Patient not found';
+              } else if (err.status === 401 || err.status === 403) {
+                this.error = true;
+                this.errorMessage = 'Access denied to patient records';
+              } else if (err.status === 0) {
+                this.error = true;
+                this.errorMessage = 'Network connection error. Please check your internet connection.';
+              } else if (err.status >= 500) {
+                this.error = true;
+                this.errorMessage = 'Server error. Please try again later.';
+              } else {
+                this.error = true;
+                this.errorMessage = err.error?.message || 'Error loading patient data';
+              }
+              
+              this.loading = false;
             },
             complete: () => {
               this.loading = false;
             }
           });
       } else {
-        // Use sample data if no ID in route
-        Error('No patient ID in route parameters');
+        console.error('No patient ID in route parameters');
+        this.error = true;
+        this.errorMessage = 'Invalid patient ID';
+        this.loading = false;
       }
     });
     
-    // If no route param is available after 1 second, use sample data
+    // If no data after 3 seconds, show error state
     setTimeout(() => {
       if (this.loading && !this.patient) {
-        console.log('No route param or slow response - using sample data');
+        console.error('Timeout loading patient data');
+        this.error = true;
+        this.errorMessage = 'Timeout loading patient data';
+        this.loading = false;
       }
-    }, 1000);
+    }, 3000);
+  }  /**
+   * Transform PatientMedicalSummary to Patient model for backwards compatibility
+   */
+  private transformPatientFromSummary(summary: any): Patient | null {
+    // Add comprehensive null safety checks
+    if (!summary) {
+      console.warn('PatientMedicalSummary is null or undefined');
+      return null;
+    }
+    
+    console.log('Summary keys:', Object.keys(summary));
+    console.log('Summary structure:', summary);
+    
+    let patientInfo = null;
+    
+    // Try to find patient info in different possible locations
+    if (summary.basic_info) {
+      patientInfo = summary.basic_info;
+      console.log('Found basic_info:', patientInfo);
+    } else if (summary.patient) {
+      patientInfo = summary.patient;
+      console.log('Found patient:', patientInfo);
+    } else if (summary.patientInfo) {
+      patientInfo = summary.patientInfo;
+      console.log('Found patientInfo:', patientInfo);
+    } else if (summary.data && summary.data.basic_info) {
+      patientInfo = summary.data.basic_info;
+      console.log('Found data.basic_info:', patientInfo);
+    } else {
+      console.warn('No patient info found in expected locations. Trying to use summary directly...');
+      // Try to use summary directly if it has patient-like properties
+      if (summary.id || summary.full_name || summary.name || summary.email) {
+        patientInfo = summary;
+        console.log('Using summary as patient info:', patientInfo);
+      } else {
+        console.error('No valid patient data found in summary');
+        return null;
+      }
+    }
+    
+    // Create patient object with comprehensive null safety
+    const patient = {
+      id: patientInfo?.id || this.patientId || 0,
+      name: patientInfo?.full_name || patientInfo?.name || 'Unknown Patient',
+      email: patientInfo?.email || '',
+      phone: patientInfo?.phone || '',
+      gender: patientInfo?.gender || '',
+      dob: patientInfo?.birthdate || patientInfo?.dob || '',
+      address: patientInfo?.address || '',
+      photo: patientInfo?.profile_image || patientInfo?.photo || '',
+      status: patientInfo?.status || 'Active',
+      
+      // Medical data from API response (try different locations)
+      allergies: summary.active_alerts || summary.allergies || [],
+      conditions: summary.medical_history || summary.conditions || [],
+      medications: summary.active_medications || summary.medications || [],
+      alerts: summary.active_alerts || summary.alerts || [],
+      vitalSigns: summary.recent_vitals || summary.vitals || [],
+      labResults: summary.recent_lab_results || summary.labResults || [],
+      notes: summary.recent_notes || summary.notes || [],
+      appointments: summary.appointments?.upcoming || summary.appointments || [],
+      medicalHistory: summary.medical_history || [],
+      
+      // Metadata with null safety
+      created_at: patientInfo?.registration_date || patientInfo?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as Patient;
+    
+    console.log('Successfully transformed patient:', patient);
+    return patient;
   }
   
   /**
@@ -170,6 +334,8 @@ export class PatientRecordComponent implements OnInit {
       }, 100);
     } catch (error) {
       console.error('Error transforming patient data:', error);
+      this.error = true;
+      this.errorMessage = 'Error processing patient data';
     }
   }
   
@@ -179,19 +345,54 @@ export class PatientRecordComponent implements OnInit {
   setActiveTab(tab: string): void {
     console.log(`Switching to tab: ${tab}`);
     this.activeTab = tab;
+    
+    // Load tab-specific data if needed
+    this.loadTabData(tab);
+    
     // Force change detection when tab changes
     this.cdr.detectChanges();
   }
   
   /**
+   * Load data specific to a tab (lazy loading)
+   */
+  private loadTabData(tab: string): void {
+    if (!this.patientId) return;
+    
+    switch (tab) {
+      case 'timeline':
+        this.patientMedicalService.getPatientTimeline(this.patientId)
+          .subscribe(events => {
+            console.log(`Loaded ${events.length} timeline events`);
+            // Transform timeline events to match the expected format
+            // Will need to implement this transformation
+          });
+        break;
+        
+      case 'notes':
+        this.patientMedicalService.getPatientNotes(this.patientId)
+          .subscribe(notes => {
+            console.log(`Loaded ${notes.length} notes`);
+            // Transform notes to match the expected format
+            // Will need to implement this transformation
+          });
+        break;
+        
+      // Add more cases for other tabs as needed
+    }
+  }
+  
+  /**
    * Navigate back to patient list
-   */  goBackToPatientList(): void {
+   */
+  goBackToPatientList(): void {
     this.router.navigate(['/doctor/patients']);
   }
   
   /**
    * Navigate to prescription page
-   */  newPrescription(): void {
+   */
+  newPrescription(): void {
     this.router.navigate(['/doctor/prescription'], { 
       queryParams: { patientId: this.patientId } 
     });
@@ -263,5 +464,30 @@ export class PatientRecordComponent implements OnInit {
     console.log(`Printing ${section} for patient ${this.patientId}`);
     this.showPrintOptions = false;
     // In a real app, this would generate a printable view of the selected section
+  }
+  
+  /**
+   * Refresh all patient data
+   */
+  refreshPatientData(): void {
+    if (this.patientId) {
+      this.loading = true;
+      this.patientMedicalService.getPatientMedicalSummary(this.patientId, true) // force refresh
+        .subscribe({
+          next: (summary) => {
+            if (summary) {
+              this.patientInfo = summary.patient;
+              this.medicalSummary = summary.medical_summary;
+              this.patient = this.transformPatientFromSummary(summary);
+              this.processPatientData();
+            }
+            this.loading = false;
+          },
+          error: (err) => {
+            console.error('Error refreshing patient data:', err);
+            this.loading = false;
+          }
+        });
+    }
   }
 }
