@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { VitalSignsModalComponent } from '../vital-signs-modal/vital-signs-modal.component';
 
 // Updated interface to match real API data structure
 interface ApiVitalSign {
@@ -49,11 +50,17 @@ interface VitalSign {
 @Component({
   selector: 'app-vital-signs-card',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './vital-signs-card.component.html',
+  imports: [CommonModule, VitalSignsModalComponent], // Make sure VitalSignsModalComponent is here
+  templateUrl: './vital-signs-card.component.html'
 })
 export class VitalSignsCardComponent {
-  @Input() vitals: any[] = []; // Accept both old and new format
+  @Input() vitals: any[] = [];
+  @Input() patientId: string = '';
+  @Output() vitalsUpdated = new EventEmitter<any[]>(); // NEW: Emit when vitals change
+  @Output() modalOpened = new EventEmitter<void>(); // NEW: Emit modal open event
+  
+  // Modal state
+  isModalOpen: boolean = false;
   
   get latestVitals(): ApiVitalSign | VitalSign | null {
     if (!this.vitals || this.vitals.length === 0) {
@@ -70,7 +77,46 @@ export class VitalSignsCardComponent {
   }
   
   get displayVitals(): any[] {
-    return this.vitals.slice(0, 5); // Show latest 5 readings
+    return this.vitals.slice(0, 2); // CHANGED: Show only 2 recent readings instead of 5
+  }
+  
+  // NEW: Get recent readings for timeline (only 2)
+  get recentReadings(): any[] {
+    if (this.vitals.length <= 1) return [];
+    return this.vitals.slice(1, 3); // Show 2nd and 3rd readings
+  }
+  
+  // NEW: Open modal method - FIXED
+  openVitalSignsModal(): void {
+    this.isModalOpen = true; // Set modal state to open
+    this.modalOpened.emit(); // Also emit event if needed
+  }
+  
+  // Modal control methods - FIXED
+  closeModal(): void {
+    this.isModalOpen = false;
+  }
+  
+  // NEW: CRUD event handlers
+  onVitalAdded(newVital: any): void {
+    this.vitals = [newVital, ...this.vitals];
+    this.vitalsUpdated.emit(this.vitals);
+    console.log('New vital signs added:', newVital);
+  }
+  
+  onVitalUpdated(updatedVital: any): void {
+    const index = this.vitals.findIndex(v => v.id === updatedVital.id);
+    if (index !== -1) {
+      this.vitals[index] = updatedVital;
+      this.vitalsUpdated.emit(this.vitals);
+      console.log('Vital signs updated:', updatedVital);
+    }
+  }
+  
+  onVitalDeleted(vitalId: number): void {
+    this.vitals = this.vitals.filter(v => v.id !== vitalId);
+    this.vitalsUpdated.emit(this.vitals);
+    console.log('Vital signs deleted:', vitalId);
   }
   
   // Helper method to get systolic BP from either format

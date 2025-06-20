@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 // Import all card components used in the template
@@ -42,6 +42,9 @@ export class TabSummaryComponent implements OnChanges {
   @Input() medicalHistory: any[] = [];
   @Input() recentNotes: any[] = [];
   @Input() activeAlerts: any[] = [];
+  
+  // Output for tab change event
+  @Output() tabChange = new EventEmitter<string>();
   
   // Computed properties for display
   get displayVitals(): any[] {
@@ -88,5 +91,10 @@ export class TabSummaryComponent implements OnChanges {
     setTimeout(() => {
       this.cdr.detectChanges();
     }, 0);
+  }
+  
+  // Handle navigation from child components
+  onNavigateToTab(tabName: string): void {
+    this.tabChange.emit(tabName);
   }
 }

@@ -1,76 +1,98 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ChangeDetectorRef, AfterViewInit, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-patient-info-header',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './patient-info-header.component.html',
+  templateUrl: './patient-info-header.component.html'
 })
-export class PatientInfoHeaderComponent implements OnInit, OnChanges, AfterViewInit {
-  @Input() patientId: number = 0;
-  @Input() name: string = 'Unknown Patient';
-  @Input() dob: string = '';
+export class PatientInfoHeaderComponent {
+  @Input() name: string = '';
+  @Input() age: number | undefined;
+  @Input() gender: string = '';
   @Input() phone: string = '';
   @Input() email: string = '';
-  @Input() age: number | undefined;
-  @Input() gender: string | undefined;
-  
-  // New medical statistics inputs
-  @Input() totalAppointments: number | undefined;
-  @Input() upcomingAppointments: number | undefined;
-  @Input() activeMedications: number | undefined;
-  @Input() activeAlerts: number | undefined;
-  @Input() lastVisit: string | null | undefined;
-  @Input() nextAppointment: string | undefined;
-  
-  // For tracking state
-  displayName: string = '';
-  
-  @Output() newPrescription = new EventEmitter<void>();
-  @Output() scheduleAppointment = new EventEmitter<void>();
-  @Output() sendMessage = new EventEmitter<void>();
-  
-  constructor(private cdr: ChangeDetectorRef) {}
-  
-  ngOnInit(): void {
-    // Initialize displayName with the input name or fallback
-    this.updateDisplayName();
-    console.log('Patient info header initialized with name:', this.name);
+  @Input() dob: string = '';
+  @Input() patientData: any = null;
+
+  // Get patient initials for avatar
+  getInitials(): string {
+    if (!this.name) return 'UK';
+    
+    const nameParts = this.name.trim().split(' ');
+    if (nameParts.length >= 2) {
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    }
+    return nameParts[0].substring(0, 2).toUpperCase();
   }
-  
-  ngOnChanges(changes: SimpleChanges): void {
-    // Update display name whenever input changes
-    if (changes['name']) {
-      console.log('Patient name changed:', changes['name'].currentValue);
-      this.updateDisplayName();
+
+  // Format date of birth properly
+  getFormattedDOB(): string {
+    if (!this.dob) return '';
+    
+    try {
+      const date = new Date(this.dob);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      // Format as MM/DD/YYYY or DD/MM/YYYY based on locale
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch (error) {
+      console.warn('Invalid date format for DOB:', this.dob);
+      return '';
     }
   }
-  
-  ngAfterViewInit(): void {
-    // Force change detection after view is initialized
-    setTimeout(() => {
-      this.updateDisplayName();
-      this.cdr.detectChanges();
-      console.log('After view init, name:', this.displayName);
-    }, 0);
+
+  // Get display gender (avoid showing "Other" if not meaningful)
+  getDisplayGender(): string {
+    if (!this.gender) return '';
+    
+    const normalizedGender = this.gender.toLowerCase().trim();
+    
+    // Only show meaningful gender values
+    if (['male', 'm', 'female', 'f'].includes(normalizedGender)) {
+      return this.gender.charAt(0).toUpperCase() + this.gender.slice(1).toLowerCase();
+    }
+    
+    // Don't show "Other" or unclear values
+    return '';
   }
-  
-  private updateDisplayName(): void {
-    this.displayName = this.name || 'Unknown Patient';
-    // Force change detection
-    this.cdr.detectChanges();
+
+  // Medical statistics methods
+  getTotalVisits(): number {
+    return this.patientData?.total_visits || 0;
   }
-  
-  onNewPrescription(): void {
-    this.newPrescription.emit();
+
+  getActiveMedications(): number {
+    return this.patientData?.active_medications?.length || 0;
   }
-  
-  onScheduleAppointment(): void {
-    this.scheduleAppointment.emit();
+
+  getActiveAlerts(): number {
+    const allergies = this.patientData?.allergies?.length || 0;
+    const alerts = this.patientData?.active_alerts?.length || 0;
+    return allergies + alerts;
   }
-  
-  onSendMessage(): void {
-    this.sendMessage.emit();
+
+  getLastVisit(): string {
+    if (!this.patientData?.last_visit) return 'No visits';
+    
+    try {
+      const date = new Date(this.patientData.last_visit);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return 'Unknown';
+    }
   }
 }

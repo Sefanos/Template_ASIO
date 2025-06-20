@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 // Updated interface to match real API data structure
@@ -26,6 +26,7 @@ interface ApiMedication {
 })
 export class MedicationsCardComponent {
   @Input() medications: any[] = []; // Accept both old and new format
+  @Output() navigateToTab = new EventEmitter<string>();
   
   showAll: boolean = false;
   
@@ -37,11 +38,26 @@ export class MedicationsCardComponent {
   
   get displayMedications(): any[] {
     const meds = this.activeMedications;
-    return this.showAll ? meds : meds.slice(0, 3);
+    return this.showAll ? meds : meds.slice(0, 2);
   }
   
-  get hasMoreMedications(): boolean {
-    return this.activeMedications.length > 3;
+  
+  // Show only first 2 medications in summary
+  getDisplayMedications(): any[] {
+    if (!this.medications || !Array.isArray(this.medications)) {
+      return [];
+    }
+    return this.medications.slice(0, 2); // Show only first 2
+  }
+
+  // Check if there are more than 2 medications
+  hasMoreMedications(): boolean {
+    return this.medications && Array.isArray(this.medications) && this.medications.length > 2;
+  }
+
+  // Get total count of medications
+  getTotalMedicationsCount(): number {
+    return this.medications ? this.medications.length : 0;
   }
   
   // Helper methods for medication data
@@ -106,5 +122,11 @@ export class MedicationsCardComponent {
   
   toggleShowAll(): void {
     this.showAll = !this.showAll;
+  }
+
+  // Navigate to prescriptions tab
+  showAllMedications(): void {
+    // Emit event to parent component to switch to prescriptions tab
+    this.navigateToTab.emit('prescriptions');
   }
 }

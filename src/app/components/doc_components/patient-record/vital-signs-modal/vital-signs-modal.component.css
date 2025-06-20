@@ -1,0 +1,89 @@
+/* Modal animations */
+.modal-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Smooth transitions */
+.transition-colors {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Form validation states */
+.ng-invalid.ng-touched {
+  border-color: #ef4444;
+}
+
+.ng-valid.ng-touched {
+  border-color: #10b981;
+}
+
+/* Custom scrollbar for modal body */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Status color utilities */
+.status-normal {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-elevated {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-high {
+  @apply bg-orange-100 text-orange-800;
+}
+
+.status-crisis {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-low {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* Table hover effects */
+tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .modal-body {
+    max-height: calc(100vh - 8rem);
+  }
+}
