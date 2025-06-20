@@ -44,6 +44,7 @@ export class PatientListTableComponent {
   constructor(private router: Router) {} // Add Router injection
 
   changePage(page: number): void {
+
     this.pageChange.emit(page);
   }
   
@@ -57,6 +58,7 @@ export class PatientListTableComponent {
   }
     onGoToPatientRecord(id: string, event: Event): void {
     event.stopPropagation(); // Prevent row toggling
+
     this.viewPatient.emit(id);
   }
   
@@ -133,5 +135,6 @@ export class PatientListTableComponent {
     
     const patientId = parseInt(patient.id);
     this.toggleRowExpansion(patientId);
+
   }
 }
