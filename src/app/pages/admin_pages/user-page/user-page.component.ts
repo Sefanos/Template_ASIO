@@ -58,7 +58,6 @@ export class UserPageComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading statuses:', error);
-        // Default fallback statuses
         this.statuses = ['active', 'pending', 'inactive']; 
       }
     });
@@ -85,7 +84,7 @@ export class UserPageComponent implements OnInit {
     return this.fb.group({
       name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      roles: [[], [Validators.required]],
+      role: ['', [Validators.required]],
       status: ['active', [Validators.required]],
       phoneNumber: [''],
       password: [''],
@@ -116,18 +115,16 @@ export class UserPageComponent implements OnInit {
     this.userService.getUser(userId).subscribe({
       next: (user) => {
         if (user) {
-          // Handle both role objects and role IDs
-          let roleIds: number[] = [];
+          let selectedRoleId = '';
           if (user.roles && user.roles.length > 0) {
-            roleIds = user.roles.map(role => isRoleObject(role) ? role.id : role);
+            const firstRole = user.roles[0];
+            selectedRoleId = isRoleObject(firstRole) ? firstRole.id.toString() : firstRole.toString();
           }
-          
-          console.log('Selected roles:', roleIds);
           
           this.userForm.patchValue({
             name: user.name || '',
             email: user.email,
-            roles: roleIds,
+            role: selectedRoleId,
             status: user.status || 'active',
             phoneNumber: user.phone || user.phoneNumber || '',
             changePassword: false,
@@ -162,30 +159,22 @@ export class UserPageComponent implements OnInit {
       const newUserData: UserCreationDto = {
         name: formValues.name,
         email: formValues.email,
-        roles: formValues.roles,
+        roles: [parseInt(formValues.role)],
         status: formValues.status,
-        // Important: Use 'phone' instead of 'phoneNumber'
         phone: formValues.phoneNumber,
         password: formValues.password,
         password_confirmation: formValues.confirmPassword
       };
       
-      console.log('Creating new user with data:', newUserData);
-      
       this.userService.addUser(newUserData).subscribe({
         next: (user) => {
-          console.log('User created successfully:', user);
-          
-          // For a new user, we need to explicitly assign roles after creation
-          if (formValues.roles && formValues.roles.length > 0) {
-            this.userService.assignRoles(user.id, formValues.roles).subscribe({
+          if (formValues.role) {
+            this.userService.assignRoles(user.id, [parseInt(formValues.role)]).subscribe({
               next: () => {
-                console.log('Roles assigned to new user');
                 this.returnToUsersList();
               },
               error: (roleError) => {
-                console.error('Error assigning roles to new user:', roleError);
-                // Continue anyway since the user was created
+                console.error('Error assigning role to new user:', roleError);
                 this.returnToUsersList();
               }
             });
@@ -206,31 +195,20 @@ export class UserPageComponent implements OnInit {
         }
       });
     } else {
-      // Updating existing user
       const userData: User = {
         id: this.userId || 0,
         name: formValues.name,
         email: formValues.email,
-        roles: [], // We'll assign roles separately
+        roles: [],
         status: formValues.status,
-        // Important: Use 'phone' instead of 'phoneNumber'
         phone: formValues.phoneNumber
       };
       
-      console.log('Updating user with data:', userData);
-      
-      // First update the user's basic info
       this.userService.updateUser(userData).subscribe({
         next: (updatedUser) => {
-          console.log('User updated successfully:', updatedUser);
-          
-          // Handle role assignment if roles were selected
-          if (formValues.roles && formValues.roles.length > 0) {
-            this.userService.assignRoles(this.userId as number, formValues.roles).subscribe({
+          if (formValues.role) {
+            this.userService.assignRoles(this.userId as number, [parseInt(formValues.role)]).subscribe({
               next: () => {
-                console.log('Roles assigned successfully');
-                
-                // Handle password reset if needed
                 if (formValues.changePassword && formValues.password) {
                   this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
                 } else {
@@ -239,10 +217,9 @@ export class UserPageComponent implements OnInit {
                 }
               },
               error: (roleError) => {
-                console.error('Error assigning roles:', roleError);
+                console.error('Error assigning role:', roleError);
                 this.loading = false;
                 
-                // Continue anyway as basic user info was updated
                 if (formValues.changePassword && formValues.password) {
                   this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
                 } else {
@@ -250,9 +227,7 @@ export class UserPageComponent implements OnInit {
                 }
               }
             });
-          } 
-          else {
-            // No roles to assign, handle password reset if needed
+          } else {
             if (formValues.changePassword && formValues.password) {
               this.resetUserPassword(this.userId as number, formValues.password, formValues.forceChange);
             } else {
@@ -325,7 +300,6 @@ export class UserPageComponent implements OnInit {
   }
   
   private returnToUsersList(): void {
-    // Get the return page from query params
     this.route.queryParams.subscribe(params => {
       const returnPage = params['returnPage'] || 1;
       const sortBy = params['sortBy'] || 'created_at';
@@ -338,14 +312,13 @@ export class UserPageComponent implements OnInit {
           sort_direction: sortDirection
         }
       });
-    }).unsubscribe(); // Unsubscribe immediately after use
+    }).unsubscribe();
   }
 
   cancel(): void {
     this.returnToUsersList();
   }
   
-  // Helper methods for form validation
   hasError(fieldName: string): boolean {
     return this.formSubmitted && 
            ((!!this.userForm.get(fieldName)?.errors) || 
@@ -369,25 +342,5 @@ export class UserPageComponent implements OnInit {
     }
     
     return 'Invalid value';
-  }
-
-  isRoleSelected(roleId: number): boolean {
-    const selectedRoles = this.userForm.get('roles')?.value || [];
-    return selectedRoles.includes(roleId);
-  }
-
-  toggleRole(roleId: number): void {
-    const selectedRoles = [...(this.userForm.get('roles')?.value || [])];
-    const index = selectedRoles.indexOf(roleId);
-    
-    if (index === -1) {
-      selectedRoles.push(roleId);
-    } else {
-      selectedRoles.splice(index, 1);
-    }
-    
-    this.userForm.patchValue({ roles: selectedRoles });
-    this.userForm.get('roles')?.markAsDirty();
-    this.userForm.updateValueAndValidity();
   }
 }
