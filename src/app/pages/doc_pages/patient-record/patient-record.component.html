@@ -75,13 +75,12 @@
     ></app-patient-alerts>    <!-- Patient Info Header - Enhanced with real medical statistics -->
     <app-patient-info-header
       *ngIf="patient"
-      [patientId]="patient.id"
       [name]="patient.name || 'Unknown Patient'"
       [dob]="patient.dob || 'N/A'"
       [phone]="patient.phone || 'N/A'"
       [email]="patient.email || 'N/A'"
       [age]="patientInfo?.age"
-      [gender]="patientInfo?.gender"
+      [gender]="patientInfo?.gender || ''"
       (newPrescription)="newPrescription()"
       (scheduleAppointment)="scheduleAppointment()"
       (sendMessage)="sendMessage()"
@@ -90,6 +89,7 @@
     <!-- Patient Tab Navigation -->
     <app-patient-tabs
       [activeTab]="activeTab"
+      [tabCounts]="getTabCounts()"
       (tabChange)="setActiveTab($event)"
     ></app-patient-tabs>
     
@@ -108,7 +108,8 @@
         [recentNotes]="patient.notes || []"
         [activeAlerts]="patient.alerts || []"
         [appointments]="patient.appointments || []"
-      ></app-tab-summary>
+        (tabChange)="setActiveTab($event)">
+      </app-tab-summary>
       
       <!-- Timeline Tab -->
       <app-tab-timeline 

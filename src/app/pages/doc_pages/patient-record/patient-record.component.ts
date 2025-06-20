@@ -80,6 +80,7 @@ export class PatientRecordComponent implements OnInit {
     { label: 'Medical Record', route: null, current: true }
   ];
 
+
   // Transformed data for components
   vitals: VitalSign[] = [];
   medications: Medication[] = [];
@@ -489,5 +490,33 @@ export class PatientRecordComponent implements OnInit {
           }
         });
     }
+  }
+
+  getTabCounts(): { [key: string]: number } {
+  return {
+    'summary': 0,
+    'timeline': this.timelineEvents?.length || 0,
+    'history': this.conditions?.length || 0,
+    'lab-results': this.labResults?.filter(lab => lab.status === 'critical').length || 0,
+    'prescriptions': this.medications?.length || 0,
+    'documents': 0,
+    'imaging': 0,
+    'notes': this.patientNotes?.length || 0,
+    'appointments': this.appointments?.length || 0,
+    'billing': 0
+  };
+}
+
+  // Helper methods for tab counts
+  getLabResultsCount(): number {
+    return this.patient?.labResults?.filter(lab => lab.status === 'critical').length || 0;
+  }
+
+  getActiveMedicationsCount(): number {
+    return this.patient?.medications?.length || 0;
+  }
+
+  getUpcomingAppointmentsCount(): number {
+    return this.patient?.appointments?.length || 0;
   }
 }

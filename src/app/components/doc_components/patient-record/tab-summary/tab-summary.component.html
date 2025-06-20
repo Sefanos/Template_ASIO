@@ -3,7 +3,10 @@
   <app-vital-signs-card [vitals]="displayVitals"></app-vital-signs-card>
   
   <!-- Medications Card with Real Data -->
-  <app-medications-card [medications]="displayMedications"></app-medications-card>
+<app-medications-card 
+  [medications]="activeMedications"
+  (navigateToTab)="onNavigateToTab($event)">
+</app-medications-card>
   
   <!-- Medical History Card with Real Data -->
   <app-medical-history-card [conditions]="displayConditions"></app-medical-history-card>

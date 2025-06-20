@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 })
 export class PatientTabsComponent implements OnInit, OnChanges {
   @Input() activeTab: string = 'summary';
+  @Input() tabCounts: { [key: string]: number } = {}; // NEW: Receive tab counts from parent
   @Output() tabChange = new EventEmitter<string>();
   
   // Display names for the tabs
@@ -21,8 +22,8 @@ export class PatientTabsComponent implements OnInit, OnChanges {
   constructor(private cdr: ChangeDetectorRef) {}
   
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['activeTab']) {
-      // Force change detection when activeTab changes
+    if (changes['activeTab'] || changes['tabCounts']) {
+      // Force change detection when activeTab or tabCounts changes
       this.cdr.detectChanges();
     }
   }
@@ -60,5 +61,11 @@ export class PatientTabsComponent implements OnInit, OnChanges {
     const tabValue = this.tabMap.get(tab) || tab.toLowerCase().replace(/ /g, '-');
     const isActive = this.activeTab === tabValue;
     return isActive;
+  }
+
+  // NEW: Get count for a specific tab
+  getTabCount(tab: string): number {
+    const tabValue = this.tabMap.get(tab) || tab.toLowerCase().replace(/ /g, '-');
+    return this.tabCounts[tabValue] || 0;
   }
 }

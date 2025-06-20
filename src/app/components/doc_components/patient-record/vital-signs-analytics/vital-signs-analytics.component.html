@@ -1,0 +1,306 @@
+<!-- Analytics Modal -->
+<div *ngIf="isOpen" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="analytics-title" role="dialog" aria-modal="true">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="close()"></div>
+
+    <!-- Modal Content -->
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+      
+      <!-- Header -->
+      <div class="bg-white px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="analytics-title">
+                📊 Vital Signs Analytics
+              </h3>
+              <p class="text-sm text-gray-500">
+                Statistical analysis and trends for patient vital signs
+              </p>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-3">
+            <!-- Timeframe Selector -->
+            <select 
+              [(ngModel)]="selectedTimeframe" 
+              (change)="onTimeframeChange()"
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+              <option *ngFor="let timeframe of timeframes" [value]="timeframe.value">
+                {{ timeframe.label }}
+              </option>
+            </select>
+            
+            <button (click)="close()" class="bg-white rounded-md text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="px-6 py-12 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p class="mt-2 text-sm text-gray-500">Analyzing vital signs data...</p>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!isLoading && !analytics" class="px-6 py-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No Data Available</h3>
+        <p class="mt-1 text-sm text-gray-500">No vital signs data found for the selected timeframe.</p>
+      </div>
+
+      <!-- Analytics Content -->
+      <div *ngIf="!isLoading && analytics" class="px-6 py-4 space-y-6">
+        
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Total Readings -->
+          <div class="bg-blue-50 rounded-lg p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-blue-900">Total Readings</p>
+                <p class="text-2xl font-bold text-blue-600">{{ analytics.overall.totalReadings }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Risk Level -->
+          <div class="bg-white border-2 rounded-lg p-4" [class]="getRiskColor(analytics.overall.riskLevel)">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium">Risk Level</p>
+                <p class="text-2xl font-bold capitalize">{{ analytics.overall.riskLevel }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Fever Episodes -->
+          <div class="bg-red-50 rounded-lg p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-red-900">Fever Episodes</p>
+                <p class="text-2xl font-bold text-red-600">{{ analytics.temperature.feverEpisodes }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Timeframe -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900">Timeframe</p>
+                <p class="text-lg font-semibold text-gray-600">{{ analytics.overall.timespan }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Blood Pressure Analytics -->
+          <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold text-gray-900">Blood Pressure Analysis</h4>
+              <span class="text-2xl">{{ getTrendIcon(analytics.bloodPressure.trend) }}</span>
+            </div>
+            
+            <div class="space-y-4">
+              <!-- Systolic -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Systolic</p>
+                  <p class="text-xs text-gray-500">Normal: 90-120 mmHg</p>
+                </div>
+                <div class="text-right">
+                  <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Min</p>
+                      <p class="text-sm font-semibold">{{ analytics.bloodPressure.systolic.min }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Avg</p>
+                      <p class="text-lg font-bold text-blue-600">{{ analytics.bloodPressure.systolic.avg }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Max</p>
+                      <p class="text-sm font-semibold">{{ analytics.bloodPressure.systolic.max }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Diastolic -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Diastolic</p>
+                  <p class="text-xs text-gray-500">Normal: 60-80 mmHg</p>
+                </div>
+                <div class="text-right">
+                  <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Min</p>
+                      <p class="text-sm font-semibold">{{ analytics.bloodPressure.diastolic.min }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Avg</p>
+                      <p class="text-lg font-bold text-blue-600">{{ analytics.bloodPressure.diastolic.avg }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Max</p>
+                      <p class="text-sm font-semibold">{{ analytics.bloodPressure.diastolic.max }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Trend -->
+              <div class="pt-2 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Trend:</span>
+                  <span class="text-sm font-medium capitalize {{ analytics.bloodPressure.trend === 'improving' ? 'text-green-600' : analytics.bloodPressure.trend === 'concerning' ? 'text-red-600' : 'text-gray-600' }}">
+                    {{ analytics.bloodPressure.trend }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pulse Rate Analytics -->
+          <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold text-gray-900">Pulse Rate Analysis</h4>
+              <span class="text-2xl">{{ getTrendIcon(analytics.pulse.trend) }}</span>
+            </div>
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Heart Rate</p>
+                  <p class="text-xs text-gray-500">Normal: 60-100 bpm</p>
+                </div>
+                <div class="text-right">
+                  <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Min</p>
+                      <p class="text-sm font-semibold">{{ analytics.pulse.min }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Avg</p>
+                      <p class="text-lg font-bold text-green-600">{{ analytics.pulse.avg }}</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Max</p>
+                      <p class="text-sm font-semibold">{{ analytics.pulse.max }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="pt-2 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Trend:</span>
+                  <span class="text-sm font-medium capitalize {{ analytics.pulse.trend === 'improving' ? 'text-green-600' : analytics.pulse.trend === 'concerning' ? 'text-red-600' : 'text-gray-600' }}">
+                    {{ analytics.pulse.trend }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Temperature Analytics -->
+          <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold text-gray-900">Temperature Analysis</h4>
+              <span class="text-2xl">🌡️</span>
+            </div>
+            
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-700">Body Temperature</p>
+                  <p class="text-xs text-gray-500">Normal: 97-99°F</p>
+                </div>
+                <div class="text-right">
+                  <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Min</p>
+                      <p class="text-sm font-semibold">{{ analytics.temperature.min }}°F</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Avg</p>
+                      <p class="text-lg font-bold text-orange-600">{{ analytics.temperature.avg }}°F</p>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-xs text-gray-500">Max</p>
+                      <p class="text-sm font-semibold">{{ analytics.temperature.max }}°F</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <div class="flex items-center mb-4">
+              <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <h4 class="text-lg font-semibold text-yellow-900">Clinical Recommendations</h4>
+            </div>
+            
+            <ul class="space-y-2">
+              <li *ngFor="let recommendation of analytics.overall.recommendations" class="flex items-start">
+                <svg class="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                </svg>
+                <span class="text-sm text-yellow-800">{{ recommendation }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">          
+          <button 
+            (click)="close()"
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+            Close Analytics
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
