@@ -116,6 +116,12 @@
         *ngSwitchCase="'timeline'"
         [events]="timelineEvents"
       ></app-tab-timeline>
+
+      <!-- Medical History Tab -->
+      <app-tab-medical-history
+        *ngSwitchCase="'history'"
+        [patient]="patient"
+      ></app-tab-medical-history>
       
       <!-- Notes Tab -->
       <app-tab-notes 

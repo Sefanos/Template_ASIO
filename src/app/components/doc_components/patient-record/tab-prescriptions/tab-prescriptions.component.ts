@@ -7,6 +7,10 @@ import { takeUntil } from 'rxjs/operators';
 
 import { Patient } from '../../../../models/patient.model';
 import { MedicationService } from '../../../../services/doc-services/medication.service';
+import { PrescriptionFormComponent } from '../../../doc_components/prescriptionRx/prescription-form/prescription-form.component';
+import { Prescription } from '../../../../models/prescription.model';
+import { PrescriptionMedicationAdapter } from '../../../../services/doc-services/prescription-medication-adapter';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 interface Medication {
   id: number;
@@ -38,7 +42,7 @@ interface DiscontinueRequest {
 @Component({
   selector: 'app-tab-prescriptions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule , PrescriptionFormComponent],
   templateUrl: './tab-prescriptions.component.html',
   styleUrls: ['./tab-prescriptions.component.css']
 })
@@ -78,11 +82,16 @@ export class TabPrescriptionsComponent implements OnInit, OnDestroy {
     expiring_soon: 0
   };
   
+  // Edit form properties
+  showEditForm = false;
+  medicationToEdit: Medication | null = null;
+  
   private destroy$ = new Subject<void>();
   
   constructor(
     private medicationService: MedicationService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
   
   ngOnInit(): void {
@@ -258,7 +267,9 @@ export class TabPrescriptionsComponent implements OnInit, OnDestroy {
   
   openEditModal(medication: Medication) {
     this.selectedMedication = medication;
-    this.showEditModal = true;
+    this.medicationToEdit = medication;
+    this.showEditForm = true;
+    this.showEditModal = true; // Keep this for now
   }
   
   openDeleteModal(medication: Medication) {
@@ -304,30 +315,100 @@ export class TabPrescriptionsComponent implements OnInit, OnDestroy {
     this.selectedMedication = null;
   }
   
-  // ===== UTILITY METHODS =====
-  
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'discontinued': return 'bg-red-100 text-red-800';
-      case 'expired': return 'bg-gray-100 text-gray-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  // Close edit form
+  closeEditForm(): void {
+    this.showEditForm = false;
+    this.medicationToEdit = null;
+    this.selectedMedication = null;
   }
   
-  getStatusIcon(status: string): string {
-    switch (status) {
-      case 'active': return '🟢';
-      case 'discontinued': return '🔴';
-      case 'expired': return '⏰';
-      case 'completed': return '✅';
-      default: return '⚪';
-    }
+  // Handle medication update completion
+  onMedicationUpdated(updatedMedication: any): void {
+    console.log('Medication updated:', updatedMedication);
+    
+    // Refresh the medications list
+    this.loadMedications();
+    this.closeEditForm();
+    this.showSuccessMessage('Medication updated successfully!');
   }
   
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString();
+  // Handle form cancellation
+  onEditFormCancelled(): void {
+    this.closeEditForm();
+  }
+  
+  // Convert Medication to Prescription for the form
+  convertMedicationToPrescription(medication: Medication): Prescription {
+    return {
+      id: medication.id,
+      patientId: medication.patient_id,
+      medication: medication.medication_name,
+      dosage: medication.dosage,
+      form: this.extractMedicationForm(medication.medication_name), // Extract from name or default
+      instructions: medication.instructions,
+      quantity: this.calculateQuantityFromDuration(medication.duration), // Calculate or default
+      refills: parseInt(medication.refills_allowed) || 0,
+      startDate: medication.start_date,
+      endDate: medication.end_date || '',
+      status: medication.status as any,
+      prescribedBy: '', // Will be set by adapter
+      prescribedDate: medication.created_at || medication.start_date,
+      sendToPharmacy: false,
+      pharmacistNotes: ''
+    };
+  }
+  
+  // Helper method to extract form from medication name
+  private extractMedicationForm(medicationName: string): string {
+    const name = medicationName.toLowerCase();
+    if (name.includes('tablet') || name.includes('tab')) return 'tablet';
+    if (name.includes('capsule') || name.includes('cap')) return 'capsule';
+    if (name.includes('liquid') || name.includes('syrup')) return 'liquid';
+    if (name.includes('injection') || name.includes('shot')) return 'injection';
+    if (name.includes('inhaler') || name.includes('spray')) return 'inhaler';
+    if (name.includes('patch')) return 'patch';
+    if (name.includes('cream') || name.includes('ointment')) return 'cream';
+    return 'tablet'; // Default
+  }
+  
+  // Helper method to calculate quantity from duration
+  private calculateQuantityFromDuration(duration: string): number {
+    // Try to extract number from duration string
+    const match = duration.match(/(\d+)/);
+    if (match) {
+      const days = parseInt(match[1]);
+      if (duration.toLowerCase().includes('day')) {
+        return Math.min(days, 90); // Cap at 90 days supply
+      }
+      if (duration.toLowerCase().includes('week')) {
+        return Math.min(days * 7, 90);
+      }
+      if (duration.toLowerCase().includes('month')) {
+        return Math.min(days * 30, 90);
+      }
+    }
+    return 30; // Default quantity
+  }
+  
+  // Success message method
+  private showSuccessMessage(message: string): void {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full';
+    notification.innerHTML = `
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+        ${message}
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+    setTimeout(() => {
+      notification.classList.add('translate-x-full');
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
   }
   
   refreshMedications() {
@@ -339,13 +420,74 @@ export class TabPrescriptionsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/doctor/prescription', prescriptionId]);
   }
 
-  createNewPrescription(): void {
-    this.router.navigate(['/doctor/prescription/new'], { 
-      queryParams: { patientId: this.patient?.id } 
-    });
+createNewPrescription() {
+  if (!this.patient?.id) {
+    console.error('No patient selected');
+    return;
   }
+
+  console.log('Navigating to prescription form for patient:', this.patient);
+  
+  // Navigate to prescription-rx with patient context
+  this.router.navigate(['/doctor/prescription'], {
+    queryParams: {
+      patient_id: this.patient.id,
+      patient_name: `${this.patient.name}`,
+      patient_dob: this.patient.dob,
+      from_patient_record: true
+    }
+  });
+}
   
   trackByMedicationId(index: number, medication: Medication): number {
     return medication.id;
+  }
+
+  // ✅ MISSING: Status badge color method
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'discontinued':
+        return 'bg-red-100 text-red-800';
+      case 'expired':
+        return 'bg-gray-100 text-gray-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  // ✅ MISSING: Status icon method
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'active':
+        return '🟢';
+      case 'discontinued':
+        return '🔴';
+      case 'expired':
+        return '⏰';
+      case 'completed':
+        return '✅';
+      default:
+        return '❓';
+    }
+  }
+
+  // ✅ MISSING: Date formatting method
+  formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   }
 }
