@@ -17,6 +17,7 @@ import { TabNotesComponent } from '../../../components/doc_components/patient-re
 import { TabAppointmentsComponent } from '../../../components/doc_components/patient-record/tab-appointments/tab-appointments.component';
 import { TabPrescriptionsComponent } from '../../../components/doc_components/patient-record/tab-prescriptions/tab-prescriptions.component';
 import { PatientNotFoundComponent } from '../../../components/doc_components/patient-record/patient-not-found/patient-not-found.component';
+import { TabMedicalHistoryComponent } from '../../../components/doc_components/patient-record/tab-medical-history/tab-medical-history.component';
 
 // Import models and services
 import { Patient } from '../../../models/patient.model';
@@ -56,6 +57,7 @@ import {
     TabNotesComponent,
     TabAppointmentsComponent,
     TabPrescriptionsComponent,
+    TabMedicalHistoryComponent,
     PatientNotFoundComponent
   ],
   templateUrl: './patient-record.component.html',
@@ -223,7 +225,7 @@ export class PatientRecordComponent implements OnInit {
         this.errorMessage = 'Timeout loading patient data';
         this.loading = false;
       }
-    }, 3000);
+    }, 5000);
   }  /**
    * Transform PatientMedicalSummary to Patient model for backwards compatibility
    */

@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-interface Medication {
+export interface Medication {
   id: number;
   chart_patient_id: number | null;
   doctor_user_id: number;
