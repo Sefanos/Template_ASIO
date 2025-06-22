@@ -1,0 +1,50 @@
+<section class="pt-20 pb-16 hero-gradient text-white" [ngClass]="{'animate-fade-in': isVisible, 'opacity-0': !isVisible}">
+  <div class="container mx-auto px-4 py-16">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <div class="space-y-8">
+        <div class="space-y-4">
+          <h1 class="text-5xl lg:text-6xl font-bold leading-tight animate-slide-in-left">
+            Book Trusted Medical <br />
+            <span class="text-white/90">Appointments Instantly</span>
+          </h1>
+          <p class="text-xl text-white/80 animate-slide-in-left animation-delay-200">
+            Connect with Morocco's best healthcare professionals in Casablanca, Marrakech, and beyond.
+          </p>
+        </div>
+        
+        <!-- Simple Booking CTA -->
+        <div class="animate-scale-in animation-delay-300">
+          <button 
+            (click)="onBookingClick()"
+            class="bg-white text-blue-600 hover:bg-gray-50 text-lg px-12 py-4 rounded-full font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+            Book Your Appointment Now
+          </button>
+        </div>
+      </div>
+      
+      <div class="relative animate-scale-in animation-delay-300">
+        <div class="relative w-full h-96 bg-white/10 rounded-3xl backdrop-blur-sm border border-white/20 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&w=800&q=80" 
+            alt="Doctor consulting with patient"
+            class="w-full h-full object-cover rounded-3xl"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-blue-600/20 to-transparent rounded-3xl"></div>
+        </div>
+        <div class="absolute -bottom-4 -right-4 bg-white rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Verified Doctors</p>
+              <p class="text-sm text-gray-600">1000+ Professionals</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

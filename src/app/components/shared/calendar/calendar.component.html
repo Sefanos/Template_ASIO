@@ -1,0 +1,76 @@
+<div class="calendar-container bg-white rounded-lg border border-gray-200">
+  <!-- Calendar Header -->
+  <div class="flex items-center justify-between p-4 border-b border-gray-200">
+    <button 
+      type="button"
+      (click)="previousMonth()"
+      class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+    
+    <h3 class="text-lg font-semibold text-gray-900">{{ currentMonthYear }}</h3>
+    
+    <button 
+      type="button"
+      (click)="nextMonth()"
+      class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Day Headers -->
+  <div class="grid grid-cols-7 border-b border-gray-200">
+    <div *ngFor="let dayName of dayNames" 
+         class="p-3 text-center text-sm font-medium text-gray-500 bg-gray-50">
+      {{ dayName }}
+    </div>
+  </div>
+
+  <!-- Calendar Days -->
+  <div class="grid grid-cols-7">
+    <ng-container *ngFor="let week of calendarDays">
+      <div *ngFor="let day of week" 
+           class="calendar-day relative h-12 border-r border-b border-gray-100 last:border-r-0"
+           [ngClass]="{
+             'cursor-pointer hover:bg-blue-50': day && !isDateDisabled(day),
+             'cursor-not-allowed': day && isDateDisabled(day),
+             'bg-gray-50': !day
+           }"
+           (click)="day && selectDate(day)">
+        
+        <div *ngIf="day" 
+             class="w-full h-full flex items-center justify-center text-sm relative"
+             [ngClass]="{
+               'text-gray-900': !isDateDisabled(day) && !isDateSelected(day) && !isToday(day),
+               'text-gray-400': isDateDisabled(day),
+               'bg-blue-600 text-white rounded-full': isDateSelected(day),
+               'bg-blue-100 text-blue-800 font-semibold rounded-full': isToday(day) && !isDateSelected(day),
+               'hover:bg-blue-600 hover:text-white hover:rounded-full': !isDateDisabled(day) && !isDateSelected(day)
+             }">
+          {{ day.getDate() }}
+          
+          <!-- Today indicator -->
+          <div *ngIf="isToday(day) && !isDateSelected(day)" 
+               class="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full">
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Selected Date Info -->
+  <div *ngIf="selectedDate" class="p-4 bg-blue-50 border-t border-gray-200">
+    <div class="flex items-center space-x-2">
+      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      <span class="text-sm text-blue-800 font-medium">
+        Selected: {{ selectedDate | date:'fullDate' }}
+      </span>
+    </div>
+  </div>
+</div>

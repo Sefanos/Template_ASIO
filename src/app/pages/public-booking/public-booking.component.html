@@ -1,0 +1,212 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+  <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-teal-600 rounded-lg flex items-center justify-center">
+    <!-- Clean heartbeat/pulse icon -->
+    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+        d="M4 12h2l2 4 4-8 2 4h6"></path>
+    </svg>
+  </div>
+  <span class="text-xl font-bold text-gray-900">ASIO Medical</span>
+</div>
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="goBackToHome()"
+            class="text-gray-600 hover:text-blue-600 transition-colors">
+            Back to Home
+          </button>
+          <button 
+            (click)="goToLogin()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition-all duration-300">
+            Sign In
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="showSuccessMessage" 
+       class="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 animate-slide-in">
+    <div class="flex items-center space-x-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>Booking request submitted successfully! We'll contact you soon.</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+      
+      <!-- Header Section -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Book Your Appointment</h1>
+        <p class="text-lg text-gray-600">
+          Fill out the form below and we'll help you schedule an appointment with the right healthcare professional.
+        </p>
+      </div>      <!-- Booking Form -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <form (ngSubmit)="onSubmit()" #bookingFormRef="ngForm">
+          
+          <!-- Personal Information -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Personal Information</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
+                  First Name *
+                </label>
+                <input 
+                  type="text"
+                  id="firstName"
+                  [(ngModel)]="bookingData.firstName"
+                  name="firstName"
+                  required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+              </div>
+              <div>
+                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name *
+                </label>
+                <input 
+                  type="text"
+                  id="lastName"
+                  [(ngModel)]="bookingData.lastName"
+                  name="lastName"
+                  required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+              </div>
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address *
+                </label>
+                <input 
+                  type="email"
+                  id="email"
+                  [(ngModel)]="bookingData.email"
+                  name="email"
+                  required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+              </div>
+              <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number *
+                </label>
+                <input 
+                  type="tel"
+                  id="phone"
+                  [(ngModel)]="bookingData.phone"
+                  name="phone"
+                  required
+                  placeholder="+212 xxx-xxx-xxx"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+              </div>
+            </div>
+          </div>
+
+          <!-- Appointment Details -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Appointment Details</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
+                  Department *
+                </label>
+                <select 
+                  id="department"
+                  [(ngModel)]="bookingData.department"
+                  name="department"
+                  required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                  <option value="">Select a department</option>
+                  <option *ngFor="let dept of departments" [value]="dept.value">
+                    {{ dept.label }}
+                  </option>
+                </select>
+              </div>              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Preferred Date *
+                </label>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <app-calendar 
+                    [selectedDate]="selectedDate"
+                    [minDate]="minDate"
+                    (dateSelected)="onDateSelected($event)">
+                  </app-calendar>
+                </div>
+              </div>              <div>
+                <label for="preferredTime" class="block text-sm font-medium text-gray-700 mb-2">
+                  Preferred Time *
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button 
+                    *ngFor="let time of timeSlots"
+                    type="button"
+                    (click)="selectTimeSlot(time)"
+                    [ngClass]="{
+                      'bg-blue-600 text-white': bookingData.preferredTime === time,
+                      'bg-gray-100 text-gray-700 hover:bg-gray-200': bookingData.preferredTime !== time
+                    }"
+                    class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-gray-300">
+                    {{ time }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="mb-8">
+            <label for="message" class="block text-sm font-medium text-gray-700 mb-2">
+              Additional Information (Optional)
+            </label>
+            <textarea 
+              id="message"
+              [(ngModel)]="bookingData.message"
+              name="message"
+              rows="4"
+              placeholder="Please describe your symptoms or reason for visit..."
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none">
+            </textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-center">
+            <button 
+              type="submit"
+              [disabled]="!isFormValid() || isSubmitting"
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-12 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105">
+              <span *ngIf="!isSubmitting">Submit Booking Request</span>
+              <span *ngIf="isSubmitting" class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </span>
+            </button>
+          </div>
+
+          <!-- Info Notice -->
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div class="text-sm text-blue-800">
+                <p class="font-medium">What happens next?</p>
+                <p class="mt-1">Our team will review your request and contact you within 24 hours to confirm your appointment and provide further instructions.</p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
