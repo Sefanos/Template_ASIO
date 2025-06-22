@@ -14,15 +14,15 @@ export class AppointmentHistoryCardComponent implements OnChanges, OnDestroy {
   
   private currentUser: any = null;
   private userSubscription: Subscription | null = null;
-  
-  constructor(
+    constructor(
     private cdr: ChangeDetectorRef,
     private authService: AuthService
   ) {
     // Subscribe to current user changes
     this.userSubscription = this.authService.getCurrentUser().subscribe(user => {
       this.currentUser = user;
-      this.cdr.detectChanges();
+      // Removed cdr.detectChanges() to prevent Angular assertion errors
+      // Angular will automatically detect changes when needed
     });
   }
 
@@ -31,7 +31,6 @@ export class AppointmentHistoryCardComponent implements OnChanges, OnDestroy {
       this.userSubscription.unsubscribe();
     }
   }
-
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['appointments']) {
       console.log('Appointments updated:', this.appointments?.length || 0);
@@ -44,7 +43,8 @@ export class AppointmentHistoryCardComponent implements OnChanges, OnDestroy {
       console.log('🔍 Current logged-in user:', this.currentUser);
       console.log('🔍 Available user fields:', this.currentUser ? Object.keys(this.currentUser) : 'No user');
       
-      setTimeout(() => this.cdr.detectChanges(), 0);
+      // Removed setTimeout with cdr.detectChanges() to prevent Angular assertion errors
+      // Angular will automatically detect changes when input properties change
     }
   }
     /**

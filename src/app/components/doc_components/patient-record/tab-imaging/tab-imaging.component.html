@@ -1,0 +1,322 @@
+<div class="space-y-6">
+  <!-- Header with Actions -->
+  <div class="bg-white rounded-card shadow-card p-card-padding">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-semibold text-text mb-2">Medical Imaging</h2>
+        <p class="text-text-light text-sm">View and manage X-rays, CT scans, MRI images, and other medical imaging</p>
+      </div>
+      
+      <button 
+        (click)="toggleUploadForm()"
+        [disabled]="isLoading || isUploading"
+        class="bg-primary text-white px-4 py-2 rounded-button flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        Upload Image
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-card p-4 text-red-800">
+    <div class="flex items-center">
+      <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      </svg>
+      {{ error }}
+    </div>
+  </div>
+
+  <!-- Upload Form -->
+  <div *ngIf="showUploadForm" class="bg-white rounded-card shadow-card p-card-padding">
+    <h3 class="text-lg font-medium text-text mb-4">Upload New Medical Image</h3>
+    
+    <!-- Upload Error -->
+    <div *ngIf="uploadError" class="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 mb-4">
+      {{ uploadError }}
+    </div>
+
+    <form (ngSubmit)="uploadImage()" class="space-y-4">      <!-- Category Selection -->
+      <div>
+        <label class="block text-sm font-medium text-text mb-2">Image Category *</label>
+        <select 
+          [(ngModel)]="uploadForm.category" 
+          (ngModelChange)="onUploadCategoryChange()"
+          name="category"
+          class="w-full border border-border rounded-input p-3"
+          required
+          [disabled]="!categoriesLoaded"
+        >
+          <option value="" disabled>{{ categoriesLoaded ? 'Select a category...' : 'Loading categories...' }}</option>
+          <option *ngFor="let option of imagingCategoryOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>        <div *ngIf="uploadForm.category" class="text-xs text-green-600 mt-1">
+          Selected: {{ selectedUploadCategoryLabel }}
+        </div>
+      </div><!-- File Selection -->
+      <div>
+        <label class="block text-sm font-medium text-text mb-2">Image File *</label>
+        <input 
+          type="file" 
+          (change)="onFileSelected($event)"
+          accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.tiff,.svg,image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff,image/svg+xml"
+          class="w-full border border-border rounded-input p-3"
+          required
+        />
+        <p class="text-xs text-text-light mt-1">
+          Supported formats: JPEG, PNG, GIF, BMP, WebP, TIFF, SVG (max 20MB)
+        </p>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium text-text mb-2">Description</label>
+        <textarea 
+          [(ngModel)]="uploadForm.description"
+          name="description"
+          rows="3"
+          class="w-full border border-border rounded-input p-3"
+          placeholder="Add a description for this image..."
+        ></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end space-x-3">
+        <button 
+          type="button"
+          (click)="toggleUploadForm()"
+          [disabled]="isUploading"
+          class="px-4 py-2 border border-border rounded-button text-text hover:bg-gray-50 disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit"
+          [disabled]="isUploading || !uploadForm.file || !uploadForm.category"
+          class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark disabled:opacity-50 flex items-center"
+        >
+          <svg *ngIf="isUploading" class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isUploading ? 'Uploading...' : 'Upload Image' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-white rounded-card shadow-card p-card-padding">
+    <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+      <!-- Search -->
+      <div class="flex-1">
+        <input 
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search images..."
+          class="w-full border border-border rounded-input p-3"
+        />
+      </div>      <!-- Category Filter -->
+      <div>
+        <select 
+          [(ngModel)]="selectedCategory"
+          (ngModelChange)="onCategoryChange()"
+          class="border border-border rounded-input p-3"
+          [disabled]="!categoriesLoaded"
+        >
+          <option value="all">All Categories</option>
+          <option *ngFor="let option of imagingCategoryOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>        <div *ngIf="selectedCategory !== 'all'" class="text-xs text-blue-600 mt-1">
+          Filtering by: {{ selectedFilterCategoryLabel }}
+        </div>
+      </div>
+
+      <!-- Sort Options -->
+      <div class="flex items-center space-x-2">
+        <select 
+          [(ngModel)]="sortBy"
+          (ngModelChange)="onSortChange()"
+          class="border border-border rounded-input p-3"
+        >
+          <option value="date">Sort by Date</option>
+          <option value="name">Sort by Name</option>
+          <option value="category">Sort by Category</option>
+        </select>
+        
+        <button 
+          (click)="toggleSortOrder()"
+          class="p-3 border border-border rounded-input hover:bg-gray-50"
+          [title]="sortOrder === 'asc' ? 'Ascending' : 'Descending'"
+        >
+          <svg class="h-4 w-4 sort-arrow" [class.desc]="sortOrder === 'desc'" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="bg-white rounded-card shadow-card p-8 text-center">
+    <div class="flex items-center justify-center">
+      <svg class="animate-spin h-8 w-8 text-primary mr-3" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Loading images...
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && filteredImages.length === 0" class="bg-white rounded-card shadow-card p-8 text-center text-text-light">
+    <svg class="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    <h3 class="text-lg font-medium text-gray-600 mb-2">No images found</h3>
+    <p class="text-sm">
+      {{ searchTerm || selectedCategory !== 'all' ? 'Try adjusting your filters or search terms.' : 'Upload the first medical image for this patient.' }}
+    </p>
+  </div>
+
+  <!-- Images Grid -->
+  <div *ngIf="!isLoading && filteredImages.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 image-grid">
+    <div *ngFor="let image of filteredImages" class="bg-white rounded-card shadow-card overflow-hidden image-card">
+      <!-- Image Thumbnail -->
+      <div class="relative">
+        <img 
+          [src]="image.downloadUrl" 
+          [alt]="image.originalFilename"
+          class="image-thumbnail"
+          (click)="openImageViewer(image)"
+          loading="lazy"
+        />
+        <div class="absolute top-2 right-2">
+          <span [class]="getCategoryBadgeColor(image.category)" class="px-2 py-1 text-xs rounded-full font-medium">
+            {{ image.categoryLabel }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Image Info -->
+      <div class="p-4">
+        <h3 class="text-sm font-medium text-text truncate mb-1" [title]="image.originalFilename">
+          {{ image.originalFilename }}
+        </h3>
+        
+        <div *ngIf="image.description" class="text-xs text-text-light mb-2 line-clamp-2">
+          {{ image.description }}
+        </div>
+
+        <!-- Image Metadata -->
+        <div class="text-xs text-text-light space-y-1 mb-3">
+          <div class="flex justify-between">
+            <span>Size:</span>
+            <span>{{ image.fileSizeFormatted }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Date:</span>
+            <span>{{ image.uploadedAt | date:'MMM d, yyyy' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>By:</span>
+            <span class="truncate ml-1">{{ image.uploadedBy }}</span>
+          </div>
+        </div>
+
+        <!-- Image Actions -->
+        <div class="flex space-x-2">
+          <button 
+            (click)="openImageViewer(image)"
+            class="flex-1 bg-primary text-white text-xs py-2 px-2 rounded-button hover:bg-primary-dark flex items-center justify-center"
+          >
+            <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            View
+          </button>
+          <button 
+            (click)="downloadImage(image)"
+            class="bg-blue-500 text-white text-xs py-2 px-2 rounded-button hover:bg-blue-600 flex items-center justify-center"
+          >
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m-6 0h6"/>
+            </svg>
+          </button>
+          <button 
+            (click)="deleteImage(image)"
+            class="bg-red-500 text-white text-xs py-2 px-2 rounded-button hover:bg-red-600 flex items-center justify-center"
+          >
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Viewer Modal -->
+  <div *ngIf="showImageViewer && selectedImage" 
+       class="fixed inset-0 z-50 flex items-center justify-center image-viewer-overlay"
+       (click)="closeImageViewer()">
+    <div class="image-viewer-content bg-white rounded-lg p-4 m-4" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-lg font-medium text-text">{{ selectedImage.originalFilename }}</h3>
+          <p class="text-sm text-text-light">{{ selectedImage.categoryLabel }} • {{ selectedImage.uploadedAt | date:'MMM d, yyyy' }}</p>
+        </div>
+        <button 
+          (click)="closeImageViewer()"
+          class="text-gray-400 hover:text-gray-600"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Image -->
+      <div class="text-center mb-4">
+        <img 
+          [src]="selectedImage.downloadUrl" 
+          [alt]="selectedImage.originalFilename"
+          class="image-viewer-image rounded-lg"
+        />
+      </div>
+
+      <!-- Modal Description -->
+      <div *ngIf="selectedImage.description" class="mb-4">
+        <h4 class="text-sm font-medium text-text mb-2">Description:</h4>
+        <p class="text-sm text-text-light">{{ selectedImage.description }}</p>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex justify-end space-x-3">
+        <button 
+          (click)="downloadImage(selectedImage)"
+          class="bg-primary text-white px-4 py-2 rounded-button hover:bg-primary-dark flex items-center"
+        >
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m-6 0h6"/>
+          </svg>
+          Download
+        </button>
+        <button 
+          (click)="closeImageViewer()"
+          class="border border-border text-text px-4 py-2 rounded-button hover:bg-gray-50"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
