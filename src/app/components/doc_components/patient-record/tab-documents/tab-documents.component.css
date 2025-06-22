@@ -1,0 +1,44 @@
+/* Tab Documents Component Styles */
+.document-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.document-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.file-icon {
+  font-size: 2rem;
+}
+
+.upload-area {
+  border: 2px dashed #e5e7eb;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.upload-area:hover {
+  border-color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+.upload-area.dragover {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.filter-button {
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  transform: translateY(-1px);
+}
+
+.sort-arrow {
+  transition: transform 0.2s ease;
+}
+
+.sort-arrow.desc {
+  transform: rotate(180deg);
+}

@@ -12,3 +12,25 @@ export interface Note {
   attachments?: string[];
   tags?: string[];
 }
+
+// New interface to match the API response structure
+export interface ApiPatientNote {
+  id: number;
+  patient_id: number;
+  note_type: string;
+  note_content: string;
+  created_at: string;
+  updated_at: string;
+  doctor_id: number;
+  canEdit: boolean;
+  // Doctor information (populated by join)
+  doctor?: {
+    id: number;
+    name: string;
+    specialization?: string;
+  };
+  // Additional fields
+  title?: string;
+  priority?: 'low' | 'medium' | 'high';
+  tags?: string[];
+}

@@ -43,12 +43,9 @@
         </svg>
         {{ loading ? 'Refreshing...' : 'Refresh' }}
       </button>
-    </div>
-
-    <!-- Patient Record Header Component -->
+    </div>    <!-- Patient Record Header Component -->
     <app-patient-record-header 
       (goBack)="goBackToPatientList()"
-      (toggleQuickNote)="toggleQuickNoteForm()"
       (togglePrintOptions)="togglePrintOptions()"
     ></app-patient-record-header>
     
@@ -57,15 +54,6 @@
       [show]="showPrintOptions"
       (printSection)="printSection($event)"
     ></app-print-options>
-    
-    <!-- Quick Note Form -->
-    <app-quick-note-form
-      [show]="showQuickNoteForm"
-      [quickNote]="quickNote"
-      (quickNoteChange)="quickNote = $event"
-      (saveNote)="saveQuickNote()"
-      (cancelNote)="toggleQuickNoteForm()"
-    ></app-quick-note-form>
     
     <!-- Patient Alerts -->
     <app-patient-alerts
@@ -121,12 +109,12 @@
       <app-tab-medical-history
         *ngSwitchCase="'history'"
         [patient]="patient"
-      ></app-tab-medical-history>
-      
-      <!-- Notes Tab -->
+      ></app-tab-medical-history>      <!-- Notes Tab -->
       <app-tab-notes 
         *ngSwitchCase="'notes'"
         [notes]="patientNotes"
+        [patientId]="patientId || 0"
+        (noteAdded)="onNoteAdded($event)"
       ></app-tab-notes>
       
       <!-- Appointments Tab -->
@@ -140,14 +128,29 @@
       <app-tab-prescriptions
         *ngSwitchCase="'prescriptions'"
         [patient]="patient"
-      ></app-tab-prescriptions>
 
+      ></app-tab-prescriptions>    
+      
       <!-- Lab Results Tab -->
+
        <app-tab-lab-results
           *ngSwitchCase="'lab-results'"
           [patientId]="patient.id || 0"
           [patient]="patient">
       </app-tab-lab-results>
+
+      <!-- Documents Tab -->
+      <app-tab-documents
+        *ngSwitchCase="'documents'"
+        [patientId]="patientId || 0"
+      ></app-tab-documents>
+
+      <!-- Imaging Tab -->
+      <app-tab-imaging
+        *ngSwitchCase="'imaging'"
+        [patientId]="patientId || 0"
+      ></app-tab-imaging>
+
       
       <!-- Other Tabs -->
       <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">

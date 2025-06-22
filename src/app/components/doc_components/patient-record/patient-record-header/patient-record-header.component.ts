@@ -9,15 +9,10 @@ import { CommonModule } from '@angular/common';
 })
 export class PatientRecordHeaderComponent {
   @Output() goBack = new EventEmitter<void>();
-  @Output() toggleQuickNote = new EventEmitter<void>();
   @Output() togglePrintOptions = new EventEmitter<void>();
 
   onGoBack(): void {
     this.goBack.emit();
-  }
-
-  onToggleQuickNote(): void {
-    this.toggleQuickNote.emit();
   }
 
   onTogglePrintOptions(): void {

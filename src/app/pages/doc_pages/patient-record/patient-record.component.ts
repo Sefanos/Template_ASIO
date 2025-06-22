@@ -7,7 +7,6 @@ import { finalize } from 'rxjs/operators';
 // Import the modular components
 import { PatientRecordHeaderComponent } from '../../../components/doc_components/patient-record/patient-record-header/patient-record-header.component';
 import { PrintOptionsComponent } from '../../../components/doc_components/patient-record/print-options/print-options.component';
-import { QuickNoteFormComponent } from '../../../components/doc_components/patient-record/quick-note-form/quick-note-form.component';
 import { PatientAlertsComponent } from '../../../components/doc_components/patient-record/patient-alerts/patient-alerts.component';
 import { PatientInfoHeaderComponent } from '../../../components/doc_components/patient-record/patient-info-header/patient-info-header.component';
 import { PatientTabsComponent } from '../../../components/doc_components/patient-record/patient-tabs/patient-tabs.component';
@@ -19,6 +18,10 @@ import { TabPrescriptionsComponent } from '../../../components/doc_components/pa
 import { PatientNotFoundComponent } from '../../../components/doc_components/patient-record/patient-not-found/patient-not-found.component';
 import { TabMedicalHistoryComponent } from '../../../components/doc_components/patient-record/tab-medical-history/tab-medical-history.component';
 import { TabLabResultsComponent } from '../../../components/doc_components/patient-record/tab-lab-results/tab-lab-results.component';
+
+import { TabDocumentsComponent } from '../../../components/doc_components/patient-record/tab-documents/tab-documents.component';
+import { TabImagingComponent } from '../../../components/doc_components/patient-record/tab-imaging/tab-imaging.component';
+
 
 // Import models and services
 import { Patient } from '../../../models/patient.model';
@@ -43,13 +46,11 @@ import {
 
 @Component({
   selector: 'app-patient-record',
-  standalone: true,
-  imports: [
+  standalone: true,  imports: [
     CommonModule, 
     FormsModule,
     PatientRecordHeaderComponent,
     PrintOptionsComponent,
-    QuickNoteFormComponent,
     PatientAlertsComponent,
     PatientInfoHeaderComponent,
     PatientTabsComponent,
@@ -60,7 +61,9 @@ import {
     TabPrescriptionsComponent,
     TabMedicalHistoryComponent,
     PatientNotFoundComponent,
-    TabLabResultsComponent
+    TabLabResultsComponent,
+    TabDocumentsComponent,
+    TabImagingComponent
   ],
   templateUrl: './patient-record.component.html',
   styleUrl: './patient-record.component.css'
@@ -68,12 +71,9 @@ import {
 export class PatientRecordComponent implements OnInit {
   // Page state
   patientId: number | null = null;
-  patient: Patient | null = null;
-  patientInfo: PatientInfo | null = null;
+  patient: Patient | null = null;  patientInfo: PatientInfo | null = null;
   medicalSummary: MedicalOverview | null = null;
   activeTab: string = 'summary';
-  quickNote: string = '';
-  showQuickNoteForm: boolean = false;
   showPrintOptions: boolean = false;
   loading: boolean = true;
   error: boolean = false;
@@ -328,15 +328,9 @@ export class PatientRecordComponent implements OnInit {
       this.labResults = transformedData.labResults;
       this.appointments = transformedData.appointments;
       this.timelineEvents = transformedData.timelineEvents;
-      this.patientNotes = transformedData.patientNotes;
-      
-      // Force change detection to update the view
-      this.cdr.detectChanges();
-      
-      // Additional forced update after a small delay to ensure all child components are updated
-      setTimeout(() => {
-        this.cdr.detectChanges();
-      }, 100);
+      this.patientNotes = transformedData.patientNotes;      
+      // Removed forced change detection to prevent Angular assertion errors
+      // Angular will automatically detect changes when needed
     } catch (error) {
       console.error('Error transforming patient data:', error);
       this.error = true;
@@ -346,16 +340,14 @@ export class PatientRecordComponent implements OnInit {
   
   /**
    * Set the active tab
-   */
-  setActiveTab(tab: string): void {
+   */  setActiveTab(tab: string): void {
     console.log(`Switching to tab: ${tab}`);
     this.activeTab = tab;
     
     // Load tab-specific data if needed
     this.loadTabData(tab);
     
-    // Force change detection when tab changes
-    this.cdr.detectChanges();
+    // Removed forced change detection to prevent Angular assertion errors
   }
   
   /**
@@ -373,14 +365,9 @@ export class PatientRecordComponent implements OnInit {
             // Will need to implement this transformation
           });
         break;
-        
-      case 'notes':
-        this.patientMedicalService.getPatientNotes(this.patientId)
-          .subscribe(notes => {
-            console.log(`Loaded ${notes.length} notes`);
-            // Transform notes to match the expected format
-            // Will need to implement this transformation
-          });
+          case 'notes':
+        // Notes will be loaded directly by the tab-notes component
+        console.log('Notes tab selected - component will handle data loading');
         break;
         
       // Add more cases for other tabs as needed
@@ -423,37 +410,7 @@ export class PatientRecordComponent implements OnInit {
    * Order new lab tests
    */
   orderNewTests(): void {
-    console.log(`Ordering new tests for patient ${this.patientId}`);
-  }
-  
-  /**
-   * Toggle quick note form visibility
-   */
-  toggleQuickNoteForm(): void {
-    this.showQuickNoteForm = !this.showQuickNoteForm;
-  }
-  
-  /**
-   * Save a quick note to patient record
-   */
-  saveQuickNote(): void {
-    if (this.quickNote.trim() && this.patientId) {
-      this.patientService.addPatientNote(this.patientId, this.quickNote)
-        .subscribe({
-          next: (success) => {
-            if (success) {
-              // Refresh patient data to show the new note
-              this.loadPatientData();
-              this.quickNote = '';
-              this.showQuickNoteForm = false;
-            }
-          },
-          error: (err) => {
-            console.error('Error saving note:', err);
-          }
-        });
-    }
-  }
+    console.log(`Ordering new tests for patient ${this.patientId}`);  }
   
   /**
    * Toggle print options visibility
@@ -494,16 +451,17 @@ export class PatientRecordComponent implements OnInit {
           }
         });
     }
-  }
+  }  
   getTabCounts(): { [key: string]: number } {
+
   return {
     'summary': 0,
     'timeline': this.timelineEvents?.length || 0,
     'history': this.conditions?.length || 0,
     'lab-results': this.getCriticalLabResultsCount(),
     'prescriptions': this.medications?.length || 0,
-    'documents': 0,
-    'imaging': 0,
+    'documents': 0, // Will be loaded dynamically by the tab component
+    'imaging': 0, // Will be loaded dynamically by the tab component
     'notes': this.patientNotes?.length || 0,
     'appointments': this.appointments?.length || 0,
     'billing': 0
@@ -527,5 +485,18 @@ export class PatientRecordComponent implements OnInit {
 
   getUpcomingAppointmentsCount(): number {
     return this.patient?.appointments?.length || 0;
+  }
+
+  /**
+   * Handle when a new note is added in the notes tab
+   */
+  onNoteAdded(newNote: Note): void {
+    console.log('New note added:', newNote);
+    // Add the new note to our local array if it's not already there
+    if (!this.patientNotes.find(note => note.id === newNote.id)) {
+      this.patientNotes.unshift(newNote);
+    }
+    // Update tab counts
+    console.log(`Notes count updated to: ${this.patientNotes.length}`);
   }
 }
