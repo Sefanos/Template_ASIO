@@ -115,8 +115,7 @@
     <div class="text-lg font-medium mb-2">No notes found</div>
     <div class="text-sm">{{ selectedCategory === 'All Notes' ? 'No notes have been created for this patient yet.' : 'No notes found in this category.' }}</div>
   </div>
-  
-  <div *ngFor="let note of filteredNotes" class="bg-white rounded-card shadow-card p-card-padding">
+    <div *ngFor="let note of filteredNotes" class="bg-white rounded-card shadow-card p-card-padding">
     <!-- Note Header -->
     <div class="flex justify-between items-start mb-3">
       <div class="flex-1">
@@ -126,32 +125,142 @@
       <div class="flex items-center space-x-2">
         <span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
           {{ note.type | titlecase }} Note
-        </span>
-        <div *ngIf="note.canEdit" class="flex space-x-1">
-          <button class="text-blue-600 hover:text-blue-800 text-sm">
-            <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+        </span>        <div class="flex space-x-1">
+          <!-- Action buttons for all notes -->
+          <button 
+            (click)="startReplyToNote(note.id)"
+            [disabled]="replyingToNoteId === note.id || editingNoteId === note.id"
+            class="text-green-600 hover:text-green-800 hover:bg-green-50 text-sm p-1.5 rounded transition-colors disabled:opacity-50"
+            title="Reply to note"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414L2.586 8a1 1 0 010-1.414l3.707-3.707a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
           </button>
-          <button class="text-red-600 hover:text-red-800 text-sm">
-            <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
-            </svg>
-          </button>
+          
+          <!-- Edit/Delete buttons only for editable notes -->
+          <div *ngIf="note.canEdit" class="flex space-x-1">
+            <button 
+              (click)="startEditingNote(note)"
+              [disabled]="editingNoteId === note.id || replyingToNoteId === note.id"
+              class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 text-sm p-1.5 rounded transition-colors disabled:opacity-50"
+              title="Edit note"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
+            <button 
+              (click)="deleteNote(note)"
+              [disabled]="editingNoteId === note.id || replyingToNoteId === note.id"
+              class="text-red-600 hover:text-red-800 hover:bg-red-50 text-sm p-1.5 rounded transition-colors disabled:opacity-50"
+              title="Delete note"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
     
     <!-- Note Title (if present) -->
-    <div *ngIf="note.title" class="font-medium text-text mb-2">{{ note.title }}</div>
+    <div *ngIf="note.title && editingNoteId !== note.id" class="font-medium text-text mb-2">{{ note.title }}</div>
     
-    <!-- Note Content -->
-    <div class="bg-hover rounded-lg p-3 whitespace-pre-wrap">
-      {{ note.content }}
+    <!-- Edit Mode -->
+    <div *ngIf="editingNoteId === note.id" class="space-y-3 mb-4">
+      <div>
+        <label class="block text-sm font-medium text-text mb-1">Title</label>
+        <input 
+          [(ngModel)]="editingTitle"
+          type="text" 
+          class="w-full border border-border rounded-input p-2"
+          placeholder="Note title (optional)"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-text mb-1">Content</label>
+        <textarea 
+          [(ngModel)]="editingContent"
+          rows="4" 
+          class="w-full border border-border rounded-input p-3"
+          placeholder="Note content"
+        ></textarea>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button 
+          (click)="cancelEditing()"
+          [disabled]="isSaving"
+          class="px-3 py-1 rounded-button border border-border text-text-light text-sm disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button 
+          (click)="saveEditedNote(note.id)"
+          [disabled]="!editingContent.trim() || isSaving"
+          class="px-3 py-1 rounded-button bg-primary text-white text-sm disabled:opacity-50"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+    
+    <!-- Note Content (View Mode) -->
+    <div *ngIf="editingNoteId !== note.id" class="bg-hover rounded-lg p-3">
+      <div class="whitespace-pre-wrap">
+        <span *ngIf="!isNoteExpanded(note.id) && note.content.length > 150">
+          {{ getTruncatedContent(note.content) }}
+        </span>
+        <span *ngIf="isNoteExpanded(note.id) || note.content.length <= 150">
+          {{ note.content }}
+        </span>
+      </div>
+      
+      <!-- Read More/Less Button -->
+      <button 
+        *ngIf="note.content.length > 150"
+        (click)="toggleNoteExpansion(note.id)"
+        class="mt-2 text-primary hover:text-primary-dark text-sm font-medium"
+      >
+        {{ isNoteExpanded(note.id) ? 'Read Less' : 'Read More' }}
+      </button>
+    </div>    
+    <!-- Reply Form -->
+    <div *ngIf="replyingToNoteId === note.id" class="mt-4 border-t pt-4">
+      <div class="mb-3">
+        <label class="block text-sm font-medium text-text mb-2">Reply to this note</label>
+        <textarea 
+          [(ngModel)]="replyContent"
+          rows="3" 
+          class="w-full border border-border rounded-input p-3"
+          placeholder="Write your reply here..."
+        ></textarea>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button 
+          (click)="cancelReply()"
+          [disabled]="isSaving"
+          class="px-3 py-1 rounded-button border border-border text-text-light text-sm disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button 
+          (click)="saveReply(note)"
+          [disabled]="!replyContent.trim() || isSaving"
+          class="px-3 py-1 rounded-button bg-primary text-white text-sm disabled:opacity-50 flex items-center"
+        >
+          <svg *ngIf="isSaving" class="animate-spin h-3 w-3 mr-1" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isSaving ? 'Sending...' : 'Send Reply' }}
+        </button>
+      </div>
     </div>
     
     <!-- Note Priority (if present) -->
-    <div *ngIf="note.priority" class="mt-2">
+    <div *ngIf="note.priority" class="mt-3">
       <span 
         class="px-2 py-0.5 rounded-full text-xs font-medium"
         [class.bg-red-100]="note.priority === 'high'"
