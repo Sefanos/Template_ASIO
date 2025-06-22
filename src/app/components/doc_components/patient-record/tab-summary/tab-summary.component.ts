@@ -97,4 +97,18 @@ export class TabSummaryComponent implements OnChanges {
   onNavigateToTab(tabName: string): void {
     this.tabChange.emit(tabName);
   }
+
+  /**
+   * Handle when a new note is added from the doctor notes card
+   */
+  onNoteAdded(newNote: any): void {
+    console.log('New note added in summary tab:', newNote);
+    // Add the new note to our local arrays
+    this.patientNotes.unshift(newNote);
+    this.recentNotes.unshift(newNote);
+    
+    // Emit to parent component (patient record) for further handling
+    // The parent can handle the API call and refresh other components
+    console.log('Note added - summary tab updated');
+  }
 }

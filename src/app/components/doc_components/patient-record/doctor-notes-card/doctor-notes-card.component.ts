@@ -1,5 +1,6 @@
-import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 // Updated interface to match real API data structure
 interface ApiNote {
@@ -24,27 +25,34 @@ interface Note {
 @Component({
   selector: 'app-doctor-notes-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './doctor-notes-card.component.html',
 })
 export class DoctorNotesCardComponent implements OnChanges {
   @Input() patientId: number | null = null;
   @Input() notes: any[] = []; // Accept both old and new format
+  @Output() noteAdded = new EventEmitter<any>();
   
   showAll: boolean = false;
+  expandedNotes: Set<number> = new Set();
+  
+  // Quick add note form
+  quickNoteContent: string = '';
+  quickNoteCategory: string = 'general';
+  quickNoteIsPrivate: boolean = false;
+  isAddingNote: boolean = false;
   
   constructor(private cdr: ChangeDetectorRef) {}
-  
-  ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(changes: SimpleChanges): void {
     if (changes['notes']) {
       console.log('Doctor notes updated:', this.notes?.length || 0);
-      // Force change detection when notes change
-      setTimeout(() => this.cdr.detectChanges(), 0);
+      // Removed cdr.detectChanges() to prevent Angular assertion errors
+      // Angular will automatically detect changes when input properties change
     }
   }
   
   get displayNotes(): any[] {
-    const recentNotes = this.notes.slice(0, this.showAll ? this.notes.length : 3);
+    const recentNotes = this.notes.slice(0, this.showAll ? this.notes.length : 2);
     return recentNotes.sort((a, b) => 
       new Date(this.getCreatedDate(b)).getTime() - new Date(this.getCreatedDate(a)).getTime()
     );
@@ -132,5 +140,59 @@ export class DoctorNotesCardComponent implements OnChanges {
   getTopCategories(): string[] {
     const counts = this.getNoteCategoryCounts();
     return Object.keys(counts).slice(0, 3);
+  }
+
+  /**
+   * Toggle note expansion
+   */
+  toggleNoteExpansion(noteId: number): void {
+    if (this.expandedNotes.has(noteId)) {
+      this.expandedNotes.delete(noteId);
+    } else {
+      this.expandedNotes.add(noteId);
+    }
+  }
+
+  /**
+   * Check if note is expanded
+   */
+  isNoteExpanded(noteId: number): boolean {
+    return this.expandedNotes.has(noteId);
+  }
+
+  /**
+   * Add a new quick note
+   */
+  addQuickNote(): void {
+    if (!this.quickNoteContent.trim()) {
+      return;
+    }
+
+    this.isAddingNote = true;
+
+    // Create the new note object
+    const newNote = {
+      id: Date.now(), // Temporary ID
+      content: this.quickNoteContent.trim(),
+      category: this.quickNoteCategory,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'Current Doctor', // This should come from auth service
+      isPrivate: this.quickNoteIsPrivate
+    };
+
+    // Add to local notes array immediately
+    this.notes.unshift(newNote);
+
+    // Emit to parent component to handle API call
+    this.noteAdded.emit(newNote);
+
+    // Reset form
+    this.quickNoteContent = '';
+    this.quickNoteCategory = 'general';
+    this.quickNoteIsPrivate = false;
+    this.isAddingNote = false;
+
+    console.log('Quick note added:', newNote);
   }
 }

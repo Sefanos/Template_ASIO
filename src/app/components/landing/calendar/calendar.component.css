@@ -1,0 +1,83 @@
+/* Calendar Component Styles */
+.calendar-container {
+  max-width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.calendar-day {
+  min-height: 48px;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.calendar-day div {
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+/* Selected date styling */
+.calendar-day .bg-blue-600 {
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Today styling */
+.calendar-day .bg-blue-100 {
+  border: 2px solid #3b82f6;
+}
+
+/* Disabled dates */
+.calendar-day .text-gray-400 {
+  background-color: transparent !important;
+}
+
+/* Weekend styling */
+.calendar-day:nth-child(7n),
+.calendar-day:nth-child(7n-6) {
+  background-color: rgba(249, 250, 251, 0.5);
+}
+
+/* Grid borders */
+.grid.grid-cols-7 > div:last-child {
+  border-right: none;
+}
+
+/* Animation for month transitions */
+.calendar-container {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .calendar-day {
+    min-height: 40px;
+  }
+  
+  .calendar-day div {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  
+  .p-4 {
+    padding: 0.75rem;
+  }
+  
+  .p-3 {
+    padding: 0.5rem;
+  }
+}

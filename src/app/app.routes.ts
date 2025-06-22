@@ -19,12 +19,15 @@ import { BillsManagmentComponent } from './pages/admin_pages/bills-managment/bil
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
+    loadComponent: () => import('./pages/landing/landing.component').then(m => m.LandingComponent)
   },
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'booking',
+    loadComponent: () => import('./pages/public-booking/public-booking.component').then(m => m.PublicBookingComponent)
   },
   {
     path: 'doctor',

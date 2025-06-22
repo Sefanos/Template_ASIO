@@ -1,0 +1,82 @@
+/* Footer Styles */
+.container {
+  max-width: 1200px;
+}
+
+/* Hover effects */
+a:hover {
+  transform: translateY(-1px);
+}
+
+/* Social icons hover */
+a svg:hover {
+  transform: scale(1.2);
+}
+
+/* Newsletter signup */
+input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+button:hover {
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+}
+
+/* Link grid spacing */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .grid {
+    gap: 2rem;
+  }
+  
+  .flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .newsletter-signup {
+    width: 100%;
+  }
+  
+  .newsletter-signup input {
+    flex: 1;
+  }
+}
+
+/* Animation for footer links */
+.space-y-3 a {
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.space-y-3 a:hover {
+  color: #ffffff;
+  padding-left: 0.5rem;
+}
+
+/* Newsletter input styling */
+input[type="email"] {
+  min-width: 200px;
+}
+
+@media (max-width: 640px) {
+  input[type="email"] {
+    min-width: 150px;
+  }
+  
+  .flex.items-center.space-x-4 {
+    flex-direction: column;
+    space-x: 0;
+    gap: 1rem;
+  }
+}

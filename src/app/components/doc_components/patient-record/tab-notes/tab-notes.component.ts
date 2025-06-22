@@ -46,6 +46,16 @@ export class TabNotesComponent implements OnChanges, OnInit {
     { value: 'follow-up', label: 'Follow-up Note' },
     { value: 'discharge', label: 'Discharge Note' }
   ];
+    // UI state properties
+  expandedNotes: Set<number> = new Set();
+  editingNoteId: number | null = null;
+  editingContent: string = '';
+  editingTitle: string = '';
+
+    // Reply functionality
+  replyingToNoteId: number | null = null;
+  replyContent: string = '';
+
     constructor(
     private cdr: ChangeDetectorRef,
     private patientNotesService: PatientNotesService
@@ -221,5 +231,169 @@ export class TabNotesComponent implements OnChanges, OnInit {
     };
     
     return this.notes.filter(note => note.type === typeMap[this.selectedCategory]);
+  }
+
+  /**
+   * Toggle note expansion
+   */
+  toggleNoteExpansion(noteId: number): void {
+    if (this.expandedNotes.has(noteId)) {
+      this.expandedNotes.delete(noteId);
+    } else {
+      this.expandedNotes.add(noteId);
+    }
+  }
+
+  /**
+   * Check if note is expanded
+   */
+  isNoteExpanded(noteId: number): boolean {
+    return this.expandedNotes.has(noteId);
+  }
+
+  /**
+   * Start editing a note
+   */
+  startEditingNote(note: Note): void {
+    this.editingNoteId = note.id;
+    this.editingContent = note.content;
+    this.editingTitle = note.title || '';
+  }
+
+  /**
+   * Cancel editing
+   */
+  cancelEditing(): void {
+    this.editingNoteId = null;
+    this.editingContent = '';
+    this.editingTitle = '';
+  }
+
+  /**
+   * Save edited note
+   */
+  saveEditedNote(noteId: number): void {
+    if (!this.editingContent.trim()) {
+      this.error = 'Note content cannot be empty';
+      return;
+    }
+
+    this.isSaving = true;
+    this.error = null;
+
+    const updateData = {
+      content: this.editingContent.trim(),
+      title: this.editingTitle.trim() || 'Untitled Note'
+    };
+
+    // TODO: Call API to update note when backend is ready
+    // For now, just update locally
+    const noteIndex = this.notes.findIndex(n => n.id === noteId);
+    if (noteIndex !== -1) {
+      this.notes[noteIndex] = {
+        ...this.notes[noteIndex],
+        content: updateData.content,
+        title: updateData.title
+      };
+    }
+
+    this.cancelEditing();
+    this.isSaving = false;
+    
+    console.log('Note update would be sent to API:', updateData);
+  }
+
+  /**
+   * Delete a note
+   */
+  deleteNote(note: Note): void {
+    if (!confirm(`Are you sure you want to delete this note?\n\n"${note.title || 'Untitled Note'}"`)) {
+      return;
+    }
+
+    // TODO: Call API to delete note when backend is ready
+    // For now, just remove locally
+    this.notes = this.notes.filter(n => n.id !== note.id);
+    
+    console.log('Note deletion would be sent to API for note ID:', note.id);
+  }
+
+  /**
+   * Get truncated content for preview
+   */
+  getTruncatedContent(content: string, maxLength: number = 150): string {
+    if (content.length <= maxLength) {
+      return content;
+    }
+    return content.substring(0, maxLength) + '...';
+  }
+
+  /**
+   * Start replying to a note
+   */
+  startReplyToNote(noteId: number): void {
+    this.replyingToNoteId = noteId;
+    this.replyContent = '';
+  }
+
+  /**
+   * Cancel reply
+   */
+  cancelReply(): void {
+    this.replyingToNoteId = null;
+    this.replyContent = '';
+  }
+
+  /**
+   * Save reply as a new note
+   */
+  saveReply(originalNote: Note): void {
+    if (!this.replyContent.trim()) {
+      this.error = 'Reply content cannot be empty';
+      return;
+    }
+
+    const replyNoteData: CreatePatientNoteRequest = {
+      patient_id: this.patientId,
+      note_type: 'general',
+      title: `Re: ${originalNote.title || 'Note'}`,
+      content: `[Reply to note by ${originalNote.provider}]\n\n${this.replyContent.trim()}`,
+      is_private: false
+    };
+
+    this.isSaving = true;
+    this.error = null;
+
+    this.patientNotesService.createPatientNote(replyNoteData).subscribe({
+      next: (createdNote) => {
+        console.log('Reply saved successfully:', createdNote);
+        
+        // Reset reply form
+        this.cancelReply();
+        this.isSaving = false;
+        
+        // Reload notes to show the new reply
+        this.loadPatientNotes();
+        
+        // Create the new note object for parent notification
+        const newNote: Note = {
+          id: createdNote.id,
+          date: createdNote.createdAt || new Date().toISOString(),
+          provider: this.extractProviderName(createdNote),
+          content: createdNote.content || '',
+          type: this.mapNoteType(createdNote.type),
+          canEdit: createdNote.canEdit ?? false,
+          title: createdNote.title || ''
+        };
+        
+        // Emit the new note to parent component
+        this.noteAdded.emit(newNote);
+      },
+      error: (error) => {
+        console.error('Error saving reply:', error);
+        this.error = 'Failed to save reply. Please try again.';
+        this.isSaving = false;
+      }
+    });
   }
 }

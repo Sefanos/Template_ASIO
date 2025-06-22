@@ -14,10 +14,10 @@
   <app-lab-results-card [labResults]="patient?.labResults || labResults || []"></app-lab-results-card>
     <!-- Appointment History Card with Real Data -->
   <app-appointment-history-card [appointments]="patient?.appointments || appointments || []"></app-appointment-history-card>
-  
-  <!-- Doctor Notes Card with Real Data -->
+    <!-- Doctor Notes Card with Real Data -->
   <app-doctor-notes-card 
     [patientId]="patientId || patient?.id"
     [notes]="displayNotes"
+    (noteAdded)="onNoteAdded($event)"
   ></app-doctor-notes-card>
 </div>
