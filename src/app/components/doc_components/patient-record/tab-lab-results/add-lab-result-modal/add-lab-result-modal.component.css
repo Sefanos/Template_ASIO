@@ -1,0 +1,39 @@
+.modal-overlay {
+  @apply fixed inset-0 z-50 overflow-y-auto bg-gray-500 bg-opacity-75 backdrop-blur-sm;
+}
+
+.modal-container {
+  @apply flex items-center justify-center min-h-screen p-4;
+}
+
+.modal-content {
+  @apply bg-white rounded-lg shadow-xl max-w-2xl w-full;
+}
+
+.modal-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.close-button {
+  @apply text-gray-400 hover:text-gray-600 transition-colors;
+}
+
+.modal-actions {
+  @apply flex justify-end space-x-3;
+}
+
+/* Animation for modal appearance */
+.modal-content {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

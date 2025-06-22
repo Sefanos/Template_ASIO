@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Appointment } from '../../../../models/appointment.model';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-tab-appointments',
@@ -9,7 +11,7 @@ import { Appointment } from '../../../../models/appointment.model';
   imports: [CommonModule, FormsModule],
   templateUrl: './tab-appointments.component.html',
 })
-export class TabAppointmentsComponent implements OnChanges {
+export class TabAppointmentsComponent implements OnChanges, OnDestroy {
   @Input() appointments: Appointment[] = [];
   @Output() scheduleNewAppointment = new EventEmitter<void>();
   
@@ -26,8 +28,20 @@ export class TabAppointmentsComponent implements OnChanges {
   pageSize = 5;
   maxPagesToShow = 5;
   
-  constructor(private cdr: ChangeDetectorRef) {}
-  
+  private currentUser: any = null;
+  private userSubscription: Subscription | null = null;
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private authService: AuthService
+  ) {
+    // Subscribe to current user changes
+    this.userSubscription = this.authService.getCurrentUser().subscribe(user => {
+      this.currentUser = user;
+      this.cdr.detectChanges();
+    });
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['appointments']) {
       console.log('Appointments tab data updated:', this.appointments, this.appointments?.length || 0);
@@ -35,6 +49,12 @@ export class TabAppointmentsComponent implements OnChanges {
       this.currentPage = 1;
       // Force change detection when appointments change
       setTimeout(() => this.cdr.detectChanges(), 0);
+    }
+  }
+  
+  ngOnDestroy(): void {
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
     }
   }
   
@@ -58,28 +78,38 @@ export class TabAppointmentsComponent implements OnChanges {
       const status = this.selectedStatusFilter.toLowerCase();
       result = result.filter(appt => appt.status === status);
     }
-    
-    // Apply time frame filter (this is simplified since we don't have actual Date objects)
-    // For a real implementation, you would parse the dates and filter based on actual date ranges
+      // Apply time frame filter
     if (this.selectedTimeFrameFilter !== 'All Time') {
-      if (this.selectedTimeFrameFilter === 'Last Month') {
-        // Filter logic would go here in a real app
-      } else if (this.selectedTimeFrameFilter === 'Last 3 Months') {
-        // Filter logic would go here in a real app
-      } else if (this.selectedTimeFrameFilter === 'Last 6 Months') {
-        // Filter logic would go here in a real app
-      } else if (this.selectedTimeFrameFilter === 'Last Year') {
-        // Filter logic would go here in a real app
+      const now = new Date();
+      const filterDate = new Date();
+      
+      switch (this.selectedTimeFrameFilter) {
+        case 'Last Month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'Last 3 Months':
+          filterDate.setMonth(now.getMonth() - 3);
+          break;
+        case 'Last 6 Months':
+          filterDate.setMonth(now.getMonth() - 6);
+          break;
+        case 'Last Year':
+          filterDate.setFullYear(now.getFullYear() - 1);
+          break;
       }
+      
+      result = result.filter(appt => {
+        const appointmentDate = new Date(this.getAppointmentDate(appt));
+        return appointmentDate >= filterDate;
+      });
     }
-    
-    // Apply search query
+      // Apply search query
     if (this.searchQuery.trim() !== '') {
       const query = this.searchQuery.toLowerCase();
       result = result.filter(appt => 
-        appt.reason.toLowerCase().includes(query) ||
-        appt.provider.toLowerCase().includes(query) ||
-        appt.type.toLowerCase().includes(query)
+        (appt.reason && appt.reason.toLowerCase().includes(query)) ||
+        (this.getDoctorName(appt) && this.getDoctorName(appt).toLowerCase().includes(query)) ||
+        (appt.type && appt.type.toLowerCase().includes(query))
       );
     }
     
@@ -183,9 +213,103 @@ export class TabAppointmentsComponent implements OnChanges {
   onScheduleNewAppointment(): void {
     this.scheduleNewAppointment.emit();
   }
+    formatDate(date: string): string {
+    if (!date) return '';
+    
+    try {
+      // Handle ISO date strings
+      if (date.includes('T')) {
+        const parsedDate = new Date(date);
+        return parsedDate.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle simple date strings like '2025-07-02'
+      const parsedDate = new Date(date);
+      return parsedDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return date; // Return original if parsing fails
+    }
+  }
   
-  formatDate(date: string): string {
-    // In a real app, this would properly format the date
-    return date;
+  // Add helper methods for consistent data extraction
+  getAppointmentDate(appointment: any): string {
+    const dateValue = appointment.date || appointment.appointmentDate || appointment.scheduled_date || appointment.appointment_datetime_start;
+    if (!dateValue) return '';
+    
+    if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      return dateValue.split('T')[0];
+    }
+    
+    return dateValue;
+  }
+  
+  getAppointmentTime(appointment: any): string {
+    if (appointment.time) {
+      return appointment.time;
+    }
+    
+    const dateTimeValue = appointment.appointment_datetime_start || appointment.appointmentTime || appointment.scheduled_time;
+    if (dateTimeValue && typeof dateTimeValue === 'string' && dateTimeValue.includes('T')) {
+      try {
+        const date = new Date(dateTimeValue);
+        return date.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        });
+      } catch {
+        return '';
+      }
+    }
+    
+    return dateTimeValue || '';
+  }
+  
+  getDoctorName(appointment: any): string {
+    // First try to get doctor from appointment data (if it exists and is valid)
+    if (appointment.doctor && typeof appointment.doctor === 'object') {
+      const doctorName = appointment.doctor.name || 
+                        appointment.doctor.full_name || 
+                        `Dr. ${appointment.doctor.last_name}`;
+      if (doctorName && doctorName !== 'Dr. undefined') {
+        return doctorName;
+      }
+    }
+    
+    // Check appointment direct fields (skip hardcoded sample data)
+    if (appointment.provider && !appointment.provider.includes('Dr. Sefanos')) {
+      return appointment.provider;
+    }
+    if (appointment.doctor_name) {
+      return appointment.doctor_name;
+    }
+    if (appointment.physician_name) {
+      return appointment.physician_name;
+    }
+    
+    // Fallback to current logged-in doctor
+    if (this.currentUser) {
+      const doctorName = this.currentUser.full_name || 
+                        this.currentUser.name || 
+                        (this.currentUser.first_name && this.currentUser.last_name ? 
+                          `Dr. ${this.currentUser.first_name} ${this.currentUser.last_name}` : null) ||
+                        (this.currentUser.last_name ? `Dr. ${this.currentUser.last_name}` : null) ||
+                        this.currentUser.username;
+      
+      if (doctorName && doctorName !== 'Dr. undefined') {
+        return doctorName;
+      }
+    }
+    
+    // Final fallback
+    return 'Doctor';
   }
 }

@@ -18,6 +18,7 @@ import { TabAppointmentsComponent } from '../../../components/doc_components/pat
 import { TabPrescriptionsComponent } from '../../../components/doc_components/patient-record/tab-prescriptions/tab-prescriptions.component';
 import { PatientNotFoundComponent } from '../../../components/doc_components/patient-record/patient-not-found/patient-not-found.component';
 import { TabMedicalHistoryComponent } from '../../../components/doc_components/patient-record/tab-medical-history/tab-medical-history.component';
+import { TabLabResultsComponent } from '../../../components/doc_components/patient-record/tab-lab-results/tab-lab-results.component';
 
 // Import models and services
 import { Patient } from '../../../models/patient.model';
@@ -34,7 +35,7 @@ import { PatientService } from '../../../shared/services/patient.service';
 import { PatientDataUtilsService } from '../../../shared/services/patient-data-utils.service';
 import { 
   PatientMedicalService, 
-  PatientMedicalSummary, 
+  PatientMedicalSummary,
   PatientInfo, 
   MedicalOverview,
   TimelineEvent as MedicalTimelineEvent 
@@ -58,7 +59,8 @@ import {
     TabAppointmentsComponent,
     TabPrescriptionsComponent,
     TabMedicalHistoryComponent,
-    PatientNotFoundComponent
+    PatientNotFoundComponent,
+    TabLabResultsComponent
   ],
   templateUrl: './patient-record.component.html',
   styleUrl: './patient-record.component.css'
@@ -493,13 +495,12 @@ export class PatientRecordComponent implements OnInit {
         });
     }
   }
-
   getTabCounts(): { [key: string]: number } {
   return {
     'summary': 0,
     'timeline': this.timelineEvents?.length || 0,
     'history': this.conditions?.length || 0,
-    'lab-results': this.labResults?.filter(lab => lab.status === 'critical').length || 0,
+    'lab-results': this.getCriticalLabResultsCount(),
     'prescriptions': this.medications?.length || 0,
     'documents': 0,
     'imaging': 0,
@@ -508,10 +509,16 @@ export class PatientRecordComponent implements OnInit {
     'billing': 0
   };
 }
-
   // Helper methods for tab counts
   getLabResultsCount(): number {
-    return this.patient?.labResults?.filter(lab => lab.status === 'critical').length || 0;
+    return this.labResults?.length || 0;
+  }
+
+  getCriticalLabResultsCount(): number {
+    return this.labResults?.filter(lab => {
+      const parameters = lab.structured_results?.results || [];
+      return parameters.some(param => param.status === 'critical');
+    }).length || 0;
   }
 
   getActiveMedicationsCount(): number {

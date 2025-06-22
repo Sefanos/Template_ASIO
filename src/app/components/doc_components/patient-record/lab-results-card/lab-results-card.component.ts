@@ -1,31 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-// Updated interface to match real API data structure
-interface ApiLabResult {
-  id: number;
-  testName: string;
-  result: string;
-  units: string;
-  referenceRange: string;
-  status: string;
-  orderedDate: string;
-  resultDate: string;
-  orderedBy: string;
-  lab: string;
-  isAbnormal: boolean;
-}
-
-// Legacy interface for backward compatibility
-interface LabResult {
-  id: number;
-  name: string;
-  value: string;
-  unit: string;
-  status: 'normal' | 'abnormal' | 'critical' | 'pending';
-  date: string;
-  notes?: string;
-}
+import { LabResult } from '../../../../models/lab-result.model';
 
 @Component({
   selector: 'app-lab-results-card',
@@ -34,13 +9,16 @@ interface LabResult {
   templateUrl: './lab-results-card.component.html',
 })
 export class LabResultsCardComponent implements OnChanges {
-  @Input() labResults: any[] = []; // Accept both old and new format
+  @Input() labResults: LabResult[] = [];
   
   constructor(private cdr: ChangeDetectorRef) {}
-  
-  ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(changes: SimpleChanges): void {
     if (changes['labResults']) {
-      console.log('Lab results updated:', this.labResults?.length || 0);
+      console.log('Lab results card - raw data:', this.labResults);
+      console.log('Lab results card - count:', this.labResults?.length || 0);
+      if (this.labResults?.length > 0) {
+        console.log('Lab results card - first result:', this.labResults[0]);
+      }
       // Force change detection when lab results change
       setTimeout(() => this.cdr.detectChanges(), 0);
     }
@@ -53,27 +31,46 @@ export class LabResultsCardComponent implements OnChanges {
   get hasLabResults(): boolean {
     return this.labResults && this.labResults.length > 0;
   }
-  
-  // Helper methods for lab result data
-  getTestName(result: any): string {
-    return result.testName || result.name || 'Unknown Test';
+    // Helper methods for lab result data
+  getTestName(result: LabResult): string {
+    return result.testName || result.testCode || `Lab Test #${result.id}`;
   }
   
-  getResult(result: any): string {
-    return result.result || result.value || 'N/A';
+  getResult(result: LabResult): string {
+    // Get the first parameter value or a summary
+    const parameters = result.structured_results?.results || [];
+    if (parameters.length === 0) return 'No results';
+    if (parameters.length === 1) {
+      return `${parameters[0].value} ${parameters[0].unit || ''}`.trim();
+    }
+    return `${parameters.length} parameters`;
   }
   
-  getUnits(result: any): string {
-    return result.units || result.unit || '';
+  getUnits(result: LabResult): string {
+    const parameters = result.structured_results?.results || [];
+    if (parameters.length === 1) {
+      return parameters[0].unit || '';
+    }
+    return '';
   }
   
-  getReferenceRange(result: any): string {
-    return result.referenceRange || result.normalRange || 'N/A';
+  getReferenceRange(result: LabResult): string {
+    const parameters = result.structured_results?.results || [];
+    if (parameters.length === 1) {
+      return parameters[0].reference_range || parameters[0].referenceRange || 'N/A';
+    }
+    return 'Multiple ranges';
   }
   
-  getStatus(result: any): string {
-    if (result.isAbnormal) return 'abnormal';
-    return result.status || 'normal';
+  getStatus(result: LabResult): string {
+    // Check if any parameters are abnormal
+    const parameters = result.structured_results?.results || [];
+    const hasAbnormal = parameters.some(p => p.status !== 'normal');
+    const hasCritical = parameters.some(p => p.status === 'critical');
+    
+    if (hasCritical) return 'critical';
+    if (hasAbnormal) return 'abnormal';
+    return 'normal';
   }
   
   getStatusColor(status: string): string {
@@ -95,24 +92,23 @@ export class LabResultsCardComponent implements OnChanges {
       default: return '📋';
     }
   }
-  
-  getOrderedDate(result: any): string {
-    return result.orderedDate || result.date || '';
+    getOrderedDate(result: LabResult): string {
+    return result.created_at || result.result_date || '';
   }
   
-  getResultDate(result: any): string {
-    return result.resultDate || result.date || '';
+  getResultDate(result: LabResult): string {
+    return result.result_date || result.created_at || '';
   }
   
-  getOrderedBy(result: any): string {
-    return result.orderedBy || result.doctor || 'Unknown Doctor';
+  getOrderedBy(result: LabResult): string {
+    return result.reviewedBy || `Doctor ID: ${result.reviewed_by_user_id}` || 'Unknown Doctor';
   }
   
-  getLab(result: any): string {
-    return result.lab || result.laboratory || 'Unknown Lab';
+  getLab(result: LabResult): string {
+    return result.labName || result.performed_by_lab_name || 'Lab';
   }
   
-  isRecentResult(result: any): boolean {
+  isRecentResult(result: LabResult): boolean {
     const resultDate = new Date(this.getResultDate(result));
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -126,9 +122,9 @@ export class LabResultsCardComponent implements OnChanges {
   }
   
   getAbnormalResultsCount(): number {
-    return this.labResults.filter(result => 
-      this.getStatus(result).toLowerCase() === 'abnormal' || 
-      this.getStatus(result).toLowerCase() === 'critical'
-    ).length;
+    return this.labResults.filter(result => {
+      const status = this.getStatus(result).toLowerCase();
+      return status === 'abnormal' || status === 'critical';
+    }).length;
   }
 }

@@ -73,47 +73,20 @@ export class PatientService {
       conditions: [
         { id: 1, name: 'Hypertension', status: 'chronic', onsetDate: '2020-06-15', notes: 'Managed with Lisinopril' },
         { id: 2, name: 'Type 2 Diabetes', status: 'chronic', onsetDate: '2018-11-23', notes: 'Managed with Metformin and diet' }
-      ],
-      labResults: [
-        {
-          id: 1,
-          name: 'HbA1c',
-          value: 6.8,
-          unit: '%',
-          referenceRange: '4.0-5.6%',
-          date: '2025-04-15',
-          status: 'abnormal',
-          trend: 'stable',
-          history: [
-            { date: '2025-01-15', value: 7.1 },
-            { date: '2024-10-15', value: 7.3 }
-          ]
-        },
-        {
-          id: 2,
-          name: 'Cholesterol Panel',
-          value: 5.0, // This seems to be a placeholder, cholesterol panel has multiple values
-          unit: 'mmol/L', // Assuming unit, adjust as needed
-          referenceRange: '<5.2 mmol/L (Total)',
-          date: '2025-04-15',
-          status: 'normal'
-        }
-      ],
-      appointments: [
+      ],      appointments: [
         {
           date: '2025-05-07', reason: 'Annual checkup', status: 'completed',
           id: 1,
           time: '10:00 AM',
           type: 'Routine',
-          provider: 'Dr. Sefanos'
-        },
-        {
-          date: '2025-03-18', reason: 'Follow-up',
+          provider: 'Dr. Sarah Johnson'
+        },        {
+          date: '2025-07-02', reason: 'Follow-up consultation',
           status: 'scheduled',
           id: 2,
           time: '02:30 PM',
           type: 'Follow-up',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr. Michael Chen'
         },
         {
           date: '2025-01-05', reason: 'Urgent care',
@@ -121,7 +94,7 @@ export class PatientService {
           id: 3,
           time: '09:15 AM',
           type: 'Urgent',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr. Emily Rodriguez'
         },
         {
           date: '2024-12-01', reason: 'Consultation',
@@ -129,7 +102,7 @@ export class PatientService {
           id: 4,
           time: '11:00 AM',
           type: 'Consultation',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr. Sarah Johnson'
         },
         {
           date: '2024-11-15', reason: 'Physical Exam',
@@ -137,7 +110,7 @@ export class PatientService {
           id: 5,
           time: '03:00 PM',
           type: 'Routine',
-          provider: 'Dr. Sefanos'
+          provider: 'Dr. David Wilson'
         }
       ],
       timelineEvents: [
@@ -195,10 +168,6 @@ export class PatientService {
       conditions: [
         { id: 3, name: 'Seasonal allergies', status: 'active', onsetDate: '2000-01-01', notes: 'Managed with Loratadine' },
         { id: 4, name: 'Appendectomy', status: 'resolved', onsetDate: '2010-05-15', endDate: '2010-05-20' }
-      ],
-      labResults: [
-        { id: 3, name: 'CBC', value: 0, unit: '', referenceRange: 'Normal', date: '2025-04-10', status: 'normal' }, // CBC usually has multiple values, placeholder here
-        { id: 4, name: 'Liver Function', value: 0, unit: '', referenceRange: 'Normal', date: '2025-04-10', status: 'normal' } // Same for LFTs
       ],
       appointments: [
         {

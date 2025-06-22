@@ -1,0 +1,34 @@
+   <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-500 bg-opacity-75 backdrop-blur-sm">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium text-gray-900">Add Lab Result</h3>
+              <button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="mb-6">
+              <p class="text-sm text-gray-600">
+                The manual lab result entry form will be implemented in Phase 2 of development.
+              </p>
+              <p class="text-sm text-gray-600 mt-2">
+                For now, lab results should be added through your existing lab interface or API.
+              </p>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                (click)="onCancel()"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

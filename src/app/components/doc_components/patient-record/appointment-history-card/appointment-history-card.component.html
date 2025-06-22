@@ -32,19 +32,18 @@
         
         <!-- Appointment Header -->
         <div class="flex items-start justify-between mb-3">
-          <div class="flex-1">
-            <div class="flex items-center mb-2">
+          <div class="flex-1">            <div class="flex items-center mb-2">
               <h4 class="text-lg font-semibold text-gray-900">{{ getAppointmentType(appointment) }}</h4>
-              <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full {{ getStatusColor(getAppointmentStatus(appointment)) }}">
+              <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full border"
+                    [ngClass]="getStatusColor(getAppointmentStatus(appointment))">
                 {{ getAppointmentStatus(appointment) | titlecase }}
               </span>
               <span *ngIf="isUpcoming(appointment)" 
-                    class="ml-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                    class="ml-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 border border-green-200 rounded-full">
                 Upcoming
               </span>
-            </div>
-            <div class="text-sm text-gray-600">
-              <span class="font-medium">Date:</span> {{ getAppointmentDate(appointment) | date:'MMM d, yyyy' }}
+            </div>            <div class="text-sm text-gray-600">
+              <span class="font-medium">Date:</span> {{ formatDate(getAppointmentDate(appointment)) }}
               <span *ngIf="getAppointmentTime(appointment)" class="ml-4">
                 <span class="font-medium">Time:</span> {{ getAppointmentTime(appointment) }}
               </span>
@@ -53,22 +52,20 @@
         </div>
         
         <!-- Appointment Details -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-          <!-- Doctor Info -->
-          <div class="bg-gray-50 rounded-lg p-3">
-            <div class="text-xs font-medium text-gray-600 mb-1">Healthcare Provider</div>
-            <div class="text-sm font-medium text-gray-900 flex items-center">
-              <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        <div class="grid grid-cols-2 gap-4 text-sm mb-3">
+          <div>
+            <span class="text-gray-500">Healthcare Provider</span>
+            <div class="flex items-center mt-1">
+              <svg class="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
               </svg>
-              {{ getDoctorName(appointment) }}
+              <span class="font-medium text-gray-900">{{ getDoctorName(appointment) }}</span>
             </div>
           </div>
           
-          <!-- Duration/Type -->
-          <div class="bg-gray-50 rounded-lg p-3">
-            <div class="text-xs font-medium text-gray-600 mb-1">Appointment Type</div>
-            <div class="text-sm font-medium text-gray-900">{{ getAppointmentType(appointment) }}</div>
+          <div>
+            <span class="text-gray-500">Appointment Type</span>
+            <div class="font-medium text-gray-900 mt-1">{{ getAppointmentType(appointment) }}</div>
           </div>
         </div>
         
@@ -104,6 +101,11 @@
               View Details
             </button>
           </div>
+        </div>
+        
+        <!-- Ordered By Footer -->
+        <div class="text-xs text-gray-500 mt-3">
+          Ordered by: {{ getOrderedBy(appointment) }}
         </div>
       </div>
       
