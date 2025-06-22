@@ -1,0 +1,95 @@
+@tailwind utilities;
+
+@layer utilities {
+  .bg-red-150 {
+    background-color: #fee2e2;
+  }
+}
+
+.lab-result-details {
+  /* Custom styles for lab result details */
+}
+
+/* Parameter status highlighting */
+.bg-red-25 {
+  background-color: #fef2f2;
+}
+
+.bg-yellow-25 {
+  background-color: #fffbeb;
+}
+
+/* Parameter value highlighting based on status */
+.parameter-value-high {
+  @apply text-red-600 font-semibold;
+}
+
+.parameter-value-low {
+  @apply text-blue-600 font-semibold;
+}
+
+.parameter-value-borderline {
+  @apply text-yellow-600 font-semibold;
+}
+
+.parameter-value-critical {
+  @apply text-red-800 font-bold;
+}
+
+.parameter-value-normal {
+  @apply text-gray-900;
+}
+
+/* Status badge animations */
+.status-badge {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.status-badge:hover {
+  @apply transform scale-105;
+}
+
+/* Action button styles */
+.action-button {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+.action-button:hover {
+  @apply transform scale-105;
+}
+
+/* Table row highlighting for abnormal values */
+.abnormal-row {
+  @apply bg-red-50 hover:bg-red-100;
+}
+
+.critical-row {
+  @apply bg-red-100 hover:bg-red-150;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .lab-result-details {
+    padding: 1rem;
+  }
+  
+  .lab-result-details table {
+    font-size: 0.875rem;
+  }
+  
+  .lab-result-details th,
+  .lab-result-details td {
+    padding: 0.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .action-button {
+    display: none;
+  }
+  
+  .lab-result-details {
+    break-inside: avoid;
+  }
+}

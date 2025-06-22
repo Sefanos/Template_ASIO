@@ -1,0 +1,46 @@
+.lab-results-tab {
+  /* Main tab container styles */
+}
+
+/* Stats cards hover effects */
+.stats-card {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.stats-card:hover {
+  @apply transform scale-105 shadow-lg;
+}
+
+/* Filter section styling */
+.filter-section {
+  @apply bg-white rounded-lg border border-gray-200;
+}
+
+/* Search input focus effects */
+.search-input:focus {
+  @apply ring-2 ring-blue-500 border-blue-500;
+}
+
+/* Action buttons */
+.action-button {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+.action-button:hover {
+  @apply transform scale-105;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .lab-results-tab {
+    padding: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

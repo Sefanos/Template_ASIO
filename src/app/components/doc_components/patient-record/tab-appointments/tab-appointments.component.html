@@ -56,17 +56,16 @@
     
     <div *ngFor="let appointment of paginatedAppointments" class="py-4">
       <div class="flex flex-wrap md:flex-nowrap justify-between gap-4">
-        <div class="flex items-start gap-4">
-          <!-- Date/Time column -->
+        <div class="flex items-start gap-4">          <!-- Date/Time column -->
           <div class="w-28 flex-none">
-            <div class="font-medium">{{ formatDate(appointment.date) }}</div>
-            <div class="text-sm text-text-light">{{ appointment.time }}</div>
+            <div class="font-medium">{{ formatDate(getAppointmentDate(appointment)) }}</div>
+            <div class="text-sm text-text-light">{{ getAppointmentTime(appointment) }}</div>
           </div>
           
           <!-- Appointment details -->
           <div>
             <div class="font-medium mb-1">{{ appointment.reason }}</div>
-            <div class="text-sm text-text-light">{{ appointment.type }} with {{ appointment.provider }}</div>
+            <div class="text-sm text-text-light">{{ appointment.type }} with {{ getDoctorName(appointment) }}</div>
             <div *ngIf="appointment.notes" class="text-sm text-text mt-1">{{ appointment.notes }}</div>
           </div>
         </div>

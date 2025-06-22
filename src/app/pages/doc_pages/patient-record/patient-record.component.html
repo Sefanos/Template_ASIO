@@ -141,6 +141,13 @@
         *ngSwitchCase="'prescriptions'"
         [patient]="patient"
       ></app-tab-prescriptions>
+
+      <!-- Lab Results Tab -->
+       <app-tab-lab-results
+          *ngSwitchCase="'lab-results'"
+          [patientId]="patient.id || 0"
+          [patient]="patient">
+      </app-tab-lab-results>
       
       <!-- Other Tabs -->
       <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">
