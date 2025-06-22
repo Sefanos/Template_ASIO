@@ -128,7 +128,11 @@
       <app-tab-prescriptions
         *ngSwitchCase="'prescriptions'"
         [patient]="patient"
-      ></app-tab-prescriptions>      <!-- Lab Results Tab -->
+
+      ></app-tab-prescriptions>    
+      
+      <!-- Lab Results Tab -->
+
        <app-tab-lab-results
           *ngSwitchCase="'lab-results'"
           [patientId]="patient.id || 0"
@@ -146,6 +150,7 @@
         *ngSwitchCase="'imaging'"
         [patientId]="patientId || 0"
       ></app-tab-imaging>
+
       
       <!-- Other Tabs -->
       <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">

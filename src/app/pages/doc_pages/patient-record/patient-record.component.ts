@@ -18,8 +18,10 @@ import { TabPrescriptionsComponent } from '../../../components/doc_components/pa
 import { PatientNotFoundComponent } from '../../../components/doc_components/patient-record/patient-not-found/patient-not-found.component';
 import { TabMedicalHistoryComponent } from '../../../components/doc_components/patient-record/tab-medical-history/tab-medical-history.component';
 import { TabLabResultsComponent } from '../../../components/doc_components/patient-record/tab-lab-results/tab-lab-results.component';
+
 import { TabDocumentsComponent } from '../../../components/doc_components/patient-record/tab-documents/tab-documents.component';
 import { TabImagingComponent } from '../../../components/doc_components/patient-record/tab-imaging/tab-imaging.component';
+
 
 // Import models and services
 import { Patient } from '../../../models/patient.model';
@@ -449,7 +451,9 @@ export class PatientRecordComponent implements OnInit {
           }
         });
     }
-  }  getTabCounts(): { [key: string]: number } {
+  }  
+  getTabCounts(): { [key: string]: number } {
+
   return {
     'summary': 0,
     'timeline': this.timelineEvents?.length || 0,
