@@ -1,135 +1,235 @@
-<div class="medical-history-container mb-6 md:mb-8">
+<!-- <div class="medical-history-container space-y-6">
 
-  <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-10 text-center bg-card rounded-card shadow-card">
-    <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mb-4"></div>
-    <p class="text-text-light">Loading medical history...</p>
+   
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 bg-card rounded-2xl shadow-sm border border-border">
+    <div class="mb-4 md:mb-0">
+      <h2 class="text-2xl font-bold text-text flex items-center gap-3">
+        <i class="fas fa-book-medical text-primary"></i>
+        Medical History
+      </h2>
+      <p class="text-text-light">Patient medical records and health information</p>
+    </div>
+    <div class="flex space-x-3">
+      <button (click)="refreshData()" class="btn-secondary flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-lg border border-border shadow-sm transition-colors duration-150">
+        <i class="fas fa-sync-alt mr-2"></i> Refresh
+      </button>
+    
+    </div>
+  </div>
+ 
+  <div *ngIf="isLoading" class="flex items-center justify-center p-10 text-center bg-card rounded-card shadow-card">
+    <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mr-4"></div>
+    <p class="text-text-light text-lg">Loading Medical History...</p>
   </div>
 
-  <div *ngIf="!isLoading && errorMessage" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative mb-6 shadow-card" role="alert">
-      <strong class="font-bold">Error!</strong>
-      <span class="block sm:inline">{{ errorMessage }}</span>
+  <div *ngIf="!isLoading && errorMessage" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative shadow-card" role="alert">
+    <strong class="font-bold">Error!</strong>
+    <span class="block sm:inline">{{ errorMessage }}</span>
   </div>
-
-  <div *ngIf="!isLoading && !errorMessage && medicalHistory" class="card bg-card rounded-card shadow-card">
-    <div class="card-header bg-hover p-card-padding border-b border-border">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-primary">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-            <path d="M8 7h6" />
-            <path d="M8 11h8" />
-            <path d="M8 15h6" />
-          </svg>
-          <span class="font-display text-section-header text-text">Medical History Details</span>
+ 
+  <div *ngIf="!isLoading && !errorMessage" class="space-y-6">
+   
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div *ngFor="let card of summaryCards" 
+           class="summary-card bg-card p-4 rounded-xl shadow-sm border border-border flex justify-between items-center"
+           [class.border-red-400]="card.key === 'allergies' && card.count > 0"
+           [class.bg-red-50]="card.key === 'allergies' && card.count > 0">
+        <div>
+          <p class="text-sm font-medium text-text-light" [class.text-red-600]="card.key === 'allergies' && card.count > 0">{{ card.title }}</p>
+          <p class="text-3xl font-bold text-text">{{ card.count }}</p>
         </div>
-        <!-- Affichage de lastUpdated si disponible -->
-        <span class="text-body text-text-muted" *ngIf="medicalHistory.lastUpdated">
-          Last updated: {{ medicalHistory.lastUpdated | date:'mediumDate' }}
-        </span>
+        <div class="text-3xl opacity-60" [class]="card.colorClass">
+          <i [class]="card.icon"></i>
+        </div>
+      </div>
+    </div>
+ 
+    <div class="bg-card p-2 rounded-xl shadow-sm border border-border flex flex-wrap gap-2">
+      <button *ngFor="let filter of filters" 
+              (click)="setFilter(filter.key)"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              [ngClass]="{
+                'bg-primary text-white shadow': activeFilter === filter.key,
+                'text-text-light hover:bg-hover hover:text-text': activeFilter !== filter.key
+              }">
+        {{ filter.label }}
+      </button>
+    </div>
+
+   
+    <div *ngIf="filteredRecords.length > 0; else noRecords" class="space-y-4">
+      <div *ngFor="let record of filteredRecords" class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+        <div class="p-4 border-b border-border bg-hover">
+          <p class="text-sm text-text-light">
+            <i class="fas fa-calendar-alt mr-2"></i>Last Updated: <span class="font-medium text-text">{{ record.last_updated | date:'longDate' }}</span>
+          </p>
+        </div>
+        <div *ngIf="hasData(record); else noDataInRecord" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          
+          <div *ngIf="record.current_medical_conditions.length > 0">
+            <h4 class="font-semibold text-text mb-2">Conditions</h4>
+            <ul class="list-disc list-inside space-y-1">
+              <li *ngFor="let item of record.current_medical_conditions" class="text-text-light">{{ item }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="record.chronic_diseases.length > 0">
+            <h4 class="font-semibold text-text mb-2">Chronic Diseases</h4>
+            <ul class="list-disc list-inside space-y-1">
+              <li *ngFor="let item of record.chronic_diseases" class="text-text-light">{{ item }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="record.past_surgeries.length > 0">
+            <h4 class="font-semibold text-text mb-2">Surgeries</h4>
+            <ul class="list-disc list-inside space-y-1">
+              <li *ngFor="let item of record.past_surgeries" class="text-text-light">{{ item }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="record.current_medications.length > 0">
+            <h4 class="font-semibold text-text mb-2">Medications</h4>
+            <ul class="list-disc list-inside space-y-1">
+              <li *ngFor="let item of record.current_medications" class="text-text-light">{{ item }}</li>
+            </ul>
+          </div>
+
+          <div *ngIf="record.allergies.length > 0">
+            <h4 class="font-semibold text-red-600 mb-2">Allergies</h4>
+            <ul class="list-disc list-inside space-y-1">
+              <li *ngFor="let item of record.allergies" class="text-red-500">{{ item }}</li>
+            </ul>
+          </div>
+
+        </div>
+        <ng-template #noDataInRecord>
+          <p class="p-4 text-text-muted italic">This record contains no specific items.</p>
+        </ng-template>
       </div>
     </div>
 
-    <div class="p-card-padding">
-      <div class="space-y-6">
-        <!-- Vital Signs Section -->
-        <div *ngIf="medicalHistory.vitalSigns" class="mb-6">
-          <div class="flex justify-between items-center mb-3">
-              <h3 class="font-display text-xl text-text"> Vital Signs</h3>
-              <span class="text-xs text-text-muted" *ngIf="medicalHistory.vitalSigns.lastRecorded">
-                Recorded: {{ medicalHistory.vitalSigns.lastRecorded | date:'short' }}
-              </span>
-          </div>
+    <ng-template #noRecords>
+      <div class="text-center py-16 bg-card rounded-lg shadow-sm border border-border">
+        <i class="fas fa-file-medical-alt text-5xl text-text-muted mb-4"></i>
+        <h3 class="text-xl font-semibold text-text">No Medical History Found</h3>
+        <p class="text-text-light mt-1">No records match the current filter, or no -->
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Utilisation de l'opérateur ?. pour un accès sécurisé -->
-            <div *ngIf="medicalHistory.vitalSigns?.bloodPressure as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-            <div *ngIf="medicalHistory.vitalSigns?.pulse as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-            <div *ngIf="medicalHistory.vitalSigns?.temperature as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-            <div *ngIf="medicalHistory.vitalSigns?.respiratoryRate as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-            <div *ngIf="medicalHistory.vitalSigns?.oxygenSaturation as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-            <div *ngIf="medicalHistory.vitalSigns?.weight as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-            <div *ngIf="medicalHistory.vitalSigns?.height as vital" class="bg-hover p-4 rounded-lg shadow flex items-start justify-between sm:col-span-1">
-              <div>
-                <p class="text-sm text-text-light">{{ vital.label }}</p>
-                <p class="text-lg font-semibold text-text">{{ vital.value }} <span class="text-xs">{{ vital.unit }}</span></p>
-              </div>
-              <i [class]="vital.icon + ' text-2xl text-primary opacity-70'"></i>
-            </div>
-          </div>
-          <!-- Message si aucun signe vital spécifique n'est présent -->
-          <div *ngIf="!(medicalHistory.vitalSigns?.bloodPressure || medicalHistory.vitalSigns?.pulse || medicalHistory.vitalSigns?.temperature || medicalHistory.vitalSigns?.respiratoryRate || medicalHistory.vitalSigns?.oxygenSaturation || medicalHistory.vitalSigns?.weight || medicalHistory.vitalSigns?.height)" class="text-text-muted italic text-center py-4">
-              No specific vital signs data available.
-          </div>
-        </div>
-        <!-- Message si l'objet vitalSigns lui-même est absent -->
-        <div *ngIf="!medicalHistory.vitalSigns && !isLoading && !errorMessage" class="text-text-muted italic text-center py-4">
-          Vital signs data is not available.
-        </div>
+          
 
-        <hr class="border-t border-border" *ngIf="medicalHistory.vitalSigns && medicalHistorySections.length > 0" />
-
-        <!-- Dynamic Medical History Sections -->
-        <ng-container *ngFor="let section of medicalHistorySections; let i = index">
-          <div>
-            <h3 class="font-display text-card-title text-primary mb-2">{{ section.title }}</h3>
-            <div class="bg-hover p-3 rounded-lg">
-              <div *ngIf="section.data && section.data.length > 0; else noDataForSection" class="flex flex-wrap gap-2">
-                <span *ngFor="let item of section.data" class="px-3 py-1 text-sm rounded-full border"
-                      [ngClass]="'border-' + section.color + ' text-' + section.color + ' bg-' + section.color + '/10'">
-                  {{ item }}
-                </span>
-              </div>
-              <ng-template #noDataForSection>
-                <p class="text-sm text-text-muted italic">{{ section.emptyText }}</p>
-              </ng-template>
-            </div>
-          </div>
-          <!-- Séparateur conditionnel entre les sections d'historique -->
-          <hr *ngIf="i < medicalHistorySections.length - 1 && medicalHistorySections.length > 1" class="my-4 border-t border-border" />
-        </ng-container>
-
-      </div>
+          
+  <div class="medical-history-container space-y-6">
+ 
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 bg-card rounded-2xl shadow-sm border border-border">
+    <div class="mb-4 md:mb-0">
+      <h2 class="text-2xl font-bold text-text flex items-center gap-3">
+        <i class="fas fa-book-medical text-primary"></i>
+        Medical History
+      </h2>
+      <p class="text-text-light">A consolidated summary of your medical records.</p>
+    </div>
+    <div class="flex space-x-3">
+      <button (click)="refreshData()" class="btn-secondary flex items-center bg-card hover:bg-hover text-text-light font-medium py-2 px-4 rounded-lg border border-border shadow-sm transition-colors duration-150">
+        <i class="fas fa-sync-alt mr-2"></i> Refresh
+      </button>
     </div>
   </div>
 
-  <!-- Message si medicalHistory est complètement null après le chargement et sans erreur -->
-  <div *ngIf="!isLoading && !errorMessage && !medicalHistory" class="text-center text-text-muted italic p-10 bg-card rounded-card shadow-card">
-    No medical history available for this patient.
+  
+  <div *ngIf="isLoading" class="flex items-center justify-center p-10 text-center bg-card rounded-card shadow-card">
+    <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mr-4"></div>
+    <p class="text-text-light text-lg">Loading Medical History...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative shadow-card" role="alert">
+    <strong class="font-bold">Error!</strong>
+    <span class="block sm:inline">{{ errorMessage }}</span>
+  </div>
+
+  
+  <div *ngIf="!isLoading && !errorMessage" class="space-y-6">
+     
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div *ngFor="let card of summaryCards" 
+           class="summary-card bg-card p-4 rounded-xl shadow-sm border border-border flex justify-between items-center"
+           [class.border-red-400]="card.key === 'allergies' && card.count > 0"
+           [class.bg-red-50]="card.key === 'allergies' && card.count > 0">
+        <div>
+          <p class="text-sm font-medium text-text-light" [class.text-red-600]="card.key === 'allergies' && card.count > 0">{{ card.title }}</p>
+          <p class="text-3xl font-bold text-text">{{ card.count }}</p>
+        </div>
+        <div class="text-3xl opacity-60" [class]="card.colorClass">
+          <i [class]="card.icon"></i>
+        </div>
+      </div>
+    </div>
+
+   
+    <div *ngIf="hasAnyData(); else noRecords" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+     
+      <div *ngIf="allAllergies.length > 0" class="bg-red-50 border border-red-200 rounded-lg shadow-sm p-5 lg:col-span-2">
+        <h3 class="text-lg font-semibold text-red-700 flex items-center mb-3">
+          <i class="fas fa-exclamation-triangle mr-3"></i>
+          Allergies
+        </h3>
+        <ul class="list-disc list-inside space-y-1.5">
+          <li *ngFor="let item of allAllergies" class="text-red-600">{{ item }}</li>
+        </ul>
+      </div>
+
+      
+      <div *ngIf="allConditions.length > 0" class="bg-card border border-border rounded-lg shadow-sm p-5">
+        <h3 class="text-lg font-semibold text-text flex items-center mb-3">
+          <i class="fas fa-procedures mr-3 text-blue-500"></i>
+          Medical Conditions
+        </h3>
+        <ul class="list-disc list-inside space-y-1.5">
+          <li *ngFor="let item of allConditions" class="text-text-light">{{ item }}</li>
+        </ul>
+      </div>
+
+     
+      <div *ngIf="allChronicDiseases.length > 0" class="bg-card border border-border rounded-lg shadow-sm p-5">
+        <h3 class="text-lg font-semibold text-text flex items-center mb-3">
+          <i class="fas fa-stopwatch-20 mr-3 text-purple-500"></i>
+          Chronic Diseases
+        </h3>
+        <ul class="list-disc list-inside space-y-1.5">
+          <li *ngFor="let item of allChronicDiseases" class="text-text-light">{{ item }}</li>
+        </ul>
+      </div>
+
+       
+      <div *ngIf="allPastSurgeries.length > 0" class="bg-card border border-border rounded-lg shadow-sm p-5">
+        <h3 class="text-lg font-semibold text-text flex items-center mb-3">
+          <i class="fas fa-cut mr-3 text-gray-600"></i>
+          Past Surgeries
+        </h3>
+        <ul class="list-disc list-inside space-y-1.5">
+          <li *ngFor="let item of allPastSurgeries" class="text-text-light">{{ item }}</li>
+        </ul>
+      </div>
+
+       
+      <div *ngIf="allCurrentMedications.length > 0" class="bg-card border border-border rounded-lg shadow-sm p-5">
+        <h3 class="text-lg font-semibold text-text flex items-center mb-3">
+          <i class="fas fa-pills mr-3 text-yellow-500"></i>
+          Current Medications
+        </h3>
+        <ul class="list-disc list-inside space-y-1.5">
+          <li *ngFor="let item of allCurrentMedications" class="text-text-light">{{ item }}</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <ng-template #noRecords>
+      <div class="text-center py-16 bg-card rounded-lg shadow-sm border border-border">
+        <i class="fas fa-file-medical-alt text-5xl text-text-muted mb-4"></i>
+        <h3 class="text-xl font-semibold text-text">No Medical History Found</h3>
+        <p class="text-text-light mt-1">No medical history has been added yet.</p>
+      </div>
+    </ng-template>
+
   </div>
 </div>
