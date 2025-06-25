@@ -1,0 +1,305 @@
+<!-- <div class="vital-signs-container">
+
+ 
+  <div *ngIf="isLoading" class="flex items-center justify-center p-10 text-center">
+    <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mb-4 mr-4"></div>
+    <p class="text-text-light text-lg">Loading Vital Signs...</p>
+  </div>
+
+  
+  <div *ngIf="!isLoading && error" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative shadow-card" role="alert">
+    <strong class="font-bold">Error!</strong>
+    <span class="block sm:inline">{{ error }}</span>
+  </div>
+
+ 
+  <div *ngIf="!isLoading && !error && latestVitals">
+     
+    <div class="latest-vitals-summary mb-8">
+      <h2 class="text-section-header font-display text-text mb-2">Latest Vitals</h2>
+      <p class="text-body text-text-light mb-4">Recorded on {{ latestVitals.recorded_at | date:'fullDate' }} at {{ latestVitals.recorded_at | date:'shortTime' }}</p>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('blood_pressure')" class="text-2xl text-primary mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Blood Pressure</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.blood_pressure_systolic }} / {{ latestVitals.blood_pressure_diastolic }}</p>
+          <p class="text-xs text-text-muted">mmHg</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('pulse_rate')" class="text-2xl text-accent mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Pulse Rate</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.pulse_rate }}</p>
+          <p class="text-xs text-text-muted">bpm</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('temperature')" class="text-2xl text-yellow-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Temperature</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.temperature }}</p>
+          <p class="text-xs text-text-muted">{{ latestVitals.temperature_unit }}</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('respiratory_rate')" class="text-2xl text-blue-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Resp. Rate</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.respiratory_rate }}</p>
+          <p class="text-xs text-text-muted">breaths/min</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('oxygen_saturation')" class="text-2xl text-red-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">SpO2</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.oxygen_saturation }}</p>
+          <p class="text-xs text-text-muted">%</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('weight')" class="text-2xl text-green-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Weight</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.weight }}</p>
+          <p class="text-xs text-text-muted">{{ latestVitals.weight_unit }}</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('height')" class="text-2xl text-purple-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Height</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.height }}</p>
+          <p class="text-xs text-text-muted">{{ latestVitals.height_unit }}</p>
+        </div>
+      </div>
+    </div>
+
+   
+    <div class="vitals-history">
+      <h2 class="text-section-header font-display text-text mb-4">History</h2>
+      <div class="bg-card rounded-lg shadow-md overflow-x-auto border border-border">
+        <table class="min-w-full divide-y divide-border">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Date</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">BP (mmHg)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Pulse (bpm)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Temp</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Resp (b/m)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">SpO2 (%)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Weight</th>
+            </tr>
+          </thead>
+          <tbody class="bg-card divide-y divide-border">
+            <tr *ngFor="let record of vitalsHistory" class="hover:bg-hover transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">{{ record.recorded_at | date:'medium':'':'en-US' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.blood_pressure_systolic }}/{{ record.blood_pressure_diastolic }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.pulse_rate }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.temperature }}{{ record.temperature_unit }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.respiratory_rate }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.oxygen_saturation }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.weight }}{{ record.weight_unit }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  
+  <div *ngIf="!isLoading && !error && !latestVitals" class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+    <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+    <p class="text-section-header text-text-light">No vital signs found.</p>
+    <p class="text-body text-text-muted">Your vital signs records will appear here once they are available.</p>
+  </div>
+</div> -->
+
+<div class="vital-signs-container">
+
+  <!-- Loading & Error States (No changes) -->
+  <div *ngIf="isLoading" class="flex items-center justify-center p-10 text-center">
+    <div class="w-12 h-12 border-4 border-t-4 border-border border-t-primary rounded-full animate-spin mb-4 mr-4"></div>
+    <p class="text-text-light text-lg">Loading Vital Signs...</p>
+  </div>
+  <div *ngIf="!isLoading && error" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative shadow-card" role="alert">
+    <strong class="font-bold">Error!</strong>
+    <span class="block sm:inline">{{ error }}</span>
+  </div>
+
+  <!-- Content State -->
+  <div *ngIf="!isLoading && !error && latestVitals">
+    <!-- Latest Vitals Summary (No changes) -->
+    <div class="latest-vitals-summary mb-8">
+      <h2 class="text-section-header font-display text-text mb-2">Latest Vitals</h2>
+      <p class="text-body text-text-light mb-4">Recorded on {{ latestVitals.recorded_at | date:'fullDate':'':'en-US' }} at {{ latestVitals.recorded_at | date:'shortTime':'':'en-US' }}</p>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+        <!-- Vital Cards... -->
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('blood_pressure')" class="text-2xl text-primary mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Blood Pressure</p>
+          <p class="text-xl font-bold text-text" [ngClass]="getBPStatusClass(latestVitals.blood_pressure_systolic, latestVitals.blood_pressure_diastolic)">{{ latestVitals.blood_pressure_systolic }} / {{ latestVitals.blood_pressure_diastolic }}</p>
+          <p class="text-xs text-text-muted">mmHg</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('pulse_rate')" class="text-2xl text-accent mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Pulse Rate</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.pulse_rate }}</p>
+          <p class="text-xs text-text-muted">bpm</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('temperature')" class="text-2xl text-yellow-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Temperature</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.temperature }}</p>
+          <p class="text-xs text-text-muted">{{ latestVitals.temperature_unit }}</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('respiratory_rate')" class="text-2xl text-blue-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Resp. Rate</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.respiratory_rate }}</p>
+          <p class="text-xs text-text-muted">breaths/min</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('oxygen_saturation')" class="text-2xl text-red-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">SpO2</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.oxygen_saturation }}</p>
+          <p class="text-xs text-text-muted">%</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('weight')" class="text-2xl text-green-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Weight</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.weight }}</p>
+          <p class="text-xs text-text-muted">{{ latestVitals.weight_unit }}</p>
+        </div>
+        <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+          <i [class]="getVitalSignIcon('height')" class="text-2xl text-purple-500 mb-2"></i>
+          <p class="text-sm text-text-light font-medium">Height</p>
+          <p class="text-xl font-bold text-text">{{ latestVitals.height }}</p>
+          <p class="text-xs text-text-muted">{{ latestVitals.height_unit }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vitals Charts (No changes) -->
+    <div class="vitals-charts mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-section-header font-display text-text">Trends</h2>
+        <button (click)="showCharts = !showCharts" class="btn-secondary text-sm py-2 px-4 rounded-lg flex items-center gap-2 transition-colors duration-150">
+          <span>{{ showCharts ? 'Hide Charts' : 'Show Charts' }}</span>
+          <i class="fas" [ngClass]="{'fa-chevron-up': showCharts, 'fa-chevron-down': !showCharts}"></i>
+        </button>
+      </div>
+      <div *ngIf="showCharts" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Charts... -->
+        <div class="chart-container bg-card p-4 rounded-xl shadow-sm border border-border">
+          <h3 class="font-semibold text-text mb-2">Blood Pressure</h3>
+          <div class="chart-wrapper h-64">
+            <ngx-charts-line-chart [results]="bloodPressureChartData" [scheme]="bpColorScheme" [legend]="legend" [xAxis]="xAxis" [yAxis]="yAxis" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabelBP" [autoScale]="true" [animations]="animations"></ngx-charts-line-chart>
+          </div>
+        </div>
+        <div class="chart-container bg-card p-4 rounded-xl shadow-sm border border-border">
+          <h3 class="font-semibold text-text mb-2">Pulse Rate</h3>
+          <div class="chart-wrapper h-64">
+            <ngx-charts-line-chart [results]="pulseChartData" scheme="vivid" [legend]="legend" [xAxis]="xAxis" [yAxis]="yAxis" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabelPulse" [animations]="animations"></ngx-charts-line-chart>
+          </div>
+        </div>
+        <div class="chart-container bg-card p-4 rounded-xl shadow-sm border border-border">
+          <h3 class="font-semibold text-text mb-2">Weight</h3>
+          <div class="chart-wrapper h-64">
+            <ngx-charts-line-chart [results]="weightChartData" scheme="forest" [legend]="legend" [xAxis]="xAxis" [yAxis]="yAxis" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabelWeight" [animations]="animations"></ngx-charts-line-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vitals History Table - AMÉLIORÉ -->
+    <div class="vitals-history">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+        <h2 class="text-section-header font-display text-text">History</h2>
+        <div class="relative w-full md:w-72">
+          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" placeholder="Search by date or notes..." class="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-primary focus:border-primary transition-colors">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></i>
+        </div>
+      </div>
+
+      <div class="bg-card rounded-lg shadow-md overflow-x-auto border border-border">
+        <table class="min-w-full divide-y divide-border">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Date</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">BP (mmHg)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Pulse (bpm)</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Temp</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Weight</th>
+            </tr>
+          </thead>
+          <tbody class="bg-card divide-y divide-border">
+            <tr *ngFor="let record of paginatedHistory" (click)="openModal(record)" class="hover:bg-hover transition-colors duration-150 cursor-pointer">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">{{ record.recorded_at | date:'medium':'':'en-US' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm" [ngClass]="getBPStatusClass(record.blood_pressure_systolic, record.blood_pressure_diastolic)">{{ record.blood_pressure_systolic }}/{{ record.blood_pressure_diastolic }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.pulse_rate }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.temperature }}{{ record.temperature_unit }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">{{ record.weight }}{{ record.weight_unit }}</td>
+            </tr>
+            <tr *ngIf="filteredHistory.length === 0">
+              <td colspan="5" class="text-center py-8 text-text-muted">No records found for your search.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div *ngIf="getTotalPages() > 1" class="flex justify-between items-center mt-4">
+        <span class="text-sm text-text-muted">
+          Page {{ currentPage }} of {{ getTotalPages() }}
+        </span>
+        <div class="flex items-center gap-2">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" class="px-3 py-1 border border-border rounded-md text-sm hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed">
+            Previous
+          </button>
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === getTotalPages()" class="px-3 py-1 border border-border rounded-md text-sm hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State (No changes) -->
+  <div *ngIf="!isLoading && !error && !latestVitals" class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+    <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+    <p class="text-section-header text-text-light">No vital signs found.</p>
+    <p class="text-body text-text-muted">Your vital signs records will appear here once they are available.</p>
+  </div>
+
+  <!-- MODAL POUR LES DÉTAILS -->
+  <div *ngIf="isModalOpen" (click)="closeModal()" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+    <div (click)="$event.stopPropagation()" class="modal-content bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out">
+      <div *ngIf="selectedVitalSign">
+        <div class="flex justify-between items-center p-4 border-b border-border">
+          <h3 class="text-lg font-bold text-text">Vital Signs Details</h3>
+          <button (click)="closeModal()" class="text-text-muted hover:text-primary">&times;</button>
+        </div>
+        <div class="p-6 overflow-y-auto">
+          <p class="text-sm text-text-muted mb-4">Recorded on {{ selectedVitalSign.recorded_at | date:'fullDate':'':'en-US' }} at {{ selectedVitalSign.recorded_at | date:'shortTime':'':'en-US' }}</p>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div class="font-semibold text-text-light">Blood Pressure:</div>
+            <div [ngClass]="getBPStatusClass(selectedVitalSign.blood_pressure_systolic, selectedVitalSign.blood_pressure_diastolic)">{{ selectedVitalSign.blood_pressure_systolic }} / {{ selectedVitalSign.blood_pressure_diastolic }} mmHg</div>
+            
+            <div class="font-semibold text-text-light">Pulse Rate:</div>
+            <div>{{ selectedVitalSign.pulse_rate }} bpm</div>
+
+            <div class="font-semibold text-text-light">Temperature:</div>
+            <div>{{ selectedVitalSign.temperature }} {{ selectedVitalSign.temperature_unit }}</div>
+
+            <div class="font-semibold text-text-light">Respiratory Rate:</div>
+            <div>{{ selectedVitalSign.respiratory_rate }} breaths/min</div>
+
+            <div class="font-semibold text-text-light">Oxygen Saturation (SpO2):</div>
+            <div>{{ selectedVitalSign.oxygen_saturation }} %</div>
+
+            <div class="font-semibold text-text-light">Weight:</div>
+            <div>{{ selectedVitalSign.weight }} {{ selectedVitalSign.weight_unit }}</div>
+
+            <div class="font-semibold text-text-light">Height:</div>
+            <div>{{ selectedVitalSign.height }} {{ selectedVitalSign.height_unit }}</div>
+          </div>
+          <div *ngIf="selectedVitalSign.notes" class="mt-4">
+            <h4 class="font-semibold text-text-light mb-1">Notes:</h4>
+            <p class="text-sm p-3 bg-background rounded-md border border-border">{{ selectedVitalSign.notes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

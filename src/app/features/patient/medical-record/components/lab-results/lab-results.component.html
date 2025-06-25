@@ -1,26 +1,133 @@
-<div *ngIf="records.length > 0; else noRecords" class="records-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  <div class="record-card bg-card rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-150 flex flex-col overflow-hidden" *ngFor="let record of records">
-    <div class="card-header p-card-padding border-b border-border flex justify-between items-start">
-      <h4 class="record-title text-card-title font-display text-text">{{ record.title }}</h4>
-      <span class="record-tag text-xs font-semibold px-2 py-1 rounded-full" [ngClass]="record.tagClass">{{ record.tagText }}</span>
-    </div>
-    <div class="p-card-padding flex-grow">
-      <p class="record-date text-xs text-text-muted mb-2 flex items-center"><i class="far fa-calendar-alt mr-2"></i> {{ record.recordDate | date:'mediumDate' }}</p>
-      <p class="record-doctor text-sm text-text-light mb-2 flex items-center" *ngIf="record.doctor"><i class="fas fa-user-md mr-2 text-primary"></i> {{ record.doctor }}</p>
-      <p class="record-summary text-body text-text-light leading-comfortable line-clamp-3">{{ record.summary }}</p>
-    </div>
-    <div class="p-card-padding border-t border-border mt-auto">
-      <button class="btn-view-details w-full bg-accent hover:bg-accent-dark text-white font-medium py-2.5 px-4 rounded-button transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent/50" (click)="onViewDetails(record)">
-          View Details
-      </button>
-    </div>
+<!-- Barre de filtres -->
+<div class="filter-bar-modern flex flex-col md:flex-row items-center gap-4 mb-8 p-4 bg-white rounded-xl shadow-md border border-gray-200">
+  <div class="relative flex-grow w-full md:w-auto">
+    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+    <input type="text" [(ngModel)]="testNameFilter" (ngModelChange)="onSearchChange()" placeholder="Search by test name..." class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
+  </div>
+  <div class="flex items-center gap-4 w-full md:w-auto">
+    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="w-full md:w-auto pl-3 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary capitalize transition">
+      <option *ngFor="let status of availableStatuses" [value]="status">{{ status === 'all' ? 'All Statuses' : status.replace('_', ' ') }}</option>
+    </select>
+    <select [(ngModel)]="sortOrder" (ngModelChange)="onFilterChange()" class="w-full md:w-auto pl-3 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
+      <option value="desc">Newest First</option>
+      <option value="asc">Oldest First</option>
+    </select>
   </div>
 </div>
 
-<ng-template #noRecords>
-  <div class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
-    <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
-    <p class="text-section-header text-text-light">No lab results found.</p>
-    <p class="text-body text-text-muted">Try adjusting your search or filter criteria.</p>
+<!-- États de chargement et d'erreur -->
+<div *ngIf="isLoading" class="flex items-center justify-center p-10 text-center">
+  <div class="w-8 h-8 border-4 border-t-4 border-gray-200 border-t-primary rounded-full animate-spin mr-4"></div>
+  <p class="text-gray-600 text-lg">Loading Lab Results...</p>
+</div>
+<div *ngIf="errorMessage && !isLoading" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert">
+  <p class="font-bold">An Error Occurred</p>
+  <p>{{ errorMessage }}</p>
+</div>
+
+<!-- Conteneur des résultats -->
+<div *ngIf="!isLoading && !errorMessage">
+  <div class="lab-results-grid grid grid-cols-1 gap-8" *ngIf="displayRecords.slice(0, 5).length > 0; else noRecords">
+    <!-- Only show up to 5 records -->
+    <div *ngFor="let record of displayRecords.slice(0, 5); trackBy: trackByRecordId" class="lab-result-card bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transition-all duration-300 hover:shadow-xl">
+      
+      <!-- Section Docteur -->
+      <div class="card-doctor-info p-5 flex items-center gap-4 bg-gray-50 border-b border-gray-200">
+        <div class="flex-shrink-0 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <i class="fas fa-user-md text-xl text-primary"></i>
+        </div>
+        <div class="flex-grow">
+          <p class="text-sm font-bold text-gray-800">{{ record.reviewed_by.name }}</p>
+          <p class="text-xs text-gray-500">{{ record.reviewed_by.doctor?.specialty || 'Specialty not available' }}</p>
+        </div>
+        <div class="status-tag flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-full" [ngClass]="getOverallStatusInfo(record.parsed_structured_results?.overall_status).colorClass.replace('text-', 'bg-').replace('-500', '-100')">
+          <i [class]="getOverallStatusInfo(record.parsed_structured_results?.overall_status).icon"></i>
+          <span>{{ getOverallStatusInfo(record.parsed_structured_results?.overall_status).text }}</span>
+        </div>
+      </div>
+
+      <!-- Section Titre du Test -->
+      <div class="card-test-title p-5">
+        <h3 class="font-display text-xl font-bold text-gray-800 flex items-center gap-3">
+          <i class="fas {{ getTestTypeIcon(record.parsed_structured_results?.test_name) }} text-primary/70"></i>
+          <span>{{ record.parsed_structured_results?.test_name }}</span>
+        </h3>
+        <p class="text-sm text-gray-500 flex items-center gap-2 mt-1 pl-8">
+          <i class="fas fa-calendar-alt"></i>
+          <span>{{ record.result_date | date:'fullDate':'':'en-US' }}</span>
+          <span class="text-gray-300">&bull;</span>
+          <i class="fas fa-clinic-medical"></i>
+          <span>{{ record.performed_by_lab_name }}</span>
+        </p>
+      </div>
+
+      <!-- Corps de la carte avec les résultats détaillés -->
+      <div class="card-body px-5 pb-5 space-y-5">
+        <div *ngFor="let result of record.parsed_structured_results?.results" class="result-component-row grid grid-cols-12 gap-4 items-center">
+          <div class="col-span-12 md:col-span-3">
+            <p class="font-semibold text-gray-700">{{ result.component }}</p>
+            <p class="text-xs text-gray-500">Normal Range: {{ result.range }} {{ result.unit }}</p>
+          </div>
+          <div class="col-span-4 md:col-span-2 text-center">
+            <p class="text-2xl font-mono font-bold" [ngClass]="getRangeInfo(result.value, result.range).colorClass">{{ result.value }}</p>
+            <p class="text-xs font-semibold capitalize" [ngClass]="getRangeInfo(result.value, result.range).colorClass">{{ getRangeInfo(result.value, result.range).status }}</p>
+          </div>
+          <div class="col-span-8 md:col-span-7 flex items-center">
+            <div class="relative w-full">
+              <div class="h-2 w-full flex rounded-full overflow-hidden bg-gray-100">
+                <div class="h-full bg-blue-200" style="width: 25%"></div>
+                <div class="h-full bg-green-200" style="width: 50%"></div>
+                <div class="h-full bg-red-200" style="width: 25%"></div>
+              </div>
+              <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 shadow-md" 
+                   [class.border-blue-600]="getRangeInfo(result.value, result.range).status === 'low'"
+                   [class.border-green-600]="getRangeInfo(result.value, result.range).status === 'normal'"
+                   [class.border-red-600]="getRangeInfo(result.value, result.range).status === 'high'"
+                   [class.border-gray-600]="getRangeInfo(result.value, result.range).status === 'unknown'"
+                   [style.left.%]="getRangeInfo(result.value, result.range).positionPercent">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pied de page de la carte avec l'interprétation -->
+      <div *ngIf="record.interpretation" class="card-footer bg-primary/5 p-5 border-t border-primary/10">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-comment-medical text-primary mt-1"></i>
+            <div>
+                <h4 class="font-semibold text-sm text-primary-dark">Doctor's Interpretation</h4>
+                <p class="text-gray-700 italic mt-1">"{{ record.interpretation }}"</p>
+            </div>
+        </div>
+      </div>
+    </div>
   </div>
-</ng-template>
+
+  <!-- Pagination -->
+  <div *ngIf="paginatedData && paginatedData.last_page > 1" class="pagination-controls mt-12 flex justify-center">
+    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm bg-white">
+      <a (click)="goToPage(currentPage - 1)" [class.opacity-50]="currentPage === 1" class="pagination-button rounded-l-md" [attr.aria-disabled]="currentPage === 1 ? true : null" tabindex="0">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+      <ng-container *ngFor="let page of getPaginationModel()">
+        <a *ngIf="typeof page === 'number'" (click)="goToPage(page)" class="pagination-button" [class.active]="currentPage === page" [attr.aria-current]="currentPage === page ? 'page' : null" tabindex="0">
+          {{ page }}
+        </a>
+        <span *ngIf="typeof page === 'string'" class="pagination-ellipsis">…</span>
+      </ng-container>
+      <a (click)="goToPage(currentPage + 1)" [class.opacity-50]="currentPage === paginatedData.last_page" class="pagination-button rounded-r-md" [attr.aria-disabled]="currentPage === paginatedData.last_page ? true : null" tabindex="0">
+        <i class="fas fa-chevron-right"></i>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Message "Aucun résultat" -->
+  <ng-template #noRecords>
+    <div class="text-center py-16 bg-white rounded-xl shadow-md border border-gray-200">
+      <i class="fas fa-folder-open text-5xl text-gray-400 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-700">No Lab Results Found</h3>
+      <p class="text-gray-500 mt-2">Please try adjusting your search or filter criteria.</p>
+    </div>
+  </ng-template>
+</div>

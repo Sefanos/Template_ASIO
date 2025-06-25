@@ -1,0 +1,14 @@
+/* Les styles spécifiques aux graphiques ont été supprimés. */
+
+/* Styles pour la nouvelle pagination */
+.pagination-button {
+  @apply relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 focus:z-20 cursor-pointer transition-colors;
+}
+
+.pagination-button.active {
+  @apply z-10 bg-primary text-white ring-primary hover:bg-primary-dark;
+}
+
+.pagination-ellipsis {
+  @apply relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-500 ring-1 ring-inset ring-gray-200;
+}

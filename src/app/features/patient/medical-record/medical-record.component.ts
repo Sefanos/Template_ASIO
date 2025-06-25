@@ -1,415 +1,274 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
-import { MedicalHistoryService } from '../../../core/patient/services/medical-history.service';
-import { PrescriptionService } from '../../../core/patient/services/prescription-service.service';
-import { LabResultService } from '../../../core/patient/services/lab-result-service.service';
-import { ToastService } from '../../../shared/services/toast.service';
- 
-export interface MedicalRecordItem {
-  id: string;
-  type:  'LabResult' | 'Image' | 'Prescription';
-  title: string;
-  recordDate: string; // Date affichée sur la carte et dans le modal (e.g., "May 2, 2025")
-  doctor?: string;
-  summary: string; // Court résumé pour la carte
-  details: string; // Détails complets pour le modal
-  tagText: string;
-  tagClass: string; // Classe CSS pour la couleur du tag
 
-  // Champs spécifiques au type pour le modal
-  resultDate?: string; // Pour LabResult
-  performedBy?: string; // Pour LabResult
-  imageDetails?: string; // Pour Image
-  takenBy?: string; // Pour Image
-  imageUrl?: string; // Pour Image (placeholder pour l'instant)
-  status?: 'active' | 'completed';
-}
-export interface MedicalHistoryData {
-  currentMedicalConditions: string[];
-  pastSurgeries: string[];
-  chronicDiseases: string[];
-  currentMedications: string[];
-  allergies: string[];
-  vitalSigns?: VitalSignsData;
-  lastUpdated: string | Date | null;
-}
-export interface VitalSign {
-  label: string;
-  value: string;
-  unit: string;
-  icon: string; // Classe Font Awesome
-}
-export interface VitalSignsData {
-  lastRecorded: string | Date | null;
-  bloodPressure?: VitalSign;
-  pulse?: VitalSign;
-  temperature?: VitalSign;
-  respiratoryRate?: VitalSign;
-  oxygenSaturation?: VitalSign;
-  weight?: VitalSign;
-  height?: VitalSign;
-}
- 
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { PrescriptionService } from '../../../core/patient/services/prescription-service.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { Prescription } from '../../../core/patient/domain/models/prescription.model';
+import { PatientStatistics } from '../../../core/patient/domain/models/patient-statistics.model';
+import { StatisticsService } from '../../../core/patient/services/statistics.service';
+import { Alert } from '../../../core/patient/domain/models/alert.model';
+import { AlertService } from '../../../core/patient/services/alert.service';
+import { ActivatedRoute } from '@angular/router';
+// L'ancienne interface ImageRecord est supprimée car les fichiers sont gérés par leur propre composant.
+type MedicalRecord = Prescription & { type: 'Prescription' };
 
 @Component({
   selector: 'app-medical-record',
   standalone: false,
   templateUrl: './medical-record.component.html',
-  styleUrl: './medical-record.component.css'
+  styleUrls: ['./medical-record.component.css']
 })
-export class MedicalRecordComponent implements OnInit{
-  tabs: string[] = ['MedicalHistory', 'LabResult', 'Image', 'Prescription'];
-  activeTab: string = 'MedicalHistory'; // 'All', 'Examinations', 'LabResults', 'Images', 'Prescriptions'
+export class MedicalRecordComponent implements OnInit {
+  // L'onglet 'Image' est remplacé par 'Files'
+  tabs: string[] = ['History', 'VitalSigns', 'LabResult', 'Files', 'Prescription', 'Notes'];
+  activeTab: string = 'History';
   searchTerm: string = '';
 
-  allRecords: MedicalRecordItem[] = [];
-  filteredRecords: MedicalRecordItem[] = [];
+  allRecords: MedicalRecord[] = [];
+  filteredRecords: MedicalRecord[] = [];
 
-  selectedRecord: MedicalRecordItem | null = null;
+  selectedRecord: any | null = null;
   isModalOpen: boolean = false;
 
+  // Filtres
   isDateFilterOpen: boolean = false;
   dateFrom: string = '';
   dateTo: string = '';
-     
-    isAdvancedFilterOpen: boolean = false;
-    availableRecordTypes: string[] = ['Prescription', 'LabResult', 'Image'];
-    availableDoctors: string[] = [];
-  
-    selectedRecordTypes: { [key: string]: boolean } = {};
-    selectedDoctors: { [key: string]: boolean } = {};
+  isAdvancedFilterOpen: boolean = false;
+  availableDoctors: string[] = [];
+  selectedDoctors: { [key: string]: boolean } = {};
 
-      // Propriétés pour l'historique médical
-  medicalHistory: MedicalHistoryData | null = null;
-  isLoadingMedicalHistory: boolean = true;
-  medicalHistoryErrorMessage: string | null = null;
+  // Statistiques
+  statistics: PatientStatistics | null = null;
+  isLoadingStatistics: boolean = true;
+  statisticsError: string | null = null;
 
-  isLoadingRecords: boolean = false; 
+  // Alertes
+  alerts: Alert[] = [];
+  isLoadingAlerts: boolean = true;
+  alertsError: string | null = null;
+  isAlertsDropdownOpen: boolean = false;
+
+  isLoadingRecords: boolean = false;
   recordsError: string | null = null;
-  // TEMPORAIRE: ID Patient (à remplacer par l'authentification)
-  private patientId = 1; // TEMPORAIRE: ID Patient
+  private patientId = 1;
 
+  initialPrescriptionStatus: string = 'active';
+  
   constructor(
-    private medicalHistoryService: MedicalHistoryService,
-    private prescriptionService: PrescriptionService, // Injection de PrescriptionService
-    private labResultService: LabResultService, // Inject LabResultService
+    private prescriptionService: PrescriptionService,
+    private statisticsService: StatisticsService,
+    private alertService: AlertService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
     private toastService: ToastService
   ) { }
-  
- 
-  
- 
-
 
   ngOnInit(): void {
-    this.initializeStaticLabAndImageData(); // Initialise les données statiques pour Image
-    this.loadMedicalHistory();
-    this.loadPrescriptions();
-    this.loadLabResults(); 
-  }
-  initializeStaticLabAndImageData(): void {
-    // Conserver les données statiques pour LabResult et Image pour l'instant
-    const staticImageRecords: MedicalRecordItem[] = [
+    this.loadAlerts();
+    this.loadAllRecordTypes();
+    this.loadStatistics();
+      this.route.queryParams.subscribe(params => {
+    if (params['tab'] && this.tabs.includes(params['tab'])) {
+      this.setActiveTab(params['tab']);
+    }
+ if (params['status']) {
+      this.initialPrescriptionStatus = params['status'];
+    } else {
+      this.initialPrescriptionStatus = 'active';
+    }
 
-      {
-        id: 'img1', type: 'Image', title: 'Chest X-Ray', recordDate: '2025-03-10T14:30:00Z', doctor: 'Dr. Emily Chen',
-        summary: 'Standard PA and lateral views of chest. No evidence of acute cardiopulmonary disease.',
-        details: 'Standard PA and lateral views of chest. Lungs are clear. Heart size is normal. No evidence of acute cardiopulmonary disease. Minor degenerative changes in the thoracic spine.',
-        tagText: 'Clear', tagClass: 'tag-image-clear', imageDetails: 'PA and lateral views', takenBy: 'Radiology Department', imageUrl: 'assets/images/round-pneumonia.jpg', status: 'completed'
-      },
-      {
-        id: 'img2', type: 'Image', title: 'Right Knee MRI', recordDate: '2025-03-15T09:00:00Z', doctor: 'Dr. Emily Chen',
-        summary: 'MRI of right knee shows mild meniscus tear in the medial compartment. No evidence of ligament damage or fracture.',
-        details: 'MRI of right knee shows mild degenerative fraying and a small radial tear of the posterior horn of the medial meniscus. ACL, PCL, and collateral ligaments are intact. No fracture or dislocation.',
-        tagText: 'Meniscus Tear', tagClass: 'tag-image-finding', imageDetails: 'Sagittal view of right knee', takenBy: 'Radiology Department', imageUrl: 'assets/placeholder-image.png', status: 'completed'
-      }
-    ];
-    this.allRecords = this.allRecords.filter(r => r.type !== 'Image');
-    this.allRecords = [...this.allRecords, ...staticImageRecords];
-  }
-  populateAvailableDoctors(): void {
-    const doctors = new Set<string>();
-    this.allRecords.forEach(record => {
-      if (record.doctor) {
-        doctors.add(record.doctor);
-      }
-    });
-    this.availableDoctors = Array.from(doctors).sort();
+  });
   }
 
- 
-  loadMedicalHistory(): void {
-    this.isLoadingMedicalHistory = true;
-    this.medicalHistoryErrorMessage = null;
-    this.medicalHistoryService.getMedicalHistory(this.patientId).subscribe({
+  loadAlerts(): void {
+    this.isLoadingAlerts = true;
+    this.alertsError = null;
+    this.alertService.getActiveAlerts().subscribe({
       next: (data) => {
-        this.medicalHistory = data; // Le service devrait retourner la structure complète
-        this.isLoadingMedicalHistory = false;
+        this.alerts = data;
+        this.isLoadingAlerts = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error fetching medical history:', err);
-        this.medicalHistoryErrorMessage = 'Failed to load medical history. Please try again later.';
-        this.isLoadingMedicalHistory = false;
+        console.error('Error loading alerts:', err);
+        this.alertsError = 'Could not load patient alerts.';
+        this.isLoadingAlerts = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  loadPrescriptions(): void {
-    this.isLoadingRecords = true; // Peut-être un indicateur spécifique pour les prescriptions
-    this.recordsError = null;
-    this.prescriptionService.getPrescriptions(this.patientId).subscribe({
-      next: (prescriptions) => {
-        // S'assurer que les prescriptions ont le type 'Prescription'
-        const typedPrescriptions = prescriptions.map(p => ({ ...p, type: 'Prescription' as const }));
-        
-        // Fusionner avec les enregistrements existants, en remplaçant les anciennes prescriptions
-        this.allRecords = [
-          ...this.allRecords.filter(r => r.type !== 'Prescription'), // Enlever les anciennes prescriptions
-          ...typedPrescriptions // Ajouter les nouvelles
-        ];
-        
-        this.finalizeLoadingRecords();
+  loadStatistics(): void {
+    this.isLoadingStatistics = true;
+    this.statisticsError = null;
+    this.statisticsService.getPatientStatistics().subscribe({
+      next: (data) => {
+        this.statistics = data;
+        this.isLoadingStatistics = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error fetching prescriptions:', err);
-        this.recordsError = 'Failed to load prescriptions. Please try again later.';
-        this.isLoadingRecords = false;
-        this.finalizeLoadingRecords(); // Appeler même en cas d'erreur pour initialiser les filtres
+        console.error('Error loading statistics:', err);
+        this.statisticsError = 'Could not load patient statistics.';
+        this.isLoadingStatistics = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  loadLabResults(): void {
+  loadAllRecordTypes(): void {
     this.isLoadingRecords = true;
     this.recordsError = null;
-    this.labResultService.getLabResults(this.patientId).subscribe({
-      next: (labResults: Omit<MedicalRecordItem, 'type'>[]) => {
-        const typedLabResults = labResults.map(lr => ({ ...lr, type: 'LabResult' as const }));
+    this.allRecords = [];
 
-        this.allRecords = [
-          ...this.allRecords.filter(r => r.type !== 'LabResult'),
-          ...typedLabResults
-        ];
-
-        this.finalizeLoadingRecords();
-      },
-      error: (err: any) => {
-        console.error('Error fetching lab results:', err);
-        this.recordsError = 'Failed to load lab results. Please try again later.';
-        this.isLoadingRecords = false;
-        this.finalizeLoadingRecords();
-      }
+    // On ne charge plus que les prescriptions, les fichiers sont autonomes.
+    Promise.all([
+      this.fetchPrescriptions()
+    ]).then(() => {
+      this.finalizeLoadingRecords();
+    }).catch(error => {
+      console.error("Error loading records:", error);
+      this.recordsError = "Failed to load some records. Please try again.";
+      this.isLoadingRecords = false;
+      this.cdr.detectChanges();
     });
-  } 
+  }
+
+  private fetchPrescriptions(): Promise<void> {
+    return new Promise((resolve) => {
+      this.prescriptionService.getPrescriptions(this.patientId).subscribe({
+        next: (data) => {
+          const prescriptionsWithType = data.map(p => ({ ...p, type: 'Prescription' as const }));
+          this.allRecords.push(...prescriptionsWithType);
+          resolve();
+        },
+        error: (err) => { console.error('Error loading prescriptions:', err); resolve(); }
+      });
+    });
+  }
+
   finalizeLoadingRecords(): void {
     this.populateAvailableDoctors();
     this.initializeAdvancedFilters();
-    this.filterRecords(); // Appliquer les filtres initiaux
+    // this.setActiveTab('History');
     this.isLoadingRecords = false;
     this.cdr.detectChanges();
   }
 
-  initializeAdvancedFilters(): void {
-    const currentSelectedTypes = { ...this.selectedRecordTypes };
-    this.selectedRecordTypes = {};
-    this.availableRecordTypes.forEach(type => {
-        this.selectedRecordTypes[type] = currentSelectedTypes[type] !== undefined ? currentSelectedTypes[type] : true;
+  populateAvailableDoctors(): void {
+    const doctors = new Set<string>();
+    this.allRecords.forEach(record => {
+      const doctorName = (record as Prescription).doctor?.name;
+      if (doctorName) doctors.add(doctorName);
     });
+    this.availableDoctors = Array.from(doctors).sort();
+  }
 
-    // Réinitialiser les docteurs sélectionnés
-    const currentSelectedDoctors = { ...this.selectedDoctors };
+  initializeAdvancedFilters(): void {
     this.selectedDoctors = {};
-    this.availableDoctors.forEach(doc => {
-        this.selectedDoctors[doc] = currentSelectedDoctors[doc] !== undefined ? currentSelectedDoctors[doc] : true;
-    });
+    this.availableDoctors.forEach(doc => { this.selectedDoctors[doc] = true; });
   }
 
   setActiveTab(tabName: string): void {
     this.activeTab = tabName;
     this.closeAllDropdowns();
-    // Re-filter records when tab changes
-    // Data loading for each tab type happens in ngOnInit or could be triggered here if not already loaded
-    this.filterRecords();
+    if (this.activeTab === 'Prescription') {
+      this.filterRecords();
+    } else {
+      this.filteredRecords = [];
+    }
   }
+
   onSearchChange(): void {
-    // La recherche ne s'applique que si l'onglet actif n'est pas MedicalHistory
-    if (this.activeTab !== 'MedicalHistory') {
+    if (this.activeTab === 'Prescription') {
       this.filterRecords();
     }
   }
-  toggleDateFilter(event: MouseEvent): void {
-    event.stopPropagation();
-    this.isAdvancedFilterOpen = false; // Ferme l'autre dropdown
-    this.isDateFilterOpen = !this.isDateFilterOpen;
-  }
 
-  applyDateFilter(): void {
-    if (this.activeTab !== 'MedicalHistory') {
-      this.filterRecords();
-    }
-    this.isDateFilterOpen = false;
-  }
-  clearDateFilter(): void {
-    this.dateFrom = '';
-    this.dateTo = '';
-    if (this.activeTab !== 'MedicalHistory') {
-      this.filterRecords();
-    }
-    this.isDateFilterOpen = false;
-  }
-  toggleAdvancedFilter(event: MouseEvent): void {
-    event.stopPropagation();
-    this.isDateFilterOpen = false; // Ferme l'autre dropdown
-    this.isAdvancedFilterOpen = !this.isAdvancedFilterOpen;
-  }
-
-  applyAdvancedFilters(): void {
-    if (this.activeTab !== 'MedicalHistory') {
-      this.filterRecords();
-    }
-    this.isAdvancedFilterOpen = false;
-  }
-  clearAdvancedFilters(): void {
-    // Re-initialize filters to their default state (all true)
-    this.availableRecordTypes.forEach(type => this.selectedRecordTypes[type] = true);
-    this.availableDoctors.forEach(doc => this.selectedDoctors[doc] = true);
-    
-    if (this.activeTab !== 'MedicalHistory') {
-      this.filterRecords();
-    }
-    this.isAdvancedFilterOpen = false;
-  }
-
-  closeAllDropdowns(): void {
-    this.isDateFilterOpen = false;
-    this.isAdvancedFilterOpen = false;
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    const target = event.target as Node;
-    // Ferme les dropdowns si le clic est à l'extérieur
-    const dateFilterButton = document.querySelector('.btn-filter-date');
-    const dateDropdown = document.querySelector('.date-filter-dropdown');
-    const advancedFilterButton = document.querySelector('.btn-filter-advanced');
-    const advancedDropdown = document.querySelector('.advanced-filter-dropdown');
-
-    const clickedInsideDate = (dateFilterButton && dateFilterButton.contains(target)) || (dateDropdown && dateDropdown.contains(target));
-    const clickedInsideAdvanced = (advancedFilterButton && advancedFilterButton.contains(target)) || (advancedDropdown && advancedDropdown.contains(target));
-
-    if (!clickedInsideDate && !clickedInsideAdvanced) {
-      this.closeAllDropdowns();
-    }
-  }
   filterRecords(): void {
-    if (this.activeTab === 'MedicalHistory') {
-      this.filteredRecords = []; // MedicalHistory a son propre affichage
-      this.cdr.detectChanges();
+    if (this.activeTab !== 'Prescription') {
+      this.filteredRecords = [];
       return;
     }
 
-    let recordsToDisplay = [...this.allRecords];
+    let records = this.allRecords.filter(r => r.type === this.activeTab);
 
-    // 1. Filtre par onglet actif (pour les types d'enregistrements)
-    recordsToDisplay = recordsToDisplay.filter(record => record.type === this.activeTab);
-    
-    // 2. Filtre par plage de dates
     if (this.dateFrom) {
-      const fromDate = new Date(this.dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      recordsToDisplay = recordsToDisplay.filter(record => {
-        const recordDateObj = new Date(record.recordDate);
-        return recordDateObj >= fromDate;
-      });
+      const from = new Date(this.dateFrom).getTime();
+      records = records.filter(r => new Date(r.start_date).getTime() >= from);
     }
     if (this.dateTo) {
-      const toDate = new Date(this.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      recordsToDisplay = recordsToDisplay.filter(record => {
-        const recordDateObj = new Date(record.recordDate);
-        return recordDateObj <= toDate;
+      const to = new Date(this.dateTo).getTime();
+      records = records.filter(r => new Date(r.start_date).getTime() <= to);
+    }
+
+    const activeDoctors = this.availableDoctors.filter(doc => this.selectedDoctors[doc]);
+    if (activeDoctors.length < this.availableDoctors.length) {
+      records = records.filter(r => {
+        const doctor = r.doctor?.name;
+        return doctor && activeDoctors.includes(doctor);
       });
     }
-    
-    // 3. Filtre par types d'enregistrements sélectionnés (depuis le dropdown "Filters")
-    if (!this.selectedRecordTypes[this.activeTab as 'Prescription' | 'LabResult' | 'Image']) {
-      recordsToDisplay = []; 
-  }
-  
-    // 4. Filtre par médecins sélectionnés (depuis le dropdown "Filters")
-    const activeSelectedDoctors = this.availableDoctors.filter(doc => this.selectedDoctors[doc]);
-    if (activeSelectedDoctors.length < this.availableDoctors.length && activeSelectedDoctors.length > 0) { 
-      recordsToDisplay = recordsToDisplay.filter(record => record.doctor && activeSelectedDoctors.includes(record.doctor));
-    } else if (activeSelectedDoctors.length === 0 && this.availableDoctors.length > 0) { 
-        recordsToDisplay = []; 
-    }
-    
-    // 5. Filtre par terme de recherche
+
     if (this.searchTerm) {
-      const lowerSearchTerm = this.searchTerm.toLowerCase();
-      recordsToDisplay = recordsToDisplay.filter(record =>
-        record.title.toLowerCase().includes(lowerSearchTerm) ||
-        (record.doctor && record.doctor.toLowerCase().includes(lowerSearchTerm)) ||
-        record.summary.toLowerCase().includes(lowerSearchTerm) ||
-        (record.details && record.details.toLowerCase().includes(lowerSearchTerm))
-      );
+      const lowerSearch = this.searchTerm.toLowerCase();
+      records = records.filter(r => {
+        const title = r.medication_name || '';
+        const summary = r.instructions || '';
+        const provider = r.doctor?.name || '';
+        return title.toLowerCase().includes(lowerSearch) ||
+               summary.toLowerCase().includes(lowerSearch) ||
+               provider.toLowerCase().includes(lowerSearch);
+      });
     }
-    this.filteredRecords = recordsToDisplay;
+
+    this.filteredRecords = records;
     this.cdr.detectChanges();
   }
 
-   
-    openModal(record: MedicalRecordItem): void {
-      this.selectedRecord = record;
-      this.isModalOpen = true;
-      this.closeAllDropdowns();
-    }
+  openModal(record: any): void {
+    if (!record || record.type !== 'Prescription') return;
 
-  closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedRecord = null;
-  }
-
- 
-  downloadRecord(record: MedicalRecordItem | null): void {
-    if (record) {
-      // Logique de téléchargement à implémenter
-      // Par exemple, créer un blob et un lien de téléchargement
-      const recordData = JSON.stringify(record, null, 2);
-      const blob = new Blob([recordData], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${record.title.replace(/\s+/g, '_')}_${record.id}.json`; // Nom de fichier suggéré
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      console.log(`Downloading record: ${record.title}`);
-      // Ne fermez pas la modale ici, laissez l'utilisateur le faire s'il le souhaite
-    }
-  }
-  exportRecords(): void {
-    // Logique d'exportation à implémenter (par exemple, tous les filteredRecords)
-    console.log('Exporting records...', this.filteredRecords);
-    this.toastService.info('Exporting records functionality to be implemented.');
+    const pres = record as Prescription;
+    this.selectedRecord = {
+      type: 'Prescription',
+      title: pres.medication_name,
+      recordDate: pres.start_date,
+      doctor: pres.doctor.name,
+      details: `Status: ${pres.status}\nDosage: ${pres.dosage}\nFrequency: ${pres.frequency}\nDuration: ${pres.duration}\nRefills Allowed: ${pres.refills_allowed}\n\nInstructions:\n${pres.instructions}`
+    };
+    this.isModalOpen = true;
   }
 
-  requestRecords(): void {
-    // Logique de demande de dossiers à implémenter
-    console.log('Requesting new records...');
-    this.toastService.info('Requesting records functionality to be implemented.');
-  }
-
-  getRecordIconClass(type: MedicalRecordItem['type']): string {
-    switch (type) {
-      case 'LabResult': return 'fas fa-vial';
-      case 'Image': return 'fas fa-x-ray';
-      case 'Prescription': return 'fas fa-file-prescription';
-      default: return 'fas fa-file-alt';
-    }
-  }
+  closeModal(): void { this.isModalOpen = false; this.selectedRecord = null; }
+  downloadRecord(record: any | null): void { this.toastService.info('Download functionality to be implemented.'); }
   
+  getRecordIconClass(type: string): string {
+    switch (type) {
+      case 'Prescription': return 'fas fa-prescription-bottle-alt';
+      case 'Files': return 'fas fa-folder-open';
+      case 'LabResult': return 'fas fa-vial';
+      case 'History': return 'fas fa-file-medical-alt';
+      default: return 'fas fa-file';
+    }
+  }
+
+  getAlertIconAndColor(severity: string): { icon: string, colorClass: string } {
+    switch (severity) {
+      case 'critical': return { icon: 'fas fa-star-of-life', colorClass: 'text-status-urgent' };
+      case 'high': return { icon: 'fas fa-exclamation-triangle', colorClass: 'text-status-urgent' };
+      case 'medium': return { icon: 'fas fa-exclamation-circle', colorClass: 'text-status-warning' };
+      default: return { icon: 'fas fa-info-circle', colorClass: 'text-status-info' };
+    }
+  }
+
+  @HostListener('document:click', ['$event']) onDocumentClick(event: Event): void { this.closeAllDropdowns(); }
+  toggleDateFilter(event: MouseEvent): void { event.stopPropagation(); this.isAdvancedFilterOpen = false; this.isAlertsDropdownOpen = false; this.isDateFilterOpen = !this.isDateFilterOpen; }
+  applyDateFilter(): void { this.filterRecords(); this.isDateFilterOpen = false; }
+  clearDateFilter(): void { this.dateFrom = ''; this.dateTo = ''; this.filterRecords(); this.isDateFilterOpen = false; }
+  toggleAdvancedFilter(event: MouseEvent): void { event.stopPropagation(); this.isDateFilterOpen = false; this.isAlertsDropdownOpen = false; this.isAdvancedFilterOpen = !this.isAdvancedFilterOpen; }
+  applyAdvancedFilters(): void { this.filterRecords(); this.isAdvancedFilterOpen = false; }
+  clearAdvancedFilters(): void { this.initializeAdvancedFilters(); this.filterRecords(); this.isAdvancedFilterOpen = false; }
+  toggleAlertsDropdown(event: MouseEvent): void { event.stopPropagation(); this.isDateFilterOpen = false; this.isAdvancedFilterOpen = false; this.isAlertsDropdownOpen = !this.isAlertsDropdownOpen; }
+  closeAllDropdowns(): void { this.isDateFilterOpen = false; this.isAdvancedFilterOpen = false; this.isAlertsDropdownOpen = false; }
 }

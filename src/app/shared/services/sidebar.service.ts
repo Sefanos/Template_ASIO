@@ -104,11 +104,11 @@ export class SidebarService {
       route: '/patient/bills',
       icon: 'file-text' // Example: using a file-text icon for bills
     },
-    {
-      label: 'Chat',
-      route: '/patient/chat',
-      icon: 'message-square' // Example: using a message-square icon for chat
-    },
+    // {
+    //   label: 'Chat',
+    //   route: '/patient/chat',
+    //   icon: 'message-square' // Example: using a message-square icon for chat
+    // },
     {
       label: 'Profile',
       route: '/patient/profile',

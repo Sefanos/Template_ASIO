@@ -1,0 +1,63 @@
+.vital-signs-container {
+  @apply space-y-6;
+}
+
+.vital-card {
+  @apply transition-all duration-200;
+}
+
+.vital-card:hover {
+  @apply transform -translate-y-1;
+}
+
+.vital-item {
+  @apply flex flex-col space-y-1;
+}
+
+.history-record {
+  @apply transition-all duration-200;
+}
+
+/* Animations pour les tendances */
+.trend-indicator {
+  @apply transition-all duration-300;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .vital-card {
+    @apply p-3;
+  }
+  
+  .history-record {
+    @apply p-3;
+  }
+  
+  .grid {
+    @apply gap-3;
+  }
+}
+
+/* Custom scrollbar pour l'historique */
+.vital-history {
+  scrollbar-width: thin;
+  scrollbar-color: #3b82f6 #f3f4f6;
+}
+
+.vital-history::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vital-history::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.vital-history::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+  border-radius: 3px;
+}
+
+.vital-history::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}

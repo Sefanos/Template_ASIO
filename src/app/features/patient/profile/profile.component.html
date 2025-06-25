@@ -1,9 +1,7 @@
- 
-
 <div class="profile-container max-w-6xl mx-auto p-4 md:p-6 lg:p-8 font-sans text-text">
   <div class="profile-header mb-card-margin p-card-padding bg-card rounded-card shadow-card">
-    <h1 class="text-dashboard-title font-display text-text mb-1">Mon Profil</h1>
-    <p class="text-body text-text-light mb-6">Gérer vos informations personnelles et paramètres de compte.</p>
+    <h1 class="text-dashboard-title font-display text-text mb-1">My Profile</h1>
+    <p class="text-body text-text-light mb-6">Manage your personal information and account settings.</p>
     
     <div class="profile-navigation flex space-x-1 border-b border-border">
       <a 
@@ -13,7 +11,7 @@
         [ngClass]="{'text-primary border-primary': rlaView.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaView.isActive}"
         class="nav-link py-3 px-4 md:px-5 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150 ease-in-out"
       >
-        Voir le profil
+        View Profile
       </a>
       <a 
         [routerLink]="['edit']" 
@@ -22,7 +20,7 @@
         [ngClass]="{'text-primary border-primary': rlaEdit.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaEdit.isActive}"
         class="nav-link py-3 px-4 md:px-5 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150 ease-in-out"
       >
-        Modifier le profil
+        Edit Profile
       </a>
 
       <a 
@@ -32,14 +30,10 @@
       [ngClass]="{'text-primary border-primary': rlaSecurity.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaSecurity.isActive}"
       class="nav-link py-3 px-4 md:px-5 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150 ease-in-out"
     >
-      Sécurité
+      Security
     </a>
-
-
     </div>
   </div>
-
-
 
   <div class="mt-card-margin">
     <router-outlet></router-outlet>

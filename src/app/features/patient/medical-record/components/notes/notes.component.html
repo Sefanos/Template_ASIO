@@ -1,0 +1,67 @@
+<div class="notes-section bg-card rounded-xl shadow-card p-6">
+  <h2 class="text-lg font-semibold mb-4 flex items-center">
+    <i class="fas fa-clipboard-list mr-2 text-primary"></i>
+    Notes des médecins
+  </h2>
+
+  <div *ngIf="isLoading" class="text-center py-8 text-text-light">
+    <i class="fas fa-spinner fa-spin mr-2"></i> Chargement des notes...
+  </div>
+  <div *ngIf="error" class="text-status-urgent bg-status-urgent/10 border border-status-urgent rounded p-4 mb-4">
+    {{ error }}
+  </div>
+  <div *ngIf="!isLoading && notes.length === 0" class="text-center text-text-light py-8">
+    <i class="fas fa-info-circle mr-2"></i> Aucune note trouvée.
+  </div>
+
+  <div *ngIf="!isLoading && notes.length > 0">
+    <div class="space-y-6">
+      <div *ngFor="let note of paginatedNotes" class="note-card bg-white rounded-lg shadow p-4 border border-border hover:shadow-lg transition">
+        <div class="flex items-center mb-2">
+          <i [class]="getNoteTypeIcon(note.note_type) + ' text-xl mr-2'"></i>
+          <span class="font-bold text-base">{{ note.title }}</span>
+          <span class="ml-2 px-2 py-0.5 text-xs rounded font-semibold"
+                [ngClass]="{
+                  'bg-indigo-100 text-indigo-700': note.note_type === 'diagnosis',
+                  'bg-green-100 text-green-700': note.note_type === 'follow_up',
+                  'bg-gray-100 text-gray-700': note.note_type !== 'diagnosis' && note.note_type !== 'follow_up'
+                }">
+            {{ getNoteTypeLabel(note.note_type) }}
+          </span>
+          <span *ngIf="note.is_private" class="ml-2 px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-600">
+            <i class="fas fa-lock mr-1"></i> Privée
+          </span>
+        </div>
+        <div class="text-sm text-text-light mb-2 flex flex-wrap gap-x-4 gap-y-1">
+          <span>
+            <i class="fas fa-user-md mr-1"></i> {{ note.doctor?.name }}
+          </span>
+          <span>
+            <i class="fas fa-calendar-day mr-1"></i> {{ note.created_at | date:'dd/MM/yyyy' }}
+          </span>
+          <span>
+            <i class="fas fa-clock mr-1"></i> {{ note.created_at | date:'HH:mm' }}
+          </span>
+        </div>
+        <div class="text-text whitespace-pre-line border-t border-gray-100 pt-2">{{ note.content }}</div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center items-center gap-2 mt-8" *ngIf="totalPages > 1">
+      <button (click)="prevPage()" [disabled]="page === 1" class="px-3 py-1 rounded border border-border bg-gray-50 hover:bg-gray-100 disabled:opacity-50">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <ng-container *ngFor="let p of [].constructor(totalPages); let i = index">
+        <button (click)="goToPage(i+1)" [class.bg-primary]="page === i+1" [class.text-white]="page === i+1"
+                class="px-3 py-1 rounded border border-border mx-0.5 hover:bg-primary-light hover:text-white"
+                [attr.aria-current]="page === i+1 ? 'page' : null">
+          {{ i+1 }}
+        </button>
+      </ng-container>
+      <button (click)="nextPage()" [disabled]="page === totalPages" class="px-3 py-1 rounded border border-border bg-gray-50 hover:bg-gray-100 disabled:opacity-50">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
