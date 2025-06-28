@@ -26,6 +26,7 @@ export class RolePageComponent implements OnInit {
   loading = false;
   errorMessage: string | null = null;
   usingCachedData = false;
+  expandedCategory: string | null = null;
   
   constructor(
     private fb: FormBuilder,
@@ -462,5 +463,10 @@ export class RolePageComponent implements OnInit {
   
   cancel(): void {
     this.router.navigate(['/admin/roles']);
+  }
+  
+  /** Toggle a single category drawer */
+  toggleCategory(category: string): void {
+    this.expandedCategory = this.expandedCategory === category ? null : category;
   }
 }
