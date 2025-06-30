@@ -2,6 +2,7 @@ import { Component, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy, sig
 import { CommonModule } from '@angular/common';
 import { CalendarService } from '../../../../services/doc-services/calendar/calendar.service';
 import { CalendarEvent } from '../../../../models/calendar/calendar-event.model';
+import { DoctorAppointmentService } from '../../../../shared/services/doctor-appointment.service';
 
 // FullCalendar imports
 import { Calendar } from '@fullcalendar/core';
@@ -39,6 +40,7 @@ import { BlockedTimeDeleteModalComponent } from '../blocked-time-delete-modal/bl
 export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
   @ViewChild('calendar') calendarEl!: ElementRef;
   private calendarService = inject(CalendarService);
+  private doctorAppointmentService = inject(DoctorAppointmentService);
   private calendar: Calendar | null = null;
   
   // State signals - Simplified approach
@@ -172,16 +174,18 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
               const fullCalendarEvents = calendarEvents.map(event => {
                 let startTime = event.start;
                 let endTime = event.end;
-                
                 if (startTime instanceof Date) {
                   startTime = startTime.toISOString();
                 }
                 if (endTime instanceof Date) {
                   endTime = endTime.toISOString();
                 }
-                
+                // Ensure isAppointment is set for all appointment events
+                const isAppointment = event.extendedProps?.['isAppointment'] !== undefined
+                  ? event.extendedProps['isAppointment']
+                  : true; // Default to true for all loaded appointments
                 const fcEvent: any = {
-                  id: event.id,
+                  id: isAppointment ? `appointment-${event.id}` : event.id,
                   title: event.title,
                   start: startTime,
                   end: endTime,
@@ -189,9 +193,11 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
                   backgroundColor: event.backgroundColor || event.color || '#4285F4',
                   borderColor: event.borderColor || event.color || '#4285F4',
                   textColor: event.textColor || '#FFFFFF',
-                  extendedProps: event.extendedProps || {}
+                  extendedProps: {
+                    ...event.extendedProps,
+                    isAppointment // Always set this!
+                  }
                 };
-                
                 return fcEvent;
               });
               
@@ -396,35 +402,58 @@ export class CalendarContainerComponent implements AfterViewInit, OnDestroy {
     
     console.log('Opening appointment for editing:', appointmentToEdit);
   }
-
-  handleBlockTimeSaved(event: CalendarEvent): void {
-    if (this.selectedBlockToEdit()) {
-      if (event.extendedProps?.['isAppointment']) {
-        this.calendarService.updateEvent(event);
-      } else {
-        this.calendarService.updateBlockedTime(event);
-      }
-    } else {
-      if (event.extendedProps?.['isAppointment']) {
-        this.calendarService.addEvent(event);
-      } else {
-        this.calendarService.addBlockedTime(event);
-      }
-    }
-    
-    this.refreshEvents();
-  }
-  
-  handleBlockTimeDeleted(eventId: string): void {
-    if (eventId.startsWith('appointment-')) {
-      this.calendarService.deleteEvent(eventId);
-    } else {
-      this.calendarService.deleteBlockedTime(eventId);
-    }
-    
+  onAppointmentUpdated(): void {
+    console.log('Appointment updated, refreshing calendar...');
     this.refreshEvents();
   }
 
+handleBlockTimeSaved(event: CalendarEvent): void {
+  if (this.selectedBlockToEdit()) {
+    if (event.extendedProps?.['isAppointment']) {
+      // Ensure the event ID uses the real DB ID after update
+      if (event.extendedProps?.['originalAppointment']?.id) {
+        event.id = `appointment-${event.extendedProps['originalAppointment'].id}`;
+      }
+      this.calendarService.updateEvent(event);
+    } else {
+      this.calendarService.updateBlockedTime(event);
+    }
+  } else {
+    if (event.extendedProps?.['isAppointment']) {
+      // Ensure the event ID uses the real DB ID after creation
+      if (event.extendedProps?.['originalAppointment']?.id) {
+        event.id = `appointment-${event.extendedProps['originalAppointment'].id}`;
+      }
+      this.calendarService.addEvent(event);
+    } else {
+      this.calendarService.addBlockedTime(event);
+    }
+  }
+  // Debug log for event ID after save
+  console.log('Saved event, ID now:', event.id, event);
+  this.refreshEvents();
+}
+
+handleBlockTimeDeleted(eventId: string): void {
+  if (eventId.startsWith('appointment-')) {
+    // Extract numeric ID if needed
+    const numericId = eventId.replace('appointment-', '');
+    console.log('Deleting appointment with DB ID:', numericId, 'and eventId:', eventId);
+    this.doctorAppointmentService.deleteAppointment(numericId).subscribe({
+      next: () => {
+        this.calendarService.deleteEvent(eventId); // Remove from frontend state
+        this.refreshEvents();
+      },
+      error: (err) => {
+        console.error('Failed to delete appointment:', err);
+        // Optionally show error to user
+      }
+    });
+  } else {
+    this.calendarService.deleteBlockedTime(eventId);
+    this.refreshEvents();
+  }
+}
   createNewAppointment(): void {
     console.log('Creating new appointment from toolbar button');
     

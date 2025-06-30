@@ -56,3 +56,20 @@ export interface ApiAppointmentResponse {
     status: string;
   };
 }
+
+// Appointment action interfaces
+export interface AppointmentActionRequest {
+  id: number;
+  reason?: string;
+  notes?: string;
+}
+
+export interface RescheduleRequest extends AppointmentActionRequest {
+  newDateTime: string;
+}
+
+export interface AppointmentActionResponse {
+  success: boolean;
+  message: string;
+  data: ApiAppointmentResponse;
+}

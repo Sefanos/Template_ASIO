@@ -1,0 +1,82 @@
+<div class="gantt-container">
+  <h2 class="gantt-title">Diagramme de Gantt - Mon Stage (Interface Médecin, APIs, IA, Rappels)</h2>
+  <div class="gantt-legend" style="margin-bottom: 12px;">
+    <div class="legend-item"><span class="legend-color bg-indigo-500"></span>Backend/API</div>
+    <div class="legend-item"><span class="legend-color bg-green-500"></span>Frontend</div>
+    <div class="legend-item"><span class="legend-color bg-orange-500"></span>Rappels/Tests</div>
+    <div class="legend-item"><span class="legend-color bg-blue-500"></span>IA/Chatbot</div>
+    <div class="legend-item"><span class="legend-color bg-gray-500"></span>Phase/Intégration</div>
+    <div class="legend-item"><span class="legend-color bg-pink-400"></span>Refactoring</div>
+    <div class="legend-item"><span class="legend-color bg-yellow-400"></span>Tests</div>
+  </div>
+  
+  <div class="gantt-timeline-container">
+    <!-- En-tête avec les mois -->
+    <div class="gantt-header">
+      <div class="gantt-task-info">Tâche</div>
+      <div class="gantt-timeline">
+        <div class="months-container">
+          <div *ngFor="let month of months" class="month-header">
+            {{ month }}
+          </div>
+        </div>
+        
+        <!-- Semaines -->
+        <div class="weeks-container">
+          <div *ngFor="let week of weeks" class="week-cell" [class.current-week]="isToday(week.start) || isToday(week.end)">
+            <span class="week-label">{{ formatDate(week.start) }}-{{ formatDate(week.end) }}</span>
+          </div>
+        </div>
+        
+        <!-- Ligne "aujourd'hui" -->
+        <div class="today-line"></div>
+      </div>
+    </div>
+    
+    <!-- Contenu du Gantt -->
+    <div class="gantt-body">
+      <!-- Liste des tâches -->
+      <div class="gantt-task-list">
+<div *ngFor="let task of tasks" 
+     class="gantt-task-item" 
+     [class.milestone]="task.type === 'milestone'" 
+     [class.phase]="task.type === 'phase'">
+  <div class="task-name" [ngStyle]="{
+      'font-weight': task.type === 'phase' ? 'bold' : 'normal',
+      'color': task.type === 'phase' ? '#374151' : '#222'
+    }">
+    {{ task.name }}
+  </div>
+</div>
+      </div>
+      
+      <!-- Timeline des tâches -->
+      <div class="gantt-timeline">
+        <div class="gantt-rows">
+          <div *ngFor="let task of tasks" class="gantt-row">
+            <div 
+              *ngIf="task.type === 'milestone'" 
+              class="milestone-marker" 
+              [class]="task.color"
+              [ngStyle]="{'left': getTaskPosition(task).left}">
+              ◆
+            </div>
+            <div 
+              *ngIf="task.type !== 'milestone'" 
+              class="task-bar" 
+              [class]="task.color"
+              [ngStyle]="{'left': getTaskPosition(task).left, 'width': getTaskPosition(task).width}">
+              <div class="progress-bar" [ngStyle]="{'width': task.progress + '%'}"></div>
+              <span class="task-label" *ngIf="task.type !== 'phase'">{{ task.progress }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="gantt-info">
+    <p>Période du projet: 1 Mars 2025 - 1 Juillet 2025</p>
+    <p>Méthodologie: Agile Scrum (sprints d'une semaine)</p>
+  </div>
+</div>
