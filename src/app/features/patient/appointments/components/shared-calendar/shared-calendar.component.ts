@@ -128,6 +128,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     // Load doctors first, then appointments will be loaded after doctors are ready
+    this.showGroupedView = false; // Default to list view for available doctors
     this.loadAvailableDoctors();
     this.generateMiniCalendar();
   }
@@ -156,7 +157,7 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
             // Initialiser les filtres et groupes
         this.filteredResources = [...this.resources];
         this.groupDoctorsBySpecialty();
-        this.showGroupedView = this.resources.length > 5; // Grouper si plus de 5 docteurs
+        this.showGroupedView = false; // Always default to list view
         
 
         // Auto-select all doctors by default when page loads
@@ -266,11 +267,16 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
+  // Helper to safely update isCalendarRefreshing and trigger change detection
+  setCalendarRefreshing(value: boolean) {
+    this.isCalendarRefreshing = value;
+    this.cdr.detectChanges();
+  }
+
   loadAppointments(): void {
     console.log('Loading appointments for calendar...');
     this.loadingAppointments = true;
-    this.isCalendarRefreshing = true;
-    
+    this.setCalendarRefreshing(true);
     // Load all appointments to display in calendar (not just upcoming)
     this.patientAppointmentService.getMyAppointments().subscribe({
       next: (sharedAppointments) => {
@@ -278,20 +284,16 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
         // Convert shared appointments to patient model then to calendar events
         const patientAppointments = this.appointmentAdapter.toPatientModelArray(sharedAppointments);
         console.log('Converted to patient appointments:', patientAppointments);
-        
         this.allCalendarEvents = patientAppointments.map(appointment => {
           // Convert time format from "9:00 AM" to "09:00" format
           const convertedTime = this.convertTimeFormat(appointment.time);
           const startDateTime = `${appointment.date}T${convertedTime}`;
           const startDate = new Date(startDateTime);
           const endDate = new Date(startDate.getTime() + 30 * 60000); // Add 30 minutes
-          
-          // Find the doctor resource to get specialty information
           const doctorResource = this.resources.find(r => r.id === appointment.doctorId.toString());
           const doctorDisplayName = doctorResource ? 
             `${appointment.doctorName} (${doctorResource.specialty})` : 
             (appointment.doctorName || 'Doctor');
-          
           const calendarEvent = {
             id: appointment.id.toString(),
             title: `${appointment.reason || 'Appointment'} - ${doctorDisplayName}`,
@@ -300,32 +302,24 @@ export class SharedCalendarComponent implements OnInit, AfterViewInit {
             backgroundColor: this.getStatusColor(appointment.status),
             borderColor: this.getStatusColor(appointment.status),
             extendedProps: {
-              resourceId: appointment.doctorId.toString(), // Use actual doctor ID
+              resourceId: appointment.doctorId.toString(),
               description: appointment.reason,
               status: appointment.status as 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed',
               doctorName: appointment.doctorName,
               doctorSpecialty: appointment.doctorSpecialty || doctorResource?.specialty
             }
           };
-          console.log('Created calendar event:', calendarEvent);
-          console.log('Original time:', appointment.time, 'Converted time:', convertedTime);
-          console.log('Event start date:', calendarEvent.start);
-          console.log('Event end date:', calendarEvent.end);
           return calendarEvent;
         });
-        
-        console.log('Calendar events created:', this.allCalendarEvents);
         this.loadingAppointments = false;
-        this.isCalendarRefreshing = false;
-        
-        // Only show events for selected doctors (none selected initially)
+        this.setCalendarRefreshing(false);
         this.filterAndSearchEvents();
       },
       error: (error: any) => {
         console.error('Error loading appointments for calendar:', error);
         this.allCalendarEvents = [];
         this.loadingAppointments = false;
-        this.isCalendarRefreshing = false;
+        this.setCalendarRefreshing(false);
         this.filterAndSearchEvents();
       }
     });

@@ -18,6 +18,9 @@ export class LabResultsComponent implements OnInit {
   paginatedData: PaginatedLabResultData | null = null;
   displayRecords: LabResult[] = [];
   
+  // Vue et affichage
+  viewMode: 'grid' | 'list' = 'grid';
+  
   sortOrder: 'desc' | 'asc' = 'desc';
   statusFilter: string = 'all';
   availableStatuses: string[] = ['all', 'abnormal', 'normal', 'reviewed', 'pending_review', 'requires_action'];
@@ -41,6 +44,16 @@ export class LabResultsComponent implements OnInit {
       this.currentPage = 1;
       this.loadLabResults();
     });
+  }
+
+  // === MÉTHODES DE GESTION DES VUES ===
+
+  /**
+   * Change le mode d'affichage entre grille et liste
+   */
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode = mode;
+    this.cdr.detectChanges();
   }
 
   onFilterChange(): void {
@@ -159,5 +172,35 @@ export class LabResultsComponent implements OnInit {
 
   trackByRecordId(index: number, record: LabResult): number {
     return record.id;
+  }
+
+  // === NOUVELLES MÉTHODES POUR LA PAGINATION AMÉLIORÉE ===
+
+  /**
+   * Retourne les pages visibles autour de la page actuelle
+   */
+  getVisiblePages(): number[] {
+    if (!this.paginatedData) return [];
+    
+    const { current_page, last_page } = this.paginatedData;
+    const pages: number[] = [];
+    
+    // Logique pour afficher 2 pages avant et après la page actuelle
+    const start = Math.max(1, current_page - 2);
+    const end = Math.min(last_page, current_page + 2);
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  }
+
+  /**
+   * Gère le changement du nombre d'éléments par page
+   */
+  onItemsPerPageChange(): void {
+    this.currentPage = 1;
+    this.loadLabResults();
   }
 }

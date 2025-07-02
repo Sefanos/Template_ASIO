@@ -46,6 +46,7 @@ export class ProfileViewComponent implements OnInit {
               name: apiData.name,
                surname: apiData.surname,
               email: apiData.email,
+              phone: apiData.phone, // Ajouté
               birthdate: apiData.birthdate,
               gender: apiData.gender,
               address: apiData.address,

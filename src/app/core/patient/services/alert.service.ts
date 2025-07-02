@@ -13,11 +13,20 @@ export class AlertService {
   constructor(private http: HttpClient) { }
 
   /**
-   * Récupère toutes les alertes actives pour le patient.
+   * Récupère toutes les alertes pour le patient (actives et inactives).
+   */
+  getAllAlerts(): Observable<Alert[]> {
+    return this.http.get<AlertsApiResponse>(this.apiUrl).pipe(
+      map(response => response.data)
+    );
+  }
+
+  /**
+   * Récupère uniquement les alertes actives pour le patient.
    */
   getActiveAlerts(): Observable<Alert[]> {
-    return this.http.get<AlertsApiResponse>(this.apiUrl).pipe(
-      map(response => response.data.filter(alert => alert.is_active))
+    return this.getAllAlerts().pipe(
+      map(alerts => alerts.filter(alert => alert.is_active))
     );
   }
 }

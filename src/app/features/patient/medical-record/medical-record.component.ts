@@ -1,4 +1,3 @@
-
 import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { PrescriptionService } from '../../../core/patient/services/prescription-service.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -8,6 +7,7 @@ import { StatisticsService } from '../../../core/patient/services/statistics.ser
 import { Alert } from '../../../core/patient/domain/models/alert.model';
 import { AlertService } from '../../../core/patient/services/alert.service';
 import { ActivatedRoute } from '@angular/router';
+import { StatusFilter } from './components/prescription-list/prescription-list.component';
 // L'ancienne interface ImageRecord est supprimée car les fichiers sont gérés par leur propre composant.
 type MedicalRecord = Prescription & { type: 'Prescription' };
 
@@ -44,16 +44,27 @@ export class MedicalRecordComponent implements OnInit {
 
   // Alertes
   alerts: Alert[] = [];
+  filteredAlerts: Alert[] = [];
   isLoadingAlerts: boolean = true;
   alertsError: string | null = null;
   isAlertsDropdownOpen: boolean = false;
+  // Filtres alertes
+  alertStatusFilter: 'all' | 'active' | 'inactive' = 'all';
+  alertTypeFilter: string = 'all';
+  alertSeverityFilter: string = 'all';
+  alertTypes: string[] = [];
+  alertSeverities: string[] = ['critical', 'high', 'medium', 'low'];
 
   isLoadingRecords: boolean = false;
   recordsError: string | null = null;
   private patientId = 1;
 
-  initialPrescriptionStatus: string = 'active';
+  initialPrescriptionStatus: StatusFilter = 'active';
   
+  // Pour l'affichage partiel des alertes
+  showAllAlerts: boolean = false;
+  maxAlertsToShow: number = 5;
+
   constructor(
     private prescriptionService: PrescriptionService,
     private statisticsService: StatisticsService,
@@ -83,9 +94,11 @@ export class MedicalRecordComponent implements OnInit {
   loadAlerts(): void {
     this.isLoadingAlerts = true;
     this.alertsError = null;
-    this.alertService.getActiveAlerts().subscribe({
+    this.alertService.getAllAlerts().subscribe({
       next: (data) => {
         this.alerts = data;
+        this.alertTypes = Array.from(new Set(data.map(a => a.alert_type)));
+        this.applyAlertFilters();
         this.isLoadingAlerts = false;
         this.cdr.detectChanges();
       },
@@ -96,6 +109,28 @@ export class MedicalRecordComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  applyAlertFilters(): void {
+    this.filteredAlerts = this.alerts.filter(alert => {
+      const statusOk = this.alertStatusFilter === 'all' || (this.alertStatusFilter === 'active' ? alert.is_active : !alert.is_active);
+      const typeOk = this.alertTypeFilter === 'all' || alert.alert_type === this.alertTypeFilter;
+      const severityOk = this.alertSeverityFilter === 'all' || alert.severity === this.alertSeverityFilter;
+      return statusOk && typeOk && severityOk;
+    });
+  }
+
+  setAlertStatusFilter(status: 'all' | 'active' | 'inactive') {
+    this.alertStatusFilter = status;
+    this.applyAlertFilters();
+  }
+  setAlertTypeFilter(type: string) {
+    this.alertTypeFilter = type;
+    this.applyAlertFilters();
+  }
+  setAlertSeverityFilter(severity: string) {
+    this.alertSeverityFilter = severity;
+    this.applyAlertFilters();
   }
 
   loadStatistics(): void {
@@ -271,4 +306,11 @@ export class MedicalRecordComponent implements OnInit {
   clearAdvancedFilters(): void { this.initializeAdvancedFilters(); this.filterRecords(); this.isAdvancedFilterOpen = false; }
   toggleAlertsDropdown(event: MouseEvent): void { event.stopPropagation(); this.isDateFilterOpen = false; this.isAdvancedFilterOpen = false; this.isAlertsDropdownOpen = !this.isAlertsDropdownOpen; }
   closeAllDropdowns(): void { this.isDateFilterOpen = false; this.isAdvancedFilterOpen = false; this.isAlertsDropdownOpen = false; }
+
+  get alertsToDisplay(): Alert[] {
+    return this.showAllAlerts ? this.filteredAlerts : this.filteredAlerts.slice(0, this.maxAlertsToShow);
+  }
+  toggleShowAllAlerts(): void {
+    this.showAllAlerts = !this.showAllAlerts;
+  }
 }

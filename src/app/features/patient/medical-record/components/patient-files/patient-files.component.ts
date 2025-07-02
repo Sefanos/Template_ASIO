@@ -1,17 +1,18 @@
-
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { PatientFile } from '../../../../../core/patient/domain/models/patient-file.model';
-import { PatientFileService } from '../../../../../core/patient/services/patient-file.service';
+
 import { ToastService } from '../../../../../shared/services/toast.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { PatientFileService } from '../../../../../core/patient/services/patient-file.service';
 
 @Component({
   selector: 'app-patient-files',
   standalone: false,
   templateUrl: './patient-files.component.html',
-  styleUrls: ['./patient-files.component.css']
+  styleUrls: ['./patient-files.component.css'],
+  
 })
 export class PatientFilesComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef;
@@ -31,6 +32,9 @@ export class PatientFilesComponent implements OnInit {
   dateFrom: string = '';
   dateTo: string = '';
 
+  // Preview loading state
+  isPreviewLoading: boolean = false;
+
   // Modals
   isUploadModalOpen = false;
   isEditModalOpen = false;
@@ -43,6 +47,13 @@ export class PatientFilesComponent implements OnInit {
   uploadForm: FormGroup;
   editForm: FormGroup;
   selectedFile: File | null = null;
+
+  // Confirmation delete modal
+  selectedFileIdToDelete: number | null = null;
+  isDeleteConfirmModalOpen: boolean = false;
+
+  // Uploading state
+  isUploading: boolean = false;
 
   constructor(
     private fileService: PatientFileService,
@@ -121,17 +132,51 @@ export class PatientFilesComponent implements OnInit {
     this.selectedFileForView = file;
     this.isViewModalOpen = true;
     this.previewUrl = null;
+    this.isPreviewLoading = false;
 
     if (file.type === 'image' || file.mimeType === 'application/pdf') {
-      this.fileService.getFileBlob(file.id).subscribe(blob => {
-        this.objectUrl = URL.createObjectURL(blob);
-        if (file.type === 'image') {
-          this.previewUrl = this.sanitizer.bypassSecurityTrustUrl(this.objectUrl);
-        } else {
-          this.previewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl);
+      this.isPreviewLoading = true;
+      this.fileService.getFileBlob(file.id).subscribe({
+        next: (blob) => {
+          this.objectUrl = URL.createObjectURL(blob);
+          if (file.type === 'image') {
+            this.previewUrl = this.sanitizer.bypassSecurityTrustUrl(this.objectUrl);
+          } else {
+            this.previewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl);
+          }
+          this.isPreviewLoading = false;
+        },
+        error: () => {
+          this.isPreviewLoading = false;
         }
       });
     }
+  }
+
+  openDeleteConfirmModal(fileId: number): void {
+    this.selectedFileIdToDelete = fileId;
+    this.isDeleteConfirmModalOpen = true;
+  }
+
+  confirmDelete(): void {
+    if (this.selectedFileIdToDelete !== null) {
+      this.fileService.deleteFile(this.selectedFileIdToDelete).subscribe({
+        next: () => {
+          this.files = this.files.filter(f => f.id !== this.selectedFileIdToDelete);
+          this.toastService.success('File deleted successfully.');
+          this.closeDeleteConfirmModal();
+        },
+        error: () => {
+          this.toastService.error('Failed to delete file.');
+          this.closeDeleteConfirmModal();
+        }
+      });
+    }
+  }
+
+  closeDeleteConfirmModal(): void {
+    this.isDeleteConfirmModalOpen = false;
+    this.selectedFileIdToDelete = null;
   }
 
   closeModals(): void {
@@ -140,7 +185,11 @@ export class PatientFilesComponent implements OnInit {
     this.isViewModalOpen = false;
     this.selectedFileForEdit = null;
     this.selectedFileForView = null;
-    
+    this.isPreviewLoading = false;
+    this.isUploading = false;
+    this.selectedFile = null;
+    this.uploadForm.patchValue({ file: null });
+
     if (this.objectUrl) {
       URL.revokeObjectURL(this.objectUrl);
       this.objectUrl = null;
@@ -167,11 +216,11 @@ export class PatientFilesComponent implements OnInit {
   }
 
   handleUpload(): void {
-    if (this.uploadForm.invalid || !this.selectedFile) {
+    if (this.uploadForm.invalid || !this.selectedFile || this.isUploading) {
       this.toastService.warning('Please select a file and a category.');
       return;
     }
-
+    this.isUploading = true;
     const formData = new FormData();
     formData.append('file', this.selectedFile, this.selectedFile.name);
     formData.append('category', this.uploadForm.value.category);
@@ -182,9 +231,13 @@ export class PatientFilesComponent implements OnInit {
       next: (newFile) => {
         this.files.unshift(newFile);
         this.toastService.success('File uploaded successfully!');
+        this.isUploading = false;
         this.closeModals();
       },
-      error: () => this.toastService.error('File upload failed.')
+      error: () => {
+        this.toastService.error('File upload failed.');
+        this.isUploading = false;
+      }
     });
   }
 
@@ -205,15 +258,7 @@ export class PatientFilesComponent implements OnInit {
   }
 
   handleDelete(fileId: number): void {
-    if (confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
-      this.fileService.deleteFile(fileId).subscribe({
-        next: () => {
-          this.files = this.files.filter(f => f.id !== fileId);
-          this.toastService.success('File deleted successfully.');
-        },
-        error: () => this.toastService.error('Failed to delete file.')
-      });
-    }
+    this.openDeleteConfirmModal(fileId);
   }
   
   handleDownload(file: PatientFile): void {

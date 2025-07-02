@@ -1,5 +1,4 @@
-
-  <div class="medical-records-page bg-background min-h-screen p-4 md:p-6 lg:p-8">
+<div class="medical-records-page bg-background min-h-screen p-4 md:p-6 lg:p-8">
     
   <!-- Header principal de la page -->
   <div class="page-main-header flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 p-6 bg-card rounded-2xl shadow-card border border-border">
@@ -15,25 +14,68 @@
             {{ alerts.length }}
           </span>
         </button>
-        <div *ngIf="isAlertsDropdownOpen" (click)="$event.stopPropagation()" class="alerts-dropdown absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-card shadow-lg z-30">
+        <div *ngIf="isAlertsDropdownOpen" (click)="$event.stopPropagation()" class="alerts-dropdown absolute top-full right-0 mt-2 w-96 bg-card border border-border rounded-card shadow-lg z-30">
           <div class="p-3 border-b border-border">
-            <h4 class="font-semibold text-text">Active Alerts</h4>
+            <h4 class="font-semibold text-text mb-2">Alerts</h4>
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <!-- Toggle boutons statut -->
+              <div class="inline-flex rounded-md shadow-sm bg-gray-100 border border-border">
+                <button type="button" (click)="setAlertStatusFilter('all')" [class.bg-primary]="alertStatusFilter==='all'" [class.text-white]="alertStatusFilter==='all'" class="px-3 py-1 rounded-l-md text-xs font-medium focus:outline-none transition-all" [ngClass]="{'bg-primary text-white': alertStatusFilter==='all', 'text-text': alertStatusFilter!=='all'}">
+                  <i class="fas fa-list mr-1"></i> All
+                </button>
+                <button type="button" (click)="setAlertStatusFilter('active')" [class.bg-green-600]="alertStatusFilter==='active'" [class.text-white]="alertStatusFilter==='active'" class="px-3 py-1 text-xs font-medium focus:outline-none transition-all" [ngClass]="{'bg-green-600 text-white': alertStatusFilter==='active', 'text-text': alertStatusFilter!=='active'}">
+                  <i class="fas fa-bolt mr-1"></i> Active
+                </button>
+                <button type="button" (click)="setAlertStatusFilter('inactive')" [class.bg-gray-400]="alertStatusFilter==='inactive'" [class.text-white]="alertStatusFilter==='inactive'" class="px-3 py-1 rounded-r-md text-xs font-medium focus:outline-none transition-all" [ngClass]="{'bg-gray-400 text-white': alertStatusFilter==='inactive', 'text-text': alertStatusFilter!=='inactive'}">
+                  <i class="fas fa-archive mr-1"></i> Inactive
+                </button>
+              </div>
+              <!-- Select type -->
+              <div class="relative">
+                <i class="fas fa-tag absolute left-2 top-1/2 -translate-y-1/2 text-xs text-text-muted"></i>
+                <select [(ngModel)]="alertTypeFilter" (ngModelChange)="setAlertTypeFilter($event)" class="filter-input pl-6 pr-2 py-1 text-xs rounded-full bg-gray-100 border border-border focus:ring-1 focus:ring-primary">
+                  <option value="all">All Types</option>
+                  <option *ngFor="let type of alertTypes" [value]="type">{{ type }}</option>
+                </select>
+              </div>
+              <!-- Select sévérité -->
+              <div class="relative">
+                <i class="fas fa-exclamation-triangle absolute left-2 top-1/2 -translate-y-1/2 text-xs text-text-muted"></i>
+                <select [(ngModel)]="alertSeverityFilter" (ngModelChange)="setAlertSeverityFilter($event)" class="filter-input pl-6 pr-2 py-1 text-xs rounded-full bg-gray-100 border border-border focus:ring-1 focus:ring-primary">
+                  <option value="all">All Severities</option>
+                  <option *ngFor="let sev of alertSeverities" [value]="sev">{{ sev }}</option>
+                </select>
+              </div>
+            </div>
+            <hr class="my-2 border-border">
           </div>
-          <div class="max-h-80 overflow-y-auto">
+          <div class="max-h-96 overflow-y-auto">
             <div *ngIf="isLoadingAlerts" class="p-4 text-center text-text-muted">Loading alerts...</div>
             <div *ngIf="alertsError" class="p-4 text-center text-status-urgent">{{ alertsError }}</div>
-            <div *ngIf="!isLoadingAlerts && alerts.length === 0" class="p-4 text-center text-text-muted">No active alerts.</div>
-            <a href="#" *ngFor="let alert of alerts" class="alert-item block p-3 hover:bg-hover border-b border-border last:border-b-0">
+            <div *ngIf="!isLoadingAlerts && filteredAlerts.length === 0" class="p-4 text-center text-text-muted">No alerts found.</div>
+            <a href="#" *ngFor="let alert of alertsToDisplay" class="alert-item block p-3 hover:bg-hover border-b border-border last:border-b-0">
               <div class="flex items-start space-x-3">
-                <!-- Code nettoyé pour utiliser la fonction du composant -->
                 <i [class]="getAlertIconAndColor(alert.severity).icon" class="mt-1" [ngClass]="getAlertIconAndColor(alert.severity).colorClass"></i>
                 <div class="flex-1">
-                  <p class="font-semibold text-sm text-text">{{ alert.title }}</p>
-                  <p class="text-xs text-text-light">{{ alert.description }}</p>
-                  <p class="text-xs text-text-muted mt-1">{{ alert.created_at | date:'mediumDate' }}</p>
+                  <div class="flex items-center gap-2">
+                    <p class="font-semibold text-sm text-text">{{ alert.title }}</p>
+                    <span *ngIf="alert.is_active" class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">Active</span>
+                    <span *ngIf="!alert.is_active" class="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-600">Inactive</span>
+                  </div>
+                  <div class="text-xs text-text-light mb-1">{{ alert.description }}</div>
+                  <div class="text-xs text-text-muted flex flex-wrap gap-2">
+                    <span>Type: {{ alert.alert_type }}</span>
+                    <span>Severity: {{ alert.severity }}</span>
+                    <span>Date: {{ alert.created_at | date:'mediumDate' }}</span>
+                  </div>
                 </div>
               </div>
             </a>
+            <div *ngIf="filteredAlerts.length > maxAlertsToShow" class="text-center py-2">
+              <button (click)="toggleShowAllAlerts()" class="text-primary font-semibold hover:underline text-xs">
+                {{ showAllAlerts ? 'Réduire' : 'Afficher tout (' + filteredAlerts.length + ')' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -74,12 +116,7 @@
       <strong>Error!</strong><span> {{ recordsError }}</span>
     </div>
     <ng-container *ngIf="!isLoadingRecords && !recordsError">
-      <app-prescription-list *ngIf="activeTab === 'Prescription'" [records]="$any(filteredRecords)" (viewRecordDetails)="openModal($event)"></app-prescription-list>
-      <div *ngIf="filteredRecords.length === 0" class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
-        <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
-        <p class="text-xl text-text-light">No prescriptions found.</p>
-        <p class="text-body text-text-muted">Try adjusting your search or filter criteria.</p>
-      </div>
+      <app-prescription-list *ngIf="activeTab === 'Prescription'" [records]="$any(filteredRecords)" [loading]="isLoadingRecords" [initialStatus]="initialPrescriptionStatus" (viewRecordDetails)="openModal($event)"></app-prescription-list>
     </ng-container>
   </ng-container>
   <app-notes *ngIf="activeTab === 'Notes'"></app-notes>
