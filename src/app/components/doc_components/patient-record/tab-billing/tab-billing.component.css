@@ -1,0 +1,5 @@
+/* Add any custom styles for the billing tab here */
+.bill-list {
+  max-width: 700px;
+  margin: 0 auto;
+}

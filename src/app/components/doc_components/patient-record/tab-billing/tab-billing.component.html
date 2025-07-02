@@ -1,0 +1,92 @@
+<div class="space-y-8">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4 tracking-tight flex items-center gap-2">
+    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    Billing
+  </h2>
+
+  <!-- Search -->
+  <div class="flex justify-start mb-4">
+    <div class="relative w-full max-w-xs">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-3.5-3.5"/>
+        </svg>
+      </span>
+      <input
+        type="text"
+        placeholder="Search bills..."
+        class="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:border-gray-400 focus:bg-white transition text-sm"
+        [(ngModel)]="search"
+        name="search"
+        (input)="onSearchChange($any($event.target).value)"
+        autocomplete="off"
+      >
+      <button *ngIf="search" type="button" (click)="clearSearch()" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="flex items-center justify-center py-12 text-gray-500">
+    <span class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-400 mr-3"></span>
+    <span class="text-base font-medium">Loading bills...</span>
+  </div>
+  <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-6 shadow">{{ error }}</div>
+  <div *ngIf="!loading && !error && bills.length === 0" class="text-center text-gray-400 py-12 text-base">No bills found for this patient.</div>
+
+  <div *ngFor="let bill of bills" class="bg-white border border-gray-200 rounded-xl shadow-sm transition hover:shadow-md overflow-hidden">
+    <div class="flex items-center justify-between p-5 cursor-pointer hover:bg-gray-50 transition" (click)="toggleExpand(bill.id)">
+      <div>
+        <div class="text-base font-semibold text-gray-800">Bill #{{ bill.bill_number }}</div>
+        <div class="flex gap-4 mt-1 text-xs text-gray-500">
+          <span>Issued: <span class="font-medium">{{ bill.issue_date | date:'mediumDate' }}</span></span>
+          <span>Amount: <span class="font-semibold text-gray-700">{{ bill.amount | currency }}</span></span>
+        </div>
+      </div>
+      <div class="flex items-center">
+        <span *ngIf="expandedBillId === bill.id" class="text-gray-500 text-xl">&#9650;</span>
+        <span *ngIf="expandedBillId !== bill.id" class="text-gray-300 text-xl">&#9660;</span>
+      </div>
+    </div>
+    <div *ngIf="expandedBillId === bill.id" class="p-5 border-t border-gray-100 bg-gray-50">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div><span class="font-semibold text-gray-600">Doctor:</span> <span class="text-gray-800">{{ bill.doctor?.name || bill.doctor_user_id }}</span></div>
+        <div><span class="font-semibold text-gray-600">Payment Method:</span> <span class="text-gray-800">{{ bill.payment_method }}</span></div>
+        <div class="md:col-span-2"><span class="font-semibold text-gray-600">Description:</span> <span class="text-gray-700">{{ bill.description || 'N/A' }}</span></div>
+      </div>
+      <div class="mb-2 font-semibold text-gray-700">Items:</div>
+      <div *ngIf="bill.items && bill.items.length > 0; else noItems">
+        <ul class="ml-2 space-y-1">
+          <li *ngFor="let item of bill.items" class="flex items-center justify-between bg-white rounded px-3 py-2 border border-gray-100">
+            <div>
+              <span class="font-medium text-gray-700">{{ item.service_type }}</span>
+              <span class="text-gray-500">- {{ item.description }}</span>
+            </div>
+            <span class="font-semibold text-gray-700">{{ item.price | currency }}</span>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noItems>
+        <span class="text-gray-400 ml-2">No items for this bill.</span>
+      </ng-template>
+      <div class="flex flex-col md:flex-row md:space-x-4 mt-4 text-xs text-gray-400">
+        <div>Created: {{ bill.created_at | date:'short' }}</div>
+        <div>Updated: {{ bill.updated_at | date:'short' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages > 1" class="flex justify-center items-center gap-2 mt-6">
+    <button (click)="goToPage(page-1)" [disabled]="page === 1" class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-600 disabled:opacity-50">Prev</button>
+    <ng-container *ngFor="let p of [].constructor(totalPages); let i = index">
+      <button (click)="goToPage(i+1)" [class.bg-blue-100]="page === (i+1)" [class.font-bold]="page === (i+1)" class="px-3 py-1 rounded border border-gray-200 text-gray-700" [disabled]="page === (i+1)">{{ i+1 }}</button>
+    </ng-container>
+    <button (click)="goToPage(page+1)" [disabled]="page === totalPages" class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-600 disabled:opacity-50">Next</button>
+  </div>
+</div>

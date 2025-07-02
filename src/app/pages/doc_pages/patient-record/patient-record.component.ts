@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -20,9 +20,11 @@ import { TabMedicalHistoryComponent } from '../../../components/doc_components/p
 import { TabLabResultsComponent } from '../../../components/doc_components/patient-record/tab-lab-results/tab-lab-results.component';
 import { TabDocumentsComponent } from '../../../components/doc_components/patient-record/tab-documents/tab-documents.component';
 import { TabImagingComponent } from '../../../components/doc_components/patient-record/tab-imaging/tab-imaging.component';
+import { AlertModalComponent } from '../../../components/doc_components/patient-record/alert-modal/alert-modal.component';
 
 // Import models and services
 import { Patient } from '../../../models/patient.model';
+import { Alert } from '../../../models/alert.model';
 import {
   VitalSign,
   Medication,
@@ -61,18 +63,23 @@ import {
     PatientNotFoundComponent,
     TabLabResultsComponent,
     TabDocumentsComponent,
-    TabImagingComponent
+    TabImagingComponent,
+    AlertModalComponent
   ],
   templateUrl: './patient-record.component.html',
   styleUrl: './patient-record.component.css'
 })
 export class PatientRecordComponent implements OnInit {
+  // ViewChild to access PatientAlertsComponent
+  @ViewChild(PatientAlertsComponent) patientAlertsComponent!: PatientAlertsComponent;
+
   // Page state
   patientId: number | null = null;
   patient: Patient | null = null;  patientInfo: PatientInfo | null = null;
   medicalSummary: MedicalOverview | null = null;
   activeTab: string = 'summary';
   showPrintOptions: boolean = false;
+  showAlertsModal: boolean = false;
   loading: boolean = true;
   error: boolean = false;
   errorMessage: string = '';
@@ -225,7 +232,7 @@ export class PatientRecordComponent implements OnInit {
         this.errorMessage = 'Timeout loading patient data';
         this.loading = false;
       }
-    }, 5000);
+    }, 10000);
   }  /**
    * Transform PatientMedicalSummary to Patient model for backwards compatibility
    */
@@ -495,4 +502,104 @@ export class PatientRecordComponent implements OnInit {
     // Update tab counts
     console.log(`Notes count updated to: ${this.patientNotes.length}`);
   }
+
+  /**
+   * Toggle alerts modal visibility
+   */
+  toggleAlertsModal(): void {
+    console.log('Toggling alerts modal. Current state:', this.showAlertsModal);
+    
+    if (this.showAlertsModal) {
+      this.closeAlertsModal();
+    } else {
+      this.openAlertsModal();
+    }
+  }
+
+  /**
+   * Open alerts modal
+   */
+  openAlertsModal(): void {
+    console.log('Opening alerts modal for patient:', this.patientId);
+    
+    if (!this.patient) {
+      console.error('Cannot open alerts modal: no patient data');
+      return;
+    }
+
+    this.showAlertsModal = true;
+    console.log('Alerts modal opened');
+  }
+
+  /**
+   * Close alerts modal
+   */
+  closeAlertsModal(): void {
+    console.log('Closing alerts modal');
+    this.showAlertsModal = false;
+  }
+
+  /**
+   * Handle alerts updated from modal
+   */
+  onAlertsUpdated(updatedAlerts: Alert[]): void {
+    console.log('🔍 Alerts updated from modal:', updatedAlerts);
+    
+    // Refresh the patient alerts component to show updated data
+    if (this.patientAlertsComponent) {
+      console.log('🔄 Refreshing PatientAlertsComponent...');
+      this.patientAlertsComponent.refreshAlerts();
+    }
+    
+    // Also refresh patient summary for other components
+    if (this.patientId) {
+      console.log('🔄 Refreshing patient data after alert update...');
+      this.loadPatientData();
+    }
+  }
+
+  /**
+   * Get current alerts in the format expected by the modal
+   */
+  getCurrentAlerts(): Alert[] {
+    if (!this.patient) return [];
+    
+    const alerts: Alert[] = [];
+    
+    // Add allergies as alerts
+    if (this.patient.allergies) {
+      this.patient.allergies.forEach((allergy, index) => {
+        if (typeof allergy === 'string') {
+          alerts.push({
+            id: `allergy-${index}`,
+            type: 'allergy',
+            title: allergy,
+            description: '',
+            severity: 'critical',
+            isActive: true,
+            createdAt: new Date().toISOString()
+          });
+        }
+      });
+    }
+    
+    // Add other alerts
+    if (this.patient.alerts) {
+      this.patient.alerts.forEach((alert: any) => {
+        alerts.push({
+          id: alert.id || `alert-${alerts.length}`,
+          type: alert.type || 'general',
+          title: alert.title || alert.message || 'Alert',
+          description: alert.description || '',
+          severity: alert.severity || 'medium',
+          isActive: alert.is_active !== false,
+          createdAt: alert.created_at || new Date().toISOString()
+        });
+      });
+    }
+    
+    return alerts;
+  }
+
+  // ...existing methods...
 }

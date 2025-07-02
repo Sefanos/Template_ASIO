@@ -1,79 +1,72 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Alert, AlertHelper } from '../../../../models/alert.model';
+import { AlertService } from '../../../../services/doc-services/alert.service';
 
 @Component({
   selector: 'app-patient-alerts',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './patient-alerts.component.html'
+  templateUrl: './patient-alerts.component.html',
 })
-export class PatientAlertsComponent {
-  @Input() allergies: any[] = [];
-  @Input() alerts: any[] = [];
+export class PatientAlertsComponent implements OnInit, OnChanges {
+  @Input() patientId: number | null = null; // ✅ Change from allergies/alerts to patientId
+  @Input() allergies: any[] = []; // ✅ Keep for backward compatibility but won't use
+  @Input() alerts: any[] = []; // ✅ Keep for backward compatibility but won't use
 
-  // Get formatted allergy names from objects or strings
-  getFormattedAllergies(): string[] {
-    if (!this.allergies || !Array.isArray(this.allergies)) {
-      return [];
+  allAlerts: Alert[] = [];
+  isLoading: boolean = false;
+  error: string | null = null;
+
+  constructor(private alertService: AlertService) {} // ✅ Inject AlertService
+
+  ngOnInit() {
+    this.loadAlertsFromAPI();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Reload when patientId changes
+    if (changes['patientId'] && this.patientId) {
+      this.loadAlertsFromAPI();
+    }
+  }
+
+  // Public method to force refresh - can be called from parent
+  refreshAlerts() {
+    this.loadAlertsFromAPI();
+  }
+
+  private loadAlertsFromAPI() {
+    if (!this.patientId) {
+      console.warn('⚠️ No patient ID provided to PatientAlertsComponent');
+      return;
     }
 
-    return this.allergies
-      .map(allergy => {
-        if (typeof allergy === 'string') {
-          return allergy;
-        }
+    this.isLoading = true;
+    this.error = null;
+
+    console.log('🔍 PatientAlertsComponent: Loading alerts for patient:', this.patientId);
+
+    this.alertService.getPatientAlerts(this.patientId).subscribe({
+      next: (alerts) => {
+        console.log('✅ PatientAlertsComponent: Received alerts:', alerts);
         
-        // Handle object-based allergies
-        if (typeof allergy === 'object' && allergy !== null) {
-          // Try common property names for allergy objects
-          return allergy.name || 
-                 allergy.allergen || 
-                 allergy.substance || 
-                 allergy.allergy || 
-                 allergy.description ||
-                 allergy.title ||
-                 JSON.stringify(allergy); // Fallback to show object structure
-        }
+        // Filter to only show active alerts in the summary view
+        this.allAlerts = alerts.filter(alert => alert.isActive);
         
-        return String(allergy); // Convert to string as fallback
-      })
-      .filter(allergy => allergy && allergy.trim().length > 0);
+        console.log('🔍 PatientAlertsComponent: Showing active alerts:', this.allAlerts);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ PatientAlertsComponent: Error loading alerts:', error);
+        this.error = 'Failed to load alerts';
+        this.allAlerts = [];
+        this.isLoading = false;
+      }
+    });
   }
 
-  // Get allergy severity if available
-  getAllergySeverity(allergy: any): string {
-    if (typeof allergy === 'object' && allergy !== null) {
-      return allergy.severity || allergy.level || 'Unknown';
-    }
-    return 'Unknown';
-  }
-
-  // Check if allergies exist and are valid
-  hasValidAllergies(): boolean {
-    return this.getFormattedAllergies().length > 0;
-  }
-
-  // Filter out empty or invalid alerts
-  getValidAlerts(): any[] {
-    if (!this.alerts || !Array.isArray(this.alerts)) {
-      return [];
-    }
-
-    return this.alerts.filter(alert => 
-      alert && 
-      (alert.title || alert.message || alert.description) && 
-      (alert.title?.trim() || alert.message?.trim() || alert.description?.trim())
-    );
-  }
-
-  formatAlertDate(dateString: string): string {
-    if (!dateString) return '';
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
-    } catch (error) {
-      return '';
-    }
+  getSeverityStyles(alert: Alert) {
+    return AlertHelper.getSeverityStyles(alert.severity);
   }
 }
