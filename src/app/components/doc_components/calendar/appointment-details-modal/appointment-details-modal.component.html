@@ -1,140 +1,146 @@
-<!-- Backdrop -->
 @if (show) {
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+  <div class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
        (click)="closeModal()">
     
     <!-- Modal Content -->
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out"
          (click)="$event.stopPropagation()">
       
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-gray-200">
-        <div class="flex items-center space-x-3">
-          <div class="p-2 bg-blue-100 rounded-lg">
-            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v6a1 1 0 01-1 1h-3v3a1 1 0 01-1 1H9a1 1 0 01-1-1v-3H5a1 1 0 01-1-1V8a1 1 0 011-1h3z" />
+      <div class="relative bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
+              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v6a1 1 0 01-1 1h-3v3a1 1 0 01-1 1H9a1 1 0 01-1-1v-3H5a1 1 0 01-1-1V8a1 1 0 011-1h3z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white">Appointment Details</h2>
+              <p class="text-blue-100 text-sm">{{ getPatientName() }}</p>
+            </div>
+          </div>
+          
+          <button (click)="closeModal()" 
+                  class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </div>
-          <div>
-            <h2 class="text-xl font-semibold text-gray-900">Appointment Details</h2>
-            <p class="text-sm text-gray-500">{{ getPatientName() }}</p>
-          </div>
+          </button>
         </div>
         
-        <button (click)="closeModal()" 
-                class="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Content -->
-      <div class="p-6 space-y-6">
-        
         <!-- Status Badge -->
-        <div class="flex items-center space-x-2">
-          <span class="px-3 py-1 rounded-full text-xs font-medium {{ getStatusColor() }}">
+        <div class="mt-3 flex items-center space-x-2">
+          <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
             {{ getStatus() | titlecase }}
           </span>
-          <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+          <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs">
             {{ getAppointmentType() }}
           </span>
         </div>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 space-y-6">
         
-        <!-- Appointment Info Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- Date & Time -->
-          <div class="space-y-4">            <h3 class="text-lg font-medium text-gray-900 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Date & Time
-            </h3>
-            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
-              @if (appointment?.start) {
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Date:</span>
-                  <span class="text-sm font-medium">{{ formatDateTime(appointment!.start).split(',')[0] }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Start Time:</span>
-                  <span class="text-sm font-medium">{{ formatTime(appointment!.start) }}</span>
-                </div>
-              }
-              @if (appointment?.end) {
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">End Time:</span>
-                  <span class="text-sm font-medium">{{ formatTime(appointment!.end) }}</span>
-                </div>
-              }
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Duration:</span>
-                <span class="text-sm font-medium">{{ getDuration() }} minutes</span>
+        <!-- Time & Date Info -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <h3 class="text-sm font-medium text-gray-900">Date & Time</h3>
+            <div class="space-y-2">
+              <div>
+                <p class="text-xs text-gray-500">Start</p>
+                <p class="text-sm font-medium">{{ formatDateTime(appointment?.start!) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">End</p>
+                <p class="text-sm font-medium">{{ formatDateTime(appointment?.end!) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Duration</p>
+                <p class="text-sm font-medium">{{ getDuration() }} minutes</p>
               </div>
             </div>
           </div>
           
-          <!-- Patient Info -->
-          <div class="space-y-4">            <h3 class="text-lg font-medium text-gray-900 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Patient Information
-            </h3>            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Patient:</span>
-                <span class="text-sm font-medium">{{ getPatientName() }}</span>
+          <div class="space-y-3">
+            <h3 class="text-sm font-medium text-gray-900">Participants</h3>
+            <div class="space-y-2">
+              <div>
+                <p class="text-xs text-gray-500">Patient</p>
+                <p class="text-sm font-medium">{{ getPatientName() }}</p>
               </div>
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Provider:</span>
-                <span class="text-sm font-medium">{{ getCurrentDoctorName() }}</span>
+              <div>
+                <p class="text-xs text-gray-500">Doctor</p>
+                <p class="text-sm font-medium">{{ getCurrentDoctorName() }}</p>
               </div>
             </div>
           </div>
         </div>
         
         <!-- Appointment Details -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Appointment Details
-          </h3>
-          
+        <div class="space-y-3">
+          <h3 class="text-sm font-medium text-gray-900">Details</h3>
           <div class="bg-gray-50 rounded-lg p-4 space-y-3">
             <div>
-              <label class="text-sm font-medium text-gray-600">Reason for Visit:</label>
-              <p class="text-sm text-gray-900 mt-1">{{ getReason() }}</p>
+              <p class="text-xs text-gray-500">Reason for Visit</p>
+              <p class="text-sm text-gray-900">{{ getReason() }}</p>
             </div>
             
             @if (getNotes()) {
               <div>
-                <label class="text-sm font-medium text-gray-600">Notes:</label>
-                <p class="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{{ getNotes() }}</p>
+                <p class="text-xs text-gray-500">Notes</p>
+                <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ getNotes() }}</p>
               </div>
             }
           </div>
         </div>
       </div>
-        <!-- Footer Actions -->
-      <div class="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
-        <button (click)="closeModal()" 
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-          Close
-        </button>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between p-6 bg-gray-50 rounded-b-2xl border-t">
+        <div class="flex items-center space-x-2">
+          @if (canModifyAppointment() && !isAppointmentInPast()) {
+            <button 
+              (click)="rescheduleAppointment()" 
+              [disabled]="isProcessing"
+              class="inline-flex items-center px-3 py-2 text-xs font-medium text-purple-700 bg-purple-100 border border-purple-200 rounded-lg hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v6a1 1 0 01-1 1h-3v3a1 1 0 01-1 1H9a1 1 0 01-1-1v-3H5a1 1 0 01-1-1V8a1 1 0 011-1h3z" />
+              </svg>
+              <span *ngIf="!isProcessing">Reschedule</span>
+              <span *ngIf="isProcessing">Processing...</span>
+            </button>
+          }
+        </div>
         
-        <button (click)="editAppointment()" 
-                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors">
-          Edit Appointment
-        </button>
+        <div class="flex items-center space-x-2">
+          <button (click)="closeModal()"                  class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            Close
+          </button>
+          
+          @if (canModifyAppointment()) {
+            <button (click)="editAppointment()" 
+                    class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors">
+              <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </button>
+          }
+        </div>
       </div>
     </div>
   </div>
 }
+
+<!-- Reschedule Modal -->
+<app-reschedule-modal
+  [show]="showRescheduleModal"
+  [appointmentTitle]="getPatientName()"
+  [currentDate]="appointment?.start ? formatDateTime(appointment!.start).split(' ')[0] : ''"
+  [currentTime]="appointment?.start ? formatDateTime(appointment!.start).split(' ')[1] : ''"
+  (reschedule)="onRescheduleConfirm($event)"
+  (cancel)="onRescheduleCancel()">
+</app-reschedule-modal>

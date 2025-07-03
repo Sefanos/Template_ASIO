@@ -537,58 +537,51 @@ export class TimeBlockFormComponent implements OnInit, OnChanges {
   }
 
   private updateExistingAppointment(formValues: any, startDateTime: Date, endDateTime: Date): void {
-    
-    
-    if (!this.blockToEdit) return;
-    
-    // Get the appointment ID from the existing appointment
-    const appointmentId = this.blockToEdit.extendedProps?.['originalAppointment']?.id || 
-                          this.blockToEdit.extendedProps?.['appointmentId'] ||
-                          this.blockToEdit.id;    // Prepare API payload for update
-    const apiPayload = {
-      patient_user_id: formValues.patient_user_id,
-      appointment_datetime_start: this.formatDateTimeForBackend(startDateTime),
-      appointment_datetime_end: this.formatDateTimeForBackend(endDateTime),
-      type: formValues.type,
-      reason_for_visit: formValues.reason_for_visit,
-      priority: formValues.priority || 'normal',
-      notes_by_staff: formValues.notes_by_staff || '',
-      reminder_preference: formValues.reminder_preference || 'email'
-    };
-    
-    
-    
-    // Call the backend to update the appointment
-    this.doctorAppointmentService.updateAppointment(appointmentId, apiPayload).subscribe({
-      next: (updatedAppointment) => {
-        
-        
-        // Create updated calendar event object
-        const appointment: CalendarEvent = {
-          ...this.blockToEdit!,
-          title: formValues.title,
-          start: startDateTime.toISOString(),
-          end: endDateTime.toISOString(),
-          extendedProps: {
-            ...this.blockToEdit!.extendedProps,
-            patientName: formValues.patientName,
-            patient_user_id: formValues.patient_user_id,
-            type: formValues.type,
-            reason_for_visit: formValues.reason_for_visit,
-            priority: formValues.priority,
-            notes_by_staff: formValues.notes_by_staff,
-            reminder_preference: formValues.reminder_preference,
-            originalAppointment: updatedAppointment          }
-        };
-          this.saved.emit(appointment);
-        this.closeForm();
-      },
-      error: (error) => {
-        this.isSubmitting = false; // Clear loading state on error
-        console.error('Error updating appointment:', error);
-        this.errorMessage = 'Failed to update appointment. Please try again.';
-      }
-    });
+  if (!this.blockToEdit) return;
+
+  const appointmentId = this.blockToEdit.extendedProps?.['originalAppointment']?.id ||
+                        this.blockToEdit.extendedProps?.['appointmentId'] ||
+                        this.blockToEdit.id;
+
+  // Only send allowed fields to backend
+  const apiPayload: any = {};
+  if (formValues.notes_by_staff) apiPayload.notes_by_staff = formValues.notes_by_staff;
+  if (formValues.reminder_preference) apiPayload.reminder_preference = formValues.reminder_preference;
+  // Optionally, if you have a status field in your form:
+  if (formValues.status) apiPayload.status = formValues.status;
+  // Optionally, if you have a notes field:
+  if (formValues.notes) apiPayload.notes = formValues.notes;
+
+  this.doctorAppointmentService.updateAppointment(appointmentId, apiPayload).subscribe({
+    next: (updatedAppointment) => {
+      
+      
+      // Create updated calendar event object
+      const appointment: CalendarEvent = {
+        ...this.blockToEdit!,
+        title: formValues.title,
+        start: startDateTime.toISOString(),
+        end: endDateTime.toISOString(),
+        extendedProps: {
+          ...this.blockToEdit!.extendedProps,
+          patientName: formValues.patientName,
+          patient_user_id: formValues.patient_user_id,
+          type: formValues.type,
+          reason_for_visit: formValues.reason_for_visit,
+          priority: formValues.priority,
+          notes_by_staff: formValues.notes_by_staff,
+          reminder_preference: formValues.reminder_preference,
+          originalAppointment: updatedAppointment          }
+      };
+        this.saved.emit(appointment);
+      this.closeForm();
+    },
+    error: (error) => {
+      this.isSubmitting = false;
+      console.error('Error updating appointment:', error);
+      this.errorMessage = 'Failed to update appointment. Please try again.';
+    }
+  });
   }
   private createNewTimeBlock(formValues: any, startDateTime: Date, endDateTime: Date): void {
     

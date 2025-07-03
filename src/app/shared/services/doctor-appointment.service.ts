@@ -52,12 +52,11 @@ export class DoctorAppointmentService {
         console.error('HTTP Error in getAppointmentsByDateRange:', error);
         throw error;
       })
-    );  }
-
-  updateAppointmentNotes(id: number, notes: string): Observable<Appointment> {
+    );  }  updateAppointmentNotes(id: number, notes: string): Observable<Appointment> {
     // Using the general update endpoint to update notes
-    return this.http.put<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}`, { notes })
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));  }
+    return this.http.put<{success: boolean, message: string, data: ApiAppointmentResponse}>(`${this.baseUrl}/appointments/${id}`, { notes_by_staff: notes })
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data)));
+  }
   blockTimeSlot(startTime: string, endTime: string, reason: string): Observable<any> {
     // Using the correct backend endpoint for blocking time slots with correct field names
     return this.http.post(`${this.baseUrl}/appointments/time-slots/block`, {
@@ -65,7 +64,8 @@ export class DoctorAppointmentService {
       end_datetime: endTime,
       reason
     });
-  }// Create new appointment
+  }
+  // Create new appointment
   createAppointment(appointmentData: any): Observable<Appointment> {
     console.log('=== CREATE APPOINTMENT DEBUG START ===');
     console.log('API URL:', `${this.baseUrl}/appointments`);
@@ -138,58 +138,65 @@ export class DoctorAppointmentService {
         })
       );
   }
-
   // Update existing appointment
   updateAppointment(id: number, appointmentData: any): Observable<Appointment> {
-    return this.http.put<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}`, appointmentData)
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));  }
-
+    return this.http.put<{success: boolean, message: string, data: ApiAppointmentResponse}>(`${this.baseUrl}/appointments/${id}`, appointmentData)
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data)));  }
   createRecurringAppointments(appointmentData: any): Observable<Appointment[]> {
-    return this.http.post<ApiAppointmentResponse[]>(`${this.baseUrl}/appointments/recurring`, appointmentData)
-      .pipe(map(responses => this.mapper.mapApiResponseArrayToAppointments(responses)));  }
-
+    return this.http.post<{success: boolean, message: string, data: ApiAppointmentResponse[]}>(`${this.baseUrl}/appointments/recurring`, appointmentData)
+      .pipe(map(response => this.mapper.mapApiResponseArrayToAppointments(response.data)));
+  }
   // Additional methods to match backend routes
   getTodaysSchedule(): Observable<Appointment[]> {
-    return this.http.get<ApiAppointmentResponse[]>(`${this.baseUrl}/appointments/schedule/today`)
-      .pipe(map(responses => this.mapper.mapApiResponseArrayToAppointments(responses)));
+    return this.http.get<{success: boolean, message: string, data: ApiAppointmentResponse[]}>(`${this.baseUrl}/appointments/schedule/today`)
+      .pipe(map(response => this.mapper.mapApiResponseArrayToAppointments(response.data)));
   }
 
   getUpcomingAppointments(): Observable<Appointment[]> {
-    return this.http.get<ApiAppointmentResponse[]>(`${this.baseUrl}/appointments/upcoming`)
-      .pipe(map(responses => this.mapper.mapApiResponseArrayToAppointments(responses)));
+    return this.http.get<{success: boolean, message: string, data: ApiAppointmentResponse[]}>(`${this.baseUrl}/appointments/upcoming`)
+      .pipe(map(response => this.mapper.mapApiResponseArrayToAppointments(response.data)));
   }
 
   getScheduleForDate(date: string): Observable<Appointment[]> {
-    return this.http.get<ApiAppointmentResponse[]>(`${this.baseUrl}/appointments/schedule/date`, {
+    return this.http.get<{success: boolean, message: string, data: ApiAppointmentResponse[]}>(`${this.baseUrl}/appointments/schedule/date`, {
       params: { date }
-    }).pipe(map(responses => this.mapper.mapApiResponseArrayToAppointments(responses)));
-  }
-
-  // Appointment actions
+    }).pipe(map(response => this.mapper.mapApiResponseArrayToAppointments(response.data)));
+  }  // Appointment actions
   confirmAppointment(id: number): Observable<Appointment> {
-    return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}/confirm`, {})
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));
+    return this.http.post<{success: boolean, message: string, data: {appointment: ApiAppointmentResponse}}>(`${this.baseUrl}/appointments/${id}/confirm`, {})
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data.appointment)));
   }
 
-  completeAppointment(id: number): Observable<Appointment> {
-    return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}/complete`, {})
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));
+  completeAppointment(id: number, notes?: string): Observable<Appointment> {
+    const payload = notes ? { notes_by_staff: notes } : {};
+    return this.http.post<{success: boolean, message: string, data: {appointment: ApiAppointmentResponse}}>(`${this.baseUrl}/appointments/${id}/complete`, payload)
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data.appointment)));
   }
 
   cancelAppointment(id: number, reason?: string): Observable<Appointment> {
-    return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}/cancel`, { reason })
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));
+    // Backend requires 'reason' field for cancellation
+    const payload = { reason: reason || 'Cancelled by doctor' };
+    return this.http.post<{success: boolean, message: string, data: {appointment: ApiAppointmentResponse}}>(`${this.baseUrl}/appointments/${id}/cancel`, payload)
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data.appointment)));
   }
 
-  markNoShow(id: number): Observable<Appointment> {
-    return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}/no-show`, {})
-      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));
+  markNoShow(id: number, notes?: string): Observable<Appointment> {
+    const payload = notes ? { notes: notes } : {};
+    return this.http.post<{success: boolean, message: string, data: {appointment: ApiAppointmentResponse}}>(`${this.baseUrl}/appointments/${id}/no-show`, payload)
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data.appointment)));
   }
-
-  rescheduleAppointment(id: number, newDateTime: string): Observable<Appointment> {
-    return this.http.post<ApiAppointmentResponse>(`${this.baseUrl}/appointments/${id}/reschedule`, {
-      new_datetime: newDateTime
-    }).pipe(map(response => this.mapper.mapApiResponseToAppointment(response)));  }  // Time slot management
+  rescheduleAppointment(id: number, newDatetimeStart: string, newDatetimeEnd?: string, reason?: string): Observable<Appointment> {
+    const payload: any = { 
+      new_datetime_start: newDatetimeStart 
+    };
+    
+    if (newDatetimeEnd) payload.new_datetime_end = newDatetimeEnd;
+    if (reason) payload.reason = reason;
+    
+    return this.http.post<{success: boolean, message: string, data: ApiAppointmentResponse}>(`${this.baseUrl}/appointments/${id}/reschedule`, payload)
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data)));
+  }
+  // Time slot management
   getBlockedSlots(startDate?: string, endDate?: string): Observable<any[]> {
     let params: any = {};
     
@@ -222,7 +229,11 @@ export class DoctorAppointmentService {
       switchMap(() => this.blockTimeSlot(startTime, endTime, reason)),
       tap((result) => console.log('Created new blocked time slot:', result))
     );
-  }// Patient search for appointments
+  }
+  deleteAppointment(id: number | string): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/appointments/${id}`);
+}
+  // Patient search for appointments
   getAvailablePatients(search?: string): Observable<any[]> {
     const params: any = {};
     if (search) {
@@ -268,5 +279,13 @@ export class DoctorAppointmentService {
 
   updateSettings(settings: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/appointments/settings`, settings);
+  }
+
+  /**
+   * Emergency cancel appointment (bypass time restrictions)
+   */
+  emergencyCancelAppointment(id: number, reason: string): Observable<Appointment> {
+    return this.http.post<{success: boolean, message: string, data: any}>(`${this.baseUrl}/appointments/${id}/emergency-cancel`, { reason })
+      .pipe(map(response => this.mapper.mapApiResponseToAppointment(response.data.appointment)));
   }
 }

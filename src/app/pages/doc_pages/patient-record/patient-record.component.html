@@ -69,6 +69,7 @@
       [email]="patient.email || 'N/A'"
       [age]="patientInfo?.age"
       [gender]="patientInfo?.gender || ''"
+      [patientData]="patient"
       (newPrescription)="newPrescription()"
       (scheduleAppointment)="scheduleAppointment()"
       (sendMessage)="sendMessage()"

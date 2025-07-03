@@ -2,8 +2,9 @@ import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil , take , filter } from 'rxjs/operators';
 
+import { AuthService } from '../../../core/auth/auth.service';
 
 import { DashboardHeaderComponent } from '../../../components/doc_components/dashboard/dashboard-header/dashboard-header.component';
 import { StatCardComponent } from '../../../components/doc_components/dashboard/stat-card/stat-card.component';
@@ -17,6 +18,7 @@ import { AiAssistantComponent } from '../../../components/doc_components/dashboa
 
 // Import Dashboard Service
 import { DoctorDashboardService, DashboardStats } from '../../../services/doc-services/doctor-dashboard.service';
+// import { GanttChartComponent } from "./gantt-chart/gantt-chart.component";
 
 // Import the StatItem interface from the StatCardComponent to ensure type compatibility
 interface StatItem {
@@ -38,8 +40,9 @@ interface StatItem {
     UpcomingAppointmentsComponent,
     NotificationsComponent,
     SimpleWeeklyOverviewComponent,
-    AiAssistantComponent
-  ],
+    AiAssistantComponent,
+    // GanttChartComponent
+],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -138,13 +141,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (rate >= 50) return 'warning';
     return 'urgent';
   }
-  constructor(private dashboardService: DoctorDashboardService) {
+  constructor(private dashboardService: DoctorDashboardService , private authService: AuthService) {
     console.log('🚀 Dashboard Component Constructor Called');
   }
-  ngOnInit(): void {
-    console.log('✅ Dashboard Component ngOnInit Called');
-    this.loadDashboardData();
-  }
+
+ngOnInit(): void {
+  this.authService.currentUser
+    .pipe(filter(user => !!user), take(1))
+    .subscribe(user => {
+      this.loadDashboardData();
+    });
+}
 
   ngAfterViewInit(): void {
     console.log('🎨 Dashboard Component ngAfterViewInit Called');

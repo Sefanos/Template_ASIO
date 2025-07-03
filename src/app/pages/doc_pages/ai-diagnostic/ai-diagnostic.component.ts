@@ -38,7 +38,9 @@ export class AiDiagnosticComponent implements OnInit {
   conditionTypes = [
     { value: 'melanoma', label: 'Skin Lesion Analysis (Melanoma)' },
     { value: 'brain', label: 'Brain MRI Analysis' },
-    { value: 'pneumonia', label: 'Chest X-Ray Analysis (Pneumonia)' }
+    { value: 'pneumonia', label: 'Chest X-Ray Analysis (Pneumonia)' },
+    { value: 'breast', label: 'Breast Cancer Analysis' },
+    { value: 'tuberculose', label: 'Chest X-Ray Analysis (Tuberculosis)' }
   ];
 
   constructor(
