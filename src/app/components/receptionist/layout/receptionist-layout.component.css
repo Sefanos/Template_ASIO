@@ -1,16 +1,13 @@
 /* Active Link Styling for Sidebar */
-.active,
-.bg-blue-600.text-white {
-  background-color: #2563eb !important;
-  color: #fff !important;
-  border-radius: 16px;
-  transition: background 0.2s, color 0.2s;
+.active {
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+  transition: all 0.3s ease;
 }
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -31,54 +28,35 @@
   scrollbar-color: #cbd5e1 transparent;
 }
 
+/* Focus outline styling */
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #2563eb;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5);
 }
 
-/* Animations for page transitions */
-.page-enter {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 300ms, transform 300ms;
-}
-
-.page-exit {
-  opacity: 1;
-}
-
-.page-exit-active {
-  opacity: 0;
-  transition: opacity 300ms;
-}
-
+/* Logo and sidebar animations */
 .logo-image {
   height: 40px;
   object-fit: contain;
   transition: all 0.3s ease;
 }
 
-.sidebar-logo {
-  animation: fadeInDown 0.5s ease-out;
-  max-width: 85%;
+/* Menu item hover effect */
+.group:hover svg {
+  filter: drop-shadow(0 0 2px rgba(79, 70, 229, 0.3));
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Button hover animations */
+button.rounded-lg, a.rounded-lg {
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-:host-context(.dark) .logo-image {
-  filter: brightness(1.1) contrast(1.1);
+button.rounded-lg:hover, a.rounded-lg:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Card shadows */
+.shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
 }

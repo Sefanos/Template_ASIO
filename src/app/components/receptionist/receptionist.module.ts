@@ -3,28 +3,33 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
+// Importations corrects des composants
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DoctorsPlanningComponent } from './doctors-planning/doctors-planning.component';
 import { BillsComponent } from './bills/bills.component';
 import { RemindersComponent } from './reminders/reminders.component';
 import { ProfileComponent } from './profile/profile.component';
-import { LayoutComponent } from './layout/receptionist-layout.component';
+import { SafeHtmlPipe } from './layout/safe-html.pipe';
+import { ReceptionistLayoutComponent } from './layout/receptionist-layout.component';
 
 @NgModule({
+  declarations: [
+    // Composants non-standalone
+  ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    LayoutComponent,
-    DashboardComponent,
     DoctorsPlanningComponent,
+    DashboardComponent,
     BillsComponent,
     RemindersComponent,
     ProfileComponent,
+    SafeHtmlPipe,
     RouterModule.forChild([
       {
         path: '',
-        component: LayoutComponent,
+        component: ReceptionistLayoutComponent,
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent },
