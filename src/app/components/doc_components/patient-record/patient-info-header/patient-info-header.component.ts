@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-patient-info-header',
@@ -8,6 +9,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './patient-info-header.component.html'
 })
 export class PatientInfoHeaderComponent {
+  @Input() patientId: string | number | undefined;
   @Input() name: string = '';
   @Input() age: number | undefined;
   @Input() gender: string = '';
@@ -15,6 +17,8 @@ export class PatientInfoHeaderComponent {
   @Input() email: string = '';
   @Input() dob: string = '';
   @Input() patientData: any = null;
+
+  constructor(private router: Router) {}
 
   // Get patient initials for avatar
   getInitials(): string {
@@ -95,4 +99,16 @@ export class PatientInfoHeaderComponent {
       return 'Unknown';
     }
   }
+
+onNewPrescription() {
+  if (this.patientData?.id) {
+    this.router.navigate(['/doctor/prescription'], { queryParams: { patientId: this.patientData.id, from_patient_record: true } });
+  }
+}
+
+onScheduleAppointment() {
+  if (this.patientData?.id) {
+    this.router.navigate(['/doctor/calendar'], { queryParams: { patientId: this.patientData.id, action: 'schedule' } });
+  }
+}
 }

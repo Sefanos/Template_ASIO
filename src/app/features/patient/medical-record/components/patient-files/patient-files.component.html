@@ -1,0 +1,248 @@
+<div class="files-container space-y-6">
+  
+  <div class="p-4 bg-card rounded-xl border border-border">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+      <h3 class="text-section-header text-text mb-3 md:mb-0">My Files</h3>
+      <div class="flex items-center space-x-2">
+  
+        <div class="view-switcher bg-hover p-1 rounded-lg">
+          <button (click)="setViewMode('grid')" [class.active]="viewMode === 'grid'"><i class="fas fa-th-large"></i></button>
+          <button (click)="setViewMode('list')" [class.active]="viewMode === 'list'"><i class="fas fa-bars"></i></button>
+        </div>
+        <button (click)="openUploadModal()" class="btn-primary w-full md:w-auto"><i class="fas fa-upload mr-2"></i> Upload File</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <select [(ngModel)]="activeCategory" (ngModelChange)="onFilterChange()" class="filter-input">
+        <option value="">All Categories</option>
+        <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.value }}</option>
+      </select>
+      <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()" class="filter-input">
+      <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()" class="filter-input">
+      <button (click)="clearFilters()" class="btn-secondary">Clear Filters</button>
+    </div>
+  </div>
+ 
+  <!-- Skeleton loaders pendant le chargement -->
+  <ng-container *ngIf="isLoading; else filesContent">
+    <div *ngIf="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
+      <div *ngFor="let i of [1,2,3,4]" class="file-card group animate-pulse">
+        <div class="file-icon-wrapper bg-gray-200 h-16 w-16 mx-auto mb-4 rounded-lg"></div>
+        <div class="file-info">
+          <div class="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+          <div class="h-3 w-20 bg-gray-100 rounded mb-1"></div>
+          <div class="h-3 w-24 bg-gray-100 rounded"></div>
+        </div>
+        <div class="file-actions flex justify-center gap-2 mt-2">
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="viewMode === 'list'" class="list-view-container bg-card rounded-xl border border-border mt-6">
+      <div *ngFor="let i of [1,2,3,4]" class="file-list-item animate-pulse">
+        <div class="w-12 text-center bg-gray-200 rounded"></div>
+        <div class="flex-grow">
+          <div class="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+          <div class="h-3 w-20 bg-gray-100 rounded"></div>
+        </div>
+        <div class="w-40 hidden md:block"><div class="h-4 w-20 bg-gray-100 rounded"></div></div>
+        <div class="w-24 hidden sm:block"><div class="h-3 w-16 bg-gray-100 rounded"></div></div>
+        <div class="w-32 hidden lg:block"><div class="h-3 w-20 bg-gray-100 rounded"></div></div>
+        <div class="w-28 flex justify-end space-x-1">
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #filesContent>
+    <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+    <div *ngIf="!errorMessage && files.length > 0">
+      <div *ngIf="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div *ngFor="let file of files" class="file-card group">
+          <div class="file-icon-wrapper" [ngClass]="getCategoryClass(file.category)">
+            <i class="file-icon" [ngClass]="getIconForMimeType(file.mimeType)"></i>
+          </div>
+          <div class="file-info">
+            <p class="file-name" title="{{ file.originalFilename }}">{{ file.originalFilename }}</p>
+            <p class="file-meta">{{ file.categoryLabel }} &bull; {{ file.fileSizeFormatted }}</p>
+            <p class="file-meta">Uploaded: {{ file.uploadedAt | date:'short' }}</p>
+          </div>
+          <div class="file-actions">
+              <button (click)="openViewModal(file)" class="action-btn hover:text-info" title="View Details"><i class="fas fa-eye"></i></button>
+            <button (click)="handleDownload(file)" class="action-btn hover:text-primary"><i class="fas fa-download"></i></button>
+            <button (click)="openEditModal(file)" class="action-btn hover:text-accent"><i class="fas fa-pencil-alt"></i></button>
+            <button (click)="handleDelete(file.id)" class="action-btn hover:text-status-urgent"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="viewMode === 'list'" class="list-view-container bg-card rounded-xl border border-border">
+        <div *ngFor="let file of files" class="file-list-item">
+          <div class="w-12 text-center" [ngClass]="getCategoryClass(file.category)"><i [ngClass]="getIconForMimeType(file.mimeType)"></i></div>
+          <div class="flex-grow">
+            <p class="file-name">{{ file.originalFilename }}</p>
+            <p class="file-meta">{{ file.description || 'No description' }}</p>
+          </div>
+          <div class="w-40 hidden md:block"><span class="category-badge" [ngClass]="getCategoryClass(file.category)">{{ file.categoryLabel }}</span></div>
+          <div class="w-24 hidden sm:block text-text-light">{{ file.fileSizeFormatted }}</div>
+          <div class="w-32 hidden lg:block text-text-light">{{ file.uploadedAt | date:'mediumDate' }}</div>
+          <div class="w-28 flex justify-end space-x-1">
+               <button (click)="openViewModal(file)" class="action-btn hover:text-info" title="View Details"><i class="fas fa-eye"></i></button>
+            <button (click)="handleDownload(file)" class="action-btn hover:text-primary"><i class="fas fa-download"></i></button>
+            <button (click)="openEditModal(file)" class="action-btn hover:text-accent"><i class="fas fa-pencil-alt"></i></button>
+            <button (click)="handleDelete(file.id)" class="action-btn hover:text-status-urgent"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="!errorMessage && files.length === 0" class="no-records-message">
+      <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+      <p class="text-xl font-semibold text-text-light">No files found.</p>
+      <p class="text-text-muted">Try adjusting filters or upload a new file.</p>
+    </div>
+  </ng-template>
+</div>
+
+ 
+<div *ngIf="isUploadModalOpen" class="modal-overlay" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3 class="modal-title">Upload a New File</h3>
+    <form [formGroup]="uploadForm" (ngSubmit)="handleUpload()" class="space-y-4">
+      
+      <div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+        <div *ngIf="!selectedFile" class="text-center">
+          <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+          <p class="font-semibold text-text">Drag & Drop your file here</p>
+          <p class="text-sm text-text-muted">or</p>
+          <button type="button" class="text-primary font-semibold mt-1" (click)="fileInput.click()">Browse file</button>
+        </div>
+        <div *ngIf="selectedFile" class="text-center">
+          <i class="fas fa-check-circle text-4xl text-status-success mb-2"></i>
+          <p class="font-semibold text-text truncate">{{ selectedFile.name }}</p>
+          <p class="text-sm text-text-muted">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+        </div>
+        <input #fileInput type="file" (change)="onFileSelected($event)" class="hidden">
+      </div>
+
+      <div>
+        <label class="form-label">Category</label>
+        <select formControlName="category" class="form-input">
+          <option value="" disabled>Select a category</option>
+          <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.value }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Description (Optional)</label>
+        <textarea formControlName="description" class="form-input" rows="3"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" (click)="closeModals()" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary flex items-center" [disabled]="uploadForm.invalid || isUploading">
+          <span *ngIf="isUploading" class="mr-2"><div class="spinner spinner-xs"></div></span>
+          Upload
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+ 
+<div *ngIf="isEditModalOpen" class="modal-overlay" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3 class="modal-title">Edit File: {{ selectedFileForEdit?.originalFilename }}</h3>
+    <form [formGroup]="editForm" (ngSubmit)="handleUpdate()" class="space-y-4">
+      <div>
+        <label class="form-label">Category</label>
+        <select formControlName="category" class="form-input">
+          <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.value }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Description (Optional)</label>
+        <textarea formControlName="description" class="form-input" rows="3"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" (click)="closeModals()" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="editForm.invalid">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+ 
+<!-- File Details Modal -->
+<div *ngIf="isViewModalOpen && selectedFileForView" class="modal-overlay" (click)="closeModals()">
+  <div class="view-modal-content" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header flex justify-between items-center p-4 border-b border-border">
+        <h3 class="modal-title !mb-0">File Details</h3>
+        <button class="text-text-muted hover:text-text" (click)="closeModals()"><i class="fas fa-times text-xl"></i></button>
+    </div>
+    
+    <div class="flex flex-col md:flex-row">
+      <!-- Preview Pane -->
+      <div class="preview-pane md:w-1/2 bg-background flex items-center justify-center p-4">
+        <ng-container *ngIf="isPreviewLoading; else previewContent">
+          <div class="spinner"></div>
+        </ng-container>
+        <ng-template #previewContent>
+          <ng-container *ngIf="previewUrl; else noPreviewTemplate">
+            <img *ngIf="selectedFileForView.type === 'image'" [src]="previewUrl" alt="File preview" class="file-preview-image">
+            <embed *ngIf="selectedFileForView.mimeType === 'application/pdf'" [src]="previewUrl" type="application/pdf" class="file-preview-embed">
+          </ng-container>
+        </ng-template>
+        <ng-template #noPreviewTemplate>
+            <div class="no-preview">
+                <i class="file-icon text-6xl" [ngClass]="getIconForMimeType(selectedFileForView.mimeType)"></i>
+                <p class="mt-4 text-text-light">Preview not available</p>
+            </div>
+        </ng-template>
+      </div>
+
+      <!-- Details Pane -->
+      <div class="details-pane md:w-1/2 p-6 space-y-4">
+        <h4 class="text-xl font-bold text-text break-words">{{ selectedFileForView.originalFilename }}</h4>
+        <div class="info-grid">
+          <div class="info-label">Category</div>
+          <div class="info-value"><span class="category-badge" [ngClass]="getCategoryClass(selectedFileForView.category)">{{ selectedFileForView.categoryLabel }}</span></div>
+          
+          <div class="info-label">Description</div>
+          <div class="info-value">{{ selectedFileForView.description || 'N/A' }}</div>
+
+          <div class="info-label">Uploaded By</div>
+          <div class="info-value">{{ selectedFileForView.uploadedBy }}</div>
+
+          <div class="info-label">Upload Date</div>
+          <div class="info-value">{{ selectedFileForView.uploadedAt | date:'fullDate' }}</div>
+
+          <div class="info-label">File Size</div>
+          <div class="info-value">{{ selectedFileForView.fileSizeFormatted }}</div>
+
+          <div class="info-label">File Type</div>
+          <div class="info-value">{{ selectedFileForView.mimeType }}</div>
+        </div>
+         <div class="pt-4">
+          <button (click)="handleDownload(selectedFileForView)" class="btn-primary w-full"><i class="fas fa-download mr-2"></i> Download File</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div *ngIf="isDeleteConfirmModalOpen" class="modal-overlay" (click)="closeDeleteConfirmModal()">
+  <div class="modal-content max-w-md" (click)="$event.stopPropagation()">
+    <h3 class="modal-title text-center">Confirm Deletion</h3>
+    <p class="text-center text-text-light py-4">Are you sure you want to delete this file? This action cannot be undone.</p>
+    <div class="flex justify-center space-x-4 mt-6">
+      <button class="btn-secondary" (click)="closeDeleteConfirmModal()">Cancel</button>
+      <button class="btn-danger" (click)="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>

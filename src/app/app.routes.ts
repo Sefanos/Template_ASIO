@@ -43,6 +43,7 @@ export const routes: Routes = [
       { path: 'patient-record/:patientId', component: PatientRecordComponent, data: { breadcrumb: 'Patient Record' } },
       { path: 'prescription', component: PrescriptionComponent },
       { path: 'ai-diagnostic', component: AiDiagnosticComponent },
+      { path: 'profile', loadComponent: () => import('./pages/doc_pages/doctor-profile/doctor-profile.component').then(m => m.DoctorProfileComponent) },
     ]
   },  {
     path: 'admin',

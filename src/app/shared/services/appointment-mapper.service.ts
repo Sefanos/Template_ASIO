@@ -10,6 +10,8 @@ export class AppointmentMapperService {
    * Transform API response to frontend Appointment model
    */  mapApiResponseToAppointment(apiResponse: ApiAppointmentResponse): Appointment {
     console.log('Mapping API response:', apiResponse);
+    console.log('appointment_datetime_start:', apiResponse.appointment_datetime_start);
+    console.log('appointment_datetime_end:', apiResponse.appointment_datetime_end);
     
     // Handle different date field names and formats from backend
     let startDate: Date;
@@ -17,18 +19,21 @@ export class AppointmentMapperService {
     
     // Check for different response formats
     if (apiResponse.appointment_datetime_start) {
+      console.log('Using appointment_datetime_start format');
       // Standard format for existing appointments
       startDate = this.parseBackendDateTime(apiResponse.appointment_datetime_start);
       endDate = apiResponse.appointment_datetime_end ? 
         this.parseBackendDateTime(apiResponse.appointment_datetime_end) :
         new Date(startDate.getTime() + 30 * 60 * 1000); // Default 30 minutes
     } else if ((apiResponse as any).appointment_datetime) {
+      console.log('Using appointment_datetime format');
       // Format for newly created appointments - just start time
       startDate = this.parseBackendDateTime((apiResponse as any).appointment_datetime);
       // For newly created appointments, assume 30 minutes duration if no end time
       endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
     } else {
       console.error('No valid datetime field found in API response:', apiResponse);
+      console.error('Available fields:', Object.keys(apiResponse));
       throw new Error('Invalid datetime in API response');
     }
     

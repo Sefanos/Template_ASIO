@@ -45,7 +45,8 @@ export class ProfileEditComponent implements OnInit {
       emergencyContact: [''],
       maritalStatus: [''],
       bloodType: [''],
-      nationality: ['']
+      nationality: [''],
+      phone: ['', [Validators.required]],
     });
   }
 
@@ -72,7 +73,8 @@ export class ProfileEditComponent implements OnInit {
               emergencyContact: data.emergency_contact || '',
               maritalStatus: data.marital_status || '',
               bloodType: data.blood_type || '',
-              nationality: data.nationality || ''
+              nationality: data.nationality || '',
+              phone: data.phone || '',
             });
 
             if (data.profile_image) {
@@ -178,7 +180,8 @@ export class ProfileEditComponent implements OnInit {
       emergency_contact: formValue.emergencyContact,
       marital_status: formValue.maritalStatus,
       blood_type: formValue.bloodType,
-      nationality: formValue.nationality
+      nationality: formValue.nationality,
+      phone: formValue.phone,
     };
 
     this.patientService.updateProfile(payload)

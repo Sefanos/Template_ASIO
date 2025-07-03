@@ -1,0 +1,27 @@
+.notes-section {
+  margin-bottom: 2rem;
+}
+.note-card {
+  transition: box-shadow 0.2s, border-color 0.2s;
+  border-left: 4px solid #6366f1; /* Indigo by default */
+}
+.note-card:hover {
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
+  border-color: #22c55e; /* Green on hover */
+}
+.note-card .bg-indigo-100 { border-left-color: #6366f1; }
+.note-card .bg-green-100 { border-left-color: #22c55e; }
+.note-card .bg-gray-100 { border-left-color: #64748b; }
+
+/* Pagination styles */
+button[aria-current="page"] {
+  font-weight: bold;
+  box-shadow: 0 2px 8px 0 rgba(99,102,241,0.10);
+}
+button:disabled {
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .note-card { padding: 1rem; }
+  .notes-section { padding: 1rem; }
+}

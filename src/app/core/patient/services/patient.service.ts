@@ -47,15 +47,8 @@ export class PatientService {
     return this.http.post<BackendResponse<PersonalInfo>>(`${this.baseUrl}/patient/profile/image`, formData);
   }
 
-  // Example, ensure this endpoint and its expected response are defined in your backend
-  getPatientDashboard(userId: number): Observable<any> {
-    const params = new HttpParams().set('userId', userId.toString());
-    return this.http.get(`${this.baseUrl}/patient/dashboard`, { params }); // Verify this route
-  }
-
   changePassword(payload: { current_password: string, new_password: string, new_password_confirmation: string }): Observable<BackendResponse<null>> {
-    // Ensure this route exists on your backend and is protected by jwt.auth
-    // e.g., Route::post('auth/change-password', [AuthController::class, 'changePassword'])->middleware('jwt.auth');
-    return this.http.post<BackendResponse<null>>(`${this.baseUrl}/auth/change-password`, payload);
+    // Appel l'endpoint patient/profile/change-password (et non auth/change-password)
+    return this.http.post<BackendResponse<null>>(`${this.baseUrl}/patient/profile/change-password`, payload);
   }
 }

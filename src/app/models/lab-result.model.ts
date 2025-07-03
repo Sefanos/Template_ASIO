@@ -35,9 +35,9 @@ export interface LabParameter {
 
 export interface CreateLabResultRequest {
   patient_id: number;
-  lab_test_name: string;
-  result_date: string;
   test_name: string;
+  result_date: string;
+  performed_by_lab_name?: string;
   structured_results: {
     results: LabParameter[];
   };

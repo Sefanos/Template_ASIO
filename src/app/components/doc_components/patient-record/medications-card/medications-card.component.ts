@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 // Updated interface to match real API data structure
 interface ApiMedication {
@@ -27,9 +28,12 @@ interface ApiMedication {
 export class MedicationsCardComponent {
   @Input() medications: any[] = []; // Accept both old and new format
   @Output() navigateToTab = new EventEmitter<string>();
-  
+  @Input() patientId?: number;
+
   showAll: boolean = false;
-  
+
+  constructor(private router: Router) {}
+
   get activeMedications(): any[] {
     return this.medications.filter(med => 
       med.isActive || med.status === 'active' || med.status === 'on-hold'

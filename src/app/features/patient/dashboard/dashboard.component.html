@@ -1,258 +1,488 @@
-<div class="max-w-full px-2 sm:px-4 lg:px-6 py-6">
-  <!-- En-tête du tableau de bord -->
-  <header class="mb-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <!-- Loading State: structure always visible, skeletons for each block -->
+  <ng-container *ngIf="loading">
+    <!-- Header skeleton -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 animate-pulse">
       <div>
-        <h1 class="text-dashboard-title text-primary mb-2 sm:mb-0">Bienvenue sur votre tableau de bord</h1>
-        <p class="text-text-muted text-sm">{{ currentDate | date:'fullDate' }}</p>
+        <div class="h-8 w-40 bg-gray-200 rounded mb-2"></div>
+        <div class="h-4 w-32 bg-gray-100 rounded"></div>
       </div>
-      <!-- Bouton Nouveau Rendez-vous -->
-      <button class="btn-primary mt-4 sm:mt-0 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
-          <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-        </svg>
-        Nouveau rendez-vous
+      <div class="h-10 w-32 bg-gray-100 rounded"></div>
+    </div>
+    <!-- Profile skeleton -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8 animate-pulse">
+      <div class="flex flex-col md:flex-row items-center p-6 gap-6">
+        <div class="w-24 h-24 rounded-full bg-gray-200"></div>
+        <div class="flex-1">
+          <div class="h-6 w-48 bg-gray-200 rounded mb-4"></div>
+          <div class="flex gap-2 mb-4">
+            <div class="h-5 w-20 bg-gray-100 rounded"></div>
+            <div class="h-5 w-20 bg-gray-100 rounded"></div>
+            <div class="h-5 w-20 bg-gray-100 rounded"></div>
+            <div class="h-5 w-32 bg-gray-100 rounded"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="h-4 w-32 bg-gray-100 rounded"></div>
+            <div class="h-4 w-32 bg-gray-100 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Stats Overview skeleton -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow animate-pulse flex items-center gap-4">
+        <div class="h-12 w-12 rounded-full bg-orange-100"></div>
+        <div>
+          <div class="h-4 w-24 bg-gray-100 rounded mb-2"></div>
+          <div class="h-5 w-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow animate-pulse flex items-center gap-4">
+        <div class="h-12 w-12 rounded-full bg-green-100"></div>
+        <div>
+          <div class="h-4 w-24 bg-gray-100 rounded mb-2"></div>
+          <div class="h-5 w-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Dashboard Stats skeleton -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+      <div *ngFor="let i of [1,2,3,4,5,6]" class="bg-white p-4 rounded-xl shadow text-center animate-pulse flex flex-col items-center">
+        <div class="mb-1 h-8 w-8 bg-gray-200 rounded-full"></div>
+        <div class="h-6 w-12 bg-gray-200 rounded mb-1"></div>
+        <div class="h-3 w-16 bg-gray-100 rounded"></div>
+      </div>
+    </div>
+    <!-- Main Content Grid skeleton -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div *ngFor="let i of [1,2,3,4,5]" class="bg-white rounded-xl shadow overflow-hidden animate-pulse mb-8">
+        <div class="p-6 border-b border-gray-200">
+          <div class="h-6 w-40 bg-gray-200 rounded mb-4"></div>
+          <div class="h-4 w-32 bg-gray-100 rounded mb-2"></div>
+          <div class="h-4 w-48 bg-gray-100 rounded mb-2"></div>
+          <div class="h-4 w-24 bg-gray-100 rounded"></div>
+        </div>
+        <div class="p-6">
+          <div class="h-4 w-full bg-gray-100 rounded mb-2"></div>
+          <div class="h-4 w-3/4 bg-gray-100 rounded mb-2"></div>
+          <div class="h-4 w-1/2 bg-gray-100 rounded"></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Error State -->
+  <ng-container *ngIf="!loading && error">
+    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">{{ error }}</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Main Content -->
+  <ng-container *ngIf="!loading && summary">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Hello 👋</h2>
+        <div class="text-sm text-gray-500">Today: {{ today | date:'fullDate':'':'en-US' }}</div>
+      </div>
+      <button class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              (click)="refresh()">
+        <i class="fas fa-sync-alt"></i>
+        Refresh
       </button>
     </div>
-  </header>
 
-  <!-- Carte Informations Personnelles -->
-  <div class="card mb-6">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4"> 
-      <img [src]="personalInfo.photoUrl || 'assets/default-avatar.png'" alt="Photo du patient" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-primary shadow-md" />
-      <div class="flex-1">
-        <h3 class="text-xl font-semibold text-text mb-1">{{ personalInfo.name }} {{ personalInfo.surname }}</h3>
-        <div class="text-sm text-text-light space-y-1 sm:flex sm:space-x-4">
-          <span class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-primary"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-            {{ personalInfo.birthDate | date:'longDate' }}
-          </span>
-          <span class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-primary"><path d="M10.75 3.922c-.38.113-.76.224-1.138.336C8.436 4.69 7.99 5.37 7.99 6.118c0 .91.735 1.642 1.643 1.642H10v2.25H8.643c-1.46 0-2.643-1.183-2.643-2.643 0-.748.447-1.428 1.172-1.864C6.41 5.12 5.76 4.51 5.76 3.643 5.76 2.56 6.576 1.75 7.643 1.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H10V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734a3.245 3.245 0 001.138-.336.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H13V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908v13.125a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V3.922z" /></svg>
-            Blood Type: {{ personalInfo.bloodType }}
-          </span>
+    <!-- Profile Card -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+      <div class="flex flex-col md:flex-row items-center p-6 gap-6">
+        <!-- Avatar -->
+        <div class="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+          {{ summary.basic_info.full_name ? summary.basic_info.full_name[0] : '?' }}
         </div>
-      </div>
-      <div class="mt-4 sm:mt-0 sm:ml-auto text-sm bg-status-urgent/10 p-3 rounded-lg border border-status-urgent/30">
-        <strong class="flex items-center text-status-urgent mb-1">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5"><path fill-rule="evenodd" d="M10 2a.75.75 0 01.75.75v1.25a.75.75 0 01-1.5 0V2.75A.75.75 0 0110 2zM8.305 4.43a.75.75 0 001.145-.71A7.493 7.493 0 0110 3.5c.349 0 .689.024 1.024.07a.75.75 0 00.22-1.484A8.994 8.994 0 0010 2c-.823 0-1.613.111-2.362.321a.75.75 0 00.667 1.108zm1.02 11.082a.75.75 0 00-1.145.71 7.493 7.493 0 01-.524 1.047.75.75 0 00.22 1.484 8.994 8.994 0 001.336.439c.823 0 1.613-.111 2.362-.321a.75.75 0 00-.667-1.108 7.493 7.493 0 01-1.024-.07.75.75 0 00-.524-1.047zM10 5a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 1.5a3 3 0 100 6 3 3 0 000-6z" clip-rule="evenodd" /></svg>
-          Emergency Contact
-        </strong>
-        <p class="text-text-muted">{{ personalInfo.emergencyContact }}</p>
-      </div>
-    </div>
 
-    <!-- SECTION: Notifications -->
-    <div class="mt-card-margin border-t border-border pt-card-padding">  
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-section-header text-primary flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M10 2a.75.75 0 01.75.75v1.25a.75.75 0 01-1.5 0V2.75A.75.75 0 0110 2zM8.305 4.43a.75.75 0 001.145-.71A7.493 7.493 0 0110 3.5c.349 0 .689.024 1.024.07a.75.75 0 00.22-1.484A8.994 8.994 0 0010 2c-.823 0-1.613.111-2.362.321a.75.75 0 00.667 1.108zm1.02 11.082a.75.75 0 00-1.145.71 7.493 7.493 0 01-.524 1.047.75.75 0 00.22 1.484 8.994 8.994 0 001.336.439c.823 0 1.613-.111 2.362-.321a.75.75 0 00-.667-1.108 7.493 7.493 0 01-1.024-.07.75.75 0 00-.524-1.047zM10 5a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 1.5a3 3 0 100 6 3 3 0 000-6z" clip-rule="evenodd" /></svg>
-          Notifications
-        </h3>
-        <button class="text-sm text-accent hover:text-accent-dark font-medium">Mark All Read</button>
-      </div>
-      <div class="space-y-3">
-        <div class="flex items-start space-x-3 p-3 bg-hover rounded-md">
-          <div class="flex-shrink-0 bg-status-success/20 text-status-success rounded-full p-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
+        <!-- User Info -->
+        <div class="flex-1">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-900">{{ summary.basic_info.full_name }}</h1>
+            <button class="inline-flex items-center gap-2 mt-2 md:mt-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    (click)="goToAppointments()">
+              <i class="fas fa-calendar-plus"></i>
+              Book appointment
+            </button>
           </div>
-          <div class="flex-1">
-            <h4 class="font-medium text-text">Appointment Reminder</h4>
-            <p class="text-sm text-text-light">You have an appointment with Dr. Sarah Johnson tomorrow at 10:30 AM.</p>
-            <div class="mt-2 space-x-2">
-              <button class="btn-primary py-1 px-3 text-xs">Confirm</button>
-              <button class="btn-secondary py-1 px-3 text-xs">Reschedule</button>
+
+          <!-- Badges -->
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              {{ summary.basic_info.gender | titlecase }}
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+              {{ summary.basic_info.age }} years
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+              ID: {{ summary.basic_info.id }}
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+              Registered on {{ summary.basic_info.registration_date | date:'longDate':'':'en-US' }}
+            </span>
+          </div>
+
+          <!-- Contact Info -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div class="flex items-center gap-2 text-gray-600">
+              <i class="fas fa-envelope text-blue-500"></i>
+              <span>{{ summary.basic_info.email }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <i class="fas fa-phone text-blue-500"></i>
+              <span>{{ summary.basic_info.phone }}</span>
             </div>
           </div>
-          <span class="text-xs text-text-muted ml-auto flex-shrink-0">1 hour ago</span>
         </div>
-        <div class="flex items-start space-x-3 p-3 bg-hover rounded-md">
-          <div class="flex-shrink-0 bg-status-info/20 text-status-info rounded-full p-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 2.75a.75.75 0 00-1.5 0v8.586l-1.72-1.72a.75.75 0 00-1.06 1.06l3 3a.75.75 0 001.06 0l3-3a.75.75 0 10-1.06-1.06l-1.72 1.72V2.75z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Last Visit -->
+      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition-shadow flex items-center gap-4">
+        <div class="p-3 rounded-full bg-orange-100 text-orange-500">
+          <i class="fas fa-history text-xl"></i>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Last visit</div>
+          <div class="font-semibold text-gray-800">
+            {{ summary.statistics.last_visit ? 
+              (summary.statistics.last_visit | date:'fullDate':'':'en-US') + ' at ' + (summary.statistics.last_visit | date:'shortTime':'':'en-US') : 
+              'No visit recorded' }}
           </div>
-          <div class="flex-1">
-            <h4 class="font-medium text-text">Test Results Available</h4>
-            <p class="text-sm text-text-light">Your recent blood test results are ready to view.</p>
-            <div class="mt-2">
-              <button class="btn-primary py-1 px-3 text-xs">View Results</button>
+        </div>
+      </div>
+
+      <!-- Next Appointment -->
+      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition-shadow flex items-center gap-4">
+        <div class="p-3 rounded-full bg-green-100 text-green-500">
+          <i class="fas fa-calendar-check text-xl"></i>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Next appointment</div>
+          <div class="font-semibold text-gray-800">
+            <ng-container *ngIf="summary.statistics.next_appointment; else noNext">
+              {{ summary.statistics.next_appointment | date:'fullDate':'':'en-US' }} at {{ summary.statistics.next_appointment | date:'shortTime':'':'en-US' }}
+            </ng-container>
+            <ng-template #noNext>
+              No upcoming appointment
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+      <div class="bg-white p-4 rounded-xl shadow text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+        <div class="mb-1">
+          <i class="fas fa-calendar-check text-blue-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-blue-600">{{ summary.statistics.total_appointments }}</div>
+        <div class="text-xs text-gray-500 mt-1">Appointments</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+        <div class="mb-1">
+          <i class="fas fa-hourglass-half text-green-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-green-600">{{ summary.statistics.upcoming_appointments }}</div>
+        <div class="text-xs text-gray-500 mt-1">Upcoming</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+        <div class="mb-1">
+          <i class="fas fa-pills text-purple-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-purple-600">{{ summary.statistics.active_medications }}</div>
+        <div class="text-xs text-gray-500 mt-1">Medications</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+        <div class="mb-1">
+          <i class="fas fa-vials text-yellow-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-yellow-600">{{ summary.statistics.lab_results_this_year }}</div>
+        <div class="text-xs text-gray-500 mt-1">Lab Results(2025)</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+        <div class="mb-1">
+          <i class="fas fa-file-medical text-indigo-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-indigo-600">{{ summary.statistics.total_files }}</div>
+        <div class="text-xs text-gray-500 mt-1">Documents</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+        <div class="mb-1">
+          <i class="fas fa-bell text-red-500 text-xl"></i>
+        </div>
+        <div class="text-2xl font-bold text-red-600">{{ summary.statistics.active_alerts }}</div>
+        <div class="text-xs text-gray-500 mt-1">Alerts</div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Recent Vitals -->
+      <div *ngIf="summary.recent_vitals?.length" class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-heartbeat text-green-500 text-xl"></i>
+              <h3 class="font-bold text-gray-900">Recent vital signs</h3>
+            </div>
+            <span class="text-sm text-gray-500">
+              Measured on {{ summary.recent_vitals[0].recordedAt | date:'fullDate':'':'en-US' }} at {{ summary.recent_vitals[0].recordedAt | date:'shortTime':'':'en-US' }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <!-- Blood Pressure -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <i class="fas fa-heart-pulse text-red-400"></i>
+                Blood pressure
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ summary.recent_vitals[0].bloodPressure?.reading || '-' }}</div>
+              <div class="text-xs text-gray-400">mmHg</div>
+            </div>
+            <!-- Pulse Rate -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <i class="fas fa-heartbeat text-pink-400"></i>
+                Pulse
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ summary.recent_vitals[0].pulseRate || '-' }}</div>
+              <div class="text-xs text-gray-400">bpm</div>
+            </div>
+            <!-- Temperature -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <i class="fas fa-thermometer-half text-orange-400"></i>
+                Temperature
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ summary.recent_vitals[0].temperature?.display || '-' }}</div>
+            </div>
+            <!-- Oxygen Saturation -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <i class="fas fa-lungs text-blue-400"></i>
+                O₂ saturation
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ summary.recent_vitals[0].oxygenSaturation || '-' }}<span class="text-base">%</span></div>
+            </div>
+            <!-- Respiratory Rate -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <i class="fas fa-wind text-cyan-400"></i>
+                Respiratory rate
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ summary.recent_vitals[0].respiratoryRate || '-' }}</div>
+              <div class="text-xs text-gray-400">resp/min</div>
+            </div>
+            <!-- Weight -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-blue-700 mb-1">
+                <i class="fas fa-weight text-blue-400"></i>
+                Weight
+              </div>
+              <div class="text-xl font-bold text-blue-700">{{ summary.recent_vitals[0].weight?.display || '-' }}</div>
+            </div>
+            <!-- Height -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <div class="flex items-center gap-2 text-sm text-blue-700 mb-1">
+                <i class="fas fa-ruler-vertical text-indigo-400"></i>
+                Height
+              </div>
+              <div class="text-xl font-bold text-blue-700">{{ summary.recent_vitals[0].height?.display || '-' }}</div>
             </div>
           </div>
-          <span class="text-xs text-text-muted ml-auto flex-shrink-0">2 days ago</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Grille pour les cartes de statistiques simples -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-card-margin my-6">
-    <div class="card">  
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Blood Pressure</h4>
-      <p class="text-2xl font-semibold text-primary mb-1">{{ personalInfo.bloodPressure || 'N/A' }}</p>
-      <div class="flex items-center text-text-light text-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1 text-status-urgent"><path d="M10 3.5a.75.75 0 01.75.75V5h.75A2.75 2.75 0 0114.25 7.75v2.5A2.75 2.75 0 0111.5 13H10v1.25a.75.75 0 01-1.5 0V13H7.5A2.75 2.75 0 014.75 10.25v-2.5A2.75 2.75 0 017.5 5H8.25V3.75A.75.75 0 0110 3.5zM8.25 6.5V10h2.5V6.5H8.25z" /></svg>
-        <span>mmHg</span>
-      </div>
-    </div>
-    <div class="card">
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Last Appointment</h4>
-      <p class="text-lg font-semibold text-primary mb-1">{{ personalInfo.lastAppointment}}</p>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-primary mt-1"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-    </div>
-    <div class="card">
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Next Appointment</h4>
-      <p class="text-lg font-semibold text-primary mb-1">{{ personalInfo.nextAppointment}}</p>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-primary mt-1"><path d="M2 10a.75.75 0 01.75-.75h1.548a1.75 1.75 0 001.696-1.003L8.27 3.72a.75.75 0 011.46 0l2.275 4.55a1.75 1.75 0 001.696 1.004h1.549a.75.75 0 010 1.5h-1.548a1.75 1.75 0 00-1.696 1.003l-2.275 4.55a.75.75 0 01-1.46 0l-2.275-4.55A1.75 1.75 0 004.298 10H2.75A.75.75 0 012 10z" /></svg>
-    </div>
-    <div class="card">
-      <h4 class="text-sm text-text-muted uppercase tracking-wider mb-1">Prescriptions</h4>
-      <p class="text-2xl font-semibold text-primary mb-1">{{ personalInfo.activePrescriptions || 0 }} <span class="text-base font-normal text-text-light">active</span></p>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-primary mt-1"><path d="M10.75 3.922c-.38.113-.76.224-1.138.336C8.436 4.69 7.99 5.37 7.99 6.118c0 .91.735 1.642 1.643 1.642H10v2.25H8.643c-1.46 0-2.643-1.183-2.643-2.643 0-.748.447-1.428 1.172-1.864C6.41 5.12 5.76 4.51 5.76 3.643 5.76 2.56 6.576 1.75 7.643 1.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H10V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734a3.245 3.245 0 001.138-.336.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H13V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908v13.125a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V3.922z" /></svg>
-    </div>
-  </div>
-
-  <!-- Rangée de cartes améliorées -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-card-margin mb-6">
-    <!-- Upcoming Appointment Card -->
-    <div class="card">
-      <div class="flex justify-between items-center mb-3">
-        <h4 class="text-section-header text-primary flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-          Upcoming Appointment
-        </h4>
-        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">View All</a>
-      </div>
-      <div class="space-y-1 mb-3">
-        <h5 class="font-semibold text-text text-lg">Regular Checkup</h5>
-        <p class="text-sm text-text-light flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-5.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM10 12a5.99 5.99 0 00-4.793 2.39A6.483 6.483 0 0010 16.5a6.483 6.483 0 004.793-2.11A5.99 5.99 0 0010 12z" clip-rule="evenodd" /></svg>
-          Dr. Sarah Johnson
-        </p>
-        <p class="text-sm text-text-light flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-          May 15, 2025 &nbsp;&nbsp;
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 ml-1"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c0-.414.336-.75.75-.75h10.5a.75.75 0 01.75.75v1.25c0 .414-.336.75-.75.75H5.5a.75.75 0 01-.75-.75V7.5z" clip-rule="evenodd" /></svg>
-          10:30 AM
-        </p>
-        <span class="status-badge status-info inline-block mt-1">Upcoming</span>
-      </div>
-      <div class="mt-4 flex space-x-2">
-        <button class="btn-secondary py-1 px-3 text-xs">Reschedule</button>
-        <button class="btn-urgent py-1 px-3 text-xs">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Recent Records Card -->
-    <div class="card">
-      <div class="flex justify-between items-center mb-3">
-        <h4 class="text-section-header text-primary flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path d="M3.75 3A1.75 1.75 0 002 4.75v10.5c0 .966.784 1.75 1.75 1.75h7.063c.281.448.707.835 1.193 1.126A3.001 3.001 0 0018 17.25v-7.5a3.001 3.001 0 00-2.25-2.87V4.75A1.75 1.75 0 0014 3H3.75zM14.5 7a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-3 0V8.5a1.5 1.5 0 011.5-1.5z" /></svg>
-          Recent Records
-        </h4>
-        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">View All</a>
-      </div>
-      <ul class="space-y-2">
-        <li class="flex justify-between items-center p-2.5 bg-hover rounded-md">
-          <div>
-            <p class="font-medium text-text">Blood Test Results</p>
-            <p class="text-xs text-text-light flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 mr-1"><path fill-rule="evenodd" d="M4 1.75a.75.75 0 01.75-.75h6.5a.75.75 0 01.75.75V3h1.25A1.75 1.75 0 0115 4.75v8.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25v-8.5A1.75 1.75 0 012.75 3H4V1.75zM8 8a1 1 0 100-2 1 1 0 000 2zM5.25 8a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM5 11.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5z" clip-rule="evenodd" /></svg>
-              April 20, 2025
-            </p>
+          <div class="text-sm text-gray-500 mb-2">
+            Measured by: <span class="font-medium text-gray-700">{{ summary.recent_vitals[0].recordedBy || '-' }}</span>
           </div>
-          <span class="status-badge status-info">Lab Result</span>
-        </li>
-        <li class="flex justify-between items-center p-2.5 bg-hover rounded-md">
-          <div>
-            <p class="font-medium text-text">Annual Physical Examination</p>
-            <p class="text-xs text-text-light flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 mr-1"><path fill-rule="evenodd" d="M4 1.75a.75.75 0 01.75-.75h6.5a.75.75 0 01.75.75V3h1.25A1.75 1.75 0 0115 4.75v8.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25v-8.5A1.75 1.75 0 012.75 3H4V1.75zM8 8a1 1 0 100-2 1 1 0 000 2zM5.25 8a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM5 11.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5z" clip-rule="evenodd" /></svg>
-              March 15, 2025
-            </p>
+
+          <div *ngIf="summary.recent_vitals[0].notes" class="text-sm text-gray-500 italic mb-4">
+            Note: {{ summary.recent_vitals[0].notes }}
           </div>
-          <span class="status-badge status-success">Examination</span>
-        </li>
-      </ul>
-    </div>
 
-    <!-- Current Medications Card -->
-    <div class="card">
-      <div class="flex justify-between items-center mb-3">
-        <h4 class="text-section-header text-primary flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path d="M10.75 3.922c-.38.113-.76.224-1.138.336C8.436 4.69 7.99 5.37 7.99 6.118c0 .91.735 1.642 1.643 1.642H10v2.25H8.643c-1.46 0-2.643-1.183-2.643-2.643 0-.748.447-1.428 1.172-1.864C6.41 5.12 5.76 4.51 5.76 3.643 5.76 2.56 6.576 1.75 7.643 1.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H10V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734a3.245 3.245 0 001.138-.336.75.75 0 01.862.617c.084.29.12.59.12.908 0 .91-.735 1.643-1.643 1.643H13V3.33a.75.75 0 01.75-.75c.625 0 1.174.29 1.518.734.38-.112.76-.224 1.138-.336a.75.75 0 01.862.617c.084.29.12.59.12.908v13.125a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V14h-1.5v2.75a.75.75 0 01-1.5 0V3.922z" /></svg>
-          Current Medications
-        </h4>
-        <a href="#" class="text-sm text-accent hover:text-accent-dark font-medium">View History</a>
+          <button class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  (click)="goToVitals()">
+            <i class="fas fa-arrow-right mr-2"></i>
+            See more
+          </button>
+        </div>
       </div>
-      <ul class="space-y-2">
-        <li class="flex justify-between items-start p-2.5 bg-hover rounded-md">
-          <div>
-            <p class="font-medium text-text">Amoxicillin</p>
-            <p class="text-sm text-text-light">500mg, 3 times daily</p>
-            <p class="text-xs text-text-muted">Prescribed by: Dr. Emily Carter</p>
+
+      <!-- Upcoming Appointment -->
+      <div *ngIf="summary.appointments?.upcoming?.length" class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-calendar-alt text-blue-500"></i>
+              <h3 class="font-bold text-gray-900">Next appointment</h3>
+            </div>
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    (click)="goToAppointments()">See all</button>
           </div>
-          <span class="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">4 days</span>
-        </li>
-        <li class="flex justify-between items-start p-2.5 bg-hover rounded-md">
-          <div>
-            <p class="font-medium text-text">Lisinopril</p>
-            <p class="text-sm text-text-light">10mg, Once daily</p>
-            <p class="text-xs text-text-muted">Prescribed by: Dr. John Smith</p>
+
+          <div class="mb-4">
+            <div class="font-bold text-lg text-gray-800">{{ summary.appointments.upcoming[0].type | titlecase }}</div>
+            <div class="mt-2 flex items-center gap-2 text-gray-600">
+              <i class="fas fa-user-md text-blue-500"></i>
+              <span>Dr. {{ summary.appointments.upcoming[0].doctor }}</span>
+            </div>
+            <div class="mt-2 flex items-center gap-4 text-gray-600 flex-wrap">
+              <span class="flex items-center gap-1">
+                <i class="fas fa-calendar-day text-blue-500"></i>
+                <span>{{ summary.appointments.upcoming[0].date | date:'longDate':'':'en-US' }}</span>
+              </span>
+              <span class="flex items-center gap-1">
+                <i class="fas fa-clock text-blue-500"></i>
+                <span>{{ summary.appointments.upcoming[0].date | date:'shortTime':'':'en-US' }}</span>
+              </span>
+            </div>
           </div>
-          <span class="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">12 days</span>
-        </li>
-      </ul>
-    </div>
-  </div>
 
- 
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium capitalize">
+              {{ summary.appointments.upcoming[0].status | titlecase }}
+            </span>
+          </div>
 
-  <!-- Health Stats Section -->
-  <div class="card mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <div>
-        <h3 class="text-section-header text-primary flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
-            <path d="M2 10a.75.75 0 01.75-.75h1.548a1.75 1.75 0 001.696-1.003L8.27 3.72a.75.75 0 011.46 0l2.275 4.55a1.75 1.75 0 001.696 1.004h1.549a.75.75 0 010 1.5h-1.548a1.75 1.75 0 00-1.696 1.003l-2.275 4.55a.75.75 0 01-1.46 0l-2.275-4.55A1.75 1.75 0 004.298 10H2.75A.75.75 0 012 10z" />
-          </svg>
-          Health Stats
-        </h3>
-        <p class="text-sm text-text-muted">Your recent health metrics</p>
-      </div>
-      <button class="text-sm text-accent hover:text-accent-dark font-medium">Voir plus</button>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div class="p-4 bg-hover rounded-lg shadow">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-medium text-text">Blood Pressure</span>
-          <span class="text-sm font-semibold text-primary">120/80 mmHg</span>
+          <div class="mt-6 flex gap-2">
+            <button class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+              Reschedule
+            </button>
+            <button class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
+              Cancel
+            </button>
+          </div>
         </div>
-        <div class="w-full bg-border rounded-full h-2">
-          <div class="bg-status-success h-2 rounded-full" style="width: 75%;"></div>
-        </div>
-        <span class="text-xs text-text-muted mt-1 block">Last measured: May 5, 2025</span>
-      </div>
-      <div class="p-4 bg-hover rounded-lg shadow">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-medium text-text">Heart Rate</span>
-          <span class="text-sm font-semibold text-primary">72 BPM</span>
-        </div>
-        <div class="w-full bg-border rounded-full h-2">
-          <div class="bg-status-info h-2 rounded-full" style="width: 60%;"></div>
-        </div>
-        <span class="text-xs text-text-muted mt-1 block">Last measured: May 5, 2025</span>
       </div>
 
-      <div class="p-4 bg-hover rounded-lg shadow">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-medium text-text">Weight</span>
-          <span class="text-sm font-semibold text-primary">165 lbs</span>
+      <!-- Active Medications -->
+      <div *ngIf="summary.active_medications?.length" class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-pills text-blue-500"></i>
+              <h3 class="font-bold text-gray-900">Active medications</h3>
+            </div>
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    (click)="goToMedicationsHistory()">See history</button>
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let med of summary.active_medications" class="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors flex justify-between items-center">
+              <div>
+                <div class="font-bold text-gray-800">{{ med.name }}</div>
+                <div class="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                  <i class="fas fa-capsules text-purple-400"></i>
+                  {{ med.dosage }}
+                  <span class="mx-1">•</span>
+                  <i class="fas fa-clock text-blue-400"></i>
+                  {{ med.frequency }}
+                </div>
+                <div class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                  <i class="fas fa-user-md text-indigo-400"></i>
+                  Prescribed by: {{ med.prescribedBy }}
+                </div>
+              </div>
+              <div *ngIf="med.duration" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                {{ med.duration }}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="w-full bg-border rounded-full h-2">
-          <div class="bg-status-warning h-2 rounded-full" style="width: 50%;"></div>
+      </div>
+
+      <!-- Recent Lab Results -->
+      <div *ngIf="summary.recent_lab_results?.length" class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-vials text-blue-500"></i>
+              <h3 class="font-bold text-gray-900">Recent lab results</h3>
+            </div>
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    (click)="goToLabResults()">See all</button>
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let lab of summary.recent_lab_results.slice(0,5)" class="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+              <div class="flex justify-between">
+                <div>
+                  <div class="font-bold text-gray-800">{{ lab.testName }}</div>
+                  <div class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                    <i class="fas fa-calendar-day text-blue-400"></i>
+                    {{ lab.resultDate | date:'longDate':'':'en-US' }}
+                    <span class="mx-1">•</span>
+                    <i class="fas fa-flask text-indigo-400"></i>
+                    {{ lab.labName }}
+                  </div>
+                  <div class="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-gray-400"></i>
+                    {{ lab.interpretation }}
+                  </div>
+                </div>
+                <div class="flex items-center">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="{
+                          'bg-yellow-100 text-yellow-800': lab.status === 'pending_review',
+                          'bg-red-100 text-red-800': lab.status === 'requires_action',
+                          'bg-green-100 text-green-800': lab.status === 'reviewed'
+                        }">
+                    {{ lab.status | titlecase }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <span class="text-xs text-text-muted mt-1 block">Last measured: May 2, 2025</span>
+      </div>
+
+      <!-- Recent Notes -->
+      <div *ngIf="summary.recent_notes?.length" class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-sticky-note text-purple-500"></i>
+              <h3 class="font-bold text-gray-900">Recent notes</h3>
+            </div>
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    (click)="goToNotes()">See all</button>
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let note of summary.recent_notes" class="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+              <div class="font-bold text-gray-800 mb-2">{{ note.title }}</div>
+              <div class="text-xs text-gray-500 mb-1 flex items-center gap-2 flex-wrap">
+                <i class="fas fa-user-md text-indigo-400"></i>
+                By {{ note.doctorName }}
+                <span class="mx-1">•</span>
+                <i class="fas fa-calendar-day text-blue-400"></i>
+                {{ note.createdAt | date:'shortDate':'':'en-US' }}
+                <span class="mx-1">•</span>
+                <i class="fas fa-clock text-gray-400"></i>
+                {{ note.createdAt | date:'shortTime':'':'en-US' }}
+              </div>
+              <div class="text-sm text-gray-600 line-clamp-2">{{ note.content }}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  </div>
- 
+  </ng-container>
+</div>

@@ -223,12 +223,6 @@ export class TabLabResultsComponent implements OnInit, OnDestroy {
     this.showTrendModal = true;
   }
 
-  onExportResults(): void {
-    // This will be implemented in Phase 4
-    console.log('Export results');
-    this.showExportModal = true;
-  }
-
   // ✅ Utility methods
   getStatusBadgeClass(status: string): string {
     switch (status) {

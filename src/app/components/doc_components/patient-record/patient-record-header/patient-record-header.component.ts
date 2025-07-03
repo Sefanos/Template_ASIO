@@ -18,4 +18,5 @@ export class PatientRecordHeaderComponent {
   onTogglePrintOptions(): void {
     this.togglePrintOptions.emit();
   }
+
 }

@@ -1,0 +1,190 @@
+<div class="vital-signs-container">
+  <!-- Error message only -->
+  <div *ngIf="!isLoading && error" class="bg-status-urgent/10 border border-status-urgent text-status-urgent px-4 py-3 rounded-card relative shadow-card" role="alert">
+    <strong class="font-bold">Error!</strong>
+    <span class="block sm:inline">{{ error }}</span>
+  </div>
+
+  <!-- Always show the structure, use skeletons for data -->
+  <div class="space-y-8">
+    <!-- Latest Vitals Summary -->
+    <div class="latest-vitals-summary mb-8">
+      <h2 class="text-section-header font-display text-text mb-2">Latest Vitals</h2>
+      <p class="text-body text-text-light mb-4">
+        <ng-container *ngIf="!isLoading && latestVitals; else vitalsDateLoader">
+          Recorded on {{ latestVitals.recorded_at | date:'MMMM d, y' }} at {{ latestVitals.recorded_at | date:'h:mm a' }}
+        </ng-container>
+        <ng-template #vitalsDateLoader>
+          <span class="inline-block w-40 h-4 bg-gray-200 rounded animate-pulse"></span>
+        </ng-template>
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+        <!-- Vital Cards -->
+        <ng-container *ngFor="let vital of [
+          { key: 'blood_pressure', label: 'Blood Pressure', icon: getVitalSignIcon('blood_pressure'), value: latestVitals ? (latestVitals.blood_pressure_systolic + ' / ' + latestVitals.blood_pressure_diastolic) : '', unit: 'mmHg', status: (latestVitals && latestVitals.blood_pressure_systolic != null && latestVitals.blood_pressure_diastolic != null) ? getBPStatusClass(latestVitals.blood_pressure_systolic, latestVitals.blood_pressure_diastolic) : '', colorClass: 'text-primary' },
+          { key: 'pulse_rate', label: 'Pulse Rate', icon: getVitalSignIcon('pulse_rate'), value: latestVitals?.pulse_rate ?? '', unit: 'bpm', status: '', colorClass: 'text-accent' },
+          { key: 'temperature', label: 'Temperature', icon: getVitalSignIcon('temperature'), value: latestVitals?.temperature ?? '', unit: latestVitals?.temperature_unit ?? '', status: '', colorClass: 'text-yellow-500' },
+          { key: 'respiratory_rate', label: 'Resp. Rate', icon: getVitalSignIcon('respiratory_rate'), value: latestVitals?.respiratory_rate ?? '', unit: 'breaths/min', status: '', colorClass: 'text-blue-500' },
+          { key: 'oxygen_saturation', label: 'SpO2', icon: getVitalSignIcon('oxygen_saturation'), value: latestVitals?.oxygen_saturation ?? '', unit: '%', status: '', colorClass: 'text-red-500' },
+          { key: 'weight', label: 'Weight', icon: getVitalSignIcon('weight'), value: latestVitals?.weight ?? '', unit: latestVitals?.weight_unit ?? '', status: '', colorClass: 'text-green-500' },
+          { key: 'height', label: 'Height', icon: getVitalSignIcon('height'), value: latestVitals?.height ?? '', unit: latestVitals?.height_unit ?? '', status: '', colorClass: 'text-purple-500' }
+        ]">
+          <div class="vital-card bg-card p-4 rounded-xl shadow-sm border border-border text-center flex flex-col justify-center items-center">
+            <i [class]="vital.icon" [ngClass]="vital.colorClass + ' text-2xl mb-2'"></i>
+            <p class="text-sm text-text-light font-medium">{{ vital.label }}</p>
+            <p class="text-xl font-bold fade-in" [ngClass]="vital.status">
+              <ng-container *ngIf="!isLoading && latestVitals; else vitalLoader">{{ vital.value }}</ng-container>
+            </p>
+            <p class="text-xs text-text-muted">{{ vital.unit }}</p>
+            <ng-template #vitalLoader>
+              <span class="inline-block w-16 h-6 bg-gray-200 rounded animate-pulse"></span>
+            </ng-template>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Vitals Charts (affiche structure, loader si isLoading) -->
+    <div class="vitals-charts mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-section-header font-display text-text">Trends</h2>
+        <button (click)="showCharts = !showCharts" class="btn-secondary text-sm py-2 px-4 rounded-lg flex items-center gap-2 transition-colors duration-150">
+          <span>{{ showCharts ? 'Hide Charts' : 'Show Charts' }}</span>
+          <i class="fas" [ngClass]="{'fa-chevron-up': showCharts, 'fa-chevron-down': !showCharts}"></i>
+        </button>
+      </div>
+      <div *ngIf="showCharts" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="chart-container bg-card p-4 rounded-xl shadow-sm border border-border">
+          <h3 class="font-semibold text-text mb-2">Blood Pressure</h3>
+          <div class="chart-wrapper h-64">
+            <ng-container *ngIf="!isLoading; else chartLoader">
+              <ngx-charts-line-chart [results]="bloodPressureChartData" [scheme]="bpColorScheme" [legend]="legend" [xAxis]="xAxis" [yAxis]="yAxis" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabelBP" [autoScale]="true" [animations]="animations"></ngx-charts-line-chart>
+            </ng-container>
+            <ng-template #chartLoader>
+              <div class="w-full h-full flex items-center justify-center">
+                <div class="w-24 h-6 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+        <div class="chart-container bg-card p-4 rounded-xl shadow-sm border border-border">
+          <h3 class="font-semibold text-text mb-2">Pulse Rate</h3>
+          <div class="chart-wrapper h-64">
+            <ng-container *ngIf="!isLoading; else chartLoader">
+              <ngx-charts-line-chart [results]="pulseChartData" scheme="vivid" [legend]="legend" [xAxis]="xAxis" [yAxis]="yAxis" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabelPulse" [animations]="animations"></ngx-charts-line-chart>
+            </ng-container>
+            <ng-template #chartLoader>
+              <div class="w-full h-full flex items-center justify-center">
+                <div class="w-24 h-6 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+        <div class="chart-container bg-card p-4 rounded-xl shadow-sm border border-border">
+          <h3 class="font-semibold text-text mb-2">Weight</h3>
+          <div class="chart-wrapper h-64">
+            <ng-container *ngIf="!isLoading; else chartLoader">
+              <ngx-charts-line-chart [results]="weightChartData" scheme="forest" [legend]="legend" [xAxis]="xAxis" [yAxis]="yAxis" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabelWeight" [animations]="animations"></ngx-charts-line-chart>
+            </ng-container>
+            <ng-template #chartLoader>
+              <div class="w-full h-full flex items-center justify-center">
+                <div class="w-24 h-6 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vitals History Table -->
+    <div class="vitals-history">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+        <h2 class="text-section-header font-display text-text">History</h2>
+        <div class="relative w-full md:w-72">
+          <input type="text" placeholder="Search vital signs..." [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" class="w-full pl-10 pr-4 py-2.5 border border-border rounded-input text-body text-text focus:ring-2 focus:ring-primary">
+        </div>
+      </div>
+      <div class="bg-card rounded-lg shadow-md overflow-x-auto border border-border">
+        <table class="min-w-full divide-y divide-border rounded-lg shadow-md overflow-hidden">
+          <thead class="bg-gradient-to-r from-primary to-primary-dark text-white">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Systolic BP</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Diastolic BP</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Pulse Rate</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Temperature</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Respiratory Rate</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Oxygen Saturation</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Weight</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Height</th>
+            </tr>
+          </thead>
+          
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let vital of paginatedHistory" class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">{{ vital.recorded_at | date:'MMMM d, y' }} at {{ vital.recorded_at | date:'h:mm a' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.blood_pressure_systolic }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.blood_pressure_diastolic }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.pulse_rate }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.temperature }} {{ vital.temperature_unit }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.respiratory_rate }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.oxygen_saturation }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.weight }} {{ vital.weight_unit }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ vital.height }} {{ vital.height_unit }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="getTotalPages() > 1" class="flex justify-between items-center mt-4">
+        <span class="text-sm text-text-muted">Page {{ currentPage }} of {{ getTotalPages() }}</span>
+        <div class="flex items-center gap-2">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" class="px-3 py-1 rounded-lg bg-primary text-white hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === getTotalPages()" class="px-3 py-1 rounded-lg bg-primary text-white hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !error && paginatedHistory.length === 0" class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+      <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
+      <p class="text-section-header text-text-light">No vital signs found.</p>
+      <p class="text-body text-text-muted">Your vital signs records will appear here once they are available.</p>
+    </div>
+  </div>
+
+  <!-- MODAL POUR LES DÉTAILS -->
+  <div *ngIf="isModalOpen" (click)="closeModal()" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+    <div (click)="$event.stopPropagation()" class="modal-content bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out">
+      <div *ngIf="selectedVitalSign">
+        <div class="flex justify-between items-center p-4 border-b border-border">
+          <h3 class="text-lg font-bold text-text">Vital Signs Details</h3>
+          <button (click)="closeModal()" class="text-text-muted hover:text-primary">&times;</button>
+        </div>
+        <div class="p-6 overflow-y-auto">
+          <p class="text-sm text-text-muted mb-4">Recorded on {{ selectedVitalSign.recorded_at | date:'MMMM d, y' }} at {{ selectedVitalSign.recorded_at | date:'h:mm a' }}</p>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div class="font-semibold text-text-light">Blood Pressure:</div>
+            <div [ngClass]="getBPStatusClass(selectedVitalSign.blood_pressure_systolic, selectedVitalSign.blood_pressure_diastolic)">{{ selectedVitalSign.blood_pressure_systolic }} / {{ selectedVitalSign.blood_pressure_diastolic }} mmHg</div>
+            <div class="font-semibold text-text-light">Pulse Rate:</div>
+            <div>{{ selectedVitalSign.pulse_rate }} bpm</div>
+            <div class="font-semibold text-text-light">Temperature:</div>
+            <div>{{ selectedVitalSign.temperature }} {{ selectedVitalSign.temperature_unit }}</div>
+            <div class="font-semibold text-text-light">Respiratory Rate:</div>
+            <div>{{ selectedVitalSign.respiratory_rate }} breaths/min</div>
+            <div class="font-semibold text-text-light">Oxygen Saturation (SpO2):</div>
+            <div>{{ selectedVitalSign.oxygen_saturation }} %</div>
+            <div class="font-semibold text-text-light">Weight:</div>
+            <div>{{ selectedVitalSign.weight }} {{ selectedVitalSign.weight_unit }}</div>
+            <div class="font-semibold text-text-light">Height:</div>
+            <div>{{ selectedVitalSign.height }} {{ selectedVitalSign.height_unit }}</div>
+          </div>
+          <div *ngIf="selectedVitalSign.notes" class="mt-4">
+            <h4 class="font-semibold text-text-light mb-1">Notes:</h4>
+            <p class="text-sm p-3 bg-background rounded-md border border-border">{{ selectedVitalSign.notes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

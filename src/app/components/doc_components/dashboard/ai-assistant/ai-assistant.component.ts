@@ -28,6 +28,6 @@ export class AiAssistantComponent {
   
   openAiAssistant() {
     // Navigate to the AI diagnostic tool
-    this.router.navigate(['/ai-diagnostic']);
+    this.router.navigate(['/doctor/ai-diagnostic']);
   }
 }

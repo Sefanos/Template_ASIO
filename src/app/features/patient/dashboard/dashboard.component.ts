@@ -1,4 +1,19 @@
 import { Component, OnInit } from '@angular/core';
+import { PatientSummaryService } from '../../../core/patient/services/patient-summary.service';
+import { Router } from '@angular/router';
+
+interface VitalSign {
+  recordedAt: string;
+  bloodPressure?: { reading?: string };
+  pulseRate?: number | string;
+  temperature?: { display?: string };
+  respiratoryRate?: number | string;
+  oxygenSaturation?: number | string;
+  weight?: { display?: string };
+  height?: { display?: string };
+  recordedBy?: string;
+}
+
 
 @Component({
   selector: 'app-dashboard',
@@ -6,51 +21,80 @@ import { Component, OnInit } from '@angular/core';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit {   
-  currentDate = new Date();
-  activeTab: string = 'appointments'; // Onglet actif par défaut
-  personalInfo = {
-    photoUrl: 'assets/images/imm2.jpg',
-    name: 'Sana',
-    surname: 'Barkouch',
-    birthDate: '1990-01-01',
-    bloodType: 'O+',
-    gender: 'Male',
-    nationality: 'American',
-    // maritalStatus: 'Célibataire',
-    emergencyContact: '+1 234 567 890',
-    registrationDate: '2023-01-15',
-    bloodPressure: '120/80',
-    lastAppointment: '15/04/2024',
-    nextAppointment: '30/04/2024',
-    activePrescriptions: 2 ,
-
-    appointments: [
-      { title: 'Consultation de suivi', doctor: 'Dr. Martin', date: '30 avril à 14:00', status: 'Programmé' },
-      { title: 'Contrôle annuel', doctor: 'Dr. Bernard', date: '15 mai à 10:30', status: 'En attente' }
-    ],
-    prescriptions: [
-      { name: 'Paracétamol', dosage: '3 fois par jour', doctor: 'Dr. Bernard', startDate: '15/04/2024', endDate: '30/04/2024', quantity: 1000 },
-      { name: 'Ibuprofène', dosage: '2 fois par jour', doctor: 'Dr. Bernard', startDate: '20/04/2024', endDate: '05/05/2024', quantity: 400 }
-    ]
-  };
-
+export class DashboardComponent implements OnInit {  
   
-  constructor() {}
-  ngOnInit(): void {
-    //  un appel API 
-  
-    // this.fetchPersonalInfo();
+    loading = true;
+  error: string | null = null;
+  summary: any = null;
+ today = new Date();
+
+
+  refresh(): void {
+    this.loading = true;
+    this.error = null;
+    this.summaryService.getSummary().subscribe({
+      next: data => {
+        this.summary = data;
+        this.loading = false;
+        this.today = new Date();
+      },
+      error: err => {
+        this.error = "Unable to load your medical summary.";
+        this.loading = false;
+      }
+    });
   }
 
-    // Exemple de méthode pour récupérer les données depuis une API
-    fetchPersonalInfo(): void {
-      // Simuler un appel API
-       
-      console.log('Fetching personal info...');
-    }
-    setActiveTab(tab: string): void {
-      this.activeTab = tab;
-    }
 
+
+constructor(private summaryService: PatientSummaryService,
+ 
+  private router: Router 
+) {}
+
+ngOnInit(): void {
+    this.summaryService.getSummary().subscribe({
+      next: data => {
+        this.summary = data;
+        this.loading = false;
+      },
+      error: err => {
+        this.error = "Unable to load your medical summary.";
+        this.loading = false;
+      }
+    });
+  }
+  get fullName(): string {
+    return this.summary?.basic_info?.full_name || '';
+  }
+  get registrationDate(): string {
+    return this.summary?.basic_info?.registration_date || '';
+  }
+  get age(): string {
+    return this.summary?.basic_info?.age || '';
+  }
+  get gender(): string {
+    return this.summary?.basic_info?.gender || '';
+  }
+
+  goToAppointments(): void {
+    this.router.navigate(['/patient/appointments']);
+  }
+
+goToVitals(): void {
+  this.router.navigate(['/patient/medical-record'], { queryParams: { tab: 'VitalSigns' } });
+}
+goToMedicationsHistory(): void {
+  this.router.navigate(['/patient/medical-record'], { queryParams: { tab: 'Prescription', status: 'active' } });
+}
+goToLabResults(): void {
+  this.router.navigate(['/patient/medical-record'], { queryParams: { tab: 'LabResult' } });
+}
+goToNotes(): void {
+  this.router.navigate(['/patient/medical-record'], { queryParams: { tab: 'Notes' } });
+}
+
+goToEventHistory(): void {
+  this.router.navigate(['/patient/medical-record'], { queryParams: { tab: 'Files' } });
+}
 }

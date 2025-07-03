@@ -94,6 +94,7 @@
   [appointment]="selectedAppointment()"
   (close)="closeAppointmentDetails()"
   (edit)="editAppointmentFromModal($event)"
+  (appointmentUpdated)="onAppointmentUpdated()"
 ></app-appointment-details-modal>
 
 <!-- Blocked Time Delete Modal -->

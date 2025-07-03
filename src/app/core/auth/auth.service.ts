@@ -181,7 +181,7 @@ export class AuthService {
     this.currentUserSubject.next(null);
     
     // Navigate to login page
-    this.router.navigate(['/login']);
+    window.location.href = '/login';
   }
   
   private handleAuthResponse(response: AuthResponse): void {

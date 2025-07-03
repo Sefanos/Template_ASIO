@@ -58,7 +58,27 @@ export class HeaderComponent implements OnInit {
   }
   
   navigateToProfile(): void {
-    this.router.navigate(['/profile']);
+    // Get user role and navigate to appropriate profile route
+    const userRole = this.authService.getUserRole();
+    switch (userRole) {
+      case 'doctor':
+        this.router.navigate(['/doctor/profile']);
+        break;
+      case 'patient':
+        this.router.navigate(['/patient/profile']);
+        break;
+      case 'receptionist':
+      case 'nurse':
+        this.router.navigate(['/receptionist/profile']);
+        break;
+      case 'admin':
+        // Admin might not have a dedicated profile, redirect to dashboard
+        this.router.navigate(['/admin/dashboard']);
+        break;
+      default:
+        // Fallback to login if role is unknown
+        this.router.navigate(['/login']);
+    }
     this.closeDropdown();
   }
 }

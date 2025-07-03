@@ -85,8 +85,7 @@ export class TabSummaryComponent implements OnChanges {
         activeAlerts: this.activeAlerts?.length || 0,
         medicalSummary: this.medicalSummary ? 'present' : 'missing'
       });
-    }
-    
+    }    
     // Force change detection
     setTimeout(() => {
       this.cdr.detectChanges();

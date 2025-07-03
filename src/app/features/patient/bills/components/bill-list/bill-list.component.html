@@ -1,31 +1,30 @@
- 
 <div class="bg-card shadow-card rounded-card p-card-padding font-sans">
-  <!-- Section des Filtres -->
+  <!-- Filters Section -->
   <div class="mb-card-margin p-card-padding border border-border rounded-card bg-background">
-    <h3 class="text-section-header text-text mb-5">Filtrer les Factures</h3>
+    <h3 class="text-section-header text-text mb-5">Filter Bills</h3>
     <form (ngSubmit)="applyFilters()" #filterForm="ngForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-end">
-      <!-- Statut Filter Removed -->
+      <!-- Status Filter Removed -->
       <!-- <div>
-        <label for="statusFilterList" class="block text-sm font-medium text-text-light mb-1.5">Statut</label>
+        <label for="statusFilterList" class="block text-sm font-medium text-text-light mb-1.5">Status</label>
         <select id="statusFilterList" name="statusFilterList" [(ngModel)]="filters.status" class="mt-1 block w-full py-2.5 px-3.5 border border-border bg-card rounded-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-text">
-          <option value="">Tous</option>
+          <option value="">All</option>
           <option *ngFor="let statusOpt of statusOptions" [value]="statusOpt">{{ statusOpt | titlecase }}</option>
         </select>
       </div> -->
       <div>
-        <label for="dateFromFilterList" class="block text-sm font-medium text-text-light mb-1.5">Date d'émission (De)</label>
+        <label for="dateFromFilterList" class="block text-sm font-medium text-text-light mb-1.5">Issue Date (From)</label>
         <input type="date" id="dateFromFilterList" name="dateFromFilterList" [(ngModel)]="filters.date_from" class="mt-1 block w-full py-2.5 px-3.5 border border-border bg-card rounded-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-text">
       </div>
       <div>
-        <label for="dateToFilterList" class="block text-sm font-medium text-text-light mb-1.5">Date d'émission (À)</label>
+        <label for="dateToFilterList" class="block text-sm font-medium text-text-light mb-1.5">Issue Date (To)</label>
         <input type="date" id="dateToFilterList" name="dateToFilterList" [(ngModel)]="filters.date_to" class="mt-1 block w-full py-2.5 px-3.5 border border-border bg-card rounded-input shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-text">
       </div>
       <div class="md:col-span-1 lg:col-span-1 flex space-x-3 mt-4 md:mt-0 lg:self-end md:col-start-2 lg:col-start-3">
         <button type="submit" class="flex-1 inline-flex items-center justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-button text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-150">
-          <span class="material-icons-outlined text-lg mr-2">filter_list</span>Appliquer
+          <span class="material-icons-outlined text-lg mr-2">filter_list</span>Apply
         </button>
         <button type="button" (click)="resetFilters()" class="flex-1 inline-flex items-center justify-center py-2.5 px-4 border border-border shadow-sm text-sm font-medium rounded-button text-text-light bg-card hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light transition-colors duration-150">
-          Réinitialiser
+          Reset
         </button>
       </div>
     </form>
@@ -33,14 +32,14 @@
 
   <div *ngIf="isLoading" class="text-center py-16">
     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-    <p class="mt-5 text-text-light">Chargement des factures...</p>
+    <p class="mt-5 text-text-light">Loading bills...</p>
   </div>
 
   <div *ngIf="errorMessage && !isLoading" class="bg-status-urgent/10 border-l-4 border-status-urgent text-status-urgent p-4 my-card-margin rounded-md shadow-md" role="alert">
     <div class="flex">
       <div class="py-1"><span class="material-icons-outlined text-xl mr-3">error_outline</span></div>
       <div>
-        <p class="font-bold text-sm">Erreur de chargement</p>
+        <p class="font-bold text-sm">Loading error</p>
         <p class="text-xs">{{ errorMessage }}</p>
       </div>
     </div>
@@ -50,10 +49,21 @@
     <table class="min-w-full divide-y divide-border bg-card">
       <thead class="bg-background">
         <tr>
-          <th *ngFor="let col of sortableColumns" scope="col" (click)="onSortChange(col.key)"
-              class="px-6 py-3.5 text-left text-xs font-semibold text-text-muted uppercase tracking-wider cursor-pointer hover:bg-hover transition-colors duration-150">
-            {{ col.label }}
-            <span *ngIf="filters.sort_by === col.key" class="ml-1.5 text-primary">{{ filters.sort_direction === 'asc' ? '▲' : '▼' }}</span>
+          <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-text-muted uppercase tracking-wider cursor-pointer hover:bg-hover transition-colors duration-150" (click)="onSortChange('bill_number')">
+            Bill No.
+            <span *ngIf="filters.sort_by === 'bill_number'" class="ml-1.5 text-primary">{{ filters.sort_direction === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-text-muted uppercase tracking-wider cursor-pointer hover:bg-hover transition-colors duration-150" (click)="onSortChange('issue_date')">
+            Date
+            <span *ngIf="filters.sort_by === 'issue_date'" class="ml-1.5 text-primary">{{ filters.sort_direction === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-text-muted uppercase tracking-wider cursor-pointer hover:bg-hover transition-colors duration-150" (click)="onSortChange('doctor_name')">
+            Doctor
+            <span *ngIf="filters.sort_by === 'doctor_name'" class="ml-1.5 text-primary">{{ filters.sort_direction === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-text-muted uppercase tracking-wider cursor-pointer hover:bg-hover transition-colors duration-150" (click)="onSortChange('amount')">
+            Amount
+            <span *ngIf="filters.sort_by === 'amount'" class="ml-1.5 text-primary">{{ filters.sort_direction === 'asc' ? '▲' : '▼' }}</span>
           </th>
           <th scope="col" class="px-6 py-3.5 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
         </tr>
@@ -63,9 +73,9 @@
             [ngClass]="{'bg-primary/5 dark:bg-primary/10': bill.id === currentSelectedBillId }"
             class="hover:bg-hover dark:hover:bg-gray-700/30 transition-colors duration-150 cursor-pointer" (click)="viewBillDetails(bill)">
           <td class="px-6 py-4 whitespace-nowrap text-sm text-text font-medium">{{ bill.bill_number }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.issue_date | date:'dd/MM/yyyy' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.doctor?.name || 'N/A' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-text text-right font-medium">{{ bill.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.issue_date | date:'dd/MM/yyyy':'':'en-US' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text">{{ bill.doctor.name || 'N/A' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-text text-right font-medium">{{ bill.amount | currency:'USD':'symbol':'1.2-2':'en-US' }}</td>
           <!-- Status Column Removed -->
           <!-- <td class="px-6 py-4 whitespace-nowrap text-sm">
             <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
@@ -79,14 +89,14 @@
             </span>
           </td> -->
           <td class="px-6 py-4 whitespace-nowrap text-sm text-center space-x-1">
-            <button (click)="viewBillDetails(bill); $event.stopPropagation()" title="Voir détails" class="text-primary hover:text-primary-dark p-1.5 rounded-full hover:bg-primary/10 focus:outline-none transition-colors duration-150">
+            <button (click)="viewBillDetails(bill); $event.stopPropagation()" title="View details" class="text-primary hover:text-primary-dark p-1.5 rounded-full hover:bg-primary/10 focus:outline-none transition-colors duration-150">
               <span class="material-icons-outlined text-xl">visibility</span>
             </button>
 
-                 <button *ngIf="bill.id" (click)="downloadBillPdf(bill, $event); $event.stopPropagation()" title="Télécharger Reçu" class="text-accent hover:text-accent-dark p-1.5 rounded-full hover:bg-accent/10 focus:outline-none transition-colors duration-150">
+                 <button *ngIf="bill.id" (click)="downloadBillPdf(bill, $event); $event.stopPropagation()" title="Download Receipt" class="text-accent hover:text-accent-dark p-1.5 rounded-full hover:bg-accent/10 focus:outline-none transition-colors duration-150">
             <span class="material-icons-outlined text-xl">download</span>
           </button>
-            <!-- <span *ngIf="bill.pdf_path === null" class="text-text-muted p-1.5 inline-block align-middle" title="PDF non disponible"> -->
+            <!-- <span *ngIf="bill.pdf_path === null" class="text-text-muted p-1.5 inline-block align-middle" title="PDF not available"> -->
                 <!-- <span class="material-icons-outlined text-xl">file_download_off</span>
             </span> -->
           </td>
@@ -97,16 +107,16 @@
 
   <div *ngIf="!isLoading && (!billsResponse || billsResponse.data.length === 0) && !errorMessage" class="text-center py-16 mt-card-margin border border-dashed border-border rounded-card">
     <span class="material-icons-outlined text-5xl text-text-muted">folder_off</span>
-    <h3 class="mt-3 text-card-title font-medium text-text">Aucune facture trouvée</h3>
-    <p class="mt-1.5 text-sm text-text-light">Essayez d'ajuster vos filtres ou vérifiez ultérieurement.</p>
+    <h3 class="mt-3 text-card-title font-medium text-text">No bills found</h3>
+    <p class="mt-1.5 text-sm text-text-light">Try adjusting your filters or check back later.</p>
   </div>
 
   <div *ngIf="billsResponse && billsResponse.data.length > 0 && billsResponse.last_page > 1" class="mt-card-margin flex items-center justify-between border-t border-border pt-5">
     <div>
       <p class="text-sm text-text-light">
-        Page <span class="font-medium text-text">{{ billsResponse.current_page }}</span> sur <span class="font-medium text-text">{{ billsResponse.last_page }}</span>
-        <span *ngIf="billsResponse.from && billsResponse.to" class="hidden sm:inline"> - Affichage de {{ billsResponse.from }}-{{ billsResponse.to }} sur {{ billsResponse.total }}</span>
-        <span *ngIf="!billsResponse.from || !billsResponse.to" class="hidden sm:inline"> - Total de {{ billsResponse.total }}</span>
+        Page <span class="font-medium text-text">{{ billsResponse.current_page }}</span> of <span class="font-medium text-text">{{ billsResponse.last_page }}</span>
+        <span *ngIf="billsResponse.from && billsResponse.to" class="hidden sm:inline"> - Showing {{ billsResponse.from }}-{{ billsResponse.to }} of {{ billsResponse.total }}</span>
+        <span *ngIf="!billsResponse.from || !billsResponse.to" class="hidden sm:inline"> - Total {{ billsResponse.total }}</span>
       </p>
     </div>
     <nav class="relative z-0 inline-flex rounded-button shadow-sm -space-x-px" aria-label="Pagination">

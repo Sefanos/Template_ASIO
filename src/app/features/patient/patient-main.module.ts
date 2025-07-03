@@ -9,6 +9,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { MedicalRecordModule } from './medical-record/medical-record.module';
 import { ProfileModule } from './profile/profile.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [],
@@ -21,7 +22,8 @@ import { RemindersModule } from './reminders/reminders.module';
     DashboardModule,
     MedicalRecordModule,
     ProfileModule,
-    RemindersModule
+    RemindersModule,
+    FormsModule
   ]
 })
 export class PatientMainModule { }
