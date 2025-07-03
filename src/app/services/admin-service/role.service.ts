@@ -301,10 +301,26 @@ export class RoleService {
   // Helper method to map API response to frontend Role model
   private mapRoleFromApi(apiRole: any): Role {
     let permissionIds: number[] = [];
+    let mostRecentUpdate = apiRole.updated_at;
     
     if (apiRole.permissions && Array.isArray(apiRole.permissions)) {
       permissionIds = apiRole.permissions.map((p: any) => p.id);
       console.log(`Extracted ${permissionIds.length} permission IDs from role`);
+      
+      // Find the most recent timestamp from permissions pivot data
+      const permissionTimestamps = apiRole.permissions
+        .map((p: any) => p.pivot?.updated_at)
+        .filter((timestamp: string) => timestamp);
+      
+      if (permissionTimestamps.length > 0) {
+        const latestPermissionUpdate = permissionTimestamps
+          .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime())[0];
+        
+        // Use the more recent timestamp between role and permissions
+        if (new Date(latestPermissionUpdate) > new Date(mostRecentUpdate)) {
+          mostRecentUpdate = latestPermissionUpdate;
+        }
+      }
     }
     
     return {
@@ -315,7 +331,7 @@ export class RoleService {
       permissionIds: permissionIds,
       permissionsCount: permissionIds.length,
       createdAt: apiRole.created_at,
-      updatedAt: apiRole.updated_at
+      updatedAt: mostRecentUpdate // Use the most recent timestamp
     };
   }
   
