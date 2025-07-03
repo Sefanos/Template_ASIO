@@ -163,6 +163,12 @@
         [patientId]="patientId || 0"
       ></app-tab-imaging>
       
+      <!-- Billing Tab -->
+      <app-tab-billing
+        *ngSwitchCase="'billing'"
+        [patientId]="patientId || 0"
+      ></app-tab-billing>
+      
       <!-- Other Tabs -->
       <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">
         <div class="text-center py-8 text-text-light">

@@ -1,34 +1,287 @@
-   <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-500 bg-opacity-75 backdrop-blur-sm">
-      <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-medium text-gray-900">Add Lab Result</h3>
-              <button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+<div class="fixed inset-0 z-50 overflow-y-auto bg-gray-500 bg-opacity-75 backdrop-blur-sm">
+  <div class="flex items-start justify-center min-h-screen p-4 pt-8">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] flex flex-col">
+      
+      <!-- Header -->
+      <div class="flex-shrink-0 p-6 border-b border-gray-200 bg-white">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium text-gray-900">Add Lab Result</h3>
+          <button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body with scrolling -->
+      <form [formGroup]="labResultForm" (ngSubmit)="onSubmit()" class="flex flex-col flex-1 min-h-0">
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6 modal-scroll-area" style="max-height: calc(85vh - 140px);">
+          
+          <!-- Information Box -->
+          <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                 </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">About Lab Parameters</h3>
+                <p class="mt-1 text-sm text-blue-700">
+                  Parameters are the individual measurements in a lab test (e.g., "Total Cholesterol" = 195 mg/dL). 
+                  Each parameter has a value, unit, normal range, and status (normal/high/low).
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Error Message -->
+          <div *ngIf="submitError" class="bg-red-50 border border-red-200 rounded-md p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-800">{{ submitError }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Test Information -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Lab Test Template -->
+            <div>
+              <label for="template" class="block text-sm font-medium text-gray-700 mb-2">
+                Lab Test Template (Optional)
+              </label>
+              <select 
+                id="template" 
+                (change)="onTemplateSelect($event)"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                <option value="">Select a template...</option>
+                <option *ngFor="let template of labTestTemplates" [value]="template.id">
+                  {{ template.name }} ({{ template.code }})
+                </option>
+              </select>
+              <p class="mt-1 text-xs text-gray-500">Templates help auto-fill common test parameters</p>
+            </div>
+
+            <!-- Test Name -->
+            <div>
+              <label for="test_name" class="block text-sm font-medium text-gray-700 mb-2">
+                Test Name <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="test_name" 
+                formControlName="test_name"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="Enter test name">
+              <div *ngIf="labResultForm.get('test_name')?.errors?.['required'] && labResultForm.get('test_name')?.touched" 
+                   class="mt-1 text-sm text-red-600">
+                Test name is required
+              </div>
+            </div>
+
+            <!-- Result Date -->
+            <div>
+              <label for="result_date" class="block text-sm font-medium text-gray-700 mb-2">
+                Result Date <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="date" 
+                id="result_date" 
+                formControlName="result_date"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+              <div *ngIf="labResultForm.get('result_date')?.errors?.['required'] && labResultForm.get('result_date')?.touched" 
+                   class="mt-1 text-sm text-red-600">
+                Result date is required
+              </div>
+            </div>
+
+            <!-- Lab Name -->
+            <div>
+              <label for="performed_by_lab_name" class="block text-sm font-medium text-gray-700 mb-2">
+                Laboratory Name
+              </label>
+              <input 
+                type="text" 
+                id="performed_by_lab_name" 
+                formControlName="performed_by_lab_name"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="Enter laboratory name">
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                Status <span class="text-red-500">*</span>
+              </label>
+              <select 
+                id="status" 
+                formControlName="status"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                <option *ngFor="let option of getStatusOptions()" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Parameters Section -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-medium text-gray-900">Test Parameters</h4>
+              <button 
+                type="button" 
+                (click)="addParameter()"
+                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Parameter
               </button>
             </div>
-            
-            <div class="mb-6">
-              <p class="text-sm text-gray-600">
-                The manual lab result entry form will be implemented in Phase 2 of development.
-              </p>
-              <p class="text-sm text-gray-600 mt-2">
-                For now, lab results should be added through your existing lab interface or API.
-              </p>
+
+            <!-- Parameters List -->
+            <div formArrayName="parameters" class="space-y-4">
+              <div 
+                *ngFor="let parameter of parametersArray.controls; let i = index" 
+                [formGroupName]="i"
+                class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                
+                <div class="flex justify-between items-start mb-4">
+                  <h5 class="text-sm font-medium text-gray-700">Parameter {{ i + 1 }}</h5>
+                  <button 
+                    type="button" 
+                    (click)="removeParameter(i)"
+                    class="text-red-500 hover:text-red-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <!-- Parameter Name -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      formControlName="name"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                      placeholder="Parameter name">
+                  </div>
+
+                  <!-- Value -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Value <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      formControlName="value"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                      placeholder="Result value">
+                  </div>
+
+                  <!-- Unit -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+                    <input 
+                      type="text" 
+                      formControlName="unit"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                      placeholder="mg/dL">
+                  </div>
+
+                  <!-- Reference Range -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Reference Range</label>
+                    <input 
+                      type="text" 
+                      formControlName="reference_range"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                      placeholder="0-100">
+                  </div>
+
+                  <!-- Status -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Status <span class="text-red-500">*</span>
+                    </label>
+                    <select 
+                      formControlName="status"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                      <option *ngFor="let option of getParameterStatusOptions()" [value]="option.value">
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <div class="flex justify-end space-x-3">
-              <button
-                type="button"
-                (click)="onCancel()"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                Close
+
+            <!-- Add first parameter if none exist -->
+            <div *ngIf="parametersArray.length === 0" class="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+              <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m-16-4c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252"/>
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No parameters added</h3>
+              <p class="mt-1 text-sm text-gray-500">Add at least one parameter with test results</p>
+              <p class="mt-1 text-xs text-gray-400">Example: "Cholesterol" = "195" mg/dL, Status: "High"</p>
+              <button 
+                type="button" 
+                (click)="addParameter()"
+                class="mt-3 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Add First Parameter
               </button>
             </div>
           </div>
+
+          <!-- Interpretation -->
+          <div>
+            <label for="interpretation" class="block text-sm font-medium text-gray-700 mb-2">
+              Clinical Interpretation
+            </label>
+            <textarea 
+              id="interpretation" 
+              formControlName="interpretation"
+              rows="3"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter clinical interpretation or comments..."></textarea>
+          </div>
         </div>
-      </div>
+
+        <!-- Footer - Sticky at bottom -->
+        <div class="flex-shrink-0 flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+          <button
+            type="button"
+            (click)="onCancel()"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="labResultForm.invalid || isSubmitting"
+            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSubmitting">Create Lab Result</span>
+            <span *ngIf="isSubmitting" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Creating...
+            </span>
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
+</div>

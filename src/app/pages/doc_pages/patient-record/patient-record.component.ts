@@ -20,6 +20,7 @@ import { TabMedicalHistoryComponent } from '../../../components/doc_components/p
 import { TabLabResultsComponent } from '../../../components/doc_components/patient-record/tab-lab-results/tab-lab-results.component';
 import { TabDocumentsComponent } from '../../../components/doc_components/patient-record/tab-documents/tab-documents.component';
 import { TabImagingComponent } from '../../../components/doc_components/patient-record/tab-imaging/tab-imaging.component';
+import { TabBillingComponent } from '../../../components/doc_components/patient-record/tab-billing/tab-billing.component';
 import { AlertModalComponent } from '../../../components/doc_components/patient-record/alert-modal/alert-modal.component';
 
 // Import models and services
@@ -64,6 +65,7 @@ import {
     TabLabResultsComponent,
     TabDocumentsComponent,
     TabImagingComponent,
+    TabBillingComponent,
     AlertModalComponent
   ],
   templateUrl: './patient-record.component.html',
