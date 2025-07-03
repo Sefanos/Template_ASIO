@@ -97,27 +97,65 @@ export class SidebarService {
     {
       label: 'Medical Record',
       route: '/patient/medical-record',
-      icon: 'heart' // Consider a different icon if 'heart' is too doctor-specific
+      icon: 'heart'
     },
     {
       label: 'Bills',
       route: '/patient/bills',
-      icon: 'file-text' // Example: using a file-text icon for bills
+      icon: 'file-text'
     },
     {
       label: 'Chat',
       route: '/patient/chat',
-      icon: 'message-square' // Example: using a message-square icon for chat
+      icon: 'message-square'
     },
     {
       label: 'Profile',
       route: '/patient/profile',
-      icon: 'user' // Example: using a user icon for profile
+      icon: 'user'
     },
     {
       label: 'Reminders',
       route: '/patient/reminders',
-      icon: 'bell' // Example: using a bell icon for reminders
+      icon: 'bell'
+    }
+  ];
+
+  private readonly receptionistMenu: SidebarItem[] = [
+    {
+      label: 'Dashboard',
+      route: '/receptionist/dashboard',
+      icon: 'grid'
+    },
+    {
+      label: 'Patients',
+      route: '/receptionist/medical-record',
+      icon: 'users'
+    },
+    {
+      label: 'Rendez-vous',
+      route: '/receptionist/appointments',
+      icon: 'calendar'
+    },
+    {
+      label: 'Planning',
+      route: '/receptionist/doctors-planning',
+      icon: 'calendar'
+    },
+    {
+      label: 'Factures',
+      route: '/receptionist/bills',
+      icon: 'file-text'
+    },
+    {
+      label: 'Rappels',
+      route: '/receptionist/reminders',
+      icon: 'bell'
+    },
+    {
+      label: 'Profil',
+      route: '/receptionist/profile',
+      icon: 'user'
     }
   ];
 
@@ -131,9 +169,11 @@ export class SidebarService {
         return this.doctorMenu;
       case 'patient':
         return this.patientMenu;
+      case 'receptionist':
+        return this.receptionistMenu;
       default:
         console.warn(`No menu defined for role: ${role}, defaulting to empty menu`);
-        return []; // Return empty array for unknown roles
+        return [];
     }
   }
 
@@ -145,6 +185,8 @@ export class SidebarService {
         return 'Doctor Menu';
       case 'patient':
         return 'Patient Menu';
+      case 'receptionist':
+        return 'RÉCEPTIONNISTE MENU';
       default:
         return 'Navigation';
     }

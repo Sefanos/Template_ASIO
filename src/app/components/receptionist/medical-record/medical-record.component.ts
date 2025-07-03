@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf, NgClass } from '@angular/common';
-import { PatientService } from '../../../services/recepetionist-services/patient.service';
+import { PatientService, Pagination } from '../../../services/recepetionist-services/patient.service';
 import { ThemeService } from '../../../services/theme.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { Subscription } from 'rxjs';
@@ -26,8 +26,18 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
   searchQuery = '';
   selectedStatus = '';
 
-  itemsPerPage = 10;
+  itemsPerPage = 15; // Correspond à per_page de l'API
   currentPage = 1;
+  totalItems = 0;
+  lastPage = 1;
+  isLoading = false;
+  
+  pagination: Pagination = {
+    total: 0,
+    current_page: 1,
+    per_page: 15,
+    last_page: 1
+  };
 
   showAddModal = false;
   editingPatient: any = null;
@@ -47,6 +57,7 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
     address: '',
     showDetails: false
   };
+
   constructor(
     private patientService: PatientService,
     private themeService: ThemeService,
@@ -67,13 +78,24 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
   }
 
   loadPatients() {
-    this.patientService.getPatients().subscribe({
-      next: (data: any[]) => {
-        this.patients = data.map(p => ({ ...p, showDetails: false }));
+    this.isLoading = true;
+    this.patientService.getPatients(this.currentPage).subscribe({
+      next: (data) => {
+        this.patients = data.patients.map(p => ({ ...p, showDetails: false }));
+        this.pagination = data.pagination;
+        this.totalItems = data.pagination.total;
+        this.currentPage = data.pagination.current_page;
+        this.itemsPerPage = data.pagination.per_page;
+        this.lastPage = data.pagination.last_page;
+        
         this.applyFilters(); // Applique aussi les filtres
-        this.updatePagedPatients(); // Met à jour la pagination
+        this.isLoading = false;
       },
-      error: (err) => console.error('Erreur lors du chargement des patients', err)
+      error: (err) => {
+        console.error('Erreur lors du chargement des patients', err);
+        this.toastService.error('Erreur lors du chargement des patients');
+        this.isLoading = false;
+      }
     });
   }
 
@@ -82,7 +104,8 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
       const matchesSearch =
         !this.searchQuery ||
         patient.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        ('#' + patient.id).toLowerCase().includes(this.searchQuery.toLowerCase());
+        ('#' + patient.id).toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        patient.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
 
       const matchesStatus =
         !this.selectedStatus || patient.status === this.selectedStatus;
@@ -90,40 +113,53 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
       return matchesSearch && matchesStatus;
     });
 
-    this.currentPage = 1; // Réinitialiser à la première page après un filtre
     this.updatePagedPatients();
   }
 
   updatePagedPatients() {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    this.pagedPatients = this.filteredPatients.slice(start, end);
+    // Comme nous utilisons la pagination côté serveur, 
+    // les patients filtrés sont déjà paginés
+    this.pagedPatients = this.filteredPatients;
   }
 
   goToPreviousPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
-      this.updatePagedPatients();
+      this.loadPatients();
     }
   }
 
   goToNextPage() {
-    const maxPage = Math.ceil(this.filteredPatients.length / this.itemsPerPage);
-    if (this.currentPage < maxPage) {
+    if (this.currentPage < this.lastPage) {
       this.currentPage++;
-      this.updatePagedPatients();
+      this.loadPatients();
     }
   }
 
   getPageNumbers(): number[] {
-    const totalItems = this.filteredPatients.length;
-    const totalPages = Math.ceil(totalItems / this.itemsPerPage);
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const totalPages = this.lastPage;
+    // Limiter le nombre de pages affichées
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    // Calcul des pages à afficher
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = startPage + maxPagesToShow - 1;
+    
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
   }
 
   goToPage(page: number) {
     this.currentPage = page;
-    this.updatePagedPatients();
+    this.loadPatients();
   }
 
   toggleView() {
@@ -152,6 +188,7 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
     if (!photo) return '/assets/images/default-user.png';
     if (photo.startsWith('http')) return photo;
     if (photo.startsWith('/storage/')) return 'http://localhost:8000' + photo;
+    if (photo.startsWith('/assets/')) return photo;
     return photo;
   }
 
@@ -229,7 +266,7 @@ export class MedicalRecordComponent implements OnInit, OnDestroy {
     if (!this.editingPatient || !this.editingPatient.id) return;
     const formData = new FormData();
     for (const key in this.newPatient) {
-      if (this.newPatient[key] !== undefined && this.newPatient[key] !== null) {
+      if (this.newPatient[key] !== undefined && this.newPatient[key] !== null && key !== 'showDetails') {
         formData.append(key, this.newPatient[key]);
       }
     }
