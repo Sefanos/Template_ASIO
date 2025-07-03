@@ -29,7 +29,7 @@ export class NotesComponent implements OnInit {
   ngOnInit(): void {
     this.noteService.getPatientNotes().subscribe({
       next: notes => {
-        this.notes = notes;
+        this.notes = notes.filter(n => !n.is_private);
         this.isLoading = false;
       },
       error: err => {

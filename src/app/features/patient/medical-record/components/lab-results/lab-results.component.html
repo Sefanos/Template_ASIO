@@ -1,5 +1,5 @@
 <!-- Barre de filtres -->
-<div class="filter-bar-modern flex flex-col md:flex-row items-center gap-4 mb-8 p-4 bg-white rounded-xl shadow-md border border-gray-200">
+<!-- <div class="filter-bar-modern flex flex-col md:flex-row items-center gap-4 mb-8 p-4 bg-white rounded-xl shadow-md border border-gray-200">
   <div class="relative flex-grow w-full md:w-auto">
     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
     <input type="text" [(ngModel)]="testNameFilter" (ngModelChange)="onSearchChange()" placeholder="Search by test name..." class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition">
@@ -13,7 +13,7 @@
       <option value="asc">Oldest First</option>
     </select>
   </div>
-</div>
+</div> -->
 
 <!-- États de chargement et d'erreur -->
 <div *ngIf="isLoading" class="flex items-center justify-center p-10 text-center">
@@ -27,9 +27,40 @@
 
 <!-- Conteneur des résultats -->
 <div *ngIf="!isLoading && !errorMessage">
-  <div class="lab-results-grid grid grid-cols-1 gap-8" *ngIf="displayRecords.slice(0, 5).length > 0; else noRecords">
-    <!-- Only show up to 5 records -->
-    <div *ngFor="let record of displayRecords.slice(0, 5); trackBy: trackByRecordId" class="lab-result-card bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transition-all duration-300 hover:shadow-xl">
+  <!-- Contrôles d'affichage -->
+  <div class="view-controls-bar flex items-center justify-between mb-6 p-4 bg-white rounded-xl shadow-md border border-gray-200">
+    <div class="results-count">
+      <p class="text-sm text-gray-600">
+        <span class="font-semibold text-primary">{{ paginatedData?.total || 0 }}</span> lab results found
+      </p>
+    </div>
+    
+    <div class="view-toggle-container flex items-center gap-4">
+      <span class="text-sm font-medium text-gray-700">View:</span>
+      <div class="view-toggle-group flex items-center bg-gray-100 rounded-lg p-1">
+        <button 
+          (click)="setViewMode('grid')"
+          [class]="'view-toggle-btn flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ' + (viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800')"
+          title="Grid View">
+          <i class="fas fa-th-large"></i>
+          <span class="hidden sm:inline">Grid</span>
+        </button>
+        <button 
+          (click)="setViewMode('list')"
+          [class]="'view-toggle-btn flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ' + (viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800')"
+          title="List View">
+          <i class="fas fa-list"></i>
+          <span class="hidden sm:inline">List</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue Grille -->
+  <div *ngIf="viewMode === 'grid'" class="lab-results-grid grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" [ngClass]="displayRecords.length > 0 ? '' : 'hidden'">
+    
+    <!-- CARTE DE RÉSULTAT AMÉLIORÉE -->
+    <div *ngFor="let record of displayRecords; trackBy: trackByRecordId" class="lab-result-card bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transition-all duration-300 hover:shadow-xl">
       
       <!-- Section Docteur -->
       <div class="card-doctor-info p-5 flex items-center gap-4 bg-gray-50 border-b border-gray-200">
@@ -54,7 +85,7 @@
         </h3>
         <p class="text-sm text-gray-500 flex items-center gap-2 mt-1 pl-8">
           <i class="fas fa-calendar-alt"></i>
-          <span>{{ record.result_date | date:'fullDate':'':'en-US' }}</span>
+          <span>{{ record.result_date | date:'fullDate' }}</span>
           <span class="text-gray-300">&bull;</span>
           <i class="fas fa-clinic-medical"></i>
           <span>{{ record.performed_by_lab_name }}</span>
@@ -104,22 +135,192 @@
     </div>
   </div>
 
-  <!-- Pagination -->
-  <div *ngIf="paginatedData && paginatedData.last_page > 1" class="pagination-controls mt-12 flex justify-center">
-    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm bg-white">
-      <a (click)="goToPage(currentPage - 1)" [class.opacity-50]="currentPage === 1" class="pagination-button rounded-l-md" [attr.aria-disabled]="currentPage === 1 ? true : null" tabindex="0">
-        <i class="fas fa-chevron-left"></i>
-      </a>
-      <ng-container *ngFor="let page of getPaginationModel()">
-        <a *ngIf="typeof page === 'number'" (click)="goToPage(page)" class="pagination-button" [class.active]="currentPage === page" [attr.aria-current]="currentPage === page ? 'page' : null" tabindex="0">
-          {{ page }}
-        </a>
-        <span *ngIf="typeof page === 'string'" class="pagination-ellipsis">…</span>
-      </ng-container>
-      <a (click)="goToPage(currentPage + 1)" [class.opacity-50]="currentPage === paginatedData.last_page" class="pagination-button rounded-r-md" [attr.aria-disabled]="currentPage === paginatedData.last_page ? true : null" tabindex="0">
-        <i class="fas fa-chevron-right"></i>
-      </a>
-    </nav>
+  <!-- Vue Liste -->
+  <div *ngIf="viewMode === 'list'" class="lab-results-list space-y-4" [ngClass]="displayRecords.length > 0 ? '' : 'hidden'">
+    <div *ngFor="let record of displayRecords; trackBy: trackByRecordId" class="lab-result-list-item bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
+      
+      <!-- En-tête de l'élément de liste -->
+      <div class="list-item-header p-6 border-b border-gray-100">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          
+          <!-- Informations principales -->
+          <div class="flex items-center gap-4">
+            <div class="flex-shrink-0 h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <i [class]="'fas ' + getTestTypeIcon(record.parsed_structured_results?.test_name) + ' text-primary text-lg'"></i>
+            </div>
+            <div>
+              <h3 class="font-display text-lg font-bold text-gray-800">{{ record.parsed_structured_results?.test_name || 'Lab Test' }}</h3>
+              <div class="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-calendar-alt"></i>
+                  {{ record.result_date | date:'MMM d, y' }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-user-md"></i>
+                  {{ record.reviewed_by.name || 'Unknown Doctor' }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-hospital"></i>
+                  {{ record.performed_by_lab_name }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statut -->
+          <div class="status-tag flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full" [ngClass]="getOverallStatusInfo(record.parsed_structured_results?.overall_status).colorClass.replace('text-', 'bg-').replace('-500', '-100')">
+            <i [class]="getOverallStatusInfo(record.parsed_structured_results?.overall_status).icon" class="text-xs"></i>
+            <span>{{ getOverallStatusInfo(record.parsed_structured_results?.overall_status).text }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corps de l'élément de liste - Résultats -->
+      <div class="list-item-body p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let result of record.parsed_structured_results?.results; let i = index" class="result-component bg-gray-50 rounded-lg p-4">
+            
+            <!-- En-tête du composant -->
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-medium text-gray-800 text-sm">{{ result.component }}</h4>
+              <span class="text-sm font-bold" [ngClass]="getRangeInfo(result.value, result.range).colorClass">
+                {{ result.value }} {{ result.unit }}
+              </span>
+            </div>
+            
+            <!-- Barre de progression compacte -->
+            <div class="range-visualization">
+              <div class="h-1.5 bg-gray-200 rounded-full relative overflow-hidden">
+                <div class="absolute top-0 left-1/4 right-1/4 h-full bg-green-200"></div>
+                <div class="absolute top-0 h-full w-0.5 rounded-full transition-all duration-300"
+                     [style.left.%]="getRangeInfo(result.value, result.range).positionPercent"
+                     [ngClass]="{
+                       'bg-blue-500': getRangeInfo(result.value, result.range).status === 'low',
+                       'bg-green-500': getRangeInfo(result.value, result.range).status === 'normal',
+                       'bg-red-500': getRangeInfo(result.value, result.range).status === 'high'
+                     }">
+                </div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1 text-center">
+                Range: {{ result.range }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interprétation en mode liste -->
+        <div *ngIf="record.interpretation" class="interpretation-section mt-6 p-4 bg-primary/5 rounded-lg border-l-4 border-primary">
+          <h5 class="font-semibold text-primary mb-2 flex items-center gap-2 text-sm">
+            <i class="fas fa-notes-medical"></i>
+            Clinical Interpretation
+          </h5>
+          <p class="text-sm text-gray-700 leading-relaxed">{{ record.interpretation }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gestion du cas "Aucun résultat" -->
+  <div *ngIf="displayRecords.length === 0" class="text-center py-16 bg-white rounded-xl shadow-md border border-gray-200">
+    <i class="fas fa-folder-open text-5xl text-gray-400 mb-4"></i>
+    <h3 class="text-xl font-semibold text-gray-700">No Lab Results Found</h3>
+    <p class="text-gray-500 mt-2">Please try adjusting your search or filter criteria.</p>
+  </div>
+
+  <!-- Pagination Améliorée -->
+  <div *ngIf="paginatedData && paginatedData.last_page > 1" class="pagination-wrapper mt-12">
+    <!-- Informations de pagination -->
+    <div class="pagination-info mb-6 text-center">
+      <p class="text-sm text-gray-600">
+        Showing <span class="font-semibold text-primary">{{ paginatedData.from }}</span> to 
+        <span class="font-semibold text-primary">{{ paginatedData.to }}</span> of 
+        <span class="font-semibold text-primary">{{ paginatedData.total }}</span> results
+      </p>
+    </div>
+    
+    <!-- Contrôles de pagination -->
+    <div class="pagination-controls flex flex-col sm:flex-row items-center justify-between gap-6">
+      <!-- Navigation précédent/suivant simplifiée -->
+      <div class="pagination-nav flex items-center gap-3">
+        <button 
+          (click)="goToPage(currentPage - 1)" 
+          [disabled]="currentPage === 1"
+          class="pagination-nav-btn pagination-prev"
+          [class.disabled]="currentPage === 1">
+          <i class="fas fa-chevron-left"></i>
+          <span class="hidden sm:inline">Previous</span>
+        </button>
+        
+        <span class="pagination-current-info px-4 py-2 bg-primary/10 text-primary font-semibold rounded-lg border border-primary/20">
+          Page {{ currentPage }} of {{ paginatedData.last_page }}
+        </span>
+        
+        <button 
+          (click)="goToPage(currentPage + 1)" 
+          [disabled]="currentPage === paginatedData.last_page"
+          class="pagination-nav-btn pagination-next"
+          [class.disabled]="currentPage === paginatedData.last_page">
+          <span class="hidden sm:inline">Next</span>
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      
+      <!-- Navigation par numéros de page -->
+      <nav class="pagination-numbers">
+        <div class="flex items-center gap-1">
+          <!-- Première page -->
+          <button 
+            *ngIf="currentPage > 3" 
+            (click)="goToPage(1)" 
+            class="pagination-number-btn">
+            1
+          </button>
+          
+          <!-- Ellipsis gauche -->
+          <span *ngIf="currentPage > 4" class="pagination-ellipsis">
+            <i class="fas fa-ellipsis-h text-gray-400"></i>
+          </span>
+          
+          <!-- Pages autour de la page actuelle -->
+          <ng-container *ngFor="let page of getVisiblePages()">
+            <button 
+              (click)="goToPage(page)" 
+              class="pagination-number-btn"
+              [class.active]="currentPage === page">
+              {{ page }}
+            </button>
+          </ng-container>
+          
+          <!-- Ellipsis droite -->
+          <span *ngIf="currentPage < paginatedData.last_page - 3" class="pagination-ellipsis">
+            <i class="fas fa-ellipsis-h text-gray-400"></i>
+          </span>
+          
+          <!-- Dernière page -->
+          <button 
+            *ngIf="currentPage < paginatedData.last_page - 2" 
+            (click)="goToPage(paginatedData.last_page)" 
+            class="pagination-number-btn">
+            {{ paginatedData.last_page }}
+          </button>
+        </div>
+      </nav>
+      
+      <!-- Sélecteur de nombre d'éléments par page -->
+      <div class="pagination-per-page flex items-center gap-2">
+        <label class="text-sm text-gray-600 font-medium">Show:</label>
+        <select 
+          [(ngModel)]="itemsPerPage" 
+          (ngModelChange)="onItemsPerPageChange()" 
+          class="pagination-select">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+        </select>
+        <span class="text-sm text-gray-600">per page</span>
+      </div>
+    </div>
   </div>
 
   <!-- Message "Aucun résultat" -->

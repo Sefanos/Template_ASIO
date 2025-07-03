@@ -33,7 +33,7 @@ export interface LabResult {
   interpretation: string;
   reviewed_by_user_id: number;
   reviewed_by: ReviewedBy;
-  status: 'reviewed' | 'pending_review' | 'requires_action' | string;
+  status: 'completed' | 'pending' | 'cancelled' | 'in_progress',
   created_at: string;
   updated_at: string;
   patient_id: number;

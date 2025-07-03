@@ -8,12 +8,12 @@ import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { LoggingService } from './shared/services/loggin.service'; // FIXED: Updated import path
 
 
-// Import French locale data
+// Import English locale data
 import { registerLocaleData } from '@angular/common';
-import localeFr from '@angular/common/locales/fr';
+import localeEn from '@angular/common/locales/en';
 
-// Register the French locale data.
-registerLocaleData(localeFr);
+// Register the English locale data.
+registerLocaleData(localeEn);
 
 // Custom error handler to log detailed errors
 export class GlobalErrorHandler implements ErrorHandler {
@@ -44,7 +44,7 @@ export const appConfig: ApplicationConfig = {
     LoggingService,
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: { hasBackdrop: true } },
-    { provide: LOCALE_ID, useValue: 'fr-FR' }
+    { provide: LOCALE_ID, useValue: 'en-US' }
   
   ]
 };

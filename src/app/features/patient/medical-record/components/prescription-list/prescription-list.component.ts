@@ -1,9 +1,8 @@
-
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, OnInit } from '@angular/core';
 import { Prescription } from '../../../../../core/patient/domain/models/prescription.model';
 
+export type StatusFilter = 'active' | 'completed' | 'cancelled' | 'all';
 type SortOrder = 'date-desc' | 'date-asc' | 'name-asc';
-type StatusFilter = 'active' | 'completed' | 'cancelled' | 'all';
 
 @Component({
   selector: 'app-prescription-list',
@@ -11,8 +10,10 @@ type StatusFilter = 'active' | 'completed' | 'cancelled' | 'all';
   templateUrl: './prescription-list.component.html',
   styleUrls: ['./prescription-list.component.css']
 })
-export class PrescriptionListComponent implements OnChanges {
+export class PrescriptionListComponent implements OnChanges, OnInit {
   @Input() records: Prescription[] = [];
+  @Input() loading: boolean = false;
+  @Input() initialStatus: StatusFilter = 'active';
   @Output() viewRecordDetails = new EventEmitter<Prescription>();
 
   // Filtres et tri
@@ -29,8 +30,32 @@ export class PrescriptionListComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['records']) {
+      this.currentPage = 1; // Toujours revenir à la première page si records change
       this.updatePipeline();
     }
+    if (changes['initialStatus'] && changes['initialStatus'].currentValue) {
+      this.activeStatusFilter = changes['initialStatus'].currentValue;
+      this.currentPage = 1; // Revenir à la première page
+      this.updatePipeline();
+    }
+  }
+
+  ngOnInit(): void {
+    // Applique le filtre initial même si l'input ne change pas (ex: navigation directe ou retour sur l'onglet)
+    this.activeStatusFilter = this.initialStatus;
+    this.currentPage = 1;
+    this.updatePipeline();
+  }
+
+  setStatusFilter(status: StatusFilter): void {
+    // Permettre aussi 'discontinued' comme équivalent d'annulées
+    if (status === 'cancelled') {
+      this.activeStatusFilter = status;
+    } else {
+      this.activeStatusFilter = status;
+    }
+    this.currentPage = 1; // Revenir à la première page
+    this.updatePipeline();
   }
 
   updatePipeline(): void {
@@ -38,7 +63,11 @@ export class PrescriptionListComponent implements OnChanges {
 
     // 1. Filtrer par statut
     if (this.activeStatusFilter !== 'all') {
-      filtered = filtered.filter(record => record.status === this.activeStatusFilter);
+      if (this.activeStatusFilter === 'cancelled') {
+        filtered = filtered.filter(record => record.status === 'cancelled' || record.status === 'discontinued');
+      } else {
+        filtered = filtered.filter(record => record.status === this.activeStatusFilter);
+      }
     }
 
     // 2. Trier
@@ -62,12 +91,6 @@ export class PrescriptionListComponent implements OnChanges {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.displayedRecords = this.processedRecords.slice(startIndex, endIndex);
-  }
-
-  setStatusFilter(status: StatusFilter): void {
-    this.activeStatusFilter = status;
-    this.currentPage = 1; // Revenir à la première page
-    this.updatePipeline();
   }
 
   setSortOrder(order: SortOrder): void {
@@ -99,7 +122,9 @@ export class PrescriptionListComponent implements OnChanges {
     switch (status.toLowerCase()) {
       case 'active': return 'bg-status-success/10 text-status-success';
       case 'completed': return 'bg-gray-100 text-text-muted';
-      case 'cancelled': return 'bg-status-urgent/10 text-status-urgent';
+      case 'cancelled':
+      case 'discontinued':
+        return 'bg-status-urgent/10 text-status-urgent';
       default: return 'bg-status-info/10 text-status-info';
     }
   }

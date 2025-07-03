@@ -1,6 +1,20 @@
-<div class="profile-security-container font-sans">
-    <div class="security-content bg-card p-card-padding rounded-card shadow-card">
-      <h2 class="text-section-header font-display text-text mb-2">Security</h2>
+<div class="profile-security-modern grid grid-cols-1 lg:grid-cols-12 gap-8 font-sans">
+  <!-- Security Card (Sticky on desktop) -->
+  <aside class="lg:col-span-4 xl:col-span-3 mb-8 lg:mb-0">
+    <div class="profile-card bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center sticky top-28 min-h-[320px]">
+      <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-4xl text-primary mb-3">
+        <i class="fas fa-lock"></i>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900 text-center">Account Security</h2>
+      <span class="text-sm text-gray-500 text-center">Change your password and secure your account</span>
+      <span class="mt-4 inline-block px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Security</span>
+    </div>
+  </aside>
+
+  <!-- Security Form -->
+  <main class="lg:col-span-8 xl:col-span-9">
+    <div class="security-content bg-white p-8 rounded-2xl shadow space-y-8">
+      <h2 class="text-section-header font-display text-text mb-2 flex items-center gap-2"><i class="fas fa-shield-alt"></i> Security</h2>
       <p class="text-body text-text-light mb-6 pb-4 border-b border-border">
         Manage your password and account security settings.
       </p>
@@ -52,7 +66,7 @@
           </div>
         </div>
 
-        <div class="form-actions flex justify-start mt-8 pt-6 border-t border-border">
+        <div class="form-actions flex justify-end mt-8 pt-6 border-t border-border">
           <button type="submit" class="text-sm font-medium py-2.5 px-6 rounded-button bg-primary text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
                   [disabled]="isSubmitting || passwordForm.invalid">
             <span *ngIf="isSubmitting" class="flex items-center justify-center">
@@ -67,4 +81,5 @@
         </div>
       </form>
     </div>
-  </div>
+  </main>
+</div>
