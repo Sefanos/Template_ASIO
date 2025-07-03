@@ -19,6 +19,8 @@ export class AppointmentsComponent {
     // Récupération de la date actuelle
     currentDate = new Date();
 
+
+    
     // Méthode pour formater la date avec suffixe ordinal
     formatDate(date: Date): string {
       const day = date.getDate();

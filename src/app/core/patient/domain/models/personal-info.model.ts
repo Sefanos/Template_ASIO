@@ -6,6 +6,7 @@ export interface PersonalInfo {
   name: string;
   surname: string;
   email: string;
+  phone: string; // 
 
   birthdate: string | null; // Expecting YYYY-MM-DD string
   gender: string | null;

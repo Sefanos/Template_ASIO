@@ -1,55 +1,109 @@
-<div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-  <div class="text-sm text-text-light mb-2 sm:mb-0">
-    Total: <span class="font-semibold text-text">{{ totalPrescriptionCount }}</span> médicament{{ totalPrescriptionCount === 1 ? '' : 's' }} 
-    (<span class="font-semibold text-status-success">{{ activePrescriptionCount }}</span> actif{{ activePrescriptionCount === 1 ? '' : 's' }})
+<!-- Barre de filtres et de tri -->
+<div class="mb-6 p-4 bg-card rounded-xl border border-border flex flex-col md:flex-row justify-between items-center gap-4">
+  <div class="filter-chips flex flex-wrap gap-2">
+    <button (click)="setStatusFilter('active')" [ngClass]="{'active-filter': activeStatusFilter === 'active'}" class="filter-chip">Active</button>
+    <button (click)="setStatusFilter('completed')" [ngClass]="{'active-filter': activeStatusFilter === 'completed'}" class="filter-chip">Completed</button>
+    <button (click)="setStatusFilter('cancelled')" [ngClass]="{'active-filter': activeStatusFilter === 'cancelled'}" class="filter-chip">Cancelled</button>
+    <button (click)="setStatusFilter('all')" [ngClass]="{'active-filter': activeStatusFilter === 'all'}" class="filter-chip">All</button>
   </div>
-  <button 
-    (click)="toggleShowAllPrescriptions()" 
-    class="btn-secondary py-2 px-4 rounded-button text-sm self-end sm:self-auto">
-    {{ showAllPrescriptions ? 'Afficher Actifs Seulement' : 'Afficher Toutes les Prescriptions' }}
-  </button>
+  <div class="sort-control w-full md:w-auto">
+    <select [(ngModel)]="sortOrder" (ngModelChange)="setSortOrder($event)" class="w-full md:w-56 border-border rounded-input shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2.5 bg-background">
+      <option value="date-desc">Sort by: Newest</option>
+      <option value="date-asc">Sort by: Oldest</option>
+      <option value="name-asc">Sort by: Name (A-Z)</option>
+    </select>
+  </div>
 </div>
 
-<div *ngIf="displayedRecords.length > 0; else noRecords" class="records-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  <!-- Utilisation de trackBy pour améliorer les performances de *ngFor -->
-  <div class="record-card bg-card rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-150 flex flex-col overflow-hidden" 
-       *ngFor="let record of displayedRecords; trackBy: trackByRecordId">
-    <div class="card-header p-card-padding border-b border-border flex justify-between items-start">
-      <h4 class="record-title text-card-title font-display text-text">{{ record.title }}</h4>
-      <div class="flex items-center">
-        <!-- Utilisation de tagText et tagClass fournis par le backend -->
-        <span *ngIf="record.tagText" 
-              class="text-xs font-semibold px-2 py-1 rounded-full capitalize"
-              [ngClass]="record.tagClass"> 
-          {{ record.tagText }}
-        </span>
+<!-- Skeleton loaders pendant le chargement -->
+<ng-container *ngIf="loading; else prescriptionsContent">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let i of [1,2,3]" class="record-card bg-card rounded-2xl shadow-card border border-border overflow-hidden flex flex-col animate-pulse">
+      <div class="p-5 border-b border-border">
+        <div class="h-5 w-32 bg-gray-200 rounded mb-2"></div>
+        <div class="h-4 w-20 bg-gray-100 rounded"></div>
+      </div>
+      <div class="p-5 flex-grow space-y-4 text-sm">
+        <div class="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+        <div class="h-3 w-20 bg-gray-100 rounded mb-2"></div>
+        <div class="h-3 w-16 bg-gray-100 rounded mb-2"></div>
+        <div class="h-3 w-32 bg-gray-100 rounded"></div>
+      </div>
+      <div class="p-4 border-t border-border bg-background mt-auto flex gap-2">
+        <div class="h-8 w-24 bg-gray-200 rounded"></div>
       </div>
     </div>
-    <div class="p-card-padding flex-grow">
-      <p class="record-date text-xs text-text-muted mb-2 flex items-center">
-        <i class="far fa-calendar-alt mr-2"></i> 
-        {{ record.recordDate | date:'mediumDate' }} <!-- recordDate est startDate -->
-      </p>
-      <p class="record-doctor text-sm text-text-light mb-2 flex items-center" *ngIf="record.doctor">
-        <i class="fas fa-user-md mr-2 text-primary"></i> 
-        {{ record.doctor }}
-      </p>
-      <p class="record-summary text-body text-text-light leading-comfortable line-clamp-3">{{ record.summary }}</p>
+  </div>
+</ng-container>
+
+<ng-template #prescriptionsContent>
+  <div *ngIf="displayedRecords.length > 0; else noRecords" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Carte de prescription améliorée -->
+    <div class="record-card bg-card rounded-2xl shadow-card border border-border overflow-hidden flex flex-col transition-all duration-300 hover:shadow-card-hover" 
+         *ngFor="let record of displayedRecords; trackBy: trackByRecordId">
+      
+      <div class="p-5 border-b border-border">
+        <div class="flex justify-between items-start gap-2">
+          <h4 class="text-card-title font-display font-bold text-text">{{ record.medication_name }}</h4>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full capitalize" [ngClass]="getStatusClass(record.status)"> 
+            {{ record.status }}
+          </span>
+        </div>
+        <p class="text-sm text-text-light flex items-center gap-2 mt-2">
+          <i class="fas fa-user-md text-primary/80"></i>
+          <span>{{ record.doctor.name || '—' }}</span>
+        </p>
+      </div>
+
+      <div class="p-5 flex-grow space-y-4 text-sm">
+        <div class="flex items-center text-text-light">
+          <i class="fas fa-pills w-5 text-center mr-2 text-accent"></i>
+          <span class="font-medium text-text">{{ record.dosage }}</span>
+          <span class="mx-2">&bull;</span>
+          <span>{{ record.frequency }}</span>
+        </div>
+        <div class="flex items-center text-text-light">
+          <i class="far fa-calendar-alt w-5 text-center mr-2 text-gray-400"></i>
+          <span>{{ record.start_date | date:'MMM d, y':'en-US' }} - {{ record.end_date ? (record.end_date | date:'MMM d, y':'en-US') : 'Ongoing' }}</span>
+        </div>
+        <div class="flex items-center text-text-light">
+          <i class="fas fa-sync-alt w-5 text-center mr-2 text-gray-400"></i>
+          <span>Refills: <span class="font-medium text-text">{{ record.refills_allowed }}</span></span>
+        </div>
+        <div class="flex items-start text-text-light pt-2">
+          <i class="fas fa-info-circle w-5 text-center mr-2 text-gray-400 mt-1"></i>
+          <p class="flex-1"><span class="font-medium text-text">Instructions:</span> {{ record.instructions | slice:0:80 }}{{ record.instructions.length > 80 ? '...' : '' }}</p>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-border bg-background mt-auto flex gap-2">
+        <button class="flex-1 btn-secondary" (click)="onViewDetails(record)">
+            Details
+        </button>
+      </div>
     </div>
-    <div class="p-card-padding border-t border-border mt-auto">
-      <button class="btn-view-details w-full bg-accent hover:bg-accent-dark text-white font-medium py-2.5 px-4 rounded-button transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-accent/50" (click)="onViewDetails(record)">
-          Voir Détails
-      </button>
-    </div>
+  </div>
+</ng-template>
+
+<!-- Contrôles de Pagination -->
+<div *ngIf="getTotalPages() > 1 && !loading" class="flex justify-between items-center mt-8">
+  <span class="text-sm text-text-muted">
+    Page {{ currentPage }} of {{ getTotalPages() }}
+  </span>
+  <div class="flex items-center gap-2">
+    <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+      Previous
+    </button>
+    <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === getTotalPages()" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+      Next
+    </button>
   </div>
 </div>
 
 <ng-template #noRecords>
-  <div class="no-records-message flex flex-col items-center justify-center text-center py-16 bg-card rounded-card shadow-card">
+  <div class="text-center py-16 bg-card rounded-xl shadow-card border border-border">
     <i class="fas fa-folder-open text-5xl text-text-muted mb-4"></i>
-    <p class="text-section-header text-text-light">
-      {{ showAllPrescriptions ? 'Aucune prescription trouvée.' : 'Aucune prescription active trouvée.' }}
-    </p>
-    <p class="text-body text-text-muted">Essayez d'ajuster vos filtres ou cliquez sur "Afficher Toutes les Prescriptions".</p>
+    <h3 class="text-xl font-semibold text-text">No prescriptions found</h3>
+    <p class="text-text-light mt-2">Try selecting another filter to see archived prescriptions.</p>
   </div>
 </ng-template>

@@ -36,14 +36,10 @@ ngOnInit(): void {
 
   loadAllBillsForSummary(): void {
     this.isLoadingSummary = true;
-    // Pour les stats, on récupère toutes les factures du patient.
-    // Le filtrage par 'paid' n'est plus appliqué ici car l'API /patient/bills
-    // ne semble plus supporter le filtre de statut.
-    // Si un endpoint dédié aux statistiques existe ou si le filtrage est possible, ajustez ici.
-    this.billService.getBills({ per_page: 1000 }) // Récupère un grand nombre de factures
+    this.billService.getBills({ per_page: 1000 })
       .pipe(
         takeUntil(this.destroy$),
-        map((response: FrontendPaginatedResponse<Bill>) => response.data) // Extrait les données de la réponse paginée
+        map((response: FrontendPaginatedResponse<Bill>) => response.data)
       )
       .subscribe({
         next: (bills: Bill[]) => {
@@ -52,25 +48,18 @@ ngOnInit(): void {
           this.isLoadingSummary = false;
           this.cdr.detectChanges();
         },
-
         error: (err) => {
-          console.error("Erreur lors du chargement des factures pour le résumé:", err);
+          console.error("Error loading bills for summary:", err);
           this.isLoadingSummary = false;
           this.setDefaultSummaryCardsOnError();
           this.cdr.detectChanges();
         }
       });
   }
-   calculateSummaryCards(): void {
-    // Le résumé est maintenant calculé sur toutes les factures récupérées,
-    // car le statut 'paid' n'est plus un critère de filtrage direct à ce niveau.
-    // Vous pourriez vouloir filtrer `this.allBillsForSummary` ici si le statut
-    // est disponible dans l'objet Bill (actuellement retiré du modèle).
+  calculateSummaryCards(): void {
     const billsToSummarize = this.allBillsForSummary;
-
     const totalCount = billsToSummarize.length;
     const totalAmount = billsToSummarize.reduce((sum, bill) => sum + bill.amount, 0);
-
     let latestBillDate = 'N/A';
     if (billsToSummarize.length > 0) {
       const sortedBills = [...billsToSummarize].sort((a, b) => {
@@ -79,22 +68,20 @@ ngOnInit(): void {
         return dateB - dateA;
       });
       if (sortedBills[0]?.issue_date) {
-        latestBillDate = new Date(sortedBills[0].issue_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        latestBillDate = new Date(sortedBills[0].issue_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
       }
     }
-this.summaryCards = [
-      { title: 'Total des factures', value: totalCount, icon: 'receipt_long', colorClass: 'bg-blue-100 text-blue-600' },
-      { title: 'Montant total facturé', value: `${totalAmount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}`, icon: 'payments', colorClass: 'bg-green-100 text-green-600' },
-      { title: 'Dernière facture émise', value: latestBillDate, icon: 'event_note', colorClass: 'bg-orange-100 text-orange-600' },
+    this.summaryCards = [
+      { title: 'Total bills', value: totalCount, icon: 'receipt_long', colorClass: 'bg-blue-100 text-blue-600' },
+      { title: 'Total billed amount', value: `${totalAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`, icon: 'payments', colorClass: 'bg-green-100 text-green-600' },
+      { title: 'Last bill issued', value: latestBillDate, icon: 'event_note', colorClass: 'bg-orange-100 text-orange-600' },
     ];
   }
-
-
- setDefaultSummaryCardsOnError(): void {
+  setDefaultSummaryCardsOnError(): void {
     this.summaryCards = [
-      { title: 'Total des factures', value: 'N/A', icon: 'receipt_long', colorClass: 'bg-blue-100 text-blue-600' },
-      { title: 'Montant total facturé', value: 'N/A', icon: 'payments', colorClass: 'bg-green-100 text-green-600' },
-      { title: 'Dernière facture émise', value: 'N/A', icon: 'event_note', colorClass: 'bg-orange-100 text-orange-600' },
+      { title: 'Total bills', value: 'N/A', icon: 'receipt_long', colorClass: 'bg-blue-100 text-blue-600' },
+      { title: 'Total billed amount', value: 'N/A', icon: 'payments', colorClass: 'bg-green-100 text-green-600' },
+      { title: 'Last bill issued', value: 'N/A', icon: 'event_note', colorClass: 'bg-orange-100 text-orange-600' },
     ];
   }
 

@@ -1,0 +1,61 @@
+<div class="notes-section bg-card rounded-xl shadow-card p-6">
+  <h2 class="text-lg font-semibold mb-4 flex items-center">
+    <i class="fas fa-clipboard-list mr-2 text-primary"></i>
+    Doctor Notes
+  </h2>
+
+  <div *ngIf="error" class="text-status-urgent bg-status-urgent/10 border border-status-urgent rounded p-4 mb-4">
+    {{ error }}
+  </div>
+
+  <!-- Skeleton loaders pendant le chargement -->
+  <ng-container *ngIf="isLoading; else notesContent">
+    <div class="space-y-6">
+      <div *ngFor="let i of [1,2,3,4]" class="note-card bg-white rounded-lg shadow p-4 border border-border animate-pulse">
+        <div class="flex items-center mb-2">
+          <div class="h-5 w-5 bg-gray-200 rounded-full mr-2"></div>
+          <div class="h-4 w-32 bg-gray-200 rounded"></div>
+          <div class="ml-2 h-4 w-12 bg-gray-100 rounded"></div>
+        </div>
+        <div class="flex mb-2 gap-4">
+          <div class="h-3 w-20 bg-gray-100 rounded"></div>
+          <div class="h-3 w-20 bg-gray-100 rounded"></div>
+          <div class="h-3 w-16 bg-gray-100 rounded"></div>
+        </div>
+        <div class="h-4 w-full bg-gray-200 rounded mb-1"></div>
+        <div class="h-4 w-3/4 bg-gray-100 rounded"></div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #notesContent>
+    <div *ngIf="notes.length === 0" class="text-center text-text-light py-8">
+      <i class="fas fa-info-circle mr-2"></i> No notes found.
+    </div>
+    <div *ngIf="notes.length > 0" class="space-y-6">
+      <div *ngFor="let note of paginatedNotes" class="note-card bg-white rounded-lg shadow p-4 border border-border">
+        <div class="flex items-center mb-2">
+          <i [class]="getNoteTypeIcon(note.note_type) + ' text-xl mr-2'"></i>
+          <span class="font-bold text-base">{{ note.title }}</span>
+          <span *ngIf="note.is_private" class="ml-2 px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-600">
+            <i class="fas fa-lock mr-1"></i> Private
+          </span>
+        </div>
+        <div class="text-sm text-text-light mb-2">
+          <span class="mr-4">
+            <i class="fas fa-user-md mr-1"></i> {{ note.doctor.name }}
+          </span>
+          <span class="mr-4">
+            <i class="fas fa-calendar-day mr-1"></i> {{ note.created_at | date:'dd/MM/yyyy' }}
+          </span>
+          <span>
+            <i class="fas fa-clock mr-1"></i> {{ note.created_at | date:'HH:mm' }}
+          </span>
+        </div>
+        <div class="text-text">
+          {{ note.content }}
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

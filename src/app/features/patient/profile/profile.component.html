@@ -1,47 +1,41 @@
- 
-
-<div class="profile-container max-w-6xl mx-auto p-4 md:p-6 lg:p-8 font-sans text-text">
-  <div class="profile-header mb-card-margin p-card-padding bg-card rounded-card shadow-card">
-    <h1 class="text-dashboard-title font-display text-text mb-1">Mon Profil</h1>
-    <p class="text-body text-text-light mb-6">Gérer vos informations personnelles et paramètres de compte.</p>
-    
-    <div class="profile-navigation flex space-x-1 border-b border-border">
-      <a 
-        [routerLink]="['view']" 
-        routerLinkActive="active-link" 
-        #rlaView="routerLinkActive"
-        [ngClass]="{'text-primary border-primary': rlaView.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaView.isActive}"
-        class="nav-link py-3 px-4 md:px-5 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150 ease-in-out"
-      >
-        Voir le profil
-      </a>
-      <a 
-        [routerLink]="['edit']" 
-        routerLinkActive="active-link"
-        #rlaEdit="routerLinkActive"
-        [ngClass]="{'text-primary border-primary': rlaEdit.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaEdit.isActive}"
-        class="nav-link py-3 px-4 md:px-5 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150 ease-in-out"
-      >
-        Modifier le profil
-      </a>
-
-      <a 
-      [routerLink]="['security']" 
-      routerLinkActive="active-link"
-      #rlaSecurity="routerLinkActive"
-      [ngClass]="{'text-primary border-primary': rlaSecurity.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaSecurity.isActive}"
-      class="nav-link py-3 px-4 md:px-5 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150 ease-in-out"
-    >
-      Sécurité
-    </a>
-
-
+<div class="profile-page max-w-7xl mx-auto py-8 px-4 md:px-8 font-sans text-text">
+  <!-- Sticky Header Navigation -->
+  <div class="profile-header sticky top-0 z-20 bg-background/80 backdrop-blur-md mb-8 rounded-b-2xl shadow-md">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-4 md:p-6">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl text-primary font-bold">
+          <i class="fas fa-user"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-display font-bold text-text mb-0.5">My Profile</h1>
+          <span class="text-xs text-text-light">Manage your personal information and account security</span>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-2 md:mt-0">
+        <a [routerLink]="['view']" routerLinkActive="active-link" #rlaView="routerLinkActive"
+           [ngClass]="{'text-primary border-primary': rlaView.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaView.isActive}"
+           class="nav-link py-2 px-4 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150"
+          >
+          Overview
+        </a>
+        <a [routerLink]="['edit']" routerLinkActive="active-link" #rlaEdit="routerLinkActive"
+           [ngClass]="{'text-primary border-primary': rlaEdit.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaEdit.isActive}"
+           class="nav-link py-2 px-4 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150"
+          >
+          Edit
+        </a>
+        <a [routerLink]="['security']" routerLinkActive="active-link" #rlaSecurity="routerLinkActive"
+           [ngClass]="{'text-primary border-primary': rlaSecurity.isActive, 'text-text-muted border-transparent hover:text-primary hover:border-primary/30': !rlaSecurity.isActive}"
+           class="nav-link py-2 px-4 text-sm font-medium border-b-2 focus:outline-none focus:bg-hover transition-colors duration-150"
+          >
+          Security
+        </a>
+      </div>
     </div>
   </div>
 
-
-
-  <div class="mt-card-margin">
+  <!-- Main Content: router-outlet only, child handles data -->
+  <div class="min-h-[60vh]">
     <router-outlet></router-outlet>
   </div>
 </div>
