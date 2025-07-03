@@ -3,11 +3,12 @@
 }
 
 .modal-container {
-  @apply flex items-center justify-center min-h-screen p-4;
+  @apply flex items-start justify-center min-h-screen p-4 pt-8;
 }
 
 .modal-content {
-  @apply bg-white rounded-lg shadow-xl max-w-2xl w-full;
+  @apply bg-white rounded-lg shadow-xl max-w-4xl w-full flex flex-col;
+  max-height: 85vh;
 }
 
 .modal-header {
@@ -16,6 +17,56 @@
 
 .close-button {
   @apply text-gray-400 hover:text-gray-600 transition-colors;
+}
+
+/* Custom scrollbar for webkit browsers */
+.modal-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E0 #F7FAFC;
+  position: relative;
+}
+
+.modal-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scroll-area::-webkit-scrollbar-track {
+  background: #F7FAFC;
+  border-radius: 4px;
+}
+
+.modal-scroll-area::-webkit-scrollbar-thumb {
+  background: #CBD5E0;
+  border-radius: 4px;
+}
+
+.modal-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #A0AEC0;
+}
+
+/* Subtle shadow to indicate scrollable content */
+.modal-scroll-area::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.modal-scroll-area::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.1), transparent);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .modal-actions {

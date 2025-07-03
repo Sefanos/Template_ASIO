@@ -1,0 +1,45 @@
+/* Alert Form Component Styles */
+
+.alert-form {
+  @apply bg-white;
+}
+
+.form-field {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-input.error {
+  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+}
+
+.form-error {
+  @apply mt-1 text-sm text-red-600;
+}
+
+.form-actions {
+  @apply flex justify-end space-x-3 pt-4 border-t border-gray-200;
+}
+
+.btn {
+  @apply px-4 py-2 text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply text-white bg-blue-600 border border-transparent hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+}
+
+.loading-spinner {
+  @apply animate-spin -ml-1 mr-2 h-4 w-4 text-white;
+}

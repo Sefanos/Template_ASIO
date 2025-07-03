@@ -14,10 +14,12 @@ import { TabTimelineComponent } from '../tab-timeline/tab-timeline.component';
 import { TabNotesComponent } from '../tab-notes/tab-notes.component';
 import { TabPrescriptionsComponent } from '../tab-prescriptions/tab-prescriptions.component';
 import { PatientNotFoundComponent } from '../patient-not-found/patient-not-found.component';
+import { AlertModalComponent } from '../alert-modal/alert-modal.component';
+import { Alert } from '../../../../models/alert.model';
+import { AlertService } from '../../../../services/doc-services/alert.service';
 
 @Component({
   selector: 'app-patient-record',
-  standalone: true,
   imports: [
     CommonModule,
     PatientRecordHeaderComponent,
@@ -30,7 +32,8 @@ import { PatientNotFoundComponent } from '../patient-not-found/patient-not-found
     TabTimelineComponent,
     TabNotesComponent,
     TabPrescriptionsComponent,
-    PatientNotFoundComponent
+    PatientNotFoundComponent,
+    AlertModalComponent
   ],
   templateUrl: './patient-record.component.html',
 })
@@ -45,11 +48,12 @@ export class PatientRecordComponent implements OnInit {
   activeTab: string = 'summary';
   showPrintOptions: boolean = false;
   showQuickNote: boolean = false;
+  showAlertsModal: boolean = false;
   quickNote: string = '';
 
   // Patient data
   allergies: string[] = [];
-  alerts: any[] = [];
+  alerts: Alert[] = [];
   vitals: any[] = [];
   medications: any[] = [];
   conditions: any[] = [];
@@ -60,7 +64,8 @@ export class PatientRecordComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private alertService: AlertService
   ) {}
 
   ngOnInit(): void {
@@ -83,10 +88,9 @@ export class PatientRecordComponent implements OnInit {
         };
 
         this.allergies = ['Penicillin', 'Peanuts'];
-        this.alerts = [
-          { type: 'warning', message: 'Patient has missed last 2 appointments' },
-          { type: 'info', message: 'Pre-op clearance needed for scheduled surgery' }
-        ];
+        
+        // Load alerts from API
+        this.loadPatientAlerts();
 
         // Populate other data as needed
         this.loading = false;
@@ -96,6 +100,29 @@ export class PatientRecordComponent implements OnInit {
       }
     }, 1000);
   }
+
+  loadPatientAlerts(): void {
+    console.log('Loading patient alerts for patient ID:', this.patientId);
+    this.alertService.getPatientAlerts(this.patientId).subscribe({
+      next: (alerts) => {
+        console.log('Received alerts from API:', alerts);
+        console.log('Alert count breakdown:', {
+          total: alerts.length,
+          active: alerts.filter(a => a.isActive).length,
+          inactive: alerts.filter(a => !a.isActive).length
+        });
+        this.alerts = alerts;
+        console.log('Updated this.alerts to:', this.alerts);
+        console.log('Current modal alerts binding will receive:', this.alerts);
+      },
+      error: (error) => {
+        console.error('Error loading patient alerts:', error);
+        // Keep existing alerts or set empty array
+        this.alerts = [];
+      }
+    });
+  }
+
   // Navigation and state management
   goBackToPatientList(): void {
     this.router.navigate(['/doctor/patients']);
@@ -110,6 +137,29 @@ export class PatientRecordComponent implements OnInit {
     if (!this.showQuickNote) {
       this.quickNote = '';
     }
+  }
+
+  toggleAlertsModal(): void {
+    this.showAlertsModal = !this.showAlertsModal;
+    // When opening the modal, refresh alerts to ensure latest data
+    if (this.showAlertsModal) {
+      this.loadPatientAlerts();
+    }
+  }
+
+  onAlertsUpdated(updatedAlerts: Alert[]): void {
+    console.log('onAlertsUpdated called with:', updatedAlerts);
+    console.log('Current alerts before refresh:', this.alerts);
+    
+    // First, immediately use the updated alerts from the modal
+    this.alerts = [...updatedAlerts];
+    console.log('Updated this.alerts immediately to:', this.alerts);
+    
+    // Then, also refresh from API after a short delay to ensure backend is up-to-date
+    setTimeout(() => {
+      console.log('Refreshing alerts from API after delay...');
+      this.loadPatientAlerts();
+    }, 100);
   }
 
   onTabChange(tab: string): void {
@@ -131,6 +181,7 @@ export class PatientRecordComponent implements OnInit {
     this.showPrintOptions = false;
     // In a real app, this would trigger printing of the selected section
   }
+
   // Quick actions
   onNewPrescription(): void {
     this.router.navigate(['/doctor/prescriptions/new'], { queryParams: { patientId: this.patientId } });

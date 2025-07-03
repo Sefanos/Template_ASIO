@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router'; // <-- Add this
 
 // Updated interface to match real API data structure
 interface ApiMedicalHistory {
@@ -30,8 +31,12 @@ interface Condition {
   templateUrl: './medical-history-card.component.html',
 })
 export class MedicalHistoryCardComponent {
-  @Input() conditions: any[] = []; // Accept both old and new format
-  
+  @Input() conditions: any[] = [];
+  @Input() patientId!: string | number;
+  @Output() navigateToTab = new EventEmitter<string>(); // <-- Add this
+
+  constructor(private router: Router) {}
+
   showAll: boolean = false;
   
   get medicalHistoryData(): any {
@@ -42,54 +47,38 @@ export class MedicalHistoryCardComponent {
     return null;
   }
   
-  get parsedConditions(): string[] {
-    const data = this.medicalHistoryData;
-    if (data && data.conditions) {
+  getParsedField(field: any): string[] {
+    if (Array.isArray(field)) {
+      return field;
+    }
+    if (typeof field === 'string') {
       try {
-        return JSON.parse(data.conditions);
-      } catch (e) {
+        return JSON.parse(field);
+      } catch {
         return [];
       }
     }
     return [];
+  }
+  
+  get parsedConditions(): string[] {
+    const data = this.medicalHistoryData;
+    return data ? this.getParsedField(data.conditions) : [];
   }
   
   get parsedAllergies(): string[] {
     const data = this.medicalHistoryData;
-    if (data && data.allergies) {
-      try {
-        return JSON.parse(data.allergies);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
+    return data ? this.getParsedField(data.allergies) : [];
   }
   
   get parsedSurgeries(): string[] {
     const data = this.medicalHistoryData;
-    if (data && data.surgeries) {
-      try {
-        const surgeries = JSON.parse(data.surgeries);
-        return Array.isArray(surgeries) ? surgeries : [];
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
+    return data ? this.getParsedField(data.surgeries) : [];
   }
   
   get parsedChronicDiseases(): string[] {
     const data = this.medicalHistoryData;
-    if (data && data.chronicDiseases) {
-      try {
-        const diseases = JSON.parse(data.chronicDiseases);
-        return Array.isArray(diseases) ? diseases : [];
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
+    return data ? this.getParsedField(data.chronicDiseases) : [];
   }
   
   get displayConditions(): string[] {
@@ -150,5 +139,9 @@ export class MedicalHistoryCardComponent {
   
   toggleShowAll(): void {
     this.showAll = !this.showAll;
+  }
+
+  goToMedicalHistoryTab(): void {
+    this.navigateToTab.emit('history');
   }
 }

@@ -16,6 +16,7 @@
       (goBack)="goBackToPatientList()"
       (toggleQuickNote)="toggleQuickNote()"
       (togglePrintOptions)="togglePrintOptions()"
+      (manageAlerts)="toggleAlertsModal()"
     ></app-patient-record-header>
     
     <!-- Print Options Dropdown -->
@@ -35,6 +36,7 @@
     
     <!-- Patient Alerts -->
     <app-patient-alerts
+      [patientId]="patientId"
       [allergies]="allergies"
       [alerts]="alerts"
     ></app-patient-alerts>
@@ -94,5 +96,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Patient Alerts Modal -->
+    <app-alert-modal
+      [isOpen]="showAlertsModal"
+      [patientId]="patientId"
+      [alerts]="alerts"
+      (close)="toggleAlertsModal()"
+      (alertsUpdated)="onAlertsUpdated($event)"
+    ></app-alert-modal>
   </div>
 </div>

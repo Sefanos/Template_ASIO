@@ -55,12 +55,27 @@
       (printSection)="printSection($event)"
     ></app-print-options>
     
-    <!-- Patient Alerts -->
-    <app-patient-alerts
-      *ngIf="patient"
-      [allergies]="patient.allergies || []"
-      [alerts]="patient.alerts || []"
-    ></app-patient-alerts>    <!-- Patient Info Header - Enhanced with real medical statistics -->
+    <!-- Patient Alerts Section with Manage Button -->
+    <div *ngIf="patient" class="mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Patient Alerts</h2>
+        <button
+          (click)="toggleAlertsModal()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 20H3a2 2 0 01-1.7-3l9-16a2 2 0 013.4 0l9 16a2 2 0 01-1.7 3z"></path>
+          </svg>
+          Manage Alerts
+        </button>
+      </div>
+      
+      <app-patient-alerts
+        [patientId]="patientId"
+        [allergies]="patient.allergies || []"
+        [alerts]="patient.alerts || []"
+      ></app-patient-alerts>
+    </div>    <!-- Patient Info Header - Enhanced with real medical statistics -->
     <app-patient-info-header
       *ngIf="patient"
       [name]="patient.name || 'Unknown Patient'"
@@ -153,6 +168,12 @@
       ></app-tab-imaging>
 
       
+      <!-- Billing Tab -->
+      <app-tab-billing
+        *ngSwitchCase="'billing'"
+        [patientId]="patientId || 0"
+      ></app-tab-billing>
+      
       <!-- Other Tabs -->
       <div *ngSwitchDefault class="bg-white rounded-card shadow-card p-card-padding">
         <div class="text-center py-8 text-text-light">
@@ -162,3 +183,11 @@
     </div>
   </div>
 </div>
+
+<!-- Alert Management Modal -->
+<app-alert-modal
+  [isOpen]="showAlertsModal"
+  [patientId]="patientId"
+  (close)="closeAlertsModal()"
+  (alertsUpdated)="onAlertsUpdated($event)">
+</app-alert-modal>
