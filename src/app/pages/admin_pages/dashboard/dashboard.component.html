@@ -2,8 +2,16 @@
 <div class="max-w-full px-2 sm:px-4 lg:px-6">
   <app-dashboard-header [title]="'ADMIN DASHBOARD'" [date]="currentDate"></app-dashboard-header>
 
-  <!-- User Activity Section -->
-  <app-user-activity class="mb-4 sm:mb-6 lg:mb-8"></app-user-activity>
+  <!-- User Activity and Registration Section (Side by Side) -->
+  <section class="mb-4 sm:mb-6 lg:mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+      <!-- User Activity Timeline (Left) -->
+      <app-user-activity></app-user-activity>
+      
+      <!-- New User Registrations (Right) -->
+      <app-user-registration-trend></app-user-registration-trend>
+    </div>
+  </section>
 
   <!-- User Status & Roles Overview Section -->
   <section class="mb-4 sm:mb-6 lg:mb-8">
@@ -15,7 +23,4 @@
 
   <!-- Module Usage Heatmap Section -->
   <app-module-usage-heatmap class="mb-4 sm:mb-6 lg:mb-8"></app-module-usage-heatmap>
-
-  <!-- User Registration Trend Section -->
-  <app-user-registration-trend class="mb-4 sm:mb-6 lg:mb-8"></app-user-registration-trend>
 </div>

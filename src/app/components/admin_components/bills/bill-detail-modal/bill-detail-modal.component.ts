@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { Bill } from '../../../../models/bill-management.model';
 import { BillManagementService } from '../../../../services/bill-management.service';
 
@@ -107,6 +107,15 @@ export class BillDetailModalComponent implements OnChanges, OnDestroy {
     return this.billDetails.doctor.phone || null;
   }
 
+  getDoctorSpecialty(): string | null {
+    if (!this.billDetails?.doctor) return null;
+    
+    // Check both possible locations for specialty based on your API
+    return this.billDetails.doctor.specialty || 
+           (this.billDetails.doctor.doctor && this.billDetails.doctor.doctor.specialty) || 
+           null;
+  }
+
   formatDate(dateString: string): string {
     try {
       const date = new Date(dateString);
@@ -126,6 +135,19 @@ export class BillDetailModalComponent implements OnChanges, OnDestroy {
       style: 'currency',
       currency: 'USD'
     }).format(numericAmount || 0);
+  }
+
+  formatPaymentMethod(method: string): string {
+    if (!method) return 'N/A';
+    
+    const methodMap: { [key: string]: string } = {
+      'cash': 'Cash',
+      'credit_card': 'Credit Card',
+      'insurance': 'Insurance',
+      'bank_transfer': 'Bank Transfer'
+    };
+    
+    return methodMap[method.toLowerCase()] || method.replace('_', ' ');
   }
 
   getServiceTypeDisplayName(serviceType: string): string {
@@ -173,20 +195,59 @@ export class BillDetailModalComponent implements OnChanges, OnDestroy {
   downloadPdf(): void {
     if (!this.billDetails) return;
 
+    this.isLoading = true; // Show loading state
     this.billService.downloadBillPdf(this.billDetails.id).pipe(
-      takeUntil(this.destroy$)
+      takeUntil(this.destroy$),
+      finalize(() => this.isLoading = false) // Ensure loading state is cleared
     ).subscribe({
       next: (blob: Blob) => {
+        // Check if we got a valid PDF (content type check)
+        if (blob.type !== 'application/pdf') {
+          console.error('Invalid content type received:', blob.type);
+          alert('Server returned an invalid PDF format');
+          return;
+        }
+
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${this.billDetails!.bill_number}.pdf`;
+        link.download = `Bill-${this.billDetails!.bill_number}.pdf`;
         link.click();
         window.URL.revokeObjectURL(url);
       },
       error: (error: any) => {
         console.error('Error downloading PDF:', error);
         alert('Failed to download PDF: ' + (error?.message || 'Unknown error'));
+      }
+    });
+  }
+
+  downloadAdminPdf(): void {
+    if (!this.billDetails) return;
+
+    this.isLoading = true; // Show loading state
+    this.billService.downloadAdminBillPdf(this.billDetails.id).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.isLoading = false) // Ensure loading state is cleared
+    ).subscribe({
+      next: (blob: Blob) => {
+        // Check if we got a valid PDF (content type check)
+        if (blob.type !== 'application/pdf') {
+          console.error('Invalid content type received:', blob.type);
+          alert('Server returned an invalid PDF format');
+          return;
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Admin-Bill-${this.billDetails!.bill_number}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error: any) => {
+        console.error('Error downloading admin PDF:', error);
+        alert('Failed to download admin PDF: ' + (error?.message || 'Unknown error'));
       }
     });
   }

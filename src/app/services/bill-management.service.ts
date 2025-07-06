@@ -200,6 +200,16 @@ export class BillManagementService {
   }
 
   /**
+   * Download admin version of bill PDF.
+   * Uses the separate admin endpoint for PDF generation.
+   */
+  downloadAdminBillPdf(billId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${billId}/admin-pdf`, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
    * Get a list of doctors.
    */
   getDoctors(): Observable<Doctor[]> {
