@@ -11,7 +11,7 @@
           [(ngModel)]="searchQuery" 
           (input)="onSearchInput($event)"
           class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="Search by name, email or ID"
+          placeholder="Search by name, email, role"
         >
         <button 
           (click)="onSearch()"
@@ -41,9 +41,13 @@
         </label>
         <button 
           (click)="showMoreFilters()" 
-          class="text-primary hover:text-primary-dark transition-colors"
+          class="text-primary hover:text-primary-dark transition-colors flex items-center"
         >
           More Filters
+          <span *ngIf="selectedRoleId !== null" 
+                class="ml-2 bg-primary text-white text-xs rounded-full px-2 py-0.5">
+            1
+          </span>
         </button>
       </div>
     </div>
@@ -219,6 +223,40 @@
           class="px-4 py-2 bg-status-urgent text-white rounded-button hover:bg-red-700"
         >
           Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- More Filters Dialog -->
+  <div *ngIf="showFiltersDialog" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div class="bg-white rounded-card shadow-card p-8 max-w-md w-full">
+      <h3 class="text-lg font-medium mb-4">Advanced Filters</h3>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-text-dark mb-2">Role</label>
+        <select 
+          [(ngModel)]="selectedRoleId"
+          class="w-full border border-border rounded-input py-2 px-3 text-text focus:outline-none focus:ring-2 focus:ring-primary">
+          <option [ngValue]="null">All Roles</option>
+          <option *ngFor="let role of availableRoles" [ngValue]="role.id">
+            {{ role.name }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="flex justify-end space-x-3">
+        <button 
+          (click)="closeFiltersDialog()" 
+          class="px-4 py-2 border border-border rounded-button text-text hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <button 
+          (click)="applyFilters()" 
+          class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark"
+        >
+          Apply Filters
         </button>
       </div>
     </div>
