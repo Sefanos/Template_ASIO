@@ -100,8 +100,13 @@ export class LabResultsCardComponent implements OnChanges {
     return result.result_date || result.created_at || '';
   }
   
-  getOrderedBy(result: LabResult): string {
-    return result.reviewedBy || `Doctor ID: ${result.reviewed_by_user_id}` || 'Unknown Doctor';
+  getOrderedBy(result: LabResult): string | null {
+    // Return the doctor name if available, otherwise null to hide the section
+    if (result.reviewedBy && result.reviewedBy.trim() !== '') {
+      return result.reviewedBy;
+    }
+    // Don't show "Doctor ID: undefined" or similar
+    return null;
   }
   
   getLab(result: LabResult): string {

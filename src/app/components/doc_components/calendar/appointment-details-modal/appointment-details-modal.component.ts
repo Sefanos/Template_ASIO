@@ -158,7 +158,22 @@ export class AppointmentDetailsModalComponent implements OnInit {
   onRescheduleConfirm(data: {date: string, time: string, reason: string}): void {
     if (!this.appointment?.id) return;
 
-    const appointmentId = Number(this.appointment.id);
+    // Fix: Extract numeric ID from string like "appointment-80"
+    let appointmentId: number;
+    if (typeof this.appointment.id === 'string') {
+      // Extract number from "appointment-80" format
+      const match = this.appointment.id.match(/\d+/);
+      appointmentId = match ? parseInt(match[0], 10) : NaN;
+    } else {
+      appointmentId = Number(this.appointment.id);
+    }
+
+    // Check if conversion was successful
+    if (isNaN(appointmentId)) {
+      console.error('Invalid appointment ID:', this.appointment.id);
+      alert('Invalid appointment ID. Please refresh the page and try again.');
+      return;
+    }
 
     // Format as "YYYY-MM-DD HH:mm:ss" (with a space, not "T")
     const newDatetimeStart = `${data.date} ${data.time}:00`;
