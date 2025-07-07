@@ -34,11 +34,11 @@
     <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 text-sm">
       <div>
         <dt class="font-medium text-text-muted">Bill No. (ID):</dt>
-        <dd class="text-text mt-0.5">{{ bill.id ?? 'N/A' }}</dd>
+        <dd class="text-text mt-0.5">{{ bill.id }}</dd>
       </div>
       <div>
         <dt class="font-medium text-text-muted">Document No.:</dt>
-        <dd class="text-text mt-0.5">{{ bill.bill_number ?? 'N/A' }}</dd>
+        <dd class="text-text mt-0.5">{{ bill.bill_number }}</dd>
       </div>
       <div>
         <dt class="font-medium text-text-muted">Issue Date:</dt>
@@ -50,11 +50,11 @@
       </div>
       <div>
         <dt class="font-medium text-text-muted">Doctor:</dt>
-        <dd class="text-text mt-0.5">{{ bill.doctor?.name || 'N/A' }}</dd>
+        <dd class="text-text mt-0.5">{{ bill.doctor.name || 'N/A' }}</dd>
       </div>
       <div>
         <dt class="font-medium text-text-muted">Specialty:</dt>
-        <dd class="text-text mt-0.5">{{ bill.doctor?.specialty || 'N/A' }}</dd>
+        <dd class="text-text mt-0.5">{{ bill.doctor.specialty || 'N/A' }}</dd>
       </div>
       <div class="md:col-span-2">
         <dt class="font-medium text-text-muted">Payment Method:</dt>

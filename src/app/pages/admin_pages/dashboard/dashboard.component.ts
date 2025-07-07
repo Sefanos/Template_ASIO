@@ -1,15 +1,14 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 // Import all dashboard components
 import { DashboardHeaderComponent } from '../../../components/admin_components/dashboard/dashboard-header/dashboard-header.component';
-import { UserActivityComponent } from '../../../components/admin_components/dashboard/user-activity/user-activity.component';
 import { ModuleUsageHeatmapComponent } from '../../../components/admin_components/dashboard/module-usage-heatmap/module-usage-heatmap.component';
-import { UserStatusOverviewComponent } from '../../../components/admin_components/dashboard/user-status-overview/user-status-overview.component';
+import { UserActivityComponent } from '../../../components/admin_components/dashboard/user-activity/user-activity.component';
 import { UserRegistrationTrendComponent } from '../../../components/admin_components/dashboard/user-registration-trend/user-registration-trend.component';
-import { FailedLoginAttemptsComponent } from '../../../components/admin_components/dashboard/failed-login-attempts/failed-login-attempts.component';
 import { UserRolesOverviewComponent } from '../../../components/admin_components/dashboard/user-roles-overview/user-roles-overview.component';
+import { UserStatusOverviewComponent } from '../../../components/admin_components/dashboard/user-status-overview/user-status-overview.component';
 // Import the StatItem interface from the StatCardComponent to ensure type compatibility
 interface StatItem {
   label: string;
@@ -28,7 +27,6 @@ interface StatItem {
     ModuleUsageHeatmapComponent,
     UserStatusOverviewComponent,
     UserRegistrationTrendComponent,
-    FailedLoginAttemptsComponent,
     UserRolesOverviewComponent,
   ],
   templateUrl: './dashboard.component.html',

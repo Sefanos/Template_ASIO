@@ -1,155 +1,462 @@
-<div class="min-h-screen bg-gray-50 flex flex-col items-center py-6 px-2">
-  <!-- Bandeau graphique large avec image -->
-  <div class="w-full max-w-7xl relative rounded-2xl overflow-hidden shadow mb-0">
-    <div 
-      class="h-32 flex items-end relative"
-      style="background-image: url('/assets/receptionist/images/rec.jpg'); background-size: cover; background-position: center;">
-      <!-- Avatar avec bouton modification -->
-      <div class="absolute left-12 -bottom-12 z-10 flex flex-col items-center">
-        <div class="w-24 h-24 rounded-full bg-white border-4 border-blue-100 shadow-lg flex items-center justify-center text-3xl font-bold text-blue-700 overflow-hidden relative group">
-          <!-- ✅ Gestion d'erreur et de chargement d'image -->
-          <img *ngIf="user?.photo" 
-               [src]="user.photo" 
-               alt="Photo" 
-               class="w-full h-full object-cover rounded-full"
-               (error)="onImageError($event)"
-               (load)="onImageLoad($event)"/>
-          <span *ngIf="!user?.photo">{{ user?.name?.charAt(0) || 'U' }}</span>
-            <!-- Bouton crayon -->
-          <label class="absolute bottom-1 right-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded-full p-1 cursor-pointer shadow transition-opacity opacity-80 group-hover:opacity-100">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2a2.828 2.828 0 11-4-4 2.828 2.828 0 014 4zm-2 2l-6 6H5v-2l6-6z" />
-            </svg>
-            <input type="file" accept="image/*" class="hidden" (change)="onPhotoSelected($event)">
-          </label>
-        </div>
-      </div>    </div>
-    <div class="bg-white pt-16 pb-8 px-16 rounded-b-2xl w-full">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800">{{ user?.name || 'Utilisateur Inconnu' }}</h2>
-          <div class="text-sm text-blue-600 mb-1">{{ user?.role || 'Rôle inconnu' }}</div>
-        </div>
-        <div class="flex items-center gap-2 mt-2 md:mt-0">
-          <span class="inline-block px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold">
-            {{ user?.joinDate ? (user.joinDate | date:'mediumDate') : 'N/A' }}
-          </span>
-        </div>
+<!-- Section contenu principal du profil, sans dupliquer la structure de navigation existante -->
+<div class="flex-1 bg-gray-50 p-6">
+  <!-- Bannière du profil -->
+  <div class="bg-white rounded-lg overflow-hidden shadow mb-6">
+    <div class="relative h-48">
+      <div class="absolute inset-0">
+        <img src="assets/receptionist/images/rec.jpg" alt="Couverture" class="w-full h-full object-cover opacity-50" />
       </div>
-    </div>  </div>
-  <!-- Carte profil principale -->
-  <div class="w-full max-w-7xl mt-16 flex flex-col gap-8"><!-- Section infos -->
-    <div class="bg-white rounded-xl shadow p-10 w-full">
-      <div class="flex justify-between items-center mb-6">        <h3 class="text-lg font-semibold text-gray-700">Détails du profil</h3>
-        <button (click)="openEditModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow text-sm font-semibold">
-          Modifier
-        </button>
-      </div>      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div>          <label class="block text-sm font-medium text-gray-500 mb-1">Nom complet</label>
-          <input type="text" [value]="user?.name || 'N/A'" disabled
-                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-base" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-500 mb-1">Email</label>
-          <input type="text" [value]="user?.email || 'N/A'" disabled
-                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-base" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-500 mb-1">Téléphone</label>
-          <input type="text" [value]="user?.phone || 'N/A'" disabled
-                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-base" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-500 mb-1">Rôle</label>
-          <input type="text" [value]="user?.role || 'N/A'" disabled
-                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-base" />
-        </div>
-      </div>    </div>    <!-- Section mot de passe -->
-    <div class="bg-white rounded-xl shadow p-10 w-full">
-      <div class="flex justify-between items-center mb-6">        <h3 class="text-lg font-semibold text-gray-700">Mot de passe</h3>
-        <button (click)="openPasswordModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow text-sm font-semibold">
-          Modifier le mot de passe
-        </button>
-      </div>      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div>          <label class="block text-sm font-medium text-gray-500 mb-1">Ancien mot de passe</label>
-          <input type="password" value="********" disabled
-                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-base" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-500 mb-1">Nouveau mot de passe</label>
-          <input type="password" value="********" disabled
-                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-base" />
-        </div>
+      <div class="absolute inset-0 flex flex-col justify-end p-6">
+        <h1 class="text-3xl font-bold text-gray-800">Mon profil</h1>
+        <p class="text-gray-600">Gérez vos informations personnelles et votre sécurité</p>
       </div>
-    </div>
-  </div>
-  <!-- Modale d'édition -->  <div *ngIf="isEditing" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-bold text-gray-800">Modifier votre profil</h3>
-        <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+      <div class="absolute right-6 top-6">
+        <div class="flex items-center bg-white rounded-full px-4 py-1.5 shadow-sm">
+          <svg class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
           </svg>
-        </button>
+          <span class="text-sm font-medium">Membre depuis {{ user?.created_at ? formatDate(user.created_at) : '11 juin 2025' }}</span>
+        </div>
       </div>
-      <form (ngSubmit)="saveChanges()" class="space-y-5">
-        <div>          <label class="block text-sm font-medium text-gray-700">Nom complet</label>
-          <input type="text" [(ngModel)]="editedUser.name" name="name" required
-                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white text-gray-700" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-          <input type="email" [(ngModel)]="editedUser.email" name="email" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Téléphone</label>
-          <input type="tel" [(ngModel)]="editedUser.phone" name="phone" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div class="flex justify-end gap-3 mt-4">          <button type="button" (click)="closeEditModal()"
-                  class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded transition-colors">
-            Annuler
-          </button>
-          <button type="submit"
-                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded shadow transition-colors">
-            Enregistrer
-          </button>
-        </div>
-      </form>
     </div>
   </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <!-- Navigation du profil -->
+    <div class="md:col-span-1">
+      <!-- Photo de profil avec bouton d'édition -->
+      <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+        <div class="p-6 flex flex-col items-center">
+          <div class="relative mb-4">
+            <!-- Image de profil avec gestion complète d'erreurs et fallbacks -->
+            <img 
+              [src]="user?.photo || tempPreviewImage || defaultPhoto" 
+              [attr.nocache]="timestamp"
+              alt="Photo de profil" 
+              class="w-32 h-32 rounded-full object-cover border-4 border-blue-100"
+              (error)="onImageError($event)"
+              crossorigin="anonymous"
+            />
+            
+            <!-- Bouton d'upload de photo -->
+            <label for="photo-upload" class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer shadow hover:bg-blue-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </label>
+            <input 
+              type="file" 
+              id="photo-upload" 
+              class="hidden" 
+              accept="image/*"
+              (change)="onPhotoSelected($event)"
+            />
+            
+            <!-- Indicateur de chargement pour la photo -->
+            <div *ngIf="isPhotoLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 rounded-full">
+              <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
 
-  <!-- Modale Changement de mot de passe -->  <div *ngIf="isPasswordModalOpen" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl dark:shadow-slate-700/20 max-w-md w-full p-8 transition-colors">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Changer le mot de passe</h3>
-        <button (click)="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
+            <!-- Bouton pour forcer l'actualisation de l'image en cas de problème -->
+            <button 
+              *ngIf="uploadError" 
+              (click)="forceRefreshImage()"
+              class="absolute top-0 right-0 bg-yellow-500 text-white rounded-full p-1 shadow-md hover:bg-yellow-600"
+              title="Forcer l'actualisation de l'image"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+          
+          <h3 class="font-medium text-gray-900 text-lg">{{ user?.name || 'Omar Bennani' }}</h3>
+          <p class="text-gray-500">{{ user?.role || 'Réceptionniste' }}</p>
+          
+          <!-- Message de succès pour feedback immédiat -->
+          <div *ngIf="uploadSuccess && !uploadError" class="mt-2 text-sm text-green-600 flex items-center">
+            <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            Photo mise à jour
+          </div>
+          
+          <!-- Message d'erreur spécifique à l'upload de photo -->
+          <div *ngIf="uploadError" class="mt-2 text-xs text-red-600 flex items-center flex-wrap">
+            <svg class="h-3 w-3 mr-1 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-wrap">{{ uploadError }}</span>
+            <button 
+              (click)="forceRefreshImage()"
+              class="ml-1 text-red-700 underline hover:text-red-800"
+              [disabled]="isPhotoLoading"
+            >
+              Actualiser
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <nav class="divide-y divide-gray-100">
+          <a class="flex items-center px-6 py-4 bg-blue-50 text-blue-700">
+            <svg class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            Information personnelle
+          </a>
+          <a (click)="openPasswordModal()" class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50 cursor-pointer">
+            <svg class="h-5 w-5 mr-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+            </svg>
+            Sécurité
+          </a>
+          <a class="flex items-center px-6 py-4 text-gray-600 hover:bg-gray-50">
+            <svg class="h-5 w-5 mr-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+            </svg>
+            Notifications
+          </a>
+        </nav>
+      </div>
+    </div>
+    
+    <!-- Section d'informations -->
+    <div class="md:col-span-3">
+      <div class="space-y-6">
+        <!-- Message d'erreur pour l'upload (version étendue) -->
+        <div *ngIf="uploadError" class="bg-red-50 border-l-4 border-red-500 p-4 text-red-700 rounded-lg shadow">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p>{{ uploadError }}</p>
+              <button 
+                (click)="forceRefreshImage()" 
+                class="text-red-800 underline hover:text-red-900 text-sm mt-1 flex items-center"
+                [disabled]="isPhotoLoading"
+              >
+                <svg *ngIf="!isPhotoLoading" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <svg *ngIf="isPhotoLoading" class="animate-spin h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ isPhotoLoading ? "Tentative en cours..." : "Cliquez ici pour tenter d'actualiser l'image" }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carte d'informations personnelles -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800">Informations personnelles</h2>
+            <button (click)="openEditModal()" class="flex items-center text-blue-600 hover:text-blue-800">
+              <svg class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              Modifier
+            </button>
+          </div>
+          
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-500 mb-1">Nom complet</label>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700">
+                  {{ user?.name || 'Omar Bennani' }}
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700 flex items-center">
+                  <svg class="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                  {{ user?.email || 'omar@gmail.com' }}
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-500 mb-1">Téléphone</label>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700 flex items-center">
+                  <svg class="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  {{ user?.phone || '0697845124' }}
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-500 mb-1">Rôle</label>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700 flex items-center">
+                  <svg class="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 005 10a6 6 0 0012 0c0-.35-.028-.696-.081-1.03A5 5 0 0010 11z" clip-rule="evenodd" />
+                  </svg>
+                  {{ user?.role || 'Réceptionniste' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Carte de sécurité -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800">Sécurité</h2>
+          </div>
+          
+          <div class="p-6">
+            <div class="flex items-center justify-between pb-5 border-b border-gray-100">
+              <div>
+                <h3 class="font-medium text-gray-800">Mot de passe</h3>
+                <p class="text-sm text-gray-500 mt-1">Dernière modification il y a plus de 30 jours</p>
+              </div>
+              <button (click)="openPasswordModal()" 
+                      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow flex items-center">
+                <svg class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+                Modifier
+              </button>
+            </div>
+            
+            <div class="pt-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-medium text-gray-800">Authentification à deux facteurs</h3>
+                  <p class="text-sm text-gray-500 mt-1">Ajoutez une couche de sécurité supplémentaire à votre compte</p>
+                </div>
+                <div class="relative inline-block w-12 h-6">
+                  <input type="checkbox" name="2fa" id="2fa" class="absolute w-6 h-6 transition duration-100 ease-in-out rounded-full appearance-none cursor-pointer bg-white border-2 border-gray-300 peer checked:bg-blue-600 checked:border-blue-600 checked:translate-x-full left-0 top-0" />
+                  <label for="2fa" class="block w-full h-full rounded-full cursor-pointer bg-gray-200 peer-checked:bg-blue-100"></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Élément pour précharger et anticiper les problèmes d'image -->
+<div style="display:none">
+  <!-- Précharger l'image directe -->
+  <img 
+    *ngIf="user?.photo && !user.photo.startsWith('data:')" 
+    [src]="user.photo + '?nocache=' + timestamp" 
+    alt="Preload"
+    (load)="onImagePreloaded()"
+    (error)="onImagePreloadError()" 
+  />
+  
+  <!-- Précharger les alternatives possibles -->
+  <ng-container *ngIf="user?.photo && user.photo.includes('localhost:8000') && !user.photo.startsWith('data:')">
+    <img 
+      *ngFor="let path of ['storage', 'storage/app/public', 'uploads', 'images']; let i = index"
+      [src]="'http://localhost:8000/' + path + '/' + user.photo.split('/').pop() + '?nocache=' + (timestamp + i)" 
+      alt="Preload alternative"
+    />
+  </ng-container>
+</div>
+
+<!-- Modales -->
+<!-- Modale d'édition -->
+<div *ngIf="isEditing" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-lg font-semibold text-gray-800">Modifier votre profil</h3>
+      <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition rounded-full p-1 hover:bg-gray-100">
+        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+    
+    <form (submit)="$event.preventDefault(); saveChanges()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+        <div class="relative rounded-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            [(ngModel)]="editedUser.name" 
+            name="name" 
+            required
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <div class="relative rounded-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+            </svg>
+          </div>
+          <input 
+            type="email" 
+            [(ngModel)]="editedUser.email" 
+            name="email" 
+            required
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+        <div class="relative rounded-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+            </svg>
+          </div>
+          <input 
+            type="tel" 
+            [(ngModel)]="editedUser.phone" 
+            name="phone"
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+          />
+        </div>
+      </div>
+      
+      <div class="flex justify-end space-x-3 pt-4">
+        <button 
+          type="button" 
+          (click)="closeEditModal()" 
+          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Annuler
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="isLoading" 
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+        >
+          <div class="flex items-center">
+            <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isLoading ? 'Enregistrement...' : 'Enregistrer' }}
+          </div>
         </button>
       </div>
-      <form (ngSubmit)="changePassword()" class="space-y-5">
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe actuel</label>
-          <input type="password" [(ngModel)]="currentPassword" name="currentPassword" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nouveau mot de passe</label>
-          <input type="password" [(ngModel)]="newPassword" name="newPassword" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div>          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmer le nouveau mot de passe</label>
-          <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 focus:border-blue-400 dark:focus:border-blue-600 outline-none bg-white dark:bg-slate-700 text-gray-700 dark:text-white transition-colors" />
-        </div>
-        <div class="flex justify-end gap-3 mt-4">          <button type="button" (click)="closePasswordModal()"
-                  class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded transition-colors">
-            Annuler
-          </button>
-          <button type="submit"
-                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded shadow transition-colors">
-            Enregistrer
-          </button>
-        </div>
-      </form>
+    </form>
+  </div>
+</div>
+
+<!-- Modale de changement de mot de passe -->
+<div *ngIf="isPasswordModalOpen" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-lg font-semibold text-gray-800">Changer votre mot de passe</h3>
+      <button (click)="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition rounded-full p-1 hover:bg-gray-100">
+        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
     </div>
+    
+    <form (submit)="$event.preventDefault(); changePassword()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe actuel</label>
+        <div class="relative rounded-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input 
+            type="password" 
+            [(ngModel)]="currentPassword" 
+            name="currentPassword" 
+            required
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+          />
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
+        <div class="relative rounded-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input 
+            type="password" 
+            [(ngModel)]="newPassword" 
+            name="newPassword" 
+            required
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+          />
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Le mot de passe doit contenir au moins 6 caractères</p>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe</label>
+        <div class="relative rounded-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input 
+            type="password" 
+            [(ngModel)]="confirmPassword" 
+            name="confirmPassword" 
+            required
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+          />
+        </div>
+      </div>
+      
+      <div class="flex justify-end space-x-3 pt-4">
+        <button 
+          type="button" 
+          (click)="closePasswordModal()" 
+          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Annuler
+        </button>
+        <button 
+          type="submit" 
+          [disabled]="isLoading" 
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+        >
+          <div class="flex items-center">
+            <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isLoading ? 'Enregistrement...' : 'Enregistrer' }}
+          </div>
+        </button>
+      </div>
+    </form>
   </div>
 </div>

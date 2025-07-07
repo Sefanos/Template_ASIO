@@ -5,16 +5,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { isRoleObject } from '../../../models/role-utils';
+import { Role } from '../../../models/role.model';
 import { User } from '../../../models/user.model';
 import { PaginatedResponse, UserFilters, UserService } from '../../../services/admin-service/user.service';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,],
   templateUrl: './users.component.html'
 })
 export class UsersComponent implements OnInit {
+  // Add the missing property
+  showFiltersDialog = false;
+  
   searchQuery: string = '';
   filters: UserFilters = {
     page: 1,
@@ -51,6 +55,10 @@ export class UsersComponent implements OnInit {
 
   private searchSubject = new Subject<string>();
   
+  // Role filter properties
+  availableRoles: Role[] = [];
+  selectedRoleId: number | null = null;
+  
   constructor(
     private userService: UserService,
     private router: Router,
@@ -81,6 +89,21 @@ export class UsersComponent implements OnInit {
       distinctUntilChanged() // Only emit if value changed
     ).subscribe(() => {
       this.onSearch();
+    });
+    
+    // Add this to load roles
+    this.loadRoles();
+  }
+  
+  // Add this new method
+  loadRoles(): void {
+    this.userService.getRoles().subscribe({
+      next: (roles) => {
+        this.availableRoles = roles;
+      },
+      error: (error) => {
+        console.error('Error loading roles:', error);
+      }
     });
   }
   
@@ -121,9 +144,12 @@ export class UsersComponent implements OnInit {
     
     const filters: UserFilters = {
       ...this.filters,
-      search: this.searchQuery || undefined,
-      status: statusFilter
+      search: this.searchQuery, // Remove the "|| undefined" to send empty strings too
+      status: statusFilter,
+      role_id: this.selectedRoleId || undefined
     };
+    
+    console.log('Search query being sent:', this.searchQuery);
     
     this.userService.getUsers(filters).subscribe({
       next: (response: PaginatedResponse<User>) => {
@@ -142,16 +168,24 @@ export class UsersComponent implements OnInit {
     });
   }
   
+  onSearchInput(event: any): void {
+    this.searchSubject.next(event.target.value);
+  }
+
   onSearch(): void {
     this.filters.page = 1; // Reset to first page when searching
     this.loadUsers();
   }
-
-  onSearchInput(event: any): void {
-    this.searchSubject.next(event.target.value);
-  }
   
   onStatusFilterChange(): void {
+    this.filters.page = 1; // Reset to first page when changing filters
+    this.loadUsers();
+  }
+  
+  // Add this new method
+  onRoleFilterChange(roleId: number | null): void {
+    this.selectedRoleId = roleId;
+    this.filters.role_id = roleId || undefined;
     this.filters.page = 1; // Reset to first page when changing filters
     this.loadUsers();
   }
@@ -183,9 +217,19 @@ export class UsersComponent implements OnInit {
     return 'Role ID: ' + firstRole;
   }
   
+  // Update this method to include 'role' in the explanation
   showMoreFilters(): void {
-    // Implement advanced filtering if needed
-    console.log('Show more filters clicked');
+    this.showFiltersDialog = true;
+    console.log('Showing more filters dialog');
+  }
+  
+  closeFiltersDialog(): void {
+    this.showFiltersDialog = false;
+  }
+  
+  applyFilters(): void {
+    this.onRoleFilterChange(this.selectedRoleId);
+    this.showFiltersDialog = false;
   }
   
   navigateToNewUser(): void {
@@ -349,5 +393,10 @@ export class UsersComponent implements OnInit {
       }
       return false;
     });
+  }
+
+  applyAdvancedFilters(): void {
+    this.onRoleFilterChange(this.selectedRoleId);
+    this.showFiltersDialog = false;
   }
 }

@@ -115,52 +115,48 @@
           </button>
         </div>
         
-        <div *ngIf="!loading && permissions.length > 0" class="permissions-section">
-          <div *ngFor="let category of categories" class="permission-category mb-6 border rounded-lg p-4 shadow-sm">
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="text-lg font-medium">{{ category }}</h3>
-              <div class="flex space-x-2">
-                <span class="text-sm text-text-muted">{{ getCategoryPermissionCount(category).selected }}/{{ getCategoryPermissionCount(category).total }}</span>
-                <button 
-                  type="button" 
-                  (click)="selectAllInCategory(category)"
-                  class="text-xs text-primary hover:text-primary-dark"
-                >
-                  Select All
-                </button>
-                <button 
-                  type="button" 
-                  (click)="deselectAllInCategory(category)"
-                  class="text-xs text-text-muted hover:text-text"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div *ngFor="let permission of permissionsByCategory[category]" class="flex items-start bg-white p-2 border border-gray-100 rounded">
-                <input 
-                  type="checkbox" 
-                  [id]="'permission_' + permission.id" 
-                  [formControlName]="permission.id"
-                  class="mt-1 mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                >
-                <div>
-                  <label [for]="'permission_' + permission.id" class="block font-medium text-text">
-                    {{ permission.name }}
-                  </label>
-                  <p class="text-xs text-text-muted">{{ permission.description }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Add this loading check to your template -->
         <div *ngIf="loading" class="text-center">
           <div class="spinner-border" role="status">
             <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        
+        <div *ngIf="!loading && permissions.length" class="space-y-4">
+          <div *ngFor="let category of categories" class="permission-category border rounded shadow-sm">
+            <!-- Header -->
+            <div 
+              class="flex justify-between items-center px-4 py-2 bg-gray-100 cursor-pointer"
+              (click)="toggleCategory(category)"
+            >
+              <h3 class="font-medium">{{ category }}</h3>
+              <svg 
+                class="h-5 w-5 transform transition-transform" 
+                [class.rotate-180]="expandedCategory === category"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <!-- Drawer body -->
+            <div *ngIf="expandedCategory === category" class="px-4 py-3 bg-white">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div *ngFor="let permission of permissionsByCategory[category]" class="flex items-start p-2 border rounded">
+                  <input
+                    type="checkbox"
+                    [id]="'permission_' + permission.id"
+                    [formControlName]="permission.id"
+                    class="mt-1 mr-2 h-4 w-4 text-primary border-gray-300 rounded"
+                  />
+                  <div>
+                    <label [for]="'permission_' + permission.id" class="block font-medium">
+                      {{ permission.name }}
+                    </label>
+                    <p class="text-xs text-gray-500">{{ permission.description }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
