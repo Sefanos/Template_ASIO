@@ -188,9 +188,9 @@
           />
         </div>
         <div class="toolbar-right flex items-center space-x-1 bg-hover p-0.5 rounded-button">
-          <button (click)="changeMainCalendarView('timeGridDay')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi.view.type === 'timeGridDay' ? 'btn-primary' : ''" [attr.aria-pressed]="calendarApi.view.type === 'timeGridDay'">Day</button>
-          <button (click)="changeMainCalendarView('timeGridWeek')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi.view.type === 'timeGridWeek' ? 'btn-primary' : ''" [attr.aria-pressed]="calendarApi.view.type === 'timeGridWeek'">Week</button>
-          <button (click)="changeMainCalendarView('dayGridMonth')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi.view.type === 'dayGridMonth' ? 'btn-primary' : ''" [attr.aria-pressed]="calendarApi.view.type === 'dayGridMonth'">Month</button>
+          <button (click)="changeMainCalendarView('timeGridDay')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridDay' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridDay'">Day</button>
+          <button (click)="changeMainCalendarView('timeGridWeek')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'timeGridWeek' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'timeGridWeek'">Week</button>
+          <button (click)="changeMainCalendarView('dayGridMonth')" class="py-1.5 px-3 rounded text-xs font-medium focus:outline-none transition-colors" [ngClass]="calendarApi?.view?.type === 'dayGridMonth' ? 'bg-primary text-white shadow-sm' : 'text-text-light hover:bg-background hover:text-primary'" [attr.aria-pressed]="calendarApi?.view?.type === 'dayGridMonth'">Month</button>
         </div>
       </div>
       <div class="fc-theme-standard relative"> <!-- Wrapper for FullCalendar theme compatibility -->
