@@ -15,12 +15,18 @@ export class AuthService {
   public currentUser = this.currentUserSubject.asObservable();
   private tokenExpiryTimer: any;
   
+  // New properties for permission handling
+  private userPermissions: string[] = [];
+  private userInterface: string | null = null;
+  private permissionMap: {[key: string]: string[]} = {};
+  
   constructor(
     private http: HttpClient,
     private router: Router
   ) {
     // Check if we have stored user and token in localStorage
     this.loadStoredUserData();
+    this.loadPermissionsData();
   }
 
   private loadStoredUserData(): void {
@@ -36,6 +42,25 @@ export class AuthService {
       if (tokenExpiry) {
         this.setupTokenExpiryTimer(new Date(tokenExpiry).getTime());
       }
+    }
+  }
+  
+  // New method to load permissions data
+  private loadPermissionsData(): void {
+    const permissionsData = localStorage.getItem('user_permissions');
+    const interfaceData = localStorage.getItem('user_interface');
+    const permissionMapData = localStorage.getItem('permission_map');
+    
+    if (permissionsData) {
+      this.userPermissions = JSON.parse(permissionsData);
+    }
+    
+    if (interfaceData) {
+      this.userInterface = interfaceData;
+    }
+    
+    if (permissionMapData) {
+      this.permissionMap = JSON.parse(permissionMapData);
     }
   }
   
@@ -88,6 +113,53 @@ export class AuthService {
       return getRoleCode(role);
     } 
     return 'unknown'; // or some default value when role is just an ID
+  }
+
+  // New method to get user interface
+  public getUserInterface(): string {
+    // First try to get it from our stored property
+    if (this.userInterface) {
+      return this.userInterface;
+    }
+    
+    // Then try to get it from the user object
+    const user = this.currentUserValue;
+    if (user && user.interface) {
+      return user.interface;
+    }
+    
+    // Fall back to role
+    return this.getUserRole();
+  }
+  
+  // New permission checking methods
+  public hasPermission(permission: string): boolean {
+    return this.userPermissions.includes(permission);
+  }
+  
+  public hasAnyPermission(permissions: string[]): boolean {
+    // Correctly handles empty permissions array
+    if (!permissions || permissions.length === 0) {
+      return true;
+    }
+    return permissions.some(permission => this.hasPermission(permission));
+  }
+  
+  public hasAllPermissions(permissions: string[]): boolean {
+    if (!permissions || permissions.length === 0) {
+      return true; // No permissions required
+    }
+    return permissions.every(permission => this.hasPermission(permission));
+  }
+  
+  // Get permissions for a specific module
+  public getModulePermissions(module: string): string[] {
+    return this.permissionMap[module] || [];
+  }
+  
+  // Check if user has access to a specific module
+  public hasModuleAccess(module: string): boolean {
+    return !!this.permissionMap[module] && this.permissionMap[module].length > 0;
   }
 
   public hasRole(allowedRoles: string[]): boolean {
@@ -176,6 +248,14 @@ export class AuthService {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('auth_token');
     localStorage.removeItem('token_expiry');
+    localStorage.removeItem('user_permissions');
+    localStorage.removeItem('user_interface');
+    localStorage.removeItem('permission_map');
+    
+    // Clear the class properties
+    this.userPermissions = [];
+    this.userInterface = null;
+    this.permissionMap = {};
     
     // Clear the current user subject
     this.currentUserSubject.next(null);
@@ -195,6 +275,22 @@ export class AuthService {
       
       // Setup token refresh timer
       this.setupTokenExpiryTimer(expiryTime);
+      
+      // Store permissions and interface data
+      if (response.user && response.user.permissions) {
+        localStorage.setItem('user_permissions', JSON.stringify(response.user.permissions));
+        this.userPermissions = response.user.permissions;
+      }
+      
+      if (response.permission_map) {
+        localStorage.setItem('permission_map', JSON.stringify(response.permission_map));
+        this.permissionMap = response.permission_map;
+      }
+      
+      if (response.user && response.user.interface) {
+        localStorage.setItem('user_interface', response.user.interface);
+        this.userInterface = response.user.interface;
+      }
       
       // Update the user
       this.updateStoredUser(response.user);

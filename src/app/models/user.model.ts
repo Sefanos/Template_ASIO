@@ -4,12 +4,14 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  roles: (Role | number)[] | Role[] | number[];
+  roles: Role[] | string[];
   status: string;
   phone?: string;
   phoneNumber?: string; // Keep for backward compatibility, but use phone
   created_at?: string;
   updated_at?: string;
+  permissions?: string[];
+  interface?: string;
 }
 
 export interface UserCreationDto {
@@ -29,6 +31,7 @@ export interface AuthResponse {
   token_type: string;
   expires_in: number;
   user: User;
+  permission_map?: { [key: string]: string[] };
 }
 
 // Error response structure

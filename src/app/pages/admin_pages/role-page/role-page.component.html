@@ -105,6 +105,16 @@
           </div>
         </div>
         
+        <!-- Add Interface Permission Warning -->
+        <div *ngIf="hasInterfacePermissions" class="mb-4 bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 rounded-md">
+          <div class="flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p><strong>Important:</strong> A role can only have ONE interface permission. Selecting multiple interface permissions will result in an error.</p>
+          </div>
+        </div>
+        
         <!-- Add these buttons above your permission categories -->
         <div class="mb-3" *ngIf="!loading && permissions.length > 0">
           <button type="button" class="btn btn-sm btn-success me-2" (click)="selectAllPermissions()">
@@ -141,18 +151,25 @@
             <!-- Drawer body -->
             <div *ngIf="expandedCategory === category" class="px-4 py-3 bg-white">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div *ngFor="let permission of permissionsByCategory[category]" class="flex items-start p-2 border rounded">
+                <div *ngFor="let permission of permissionsByCategory[category]" 
+                     class="flex items-start p-2 border rounded"
+                     [ngClass]="{'bg-blue-50': checkIfInterface(permission)}">
                   <input
                     type="checkbox"
                     [id]="'permission_' + permission.id"
                     [formControlName]="permission.id"
                     class="mt-1 mr-2 h-4 w-4 text-primary border-gray-300 rounded"
+                    (change)="checkIfInterface(permission) && handlePermissionChange($event, permission.id)"
                   />
                   <div>
                     <label [for]="'permission_' + permission.id" class="block font-medium">
                       {{ permission.name }}
+                      <span *ngIf="checkIfInterface(permission)" class="text-xs text-blue-600 ml-1">(Interface)</span>
                     </label>
                     <p class="text-xs text-gray-500">{{ permission.description }}</p>
+                    <p *ngIf="checkIfInterface(permission)" class="text-xs text-blue-600 mt-1">
+                      This is an interface permission. A role can only have ONE interface permission.
+                    </p>
                   </div>
                 </div>
               </div>
