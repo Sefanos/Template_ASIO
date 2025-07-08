@@ -156,7 +156,7 @@ export class AppointmentMapperService {
   private mapApiStatusToFrontendStatus(apiStatus: string): Appointment['status'] {
     const statusMap: { [key: string]: Appointment['status'] } = {
       'scheduled': 'scheduled',
-      'confirmed': 'scheduled', // Map confirmed to scheduled for frontend
+      'confirmed': 'confirmed',
       'completed': 'completed',
       'cancelled': 'cancelled',
       'no-show': 'no-show'
