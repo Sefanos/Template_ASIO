@@ -15,7 +15,7 @@ export interface CalendarEvent {
     doctorId?: number;
     doctorName?: string;
     appointmentType?: string;
-    status?: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+    status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
     isBlockedTime?: boolean;
     blockCategory?: 'lunch' | 'meeting' | 'vacation' | 'other';
     notes?: string;

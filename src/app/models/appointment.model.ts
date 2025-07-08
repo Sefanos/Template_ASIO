@@ -6,7 +6,7 @@ export interface Appointment {
   type: string;
   provider: string;       // Doctor name extracted from nested object
   reason: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
   notes?: string;
   
   // Additional fields from backend (optional for compatibility)
