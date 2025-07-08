@@ -48,6 +48,17 @@ export class PatientFileService {
       map(response => response.data)
     );
   }
+    /**
+   * Upload a file for the currently authenticated patient.
+   * ✅ NOUVELLE MÉTHODE
+   */
+  uploadFileForPatient(formData: FormData): Observable<PatientFile> {
+    // Note: This FormData should NOT contain a patient_id
+    return this.http.post<SinglePatientFileApiResponse>(`${environment.apiUrl}/patient/files`, formData).pipe(
+      map(response => response.data)
+    );
+  }
+  
 
   updateFile(id: number, data: { description?: string; category?: string }): Observable<PatientFile> {
     const headers = new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded');

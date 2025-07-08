@@ -225,9 +225,9 @@ export class PatientFilesComponent implements OnInit {
     formData.append('file', this.selectedFile, this.selectedFile.name);
     formData.append('category', this.uploadForm.value.category);
     formData.append('description', this.uploadForm.value.description || '');
-    formData.append('patient_id', '19');
+ 
 
-    this.fileService.uploadFile(formData).subscribe({
+    this.fileService.uploadFileForPatient(formData).subscribe({
       next: (newFile) => {
         this.files.unshift(newFile);
         this.toastService.success('File uploaded successfully!');
