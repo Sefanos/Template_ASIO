@@ -1,10 +1,42 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf, NgClass } from '@angular/common';
-import { PatientService, Pagination } from '../../../services/recepetionist-services/patient.service';
-import { ThemeService } from '../../../services/theme.service';
-import { ToastService } from '../../../shared/services/toast.service';
+import { FormsModule } from '@angular/forms';
+import { PatientService, PatientCollectionResponse } from '../../../services/recepetionist-services/patient.service';
 import { Subscription } from 'rxjs';
+
+interface Patient {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  photo?: string;
+  dob?: string;
+  gender?: string;
+  nationality: string;
+  blood_group: string;
+  marital_status: string;
+  address: string;
+  emergency_contact?: string;
+  created_at: string;
+  updated_at: string;
+  showDetails: boolean;
+}
+
+interface NewPatient {
+  name: string;
+  email: string;
+  phone: string;
+  dob: string;
+  gender: string;
+  nationality: string;
+  blood_group: string;
+  marital_status: string;
+  address: string;
+  status: string;
+  emergency_contact: string;
+  showDetails: boolean;
+}
 
 @Component({
   selector: 'app-medical-record',
@@ -14,290 +46,474 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./medical-record.component.css']
 })
 export class MedicalRecordComponent implements OnInit, OnDestroy {
+  // Vue et état
   currentView = 'grid';
   isListView = false;
-  isDarkMode = false;
-  private themeSubscription: Subscription | null = null;
-
-  patients: any[] = [];
-  filteredPatients: any[] = [];
-  pagedPatients: any[] = [];
-
-  searchQuery = '';
-  selectedStatus = '';
-
-  itemsPerPage = 15; // Correspond à per_page de l'API
-  currentPage = 1;
-  totalItems = 0;
-  lastPage = 1;
   isLoading = false;
   
-  pagination: Pagination = {
-    total: 0,
-    current_page: 1,
-    per_page: 15,
-    last_page: 1
-  };
-
-  showAddModal = false;
-  editingPatient: any = null;
-  selectedFile: File | null = null;
-  newPatient: any = {
-    id: null,
+  // Modals
+  isAddModalOpen = false;
+  isEditModalOpen = false;
+  isDeleteModalOpen = false;
+  
+  // Données patients
+  patients: Patient[] = [];
+  editingPatient: Patient | null = null;
+  patientToDelete: Patient | null = null;
+  
+  // Nouveau patient
+  newPatient: NewPatient = {
     name: '',
     email: '',
     phone: '',
     dob: '',
-    photo: '/assets/images/default-user.png',
-    status: 'active',
+    gender: '',
     nationality: '',
     blood_group: '',
     marital_status: '',
-    gender: '',
     address: '',
+    status: 'active',
+    emergency_contact: '',
     showDetails: false
   };
+  
+  // Upload de fichier
+  selectedFile: File | null = null;
+  
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 15;
+  totalItems = 0;
+  lastPage = 1;
+  
+  // Filtres et recherche
+  searchQuery = '';
+  selectedStatus = '';
+  
+  // Options pour les dropdowns
+  statusOptions = [
+    { value: '', label: 'Tous les statuts' },
+    { value: 'active', label: 'Actif' },
+    { value: 'inactive', label: 'Inactif' },
+    { value: 'pending', label: 'En attente' }
+  ];
+  
+  genderOptions = [
+    { value: 'Homme', label: 'Homme' },
+    { value: 'Femme', label: 'Femme' },
+    { value: 'Autre', label: 'Autre' }
+  ];
+  
+  bloodGroupOptions = [
+    'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+  ];
+  
+  maritalStatusOptions = [
+    'Célibataire', 'Marié(e)', 'Divorcé(e)', 'Veuf/Veuve', 'Autre'
+  ];
+  
+  // Subscriptions
+  private subscriptions: Subscription[] = [];
 
   constructor(
-    private patientService: PatientService,
-    private themeService: ThemeService,
-    private toastService: ToastService
+    private patientService: PatientService
   ) {}
 
   ngOnInit(): void {
     this.loadPatients();
-    this.themeSubscription = this.themeService.darkMode$.subscribe(isDark => {
-      this.isDarkMode = isDark;
-    });
-  }
-  
-  ngOnDestroy(): void {
-    if (this.themeSubscription) {
-      this.themeSubscription.unsubscribe();
-    }
   }
 
-  loadPatients() {
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  // ===== CHARGEMENT DES DONNÉES =====
+  
+  loadPatients(): void {
     this.isLoading = true;
-    this.patientService.getPatients(this.currentPage).subscribe({
-      next: (data) => {
-        this.patients = data.patients.map(p => ({ ...p, showDetails: false }));
-        this.pagination = data.pagination;
-        this.totalItems = data.pagination.total;
-        this.currentPage = data.pagination.current_page;
-        this.itemsPerPage = data.pagination.per_page;
-        this.lastPage = data.pagination.last_page;
-        
-        this.applyFilters(); // Applique aussi les filtres
+    
+    const subscription = this.patientService.getPatients(
+      this.currentPage, 
+      this.itemsPerPage, 
+      this.searchQuery, 
+      this.selectedStatus
+    ).subscribe({
+      next: (response: PatientCollectionResponse) => {
+        this.patients = response.data.map(p => ({ ...p, showDetails: false }));
+        this.totalItems = response.pagination.total;
+        this.currentPage = response.pagination.current_page;
+        this.itemsPerPage = response.pagination.per_page;
+        this.lastPage = response.pagination.last_page;
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Erreur lors du chargement des patients', err);
-        this.toastService.error('Erreur lors du chargement des patients');
+        this.showToast('Erreur lors du chargement des patients', 'error');
         this.isLoading = false;
       }
     });
-  }
-
-  applyFilters() {
-    this.filteredPatients = this.patients.filter(patient => {
-      const matchesSearch =
-        !this.searchQuery ||
-        patient.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        ('#' + patient.id).toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        patient.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
-
-      const matchesStatus =
-        !this.selectedStatus || patient.status === this.selectedStatus;
-
-      return matchesSearch && matchesStatus;
-    });
-
-    this.updatePagedPatients();
-  }
-
-  updatePagedPatients() {
-    // Comme nous utilisons la pagination côté serveur, 
-    // les patients filtrés sont déjà paginés
-    this.pagedPatients = this.filteredPatients;
-  }
-
-  goToPreviousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadPatients();
-    }
-  }
-
-  goToNextPage() {
-    if (this.currentPage < this.lastPage) {
-      this.currentPage++;
-      this.loadPatients();
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const totalPages = this.lastPage;
-    // Limiter le nombre de pages affichées
-    const maxPagesToShow = 5;
     
-    if (totalPages <= maxPagesToShow) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    // Calcul des pages à afficher
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = startPage + maxPagesToShow - 1;
-    
-    if (endPage > totalPages) {
-      endPage = totalPages;
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    }
-
-    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+    this.subscriptions.push(subscription);
   }
 
-  goToPage(page: number) {
-    this.currentPage = page;
-    this.loadPatients();
-  }
-
-  toggleView() {
-    this.currentView = this.isListView ? 'list' : 'grid';
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'active': return 'Actif';
-      case 'follow up': return 'En Suivi';
-      case 'critical': return 'Urgent';
-      default: return 'Inconnu';
-    }
-  }
-
-  getStatusClass(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'active': return 'bg-green-100 text-green-700';
-      case 'follow up': return 'bg-yellow-100 text-yellow-700';
-      case 'critical': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  }
-
-  getPhotoUrl(photo: string): string {
-    if (!photo) return '/assets/images/default-user.png';
-    if (photo.startsWith('http')) return photo;
-    if (photo.startsWith('/storage/')) return 'http://localhost:8000' + photo;
-    if (photo.startsWith('/assets/')) return photo;
-    return photo;
-  }
-
-  onImageError(event: any) {
-    event.target.src = 'https://via.placeholder.com/60x60?text=Erreur ';
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
-  }
-
-  openAddModal() {
+  // ===== GESTION DES MODALS =====
+  
+  openAddModal(): void {
+    this.resetNewPatient();
+    this.isAddModalOpen = true;
     this.editingPatient = null;
+  }
+
+  openEditModal(patient: Patient): void {
+    this.editingPatient = patient;
     this.newPatient = {
-      id: null,
-      name: '',
-      email: '',
-      phone: '',
-      dob: '',
-      photo: '/assets/images/default-user.png',
-      status: 'active',
-      nationality: '',
-      blood_group: '',
-      marital_status: '',
-      gender: '',
-      address: '',
-      showDetails: false
+      name: patient.name || '',
+      email: patient.email || '',
+      phone: patient.phone || '',
+      dob: patient.dob || '',
+      gender: patient.gender || '',
+      nationality: patient.nationality || '',
+      blood_group: patient.blood_group || '',
+      marital_status: patient.marital_status || '',
+      address: patient.address || '',
+      status: patient.status || 'active',
+      emergency_contact: patient.emergency_contact || '',
+      showDetails: patient.showDetails || false
     };
+    this.isAddModalOpen = true;
+  }
+
+  closeAddModal(): void {
+    this.isAddModalOpen = false;
+    this.editingPatient = null;
+    this.resetNewPatient();
     this.selectedFile = null;
-    this.showAddModal = true;
   }
 
-  closeAddModal() {
-    this.showAddModal = false;
+  openDeleteModal(patient: Patient): void {
+    this.patientToDelete = patient;
+    this.isDeleteModalOpen = true;
   }
 
-  saveNewPatient() {
+  closeDeleteModal(): void {
+    this.isDeleteModalOpen = false;
+    this.patientToDelete = null;
+  }
+
+  // ===== CRUD OPERATIONS =====
+  
+  savePatient(): void {
     if (!this.newPatient.name || !this.newPatient.email) {
-      this.toastService.warning('Veuillez remplir tous les champs obligatoires.');
+      this.showToast('Le nom et l\'email sont obligatoires.', 'warning');
       return;
     }
 
     const formData = new FormData();
-    for (const key in this.newPatient) {
-      if (this.newPatient[key] !== undefined && this.newPatient[key] !== null) {
-        formData.append(key, this.newPatient[key]);
+    
+    // Ajouter tous les champs du patient en s'assurant qu'ils ne sont pas vides
+    Object.keys(this.newPatient).forEach(key => {
+      const value = this.newPatient[key as keyof NewPatient];
+      if (value !== null && value !== undefined && value !== '' && key !== 'showDetails') {
+        formData.append(key, value as string);
       }
-    }
-    if (this.selectedFile) {
+    });
+    
+    // S'assurer que les champs requis sont présents même si vides
+    const requiredFields = ['name', 'email', 'status'];
+    requiredFields.forEach(field => {
+      if (!formData.has(field)) {
+        const value = this.newPatient[field as keyof NewPatient];
+        formData.append(field, value as string || '');
+      }
+    });
+    
+    // Ajouter la photo si sélectionnée - Temporairement désactivé pour les mises à jour 
+    // à cause d'un problème de base de données avec profile_image
+    if (this.selectedFile && !this.editingPatient) {
       formData.append('photo', this.selectedFile);
+      console.log('Photo added to form data for new patient');
+    } else if (this.selectedFile && this.editingPatient) {
+      console.warn('Photo upload disabled for updates due to database column issue');
+      this.showToast('Note: La mise à jour de la photo est temporairement désactivée', 'warning');
     }
 
-    this.patientService.addPatient(formData).subscribe({
-      next: () => {
+    // Debug: afficher ce qui va être envoyé
+    console.log('Data being sent:');
+    formData.forEach((value, key) => {
+      console.log(`${key}: ${value}`);
+    });
+
+    const action = this.editingPatient
+      ? this.patientService.updatePatient(this.editingPatient.id, formData)
+      : this.patientService.addPatient(formData);
+    
+    const successMessage = this.editingPatient ? 'Patient mis à jour avec succès' : 'Patient ajouté avec succès';
+    const errorMessage = this.editingPatient ? 'Erreur lors de la mise à jour' : 'Erreur lors de l\'ajout';
+
+    const subscription = action.subscribe({
+      next: (response) => {
         this.loadPatients();
         this.closeAddModal();
-        this.toastService.success('Patient ajouté');
-        this.selectedFile = null;
+        this.showToast(successMessage, 'success');
       },
-      error: () => this.toastService.error('Erreur lors de l\'ajout du patient')
-    });
-  }
-
-  openEditModal(patient: any) {
-    this.editingPatient = { ...patient };
-    this.newPatient = { ...patient };
-    this.selectedFile = null;
-    this.showAddModal = true;
-  }
-
-  updatePatient() {
-    if (!this.editingPatient || !this.editingPatient.id) return;
-    const formData = new FormData();
-    for (const key in this.newPatient) {
-      if (this.newPatient[key] !== undefined && this.newPatient[key] !== null && key !== 'showDetails') {
-        formData.append(key, this.newPatient[key]);
+      error: (error) => {
+        console.error('Error:', error);
+        let errorMsg = errorMessage;
+        
+        // Handle database/SQL errors specifically
+        if (error?.error?.message && error.error.message.includes('SQLSTATE')) {
+          console.error('Database error detected:', error.error.message);
+          if (error.error.message.includes('profile_image')) {
+            errorMsg = 'Erreur de base de données: La colonne profile_image n\'existe pas. Veuillez contacter l\'administrateur.';
+          } else {
+            errorMsg = 'Erreur de base de données. Veuillez contacter l\'administrateur.';
+          }
+        }
+        // Afficher les erreurs de validation si disponibles
+        else if (error?.error?.errors) {
+          console.error('Validation errors:', error.error.errors);
+          const firstError = Object.values(error.error.errors)[0] as string[];
+          errorMsg = firstError[0] || errorMessage;
+          
+          // Afficher toutes les erreurs de validation dans la console pour debug
+          Object.keys(error.error.errors).forEach(field => {
+            console.error(`${field}: ${error.error.errors[field].join(', ')}`);
+          });
+        } else if (error?.error?.message) {
+          console.error('Error message:', error.error.message);
+          errorMsg = error.error.message;
+        }
+        
+        this.showToast(errorMsg, 'error');
       }
-    }
-    if (this.selectedFile) {
-      formData.append('photo', this.selectedFile);
-    }
+    });
+    
+    this.subscriptions.push(subscription);
+  }
 
-    this.patientService.updatePatient(this.editingPatient.id, formData).subscribe({
+  confirmDelete(): void {
+    if (!this.patientToDelete) return;
+
+    const subscription = this.patientService.deletePatient(this.patientToDelete.id).subscribe({
       next: () => {
         this.loadPatients();
-        this.showAddModal = false;
-        this.toastService.success('Patient mis à jour');
-        this.selectedFile = null;
+        this.closeDeleteModal();
+        this.showToast('Patient supprimé avec succès', 'success');
       },
-      error: () => this.toastService.error('Erreur lors de la mise à jour')
+      error: (error) => {
+        console.error('Error deleting patient:', error);
+        this.showToast('Erreur lors de la suppression', 'error');
+      }
     });
+    
+    this.subscriptions.push(subscription);
   }
 
-  deletePatient(patient: any) {
-    if (confirm(`Supprimer ${patient.name} ?`)) {
-      this.patientService.deletePatient(patient.id).subscribe({
-        next: () => {
-          this.loadPatients();
-          this.toastService.success('Patient supprimé');
-        },
-        error: () => this.toastService.error('Erreur lors de la suppression')
-      });
+  // ===== GESTION DES FICHIERS =====
+  
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      // Validation du fichier
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      
+      if (!validTypes.includes(file.type)) {
+        this.showToast('Type de fichier non supporté. Utilisez JPEG, PNG, JPG ou GIF.', 'warning');
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        this.showToast('Le fichier est trop volumineux. Maximum 2MB.', 'warning');
+        return;
+      }
+      
+      this.selectedFile = file;
     }
   }
 
-  toggleDetails(patient: any) {
+  // ===== RECHERCHE ET FILTRES =====
+  
+  onSearch(): void {
+    this.currentPage = 1;
+    this.loadPatients();
+  }
+
+  onStatusFilter(): void {
+    this.currentPage = 1;
+    this.loadPatients();
+  }
+
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedStatus = '';
+    this.currentPage = 1;
+    this.loadPatients();
+  }
+
+  // ===== PAGINATION =====
+  
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.lastPage && page !== this.currentPage) {
+      this.currentPage = page;
+      this.loadPatients();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.goToPage(this.currentPage - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.lastPage) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
+
+  // ===== AFFICHAGE ET NAVIGATION =====
+  
+  toggleView(): void {
+    this.isListView = !this.isListView;
+    this.currentView = this.isListView ? 'list' : 'grid';
+  }
+
+  togglePatientDetails(patient: Patient): void {
     patient.showDetails = !patient.showDetails;
+  }
+
+  // ===== UTILITAIRES =====
+  
+  resetNewPatient(): void {
+    this.newPatient = {
+      name: '',
+      email: '',
+      phone: '',
+      dob: '',
+      gender: '',
+      nationality: '',
+      blood_group: '',
+      marital_status: '',
+      address: '',
+      status: 'active',
+      emergency_contact: '',
+      showDetails: false
+    };
+  }
+
+  showToast(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
+    // Implémentation simple de toast pour le moment
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // Vous pouvez intégrer votre service de toast préféré ici
+    // Par exemple: this.toastService.show(message, type);
+    
+    // Toast basique avec alert pour les erreurs critiques
+    if (type === 'error') {
+      // Affichage temporaire d'une notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'active':
+        return 'status-active';
+      case 'inactive':
+        return 'status-inactive';
+      case 'pending':
+        return 'status-pending';
+      default:
+        return 'status-inactive';
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'active':
+        return 'Actif';
+      case 'inactive':
+        return 'Inactif';
+      case 'pending':
+        return 'En attente';
+      default:
+        return status;
+    }
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'Non renseigné';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR');
+    } catch {
+      return 'Date invalide';
+    }
+  }
+
+  calculateAge(birthdate: string): number | null {
+    if (!birthdate) return null;
+    
+    try {
+      const birth = new Date(birthdate);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      
+      return age;
+    } catch {
+      return null;
+    }
+  }
+
+  // ===== GETTERS POUR LES TEMPLATES =====
+  
+  get paginationInfo(): string {
+    const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+    const end = Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
+    return `${start}-${end} sur ${this.totalItems}`;
+  }
+
+  get hasPatients(): boolean {
+    return this.patients.length > 0;
+  }
+
+  get isFirstPage(): boolean {
+    return this.currentPage === 1;
+  }
+
+  get isLastPage(): boolean {
+    return this.currentPage === this.lastPage;
+  }
+
+  get paginationPages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    
+    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.lastPage, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   }
 }
