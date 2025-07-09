@@ -235,6 +235,14 @@ export class RolePageComponent implements OnInit {
       return;
     }
     
+    // Validate interface permissions
+    const interfaceError = this.validateInterfacePermissions();
+    if (interfaceError) {
+      this.errorMessage = interfaceError;
+      this.loading = false;
+      return;
+    }
+    
     const formValues = this.roleForm.getRawValue();
     const permissionsObj = formValues.permissions || {};
     
@@ -335,7 +343,12 @@ export class RolePageComponent implements OnInit {
       }
       
       this.errorMessage = errorMessages.join(' ');
-    } else {
+    } else if (error.error?.message && 
+            (error.error.message.includes('interface permission') || 
+             error.error.message.includes('multiple interface'))) {
+    // Specific handler for interface permission errors from backend
+    this.errorMessage = error.error.message;
+  } else {
       this.errorMessage = 'An error occurred. Please try again.';
     }
   }
@@ -468,5 +481,80 @@ export class RolePageComponent implements OnInit {
   /** Toggle a single category drawer */
   toggleCategory(category: string): void {
     this.expandedCategory = this.expandedCategory === category ? null : category;
+  }
+  
+  /**
+   * Check if a permission is an interface permission
+   */
+  isInterfacePermission(permission: Permission): boolean {
+    return permission.group === 'interfaces' && permission.code.startsWith('interfaces:');
+  }
+  
+  /**
+   * Validate that only one interface permission is selected
+   * @returns Error message if validation fails, null if validation passes
+   */
+  validateInterfacePermissions(): string | null {
+    const formValues = this.roleForm.getRawValue();
+    const permissionsObj = formValues.permissions || {};
+    
+    // Get all selected permission IDs
+    const selectedPermissionIds = Object.keys(permissionsObj)
+      .filter(key => permissionsObj[key])
+      .map(key => parseInt(key, 10));
+    
+    // Find interface permissions among selected ones
+    const selectedInterfacePermissions = this.permissions.filter(p => 
+      selectedPermissionIds.includes(p.id) && this.isInterfacePermission(p)
+    );
+    
+    if (selectedInterfacePermissions.length > 1) {
+      return `A role can only have one interface permission. You've selected ${selectedInterfacePermissions.length} interface permissions: ${selectedInterfacePermissions.map(p => p.name).join(', ')}`;
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Helper method for template to check if permission is an interface
+   */
+  checkIfInterface(permission: Permission): boolean {
+    return this.isInterfacePermission(permission);
+  }
+
+  /**
+   * Used by template to check if any interface permissions exist
+   */
+  get hasInterfacePermissions(): boolean {
+    return this.permissions.some(p => this.isInterfacePermission(p));
+  }
+
+  /**
+   * Handle interface permission selection to ensure only one is selected
+   */
+  onInterfacePermissionChange(permissionId: number, isChecked: boolean): void {
+    if (!isChecked) return; // Only handle when checkbox is checked
+    
+    // If it's an interface permission, uncheck any other selected interface permissions
+    const permissionsGroup = this.roleForm.get('permissions') as FormGroup;
+    
+    this.permissions.forEach(p => {
+      if (p.id !== permissionId && this.isInterfacePermission(p)) {
+        const control = permissionsGroup.get(p.id.toString());
+        if (control) {
+          control.setValue(false);
+        }
+      }
+    });
+  }
+  
+  /**
+   * Handle checkbox change events with proper type casting
+   */
+  handlePermissionChange(event: Event, permissionId: number): void {
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      this.onInterfacePermissionChange(permissionId, true);
+    }
   }
 }

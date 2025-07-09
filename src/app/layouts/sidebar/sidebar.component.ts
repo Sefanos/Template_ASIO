@@ -1,9 +1,9 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { SidebarService, SidebarItem } from '../../shared/services/sidebar.service';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { SidebarItem, SidebarService } from '../../shared/services/sidebar.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -54,27 +54,26 @@ export class SidebarComponent implements OnInit {
       this.sanitizedIcons[key] = this.sanitizer.bypassSecurityTrustHtml(value);
     }
     
-    if (this.role) {
-      this.loadMenu();
-    } else {
-      const currentRole = this.authService.getUserRole();
-      if (currentRole) {
-        this.role = currentRole;
-        this.loadMenu();
-      }
-    }
+    // Use interface instead of role
+    this.loadMenu();
   }
-  
+
   loadMenu(): void {
     try {
-      if (!this.role) {
+      // Get the interface from the auth service instead of using the role input
+      const userInterface = this.authService.getUserInterface();
+      
+      if (!userInterface) {
         this.menuItems = [];
+        this.menuTitle = 'Navigation';
         return;
       }
       
-      this.menuItems = this.sidebarService.getMenuByRole(this.role);
-      this.menuTitle = this.sidebarService.getMenuTitle(this.role);
+      // Use getMenuByInterface instead of getMenuByRole
+      this.menuItems = this.sidebarService.getMenuByInterface(userInterface);
+      this.menuTitle = this.sidebarService.getMenuTitleByInterface(userInterface);
     } catch (error) {
+      console.error('Error loading menu:', error);
       this.menuItems = [];
       this.menuTitle = 'Navigation';
     }

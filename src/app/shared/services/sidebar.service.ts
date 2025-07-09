@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { AuthService } from '../../core/auth/auth.service';
 
 /**
  * Interface for sidebar menu items
@@ -21,6 +22,9 @@ export interface SidebarItem {
   
   /** Whether this item is active */
   active?: boolean;
+
+  /** Required permissions to view this menu item */
+  permissions?: string[];
 }
 
 @Injectable({
@@ -159,26 +163,94 @@ export class SidebarService {
     }
   ];
 
-  constructor() { }
+  constructor(private authService: AuthService) { }
 
   getMenuByRole(role: string): SidebarItem[] {
+    let menuItems: SidebarItem[] = [];
+    
+    // Role-based menu selection
     switch (role?.toLowerCase()) {
       case 'admin':
-        return this.adminMenu;
+        menuItems = this.adminMenu;
+        break;
       case 'doctor':
-        return this.doctorMenu;
+        menuItems = this.doctorMenu;
+        break;
       case 'patient':
-        return this.patientMenu;
+        menuItems = this.patientMenu;
+        break;
       case 'receptionist':
-        return this.receptionistMenu;
+        menuItems = this.receptionistMenu;
+        break;
       default:
         console.warn(`No menu defined for role: ${role}, defaulting to empty menu`);
         return [];
     }
+    
+    // Permission-based filtering
+    return menuItems.filter(item => {
+      if (!item.permissions || item.permissions.length === 0) {
+        return true;
+      }
+      
+      return this.authService.hasAnyPermission(item.permissions);
+    });
+  }
+
+  getMenuByInterface(interfaceType: string): SidebarItem[] {
+    let menuItems: SidebarItem[] = [];
+    
+    // Get menu based on interface, not role
+    switch (interfaceType?.toLowerCase()) {
+      case 'admin':
+        menuItems = this.adminMenu;
+        break;
+      case 'doctor':
+        menuItems = this.doctorMenu;
+        break;
+      case 'patient':
+        menuItems = this.patientMenu;
+        break;
+      case 'receptionist':
+        menuItems = this.receptionistMenu;
+        break;
+      default:
+        console.warn(`No menu defined for interface: ${interfaceType}, defaulting to empty menu`);
+        return [];
+    }
+    
+    // Filter by permissions
+    return this.filterMenuByPermissions(menuItems);
+  }
+
+  private filterMenuByPermissions(menuItems: SidebarItem[]): SidebarItem[] {
+    return menuItems.filter(item => {
+      if (!item.permissions || item.permissions.length === 0) {
+        return true;
+      }
+      
+      return this.authService.hasAnyPermission(item.permissions);
+    });
   }
 
   getMenuTitle(role: string): string {
     switch (role?.toLowerCase()) {
+      case 'admin':
+        return 'Admin Menu';
+      case 'doctor':
+        return 'Doctor Menu';
+      case 'patient':
+        return 'Patient Menu';
+      case 'receptionist':
+        return 'RÉCEPTIONNISTE MENU';
+      default:
+        return 'Navigation';
+    }
+  }
+
+  // Also update the title method to work with interfaces
+  getMenuTitleByInterface(interfaceType: string): string {
+    switch (interfaceType?.toLowerCase()) {
       case 'admin':
         return 'Admin Menu';
       case 'doctor':
