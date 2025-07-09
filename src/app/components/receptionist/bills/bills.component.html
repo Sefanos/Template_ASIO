@@ -1,310 +1,1009 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">  <!-- Header -->
-  <section class="bg-white border border-gray-200 rounded-xl shadow-md p-6 mb-6 flex justify-between items-center">
-    <div class="header-content">
-      <h2 class="text-xl font-bold text-primary">Gestion des Factures</h2>
-      <p class="text-sm text-text-light mt-1">Suivez et gérez les factures des patients en temps réel.</p>
-    </div>
-    <button 
-      (click)="openAddModal()" 
-      class="btn btn-primary px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]">
-      + Nouvelle Facture
-    </button>
-  </section>  <!-- Filtres améliorés -->
-  <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg p-6 mb-8">
-    <div class="flex flex-col lg:flex-row gap-6">      <!-- Recherche -->
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Rechercher</label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <!-- En-tête avec statistiques -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestion des Factures</h1>
+        <p class="mt-2 text-gray-600">Suivez et gérez toutes les factures des patients</p>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="bg-white rounded-lg shadow px-6 py-4" *ngIf="pagination">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-indigo-600">{{ pagination.total }}</div>
+            <div class="text-sm text-gray-500">Factures totales</div>
           </div>
-          <input type="text"
-                 placeholder="Nom du patient, ID facture..."
-                 [(ngModel)]="searchQuery"
-                 class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
         </div>
-      </div>      <!-- Filtre par date -->
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Filtrer par Date</label>
-        <div class="relative">
-          <input type="date"
-                 [(ngModel)]="selectedDate"
-                 class="block w-full px-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-        </div>
-      </div>      <!-- Bouton de réinitialisation -->
-      <div class="flex items-end">
-        <button 
-          (click)="clearFilters()"
-          class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        <button
+          (click)="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          Réinitialiser
+          Créer Facture
         </button>
       </div>
     </div>
-  </div>  <!-- Tableau moderne -->
-  <div class="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="min-w-full">
-        <thead>
-          <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ID</th>
-            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Patient</th>
-            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
-            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Montant</th>
-            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Description</th>
-            <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Filtres</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Filtre Patient ID -->
+      <div>
+        <label for="patientId" class="block text-sm font-medium text-gray-700">ID Patient</label>
+        <input
+          type="number"
+          id="patientId"
+          [(ngModel)]="patientIdFilter"
+          (ngModelChange)="onFilterChange()"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="Ex: 12"
+        />
+      </div>
+
+      <!-- Filtre Nom du docteur -->
+      <div>
+        <label for="doctorName" class="block text-sm font-medium text-gray-700">Nom du Docteur</label>
+        <input
+          type="text"
+          id="doctorName"
+          [(ngModel)]="doctorNameFilter"
+          (ngModelChange)="onFilterChange()"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="Ex: Dr. Smith"
+        />
+      </div>
+
+      <!-- Filtre Méthode de paiement -->
+      <div>
+        <label for="paymentMethod" class="block text-sm font-medium text-gray-700">Méthode de Paiement</label>
+        <select
+          id="paymentMethod"
+          [(ngModel)]="paymentMethodFilter"
+          (ngModelChange)="onFilterChange()"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        >
+          <option value="">Toutes</option>
+          <option value="credit_card">Carte de crédit</option>
+          <option value="bank_transfer">Virement bancaire</option>
+          <option value="cash">Espèces</option>
+          <option value="insurance">Assurance</option>
+        </select>
+      </div>
+
+      <!-- Filtre Période -->
+      <div>
+        <label for="presetPeriod" class="block text-sm font-medium text-gray-700">Période</label>
+        <select
+          id="presetPeriod"
+          [(ngModel)]="presetPeriodFilter"
+          (ngModelChange)="onFilterChange()"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        >
+          <option value="">Toutes</option>
+          <option value="last_7_days">7 derniers jours</option>
+          <option value="last_30_days">30 derniers jours</option>
+          <option value="last_90_days">90 derniers jours</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <button
+        (click)="clearFilters()"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        Effacer les filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+    <span class="ml-2 text-gray-600">Chargement...</span>
+  </div>
+
+  <!-- Tableau des factures -->
+  <div *ngIf="!isLoading" class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              N° Facture
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Patient
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Docteur
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Date d'émission
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Montant
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
-        </thead>        <tbody class="divide-y divide-gray-100">
-          <tr *ngFor="let invoice of paginatedInvoices; let i = index" 
-              class="hover:bg-blue-50/50 transition-all duration-200 group">            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
-                  {{ invoice.id }}
-                </div>
-              </div>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let bill of bills" class="hover:bg-gray-50 transition-colors duration-200">
+            <!-- N° Facture -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ bill.bill_number }}</div>
+              <div class="text-xs text-gray-500">ID: {{ bill.id }}</div>
             </td>
+            
+            <!-- Patient -->
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
-                <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
-                  {{ invoice.patientName.charAt(0).toUpperCase() }}
+                <div class="flex-shrink-0 h-10 w-10">
+                  <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <span class="text-sm font-medium text-indigo-700">
+                      {{ getInitials(bill.patient.user.name) }}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <div class="text-sm font-semibold text-gray-900">{{ invoice.patientName }}</div>
-                  <div class="text-sm text-gray-500">Patient</div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ bill.patient.user.name }}</div>
+                  <div class="text-sm text-gray-500">{{ bill.patient.user.email }}</div>
+                  <div class="text-xs text-gray-400">ID: {{ bill.patient_id }}</div>
                 </div>
               </div>
             </td>
+            
+            <!-- Docteur -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ invoice.date | date: 'dd/MM/yyyy' }}</div>
-              <div class="text-sm text-gray-500">{{ invoice.date | date: 'EEEE' }}</div>
+              <div>
+                <div class="text-sm font-medium text-gray-900">{{ bill.doctor.name }}</div>
+                <div class="text-sm text-gray-500">{{ bill.doctor.doctor.specialty }}</div>
+                <div class="text-xs text-gray-400">{{ bill.doctor.doctor.experience_years }} ans d'exp.</div>
+              </div>
             </td>
+            
+            <!-- Date -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
-                   [class]="getAmountColorClass(invoice.amount)">
-                {{ invoice.amount | currency: 'EUR' }}
+              <div class="text-sm text-gray-900">{{ bill.issue_date | date:'dd/MM/yyyy' }}</div>
+              <div class="text-xs text-gray-500">{{ bill.issue_date | date:'HH:mm' }}</div>
+            </td>
+            
+            <!-- Montant -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-lg font-semibold text-green-600">
+                {{ bill.amount | number:'1.2-2' }} MAD
               </div>
-            </td>            <td class="px-6 py-4">
-              <div class="text-sm text-gray-900 max-w-xs truncate" [title]="invoice.description">
-                {{ invoice.description || 'Aucune description' }}
+              <div class="text-xs text-gray-500">
+                {{ bill.items.length }} service(s)
               </div>
-            </td>            <td class="px-6 py-4 whitespace-nowrap text-right">
-              <div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <button (click)="openViewModal(invoice)" 
-                        class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
-                        title="Voir">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </td>
+            
+            <!-- Actions -->
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex space-x-2">
+                <button 
+                  (click)="viewBillDetails(bill)"
+                  class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  title="Voir les détails">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
-                <button (click)="openEditModal(invoice)" 
-                        class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                        title="Modifier">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                <button 
+                  *ngIf="bill.pdf_path"
+                  (click)="downloadPDF(bill)"
+                  class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                  title="Télécharger PDF">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </button>
-                <button (click)="deleteInvoice(invoice)" 
-                        class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
-                        title="Supprimer">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                <button 
+                  (click)="printBill(bill)"
+                  class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                  title="Imprimer">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                </button>
+                
+                <!-- Nouveau bouton : Modifier -->
+                <button 
+                  (click)="openEditModal(bill)"
+                  class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                  title="Modifier la facture">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                
+                <!-- Nouveau bouton : Ajouter un article -->
+                <button 
+                  (click)="openAddItemModal(bill)"
+                  class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200"
+                  title="Ajouter un article">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+                
+                <!-- Nouveau bouton : Supprimer -->
+                <button 
+                  (click)="deleteBill(bill)"
+                  class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                  title="Supprimer la facture">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>
             </td>
           </tr>
         </tbody>
-      </table>      <!-- Message si aucune facture -->
-      <div *ngIf="paginatedInvoices.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </table>
+
+      <!-- Message si aucune facture -->
+      <div *ngIf="bills.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune facture trouvée</h3>
-        <p class="text-gray-500">Commencez par créer votre première facture.</p>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune facture trouvée</h3>
+        <p class="mt-1 text-sm text-gray-500">Essayez de modifier vos filtres ou ajoutez une nouvelle facture.</p>
       </div>
     </div>
   </div>
-  <!-- Pagination moderne -->
-  <div *ngIf="totalPages > 1" class="mt-8 flex items-center justify-between">
-    <div class="text-sm text-gray-700">
-      Affichage <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> à 
-      <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredInvoices.length) }}</span> de 
-      <span class="font-medium">{{ filteredInvoices.length }}</span> résultats
-    </div>
-    
-    <div class="flex items-center space-x-2">
-      <button 
-        (click)="currentPage = currentPage > 1 ? currentPage - 1 : 1"
-        [disabled]="currentPage === 1"
-        class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
-        Précédent
-      </button>      <ng-container *ngFor="let _ of getPagesArray(); let i = index">
-        <button 
-          (click)="currentPage = i + 1"
-          class="w-10 h-10 rounded-lg font-medium transition-all duration-200"
-          [class.bg-blue-600]="currentPage === i + 1"
-          [class.text-white]="currentPage === i + 1"
-          [class.shadow-lg]="currentPage === i + 1"
-          [class.bg-white]="currentPage !== i + 1"
-          [class.border]="currentPage !== i + 1"
-          [class.border-gray-300]="currentPage !== i + 1"
-          [class.text-gray-700]="currentPage !== i + 1"
-          [class.hover:bg-gray-50]="currentPage !== i + 1">
-          {{ i + 1 }}
-        </button>
-      </ng-container>
 
-      <button 
-        (click)="currentPage = currentPage < totalPages ? currentPage + 1 : currentPage"
-        [disabled]="currentPage === totalPages"
-        class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
-        Suivant
+  <!-- Pagination -->
+  <div *ngIf="pagination && pagination.last_page > 1" class="bg-white px-6 py-4 flex flex-col sm:flex-row items-center justify-between border border-gray-200 rounded-lg shadow-sm mt-6">
+    <!-- Informations sur les résultats -->
+    <div class="flex items-center space-x-2 text-sm text-gray-600 mb-4 sm:mb-0">
+      <span class="flex items-center">
+        <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Page {{ pagination.current_page }} sur {{ pagination.last_page }}
+      </span>
+      <span class="text-gray-400">•</span>
+      <span>
+        {{ (pagination.current_page - 1) * pagination.per_page + 1 }}-{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }} 
+        sur {{ pagination.total }} factures
+      </span>
+    </div>
+
+    <!-- Contrôles de pagination -->
+    <div class="flex items-center space-x-1">
+      <!-- Première page -->
+      <button
+        *ngIf="pagination.current_page > 3"
+        (click)="onPageChange(1)"
+        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-indigo-600 transition-colors duration-200"
+        title="Première page"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+        </svg>
+      </button>
+
+      <!-- Page précédente -->
+      <button
+        (click)="onPageChange(pagination.current_page - 1)"
+        [disabled]="pagination.current_page <= 1"
+        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-700 transition-colors duration-200"
+        title="Page précédente"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+
+      <!-- Pages numérotées -->
+      <div class="flex items-center space-x-1">
+        <ng-container *ngFor="let page of getVisiblePages()">
+          <span *ngIf="page === '...'" class="px-3 py-2 text-sm text-gray-400">...</span>
+          <button
+            *ngIf="page !== '...'"
+            (click)="onPageChange(+page)"
+            [class]="getPageButtonClass(+page)"
+            class="relative inline-flex items-center px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200"
+          >
+            {{ page }}
+          </button>
+        </ng-container>
+      </div>
+
+      <!-- Page suivante -->
+      <button
+        (click)="onPageChange(pagination.current_page + 1)"
+        [disabled]="pagination.current_page >= pagination.last_page"
+        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-700 transition-colors duration-200"
+        title="Page suivante"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+
+      <!-- Dernière page -->
+      <button
+        *ngIf="pagination.current_page < pagination.last_page - 2"
+        (click)="onPageChange(pagination.last_page)"
+        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-indigo-600 transition-colors duration-200"
+        title="Dernière page"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+        </svg>
       </button>
     </div>
-  </div>  <!-- Modale moderne -->
-  <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative transform transition-all duration-300 scale-100">
-      <button (click)="closeModal()" 
-              class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>      <ng-container [ngSwitch]="modalMode">        <!-- Formulaire d'ajout -->
-        <form *ngSwitchCase="'add'" (ngSubmit)="saveInvoice()" class="space-y-6">
-          <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-            </div>            <h3 class="text-2xl font-bold text-gray-900">Nouvelle Facture</h3>
-            <p class="text-gray-600 mt-2">Créez une nouvelle facture pour un patient</p>
-          </div>          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Patient</label>
-              <input type="text" [(ngModel)]="newInvoice.patientName" name="patientName" required
-                     class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                     placeholder="Nom complet du patient">
-            </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                <input type="date" [(ngModel)]="newInvoice.date" name="date" required
-                       class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200">
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Montant (EUR)</label>
-                <input type="number" [(ngModel)]="newInvoice.amount" name="amount" required min="0" step="0.01"
-                       class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                       placeholder="0.00">
-              </div>
-            </div>            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-              <textarea [(ngModel)]="newInvoice.description" name="description" rows="3"
-                        class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                        placeholder="Description des services ou traitements..."></textarea>
+
+    <!-- Sélecteur de nombre d'éléments par page -->
+    <div class="flex items-center space-x-2 mt-4 sm:mt-0">
+      <label for="perPage" class="text-sm text-gray-600">Afficher:</label>
+      <select
+        id="perPage"
+        [(ngModel)]="filters.per_page"
+        (ngModelChange)="onPerPageChange()"
+        class="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+      >
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <span class="text-sm text-gray-600">par page</span>
+    </div>
+  </div>
+
+  <!-- Modal de détails de facture -->
+  <div *ngIf="selectedBill" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeModal()">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+      <!-- Header de la modal -->
+      <div class="flex items-center justify-between pb-4 border-b">
+        <h3 class="text-lg font-medium text-gray-900">
+          Détails de la facture {{ selectedBill.bill_number }}
+        </h3>
+        <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Contenu de la modal -->
+      <div class="mt-4">
+        <!-- Informations générales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Patient -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="text-sm font-medium text-gray-900 mb-2">Informations Patient</h4>
+            <div class="space-y-1">
+              <p class="text-sm"><span class="font-medium">Nom:</span> {{ selectedBill.patient.user.name }}</p>
+              <p class="text-sm"><span class="font-medium">Email:</span> {{ selectedBill.patient.user.email }}</p>
+              <p class="text-sm"><span class="font-medium">Téléphone:</span> {{ selectedBill.patient.user.phone }}</p>
+              <p class="text-sm"><span class="font-medium">ID Patient:</span> {{ selectedBill.patient_id }}</p>
             </div>
           </div>
 
-          <div class="flex gap-3 pt-4">
-            <button type="button" (click)="closeModal()" 
-                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">
-              Annuler
-            </button>
-            <button type="submit" 
-                    class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-              Créer la Facture
-            </button>
-          </div>
-        </form>        <!-- Formulaire d'édition -->
-        <form *ngSwitchCase="'edit'" (ngSubmit)="saveInvoice()" class="space-y-6">
-          <div class="text-center mb-6">            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-              </svg>
+          <!-- Docteur -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="text-sm font-medium text-gray-900 mb-2">Informations Docteur</h4>
+            <div class="space-y-1">
+              <p class="text-sm"><span class="font-medium">Nom:</span> {{ selectedBill.doctor.name }}</p>
+              <p class="text-sm"><span class="font-medium">Email:</span> {{ selectedBill.doctor.email }}</p>
+              <p class="text-sm"><span class="font-medium">Spécialité:</span> {{ selectedBill.doctor.doctor.specialty }}</p>
+              <p class="text-sm"><span class="font-medium">Expérience:</span> {{ selectedBill.doctor.doctor.experience_years }} ans</p>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">Modifier la Facture</h3>
-            <p class="text-gray-600 mt-2">Modifiez les informations de la facture #{{ newInvoice.id }}</p>
-          </div>          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Patient</label>
-              <input type="text" [(ngModel)]="newInvoice.patientName" name="patientName" required
-                     class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                <input type="date" [(ngModel)]="newInvoice.date" name="date" required
-                       class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Montant (EUR)</label>
-                <input type="number" [(ngModel)]="newInvoice.amount" name="amount" required min="0" step="0.01"
-                       class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-              <textarea [(ngModel)]="newInvoice.description" name="description" rows="3"
-                        class="w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"></textarea>
-            </div>
-          </div>          <div class="flex gap-3 pt-4">
-            <button type="button" (click)="closeModal()" 
-                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">
-              Annuler
-            </button>
-            <button type="submit" 
-                    class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-              Mettre à Jour
-            </button>
-          </div>
-        </form>        <!-- Vue détaillée -->
-        <div *ngSwitchCase="'view'" class="space-y-6">
-          <div class="text-center mb-6">            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-gray-900">Détails de la Facture</h3>
-            <p class="text-gray-600 mt-2">Facture #{{ selectedInvoice.id }}</p>
-          </div>          <div class="bg-gray-50 rounded-xl p-6 space-y-4">
-            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
-              <span class="text-sm font-semibold text-gray-600">Patient</span>
-              <span class="text-lg font-bold text-gray-900">{{ selectedInvoice.patientName }}</span>
-            </div>
-            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
-              <span class="text-sm font-semibold text-gray-600">Date</span>
-              <span class="text-lg text-gray-900">{{ selectedInvoice.date | date: 'dd/MM/yyyy' }}</span>
-            </div>
-            <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
-              <span class="text-sm font-semibold text-gray-600">Montant</span>
-              <span class="text-xl font-bold text-green-600">{{ selectedInvoice.amount | currency: 'EUR' }}</span>
-            </div>
-            <div class="py-3">
-              <span class="text-sm font-semibold text-gray-600 block mb-2">Description</span>
-              <p class="text-gray-900 bg-white p-4 rounded-lg border border-gray-200">
-                {{ selectedInvoice.description || 'Aucune description fournie' }}
-              </p>
-            </div>
-          </div>          <div class="flex gap-3">
-            <button type="button" (click)="closeModal()" 
-                    class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">
-              Fermer
-            </button>
-            <button type="button" (click)="openEditModal(selectedInvoice); closeModal()" 
-                    class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-              Modifier
-            </button>
           </div>
         </div>
-      </ng-container>
+
+        <!-- Informations facture -->
+        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+          <h4 class="text-sm font-medium text-gray-900 mb-2">Informations Facture</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm"><span class="font-medium">Date d'émission:</span> {{ selectedBill.issue_date | date:'dd/MM/yyyy à HH:mm' }}</p>
+              <p class="text-sm"><span class="font-medium">Méthode de paiement:</span> {{ getPaymentMethodLabel(selectedBill.payment_method) }}</p>
+            </div>
+            <div>
+              <p class="text-sm"><span class="font-medium">Montant total:</span> 
+                <span class="text-lg font-bold text-green-600">{{ selectedBill.amount | number:'1.2-2' }} MAD</span>
+              </p>
+              <p class="text-sm"><span class="font-medium">Créé le:</span> {{ selectedBill.created_at | date:'dd/MM/yyyy à HH:mm' }}</p>
+            </div>
+          </div>
+          <div class="mt-2" *ngIf="selectedBill.description">
+            <p class="text-sm"><span class="font-medium">Description:</span> {{ selectedBill.description }}</p>
+          </div>
+        </div>
+
+        <!-- Services/Items -->
+        <div>
+          <h4 class="text-sm font-medium text-gray-900 mb-3">Services facturés</h4>
+          <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Prix unitaire</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let item of selectedBill.items">
+                  <td class="px-4 py-2 text-sm">
+                    <span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-xs">
+                      {{ getServiceTypeLabel(item.service_type) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-2 text-sm text-gray-900">{{ item.description }}</td>
+                  <td class="px-4 py-2 text-sm text-gray-900 text-center">{{ item.quantity }}</td>
+                  <td class="px-4 py-2 text-sm text-gray-900">{{ item.price | number:'1.2-2' }} MAD</td>
+                  <td class="px-4 py-2 text-sm font-medium text-gray-900">{{ item.total | number:'1.2-2' }} MAD</td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-gray-50">
+                <tr>
+                  <td colspan="4" class="px-4 py-2 text-sm font-medium text-gray-900 text-right">Total facture:</td>
+                  <td class="px-4 py-2 text-sm font-bold text-green-600">{{ selectedBill.amount | number:'1.2-2' }} MAD</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de la modal -->
+      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+        <button 
+          (click)="printBill(selectedBill)"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+          <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Imprimer
+        </button>
+        <button 
+          *ngIf="selectedBill.pdf_path"
+          (click)="downloadPDF(selectedBill)"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+          <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Télécharger PDF
+        </button>
+        <button 
+          (click)="closeModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de création de facture -->
+  <div *ngIf="showCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeCreateModal()">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 xl:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <!-- Header de la modal -->
+      <div class="flex items-center justify-between pb-4 border-b">
+        <h3 class="text-xl font-semibold text-gray-900">
+          <svg class="w-6 h-6 inline mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Créer une nouvelle facture
+        </h3>
+        <button (click)="closeCreateModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Contenu de la modal -->
+      <div class="mt-6">
+        <!-- Informations générales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- ID Patient -->
+          <div>
+            <label for="patientId" class="block text-sm font-medium text-gray-700 mb-1">ID Patient *</label>
+            <input
+              type="number"
+              id="patientId"
+              [(ngModel)]="newBill.patient_id"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Ex: 1"
+              required
+            />
+          </div>
+
+          <!-- ID Docteur -->
+          <div>
+            <label for="doctorId" class="block text-sm font-medium text-gray-700 mb-1">ID Docteur *</label>
+            <input
+              type="number"
+              id="doctorId"
+              [(ngModel)]="newBill.doctor_user_id"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Ex: 2"
+              required
+            />
+          </div>
+
+          <!-- Date d'émission -->
+          <div>
+            <label for="issueDate" class="block text-sm font-medium text-gray-700 mb-1">Date d'émission *</label>
+            <input
+              type="date"
+              id="issueDate"
+              [(ngModel)]="newBill.issue_date"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
+
+          <!-- Méthode de paiement -->
+          <div>
+            <label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement *</label>
+            <select
+              id="paymentMethod"
+              [(ngModel)]="newBill.payment_method"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            >
+              <option value="">Sélectionner une méthode</option>
+              <option *ngFor="let method of paymentMethods" [value]="method.value">
+                {{ method.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-6">
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea
+            id="description"
+            [(ngModel)]="newBill.description"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Description de la facture..."
+          ></textarea>
+        </div>
+
+        <!-- Section Services/Items -->
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">Services et prestations</h4>
+          
+          <!-- Formulaire d'ajout d'item -->
+          <div class="bg-gray-50 p-4 rounded-lg mb-4">
+            <h5 class="text-md font-medium text-gray-800 mb-3">Ajouter un service</h5>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+              <!-- Type de service -->
+              <div>
+                <label for="serviceType" class="block text-sm font-medium text-gray-700 mb-1">Type de service *</label>
+                <select
+                  id="serviceType"
+                  [(ngModel)]="newItem.service_type"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Sélectionner un type</option>
+                  <option *ngFor="let type of serviceTypes" [value]="type">{{ type }}</option>
+                </select>
+              </div>
+
+              <!-- Description du service -->
+              <div>
+                <label for="serviceDescription" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <input
+                  type="text"
+                  id="serviceDescription"
+                  [(ngModel)]="newItem.description"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Description du service"
+                />
+              </div>
+
+              <!-- Prix -->
+              <div>
+                <label for="servicePrice" class="block text-sm font-medium text-gray-700 mb-1">Prix (MAD) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  id="servicePrice"
+                  [(ngModel)]="newItem.price"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="addNewItem()"
+              [disabled]="!newItem.service_type || !newItem.description || newItem.price <= 0"
+              class="inline-flex items-center px-3 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Ajouter
+            </button>
+          </div>
+
+          <!-- Liste des items ajoutés -->
+          <div *ngIf="newBill.items.length > 0" class="space-y-2">
+            <h5 class="text-md font-medium text-gray-800 mb-2">Services ajoutés ({{ newBill.items.length }})</h5>
+            <div *ngFor="let item of newBill.items; let i = index" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+              <div class="flex-1">
+                <div class="flex items-center space-x-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    {{ item.service_type }}
+                  </span>
+                  <span class="text-sm text-gray-900">{{ item.description }}</span>
+                  <span class="text-sm font-medium text-gray-900">{{ item.price.toFixed(2) }} MAD</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="removeItem(i)"
+                class="text-red-400 hover:text-red-600 transition-colors duration-200"
+                title="Supprimer"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Total -->
+            <div class="bg-indigo-50 p-3 rounded-lg">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-medium text-gray-900">Total:</span>
+                <span class="text-xl font-bold text-indigo-600">{{ getTotalAmount().toFixed(2) }} MAD</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message si aucun item -->
+          <div *ngIf="newBill.items.length === 0" class="text-center py-6 bg-gray-50 rounded-lg">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun service ajouté</h3>
+            <p class="mt-1 text-sm text-gray-500">Ajoutez des services à cette facture en utilisant le formulaire ci-dessus.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de la modal -->
+      <div class="flex justify-end space-x-3 pt-4 border-t">
+        <button
+          type="button"
+          (click)="closeCreateModal()"
+          class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:bg-gray-50 active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="createBill()"
+          [disabled]="isCreating || !newBill.patient_id || !newBill.doctor_user_id || !newBill.payment_method || newBill.items.length === 0"
+          class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150"
+        >
+          <div *ngIf="isCreating" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          <svg *ngIf="!isCreating" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          {{ isCreating ? 'Création...' : 'Créer Facture' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de modification de facture -->
+  <div *ngIf="showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeEditModal()">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 xl:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <!-- Header de la modal -->
+      <div class="flex items-center justify-between pb-4 border-b">
+        <h3 class="text-xl font-semibold text-gray-900">
+          <svg class="w-6 h-6 inline mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Modifier la facture {{ billToEdit?.bill_number }}
+        </h3>
+        <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Contenu de la modal -->
+      <div class="mt-6">
+        <!-- Informations générales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Méthode de paiement -->
+          <div>
+            <label for="editPaymentMethod" class="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement *</label>
+            <select
+              id="editPaymentMethod"
+              [(ngModel)]="editBill.payment_method"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Sélectionner une méthode</option>
+              <option *ngFor="let method of paymentMethods" [value]="method.value">
+                {{ method.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Informations patient/docteur (lecture seule) -->
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <h4 class="text-sm font-medium text-gray-700 mb-2">Informations de la facture</h4>
+            <p class="text-sm text-gray-600">Patient: {{ billToEdit?.patient?.user?.name || 'N/A' }}</p>
+            <p class="text-sm text-gray-600">Docteur: {{ billToEdit?.doctor?.name || 'N/A' }}</p>
+            <p class="text-sm text-gray-600">Date: {{ billToEdit?.issue_date | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-6">
+          <label for="editDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea
+            id="editDescription"
+            [(ngModel)]="editBill.description"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Description de la facture..."
+          ></textarea>
+        </div>
+
+        <!-- Section Services/Items -->
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">Services et prestations</h4>
+          
+          <!-- Formulaire d'ajout d'item -->
+          <div class="bg-gray-50 p-4 rounded-lg mb-4">
+            <h5 class="text-md font-medium text-gray-800 mb-3">Ajouter un service</h5>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+              <!-- Type de service -->
+              <div>
+                <label for="editServiceType" class="block text-sm font-medium text-gray-700 mb-1">Type de service *</label>
+                <select
+                  id="editServiceType"
+                  [(ngModel)]="newItem.service_type"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Sélectionner un type</option>
+                  <option *ngFor="let type of serviceTypes" [value]="type">{{ type }}</option>
+                </select>
+              </div>
+
+              <!-- Description du service -->
+              <div>
+                <label for="editServiceDescription" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <input
+                  type="text"
+                  id="editServiceDescription"
+                  [(ngModel)]="newItem.description"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Description du service"
+                />
+              </div>
+
+              <!-- Prix -->
+              <div>
+                <label for="editServicePrice" class="block text-sm font-medium text-gray-700 mb-1">Prix (MAD) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  id="editServicePrice"
+                  [(ngModel)]="newItem.price"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="addEditItem()"
+              [disabled]="!newItem.service_type || !newItem.description || newItem.price <= 0"
+              class="inline-flex items-center px-3 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Ajouter
+            </button>
+          </div>
+
+          <!-- Liste des items ajoutés -->
+          <div *ngIf="editBill.items && editBill.items.length > 0" class="space-y-2">
+            <h5 class="text-md font-medium text-gray-800 mb-2">Services ({{ editBill.items.length }})</h5>
+            <div *ngFor="let item of editBill.items; let i = index" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+              <div class="flex-1">
+                <div class="flex items-center space-x-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {{ item.service_type }}
+                  </span>
+                  <span class="text-sm text-gray-900">{{ item.description }}</span>
+                  <span class="text-sm font-medium text-gray-900">{{ item.price.toFixed(2) }} MAD</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="removeEditItem(i)"
+                class="text-red-400 hover:text-red-600 transition-colors duration-200"
+                title="Supprimer"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Total -->
+            <div class="bg-blue-50 p-3 rounded-lg">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-medium text-gray-900">Total:</span>
+                <span class="text-xl font-bold text-blue-600">{{ getEditTotalAmount().toFixed(2) }} MAD</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message si aucun item -->
+          <div *ngIf="!editBill.items || editBill.items.length === 0" class="text-center py-6 bg-gray-50 rounded-lg">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun service</h3>
+            <p class="mt-1 text-sm text-gray-500">Ajoutez des services à cette facture.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de la modal -->
+      <div class="flex justify-end space-x-3 pt-4 border-t">
+        <button
+          type="button"
+          (click)="closeEditModal()"
+          class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:bg-gray-50 active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="updateBill()"
+          [disabled]="isUpdating || !editBill.payment_method || !editBill.items || editBill.items.length === 0"
+          class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150"
+        >
+          <div *ngIf="isUpdating" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          <svg *ngIf="!isUpdating" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          {{ isUpdating ? 'Mise à jour...' : 'Mettre à jour' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal d'ajout d'article -->
+  <div *ngIf="showAddItemModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeAddItemModal()">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+      <!-- Header de la modal -->
+      <div class="flex items-center justify-between pb-4 border-b">
+        <h3 class="text-xl font-semibold text-gray-900">
+          <svg class="w-6 h-6 inline mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Ajouter un article à la facture {{ billToAddItem?.bill_number }}
+        </h3>
+        <button (click)="closeAddItemModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Contenu de la modal -->
+      <div class="mt-6">
+        <!-- Informations de la facture -->
+        <div class="bg-yellow-50 p-4 rounded-lg mb-6">
+          <h4 class="text-sm font-medium text-gray-900 mb-2">Informations de la facture</h4>
+          <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+              <span class="font-medium">Patient:</span> {{ billToAddItem?.patient?.user?.name || 'N/A' }}
+            </div>
+            <div>
+              <span class="font-medium">Docteur:</span> {{ billToAddItem?.doctor?.name || 'N/A' }}
+            </div>
+            <div>
+              <span class="font-medium">Montant actuel:</span> {{ billToAddItem?.amount | number:'1.2-2' }} MAD
+            </div>
+            <div>
+              <span class="font-medium">Articles actuels:</span> {{ billToAddItem?.items?.length || 0 }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulaire d'ajout d'article -->
+        <div class="space-y-4">
+          <!-- Type de service -->
+          <div>
+            <label for="addItemServiceType" class="block text-sm font-medium text-gray-700 mb-1">Type de service *</label>
+            <select
+              id="addItemServiceType"
+              [(ngModel)]="newItemToAdd.service_type"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              required
+            >
+              <option value="">Sélectionner un type</option>
+              <option *ngFor="let type of serviceTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label for="addItemDescription" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <input
+              type="text"
+              id="addItemDescription"
+              [(ngModel)]="newItemToAdd.description"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              placeholder="Description du service"
+              required
+            />
+          </div>
+
+          <!-- Prix -->
+          <div>
+            <label for="addItemPrice" class="block text-sm font-medium text-gray-700 mb-1">Prix (MAD) *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              id="addItemPrice"
+              [(ngModel)]="newItemToAdd.price"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              placeholder="0.00"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de la modal -->
+      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+        <button
+          type="button"
+          (click)="closeAddItemModal()"
+          class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:bg-gray-50 active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition ease-in-out duration-150"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="addItemToBill()"
+          [disabled]="isAddingItem || !newItemToAdd.service_type || !newItemToAdd.description || newItemToAdd.price <= 0"
+          class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 focus:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150"
+        >
+          <div *ngIf="isAddingItem" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          <svg *ngIf="!isAddingItem" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          {{ isAddingItem ? 'Ajout...' : 'Ajouter l\'article' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

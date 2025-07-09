@@ -8,4 +8,172 @@
   transition: background-color 0.2s ease;
 }
 
+/* Styles améliorés pour l'interface de facturation */
+
+/* Animation pour les éléments de tableau */
+.table-row {
+  transition: all 0.2s ease-in-out;
+}
+
+.table-row:hover {
+  background-color: #f9fafb;
+  transform: translateX(2px);
+}
+
+/* Animation pour les boutons d'action */
+.action-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Style pour la modal avec animation */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation de l'avatar */
+.avatar {
+  transition: transform 0.2s ease-in-out;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+}
+
+/* Style pour les cartes d'information */
+.info-card {
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.info-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Animation du spinner de chargement */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Style responsive pour les colonnes de tableau */
+@media (max-width: 768px) {
+  .responsive-table {
+    font-size: 0.875rem;
+  }
+  
+  .responsive-table th,
+  .responsive-table td {
+    padding: 0.5rem;
+  }
+  
+  .mobile-stack {
+    display: block;
+  }
+  
+  .mobile-stack > div {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Style pour les boutons de pagination */
+.pagination-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button:not(:disabled):hover {
+  background-color: #f9fafb;
+  transform: translateY(-1px);
+}
+
+/* Style pour les statistiques en en-tête */
+.stats-card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Style pour les badges avec animations */
+.payment-badge {
+  transition: all 0.2s ease-in-out;
+}
+
+.payment-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Couleurs spécifiques pour les méthodes de paiement */
+.payment-cash {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.payment-credit-card {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.payment-bank-transfer {
+  background-color: #e9d5ff;
+  color: #7c3aed;
+}
+
+.payment-insurance {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+/* Effet de focus pour l'accessibilité */
+.focus-ring:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Animation de chargement personnalisée */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 
