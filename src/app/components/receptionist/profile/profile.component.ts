@@ -15,6 +15,7 @@ export class ProfileComponent implements OnInit {
   editedUser: any = {};
   isEditing = false;
   isLoading = false;
+  isInitialLoading = true; // Nouveau: pour le chargement initial
   uploadError: string | null = null;
   isPhotoLoading = false;
   uploadSuccess = false;
@@ -42,11 +43,15 @@ export class ProfileComponent implements OnInit {
     if (storedPhoto) {
       this.tempPreviewImage = storedPhoto;
     }
+    
+    // Démarrer immédiatement le chargement du profil
     this.loadProfile();
   }
 
   loadProfile() {
     this.isLoading = true;
+    this.isInitialLoading = true;
+    
     this.profileService.getProfile().subscribe({
       next: (data: any) => {
         const userData = data.user || data.data || data;
@@ -103,6 +108,7 @@ export class ProfileComponent implements OnInit {
         
         this.editedUser = { ...this.user };
         this.isLoading = false;
+        this.isInitialLoading = false; // Marquer le chargement initial comme terminé
         
         // Forcer un rafraîchissement visuel des images
         setTimeout(() => this.refreshImages(), 300);
@@ -115,28 +121,11 @@ export class ProfileComponent implements OnInit {
       error: (err) => {
         console.error('Erreur lors du chargement du profil:', err);
         
-        // Valeurs par défaut en cas d'erreur
-        this.user = {
-          name: 'Omar Bennani',
-          email: 'omar@gmail.com',
-          phone: '0697845124',
-          role: 'Réceptionniste',
-          photo: this.tempPreviewImage || this.defaultPhoto,
-          created_at: new Date(),
-        };
-        
-        // Mettre à jour les données dans le service même en cas d'erreur
-        this.profileService.updateUserName(this.user.name);
-        this.profileService.updateUserEmail(this.user.email);
-        this.profileService.updateUserRole(this.user.role);
-        
-        // Ne pas écraser l'image locale s'il y en a une
-        if (!this.tempPreviewImage) {
-          this.profileService.updateUserAvatar(this.user.photo);
-        }
-        
-        this.editedUser = { ...this.user };
+        // En cas d'erreur, ne pas afficher de données statiques
+        // Juste marquer que le chargement initial est terminé avec une erreur
+        this.user = null;
         this.isLoading = false;
+        this.isInitialLoading = false; // Marquer le chargement comme terminé même en cas d'erreur
       }
     });
   }

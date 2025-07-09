@@ -1,25 +1,56 @@
 <!-- Section contenu principal du profil, sans dupliquer la structure de navigation existante -->
 <div class="flex-1 bg-gray-50 p-6">
-  <!-- Bannière du profil -->
-  <div class="bg-white rounded-lg overflow-hidden shadow mb-6">
-    <div class="relative h-48">
-      <div class="absolute inset-0">
-        <img src="assets/receptionist/images/rec.jpg" alt="Couverture" class="w-full h-full object-cover opacity-50" />
+  
+  <!-- Loader de chargement initial -->
+  <div *ngIf="isInitialLoading" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <!-- Spinner animé -->
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+      <p class="text-gray-600 text-lg">Chargement de votre profil...</p>
+    </div>
+  </div>
+
+  <!-- Message d'erreur si échec du chargement et pas de chargement initial -->
+  <div *ngIf="!isInitialLoading && !user" class="flex items-center justify-center min-h-screen">
+    <div class="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
+      <div class="text-red-500 mb-4">
+        <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
       </div>
-      <div class="absolute inset-0 flex flex-col justify-end p-6">
-        <h1 class="text-3xl font-bold text-gray-800">Mon profil</h1>
-        <p class="text-gray-600">Gérez vos informations personnelles et votre sécurité</p>
-      </div>
-      <div class="absolute right-6 top-6">
-        <div class="flex items-center bg-white rounded-full px-4 py-1.5 shadow-sm">
-          <svg class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-          </svg>
-          <span class="text-sm font-medium">Membre depuis {{ user?.created_at ? formatDate(user.created_at) : '11 juin 2025' }}</span>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
+      <p class="text-gray-600 mb-4">Impossible de charger les informations de votre profil.</p>
+      <button 
+        (click)="loadProfile()" 
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Réessayer
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu du profil (affiché uniquement quand les données sont chargées) -->
+  <div *ngIf="!isInitialLoading && user">
+    <!-- Bannière du profil -->
+    <div class="bg-white rounded-lg overflow-hidden shadow mb-6">
+      <div class="relative h-48">
+        <div class="absolute inset-0">
+          <img src="assets/receptionist/images/rec.jpg" alt="Couverture" class="w-full h-full object-cover opacity-50" />
+        </div>
+        <div class="absolute inset-0 flex flex-col justify-end p-6">
+          <h1 class="text-3xl font-bold text-gray-800">Mon profil</h1>
+          <p class="text-gray-600">Gérez vos informations personnelles et votre sécurité</p>
+        </div>
+        <div class="absolute right-6 top-6">
+          <div class="flex items-center bg-white rounded-full px-4 py-1.5 shadow-sm">
+            <svg class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-sm font-medium">Membre depuis {{ user?.created_at ? formatDate(user.created_at) : 'N/A' }}</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     <!-- Navigation du profil -->
@@ -74,8 +105,8 @@
             </button>
           </div>
           
-          <h3 class="font-medium text-gray-900 text-lg">{{ user?.name || 'Omar Bennani' }}</h3>
-          <p class="text-gray-500">{{ user?.role || 'Réceptionniste' }}</p>
+          <h3 class="font-medium text-gray-900 text-lg">{{ user?.name || 'N/A' }}</h3>
+          <p class="text-gray-500">{{ user?.role || 'N/A' }}</p>
           
           <!-- Message de succès pour feedback immédiat -->
           <div *ngIf="uploadSuccess && !uploadError" class="mt-2 text-sm text-green-600 flex items-center">
@@ -174,7 +205,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-500 mb-1">Nom complet</label>
                 <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-700">
-                  {{ user?.name || 'Omar Bennani' }}
+                  {{ user?.name || 'N/A' }}
                 </div>
               </div>
               
@@ -185,7 +216,7 @@
                     <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
-                  {{ user?.email || 'omar@gmail.com' }}
+                  {{ user?.email || 'N/A' }}
                 </div>
               </div>
               
@@ -195,7 +226,7 @@
                   <svg class="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                   </svg>
-                  {{ user?.phone || '0697845124' }}
+                  {{ user?.phone || 'N/A' }}
                 </div>
               </div>
               
@@ -205,7 +236,7 @@
                   <svg class="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 005 10a6 6 0 0012 0c0-.35-.028-.696-.081-1.03A5 5 0 0010 11z" clip-rule="evenodd" />
                   </svg>
-                  {{ user?.role || 'Réceptionniste' }}
+                  {{ user?.role || 'N/A' }}
                 </div>
               </div>
             </div>
@@ -460,3 +491,5 @@
     </form>
   </div>
 </div>
+
+  </div> <!-- Fin de la condition *ngIf="!isInitialLoading && user" -->
