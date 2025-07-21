@@ -164,7 +164,7 @@
     </div>
     <form (ngSubmit)="editingEvent?.event ? updateEvent() : addNewEvent()" class="space-y-4">
       <div class="relative">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Patient <span class="text-red-500">*</span></label>
         <input type="text"
                [(ngModel)]="patientSearchTerm"
                (ngModelChange)="onPatientSearch($event)"
@@ -191,8 +191,9 @@
         <input type="text" [(ngModel)]="editingEvent.title" name="title" required placeholder="Ex: Consultation annuelle" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
-        <select [(ngModel)]="editingEvent.resourceId" name="resourceId" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Médecin <span class="text-red-500">*</span></label>
+        <select [(ngModel)]="editingEvent.resourceId" name="resourceId" required (change)="selectDoctor(editingEvent.resourceId)" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option [ngValue]="null" disabled selected>Choisir un médecin</option>
           <option *ngFor="let doctor of doctors" [ngValue]="doctor.id">{{ doctor.name }}</option>
           <option *ngIf="doctors.length === 0" disabled>Aucun médecin disponible</option>
         </select>
@@ -223,7 +224,7 @@
         <button *ngIf="editingEvent?.event && editingEvent.event.extendedProps.status === 'scheduled'" type="button" (click)="confirmAppointment()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Confirmer</button>
         <button *ngIf="editingEvent?.event && ['scheduled', 'confirmed'].includes(editingEvent.event.extendedProps.status)" type="button" (click)="cancelAppointment()" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">Annuler</button>
         <button *ngIf="editingEvent?.event && editingEvent.event.extendedProps.status === 'confirmed'" type="button" (click)="completeAppointment()" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors">Terminer</button>
-        <button type="submit" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md">
+        <button type="submit" [disabled]="!selectedPatient || !editingEvent.resourceId || !editingEvent.date || !editingEvent.time || !editingEvent.endDate || !editingEvent.endTime || !editingEvent.title" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md">
           {{ editingEvent?.event ? 'Enregistrer' : 'Créer' }}
         </button>
       </div>
