@@ -1,597 +1,491 @@
-import { Component, AfterViewInit, ViewChild, ElementRef, signal, effect, NgZone } from '@angular/core';
-import { Calendar, CalendarOptions, DatesSetArg } from '@fullcalendar/core';
+import { Component, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { PlanningService } from '../../../services/recepetionist-services/planning.service';
+import { Calendar } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
 import listPlugin from '@fullcalendar/list';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-doctors-planning',
   templateUrl: './doctors-planning.component.html',
   styleUrls: ['./doctors-planning.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  // providers: [PlanningService],
+  imports: [
+    CommonModule,
+    FormsModule
+  ]
 })
 export class DoctorsPlanningComponent implements AfterViewInit {
-  doctorName = 'Dr. Kamal Berrada';
-  selectedView = 'timeGridWeek';
-  currentViewDate = 'Juin 2025';
-  selectedDateAppointments: any[] = [];
-  showAppointmentPanel = false;
-  showEventModal = false;
-  selectedDate = '';
-  
-  // Mini-calendrier
-  currentYear = new Date().getFullYear();
-  currentMonthIndex = new Date().getMonth();
-  currentMonthName = new Date().toLocaleString('fr-FR', { month: 'long' });
-  dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-  calendarDays: { date: Date; currentMonth: boolean; hasEvents: boolean; hasUrgentEvents: boolean }[] = [];
-  
-  // Filtres médecins
-  doctors = [
-    { id: 'dr-berrada', name: 'Dr. Kamal Berrada', specialty: 'Cardiologie', selected: true, color: '#6366f1' },
-    { id: 'dr-alaoui', name: 'Dr. Fatima El Alaoui', specialty: 'Pédiatrie', selected: false, color: '#10b981' },
-    { id: 'dr-tazi', name: 'Dr. Mohammed Tazi', specialty: 'Neurologie', selected: false, color: '#f59e0b' }
-  ];
-  
-  // États des modales et formulaires en utilisant des signaux
-  showTimeBlockModal = signal<boolean>(false);
-  isAppointmentForm = signal<boolean>(true);
-  selectedBlockToEdit = signal<any | null>(null);
-
-  views = [
-    { value: 'dayGridMonth', label: 'Mois' },
-    { value: 'timeGridWeek', label: 'Semaine' },
-    { value: 'timeGridDay', label: 'Jour' }
-  ];
-
-  calendarEvents = [
-    {
-      id: 'evt-1',
-      title: 'Consultation - Salwa Slimani',
-      start: '2025-06-10T10:00:00',
-      end: '2025-06-10T11:00:00',
-      backgroundColor: '#6366f1',
-      borderColor: '#6366f1',
-      resourceId: 'dr-berrada'
-    },
-    {
-      id: 'evt-2',
-      title: 'Examen - Imane Tahri',
-      start: '2025-06-15T14:30:00',
-      end: '2025-06-15T15:30:00',
-      backgroundColor: '#10b981',
-      borderColor: '#10b981',
-      resourceId: 'dr-alaoui'
-    },
-    {
-      id: 'evt-3',
-      title: 'Suivi - Sana Barkouch',
-      start: '2025-06-15T16:00:00',
-      end: '2025-06-15T17:00:00',
-      backgroundColor: '#f59e0b',
-      borderColor: '#f59e0b',
-      resourceId: 'dr-tazi'
-    }
-  ];
-
-  appointmentTypes = [
-    'Consultation',
-    'Suivi',
-    'Examen',
-    'Urgence',
-    'Vaccination',
-    'Bilan',
-    'Téléconsultation',
-    'Intervention',
-    'Autre'
-  ];
-
-  editingEvent: any = null;
-  searchQuery: string = '';
+  specialtyAccordion: { [key: string]: boolean } = {};
+  doctorSpecialties: string[] = [];
+  doctorsBySpecialty: { [key: string]: any[] } = {};
+  rescheduleData = {
+    new_datetime_start: '',
+    new_datetime_end: '',
+    reason: '',
+    notes_by_staff: ''
+  };
+  showRescheduleModal = false;
+  openRescheduleModal() {
+    this.rescheduleData = {
+      new_datetime_start: '',
+      new_datetime_end: '',
+      reason: '',
+      notes_by_staff: ''
+    };
+    this.showRescheduleModal = true;
+  }
   @ViewChild('calendarEl') calendarEl!: ElementRef<HTMLElement>;
-  private calendar!: Calendar;
+  calendar!: Calendar;
+  appointments: any[] = [];
+  doctors: any[] = [];
+  patients: any[] = [];
+  selectedView = 'timeGridWeek';
+  currentViewDate = '';
+  showEventModal = false;
+  editingEvent: any = null;
+  showAppointmentPanel = false;
+  selectedDate: string = '';
+  selectedDateAppointments: any[] = [];
+  searchQuery: string = '';
+  views = [
+    { label: 'Semaine', value: 'timeGridWeek' },
+    { label: 'Jour', value: 'timeGridDay' },
+    { label: 'Liste', value: 'listWeek' }
+  ];
+  currentMonthName: string = '';
+  currentYear: number = new Date().getFullYear();
+  dayNames: string[] = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  calendarDays: any[] = [];
+  appointmentTypes: string[] = ['Consultation', 'Suivi', 'Urgence'];
+  patientSearchTerm: string = '';
+  filteredPatients: any[] = [];
+  searchingPatients: boolean = false;
 
-  constructor(private ngZone: NgZone) {
-    this.generateCalendarDays();
-    
-    effect(() => {
-      const showModal = this.showTimeBlockModal();
-      if (!showModal) {
-        this.selectedBlockToEdit.set(null);
+  // --- Add: Track selected patient and doctor for the modal form ---
+  selectedPatient: any = null;
+  selectedDoctorId: number | null = null;
+
+  // --- Add: Validate and build payload for new appointment ---
+  // Add new appointment (single implementation, validated)
+  addNewEvent() {
+    // Compose datetime from date and time pickers
+    const start = this.editingEvent.date && this.editingEvent.time
+      ? `${this.editingEvent.date}T${this.editingEvent.time}:00`
+      : this.editingEvent.appointment_datetime_start;
+
+    const end = this.editingEvent.endDate && this.editingEvent.endTime
+      ? `${this.editingEvent.endDate}T${this.editingEvent.endTime}:00`
+      : this.editingEvent.appointment_datetime_end;
+
+    // Use selected patient and doctor if available
+    const patient_id = this.selectedPatient?.id || this.editingEvent.patient_id;
+    const doctor_id = this.selectedDoctorId || this.editingEvent.resourceId || this.editingEvent.doctor_id;
+
+    const payload = {
+      patient_id,
+      doctor_id,
+      appointment_datetime_start: start,
+      appointment_datetime_end: end,
+      type: this.editingEvent.type,
+      reason: this.editingEvent.reason || this.editingEvent.title,
+      staff_notes: this.editingEvent.staff_notes || ''
+    };
+
+    // Validate required fields before sending
+    if (!payload.patient_id || !payload.doctor_id || !payload.appointment_datetime_start || !payload.reason) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    this.planningService.createAppointment(payload).subscribe({
+      next: (res) => {
+        this.showEventModal = false;
+        this.loadInitialData();
+      },
+      error: (err) => {
+        console.error('[Create Appointment Error]', err);
+        alert('Erreur lors de la création du rendez-vous. Vérifiez les champs obligatoires.');
       }
     });
   }
+
+  // --- Add: Doctor selection logic for modal ---
+  selectDoctor(doctorId: number) {
+    this.selectedDoctorId = doctorId;
+    this.editingEvent.resourceId = doctorId;
+    this.editingEvent.doctor_id = doctorId;
+  }
+
+  // Patient selection logic for modal (must be public for template)
+  public selectPatient(patient: any) {
+    this.selectedPatient = patient;
+    this.editingEvent.patient_id = patient.id;
+    this.patientSearchTerm = patient.name;
+    this.filteredPatients = [];
+  }
+
+  constructor(
+    private planningService: PlanningService,
+    private ngZone: NgZone
+  ) {}
 
   ngAfterViewInit(): void {
-    const calendarElement = this.calendarEl?.nativeElement;
-
-    if (!calendarElement) {
-      console.error('Élément #calendar introuvable');
-      return;
-    }
-
-    this.updateCurrentViewDateFromDate(new Date());
-
-    const calendarOptions: any = {
-      plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin, listPlugin],
-      initialView: this.selectedView,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-      },
-      events: this.getFilteredEvents.bind(this),
-      resources: this.getFilteredDoctors(),
-      editable: true,
-      selectable: true,
-      selectMirror: true,
-      navLinks: true,
-      slotMinTime: '07:00:00',
-      slotMaxTime: '19:00:00',
-      slotDuration: '00:15:00',
-      allDaySlot: true,
-      nowIndicator: true,
-      locale: 'fr',
-      dateClick: this.handleDateClick.bind(this),
-      eventClick: this.handleEventClick.bind(this),
-      select: this.handleDateSelect.bind(this),
-      datesSet: (info: DatesSetArg) => {
-        this.ngZone.run(() => {
-          this.updateCurrentViewDateFromInfo(info);
-        });
-      }
-    };
-
-    this.calendar = new Calendar(calendarElement, calendarOptions);
-    this.calendar.render();
+    this.loadInitialData();
   }
 
-  // Méthodes du calendrier principal
-  changeView(view: string): void {
-    this.selectedView = view;
-    this.calendar.changeView(view);
-    
-    this.ngZone.run(() => {
-      this.updateCurrentViewDateFromDate(this.calendar.getDate());
-    });
-  }
-
-  prev(): void {
-    this.calendar.prev();
-    this.ngZone.run(() => {
-      this.updateCurrentViewDateFromDate(this.calendar.getDate());
-    });
-  }
-
-  next(): void {
-    this.calendar.next();
-    this.ngZone.run(() => {
-      this.updateCurrentViewDateFromDate(this.calendar.getDate());
-    });
-  }
-
-  refreshCalendar(): void {
-    if (this.calendar) {
-      this.calendar.refetchEvents();
-    }
-  }
-
-  // Méthodes pour les données (événements & ressources)
-  getFilteredDoctors(): any[] {
-    return this.doctors.map(doctor => ({
-      id: doctor.id,
-      title: doctor.name,
-      eventColor: doctor.color
-    }));
-  }
-  
-  getFilteredEvents(info: any, successCallback: Function): void {
-    const selectedDoctorIds = this.doctors.filter(d => d.selected).map(d => d.id);
-    let filteredEvents = this.calendarEvents.filter(event => selectedDoctorIds.includes(event.resourceId));
-    
-    if (this.searchQuery) {
-      const query = this.searchQuery.toLowerCase();
-      filteredEvents = filteredEvents.filter(event => 
-        event.title.toLowerCase().includes(query)
-      );
-    }
-    
-    successCallback(filteredEvents);
-  }
-
-  // Méthodes de gestion des interactions (clics, sélection)
-  handleDateClick(arg: any): void {
-    const clickedDateStr = arg.dateStr.split('T')[0];
-    this.selectedDate = clickedDateStr;
-    
-    this.selectedDateAppointments = this.calendarEvents.filter(event =>
-      event.start.includes(clickedDateStr)
-    );
-    
-    this.showAppointmentPanel = this.selectedDateAppointments.length > 0;
-
-    setTimeout(() => {
-      const panel = document.getElementById('appointment-panel');
-      panel?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }
-
-  handleDateSelect(selectInfo: any): void {
-    const date = selectInfo.startStr.split('T')[0];
-    const startTime = selectInfo.start.toTimeString().substring(0, 5);
-    
-    const endDate = selectInfo.endStr.split('T')[0];
-    const endTime = selectInfo.end.toTimeString().substring(0, 5);
-
-    this.editingEvent = {
-      title: '',
-      patient: '',
-      type: 'Consultation',
-      date: date,
-      time: startTime,
-      endDate: endDate,
-      endTime: endTime,
-      resourceId: selectInfo.resource?.id || this.doctors[0].id
-    };
-    this.showEventModal = true;
-
-    this.calendar.unselect();
-  }
-
-  handleEventClick(clickInfo: any): void {
-    const [typeTitle, patient] = clickInfo.event.title.split(' - ');
-    const typeMatch = typeTitle.match(/^\[(.*?)\]/);
-    const type = typeMatch ? typeMatch[1] : 'Consultation';
-    const title = typeTitle.replace(/^\[.*?\]\s?/, '');
-
-    this.editingEvent = {
-      event: clickInfo.event,
-      title,
-      patient: patient || '',
-      type,
-      date: clickInfo.event.startStr.split('T')[0],
-      time: clickInfo.event.startStr.split('T')[1]?.substring(0,5) || '09:00',
-      endDate: clickInfo.event.endStr?.split('T')[0] || clickInfo.event.startStr.split('T')[0],
-      endTime: clickInfo.event.endStr?.split('T')[1]?.substring(0,5) || '09:30',
-      resourceId: clickInfo.event.getResources()[0]?.id || this.doctors[0].id
-    };
-    this.showEventModal = true;
-  }
-
-  // Méthodes de gestion de la modale d'événement (ajout/édition)
-  openAddEventModal(): void {
-    const currentDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date();
-    const startTime = currentTime.getHours().toString().padStart(2, '0') + ':' + 
-                     currentTime.getMinutes().toString().padStart(2, '0');
-    
-    const endTime = new Date(currentTime.getTime() + 30 * 60000);
-    const endTimeStr = endTime.getHours().toString().padStart(2, '0') + ':' + 
-                      endTime.getMinutes().toString().padStart(2, '0');
-    
-    this.editingEvent = {
-      title: '',
-      patient: '',
-      type: 'Consultation',
-      date: currentDate,
-      time: startTime,
-      endDate: currentDate,
-      endTime: endTimeStr,
-      resourceId: this.doctors.find(d => d.selected)?.id || this.doctors[0].id
-    };
-    this.showEventModal = true;
-  }
-
-  closeAddEventModal(): void {
-    this.showEventModal = false;
-    this.editingEvent = null;
-  }
-
-  addNewEvent(): void {
-    if (!this.editingEvent.title || !this.editingEvent.patient || 
-        !this.editingEvent.date || !this.editingEvent.time || 
-        !this.editingEvent.endDate || !this.editingEvent.endTime) {
-      alert('Veuillez remplir tous les champs.');
-      return;
-    }
-
-    const start = new Date(`${this.editingEvent.date}T${this.editingEvent.time}`);
-    const end = new Date(`${this.editingEvent.endDate}T${this.editingEvent.endTime}`);
-    
-    if (end <= start) {
-      alert('La date et l\'heure de fin doivent être après la date et l\'heure de début.');
-      return;
-    }
-
-    const selectedDoctor = this.doctors.find(d => d.id === this.editingEvent.resourceId);
-    const eventColor = selectedDoctor ? selectedDoctor.color : '#6366f1';
-
-    this.calendarEvents.push({
-      id: `evt-${Date.now()}`,
-      title: `[${this.editingEvent.type}] ${this.editingEvent.title} - ${this.editingEvent.patient}`,
-      start: start.toISOString(),
-      end: end.toISOString(),
-      backgroundColor: eventColor,
-      borderColor: eventColor,
-      resourceId: this.editingEvent.resourceId
-    });
-
-    this.closeAddEventModal();
-    this.refreshCalendar();
-    this.generateCalendarDays();
-  }
-
-  updateEvent(): void {
-    if (!this.editingEvent || !this.editingEvent.event) {
-      console.error('No event to update');
-      return;
-    }
-
-    if (!this.editingEvent.title || !this.editingEvent.patient || 
-        !this.editingEvent.date || !this.editingEvent.time || 
-        !this.editingEvent.endDate || !this.editingEvent.endTime) {
-      alert('Veuillez remplir tous les champs.');
-      return;
-    }
-
-    const start = new Date(`${this.editingEvent.date}T${this.editingEvent.time}`);
-    const end = new Date(`${this.editingEvent.endDate}T${this.editingEvent.endTime}`);
-    
-    if (end <= start) {
-      alert('La date et l\'heure de fin doivent être après la date et l\'heure de début.');
-      return;
-    }
-
-    const selectedDoctor = this.doctors.find(d => d.id === this.editingEvent.resourceId);
-    const eventColor = selectedDoctor ? selectedDoctor.color : '#6366f1';
-
-    // Update the FullCalendar event
-    const eventToUpdate = this.editingEvent.event;
-    eventToUpdate.setProp('title', `[${this.editingEvent.type}] ${this.editingEvent.title} - ${this.editingEvent.patient}`);
-    eventToUpdate.setStart(start.toISOString());
-    eventToUpdate.setEnd(end.toISOString());
-    eventToUpdate.setProp('backgroundColor', eventColor);
-    eventToUpdate.setProp('borderColor', eventColor);
-    
-    // Update resource if changed
-    if (eventToUpdate.getResources()[0]?.id !== this.editingEvent.resourceId) {
-      eventToUpdate.setResources([this.editingEvent.resourceId]);
-    }
-
-    // Update in local array
-    const eventIndex = this.calendarEvents.findIndex(e => e.id === eventToUpdate.id);
-    if (eventIndex !== -1) {
-      this.calendarEvents[eventIndex] = {
-        ...this.calendarEvents[eventIndex],
-        title: `[${this.editingEvent.type}] ${this.editingEvent.title} - ${this.editingEvent.patient}`,
-        start: start.toISOString(),
-        end: end.toISOString(),
-        backgroundColor: eventColor,
-        borderColor: eventColor,
-        resourceId: this.editingEvent.resourceId
-      };
-    }
-
-    this.closeAddEventModal();
-    this.generateCalendarDays();
-  }
-
-  deleteEditEvent(): void {
-    if (!this.editingEvent || !this.editingEvent.event) {
-      console.error('No event to delete');
-      return;
-    }
-
-    if (!confirm('Voulez-vous vraiment supprimer ce rendez-vous ?')) {
-      return;
-    }
-
-    const eventToDelete = this.editingEvent.event;
-    const eventId = eventToDelete.id;
-
-    // Remove from FullCalendar
-    eventToDelete.remove();
-
-    // Remove from local array
-    const eventIndex = this.calendarEvents.findIndex(e => e.id === eventId);
-    if (eventIndex !== -1) {
-      this.calendarEvents.splice(eventIndex, 1);
-    }
-
-    this.closeAddEventModal();
-    this.generateCalendarDays();
-  }
-
-  // Méthodes de gestion des filtres et recherche
-  toggleDoctor(doctorId: string): void {
-    const doctor = this.doctors.find(d => d.id === doctorId);
-    if (doctor) {
-      doctor.selected = !doctor.selected;
-      this.refreshCalendar();
-    }
-  }
-  
-  selectAllDoctors(): void {
-    this.doctors.forEach(doctor => doctor.selected = true);
-    this.refreshCalendar();
-  }
-  
-  clearAllDoctors(): void {
-    this.doctors.forEach(doctor => doctor.selected = false);
-    this.refreshCalendar();
-  }
-  
-  onSearchChange(): void {
-    this.refreshCalendar();
-  }
-
-  // Méthodes pour le mini-calendrier
-  generateCalendarDays(): void {
-    this.calendarDays = [];
-    const firstDayOfMonth = new Date(this.currentYear, this.currentMonthIndex, 1);
-    const lastDayOfMonth = new Date(this.currentYear, this.currentMonthIndex + 1, 0);
-    
-    let firstDayOfWeek = firstDayOfMonth.getDay();
-    firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-    
-    const previousMonth = new Date(this.currentYear, this.currentMonthIndex, 0);
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      const day = previousMonth.getDate() - firstDayOfWeek + i + 1;
-      this.calendarDays.push({
-        date: new Date(this.currentYear, this.currentMonthIndex - 1, day),
-        currentMonth: false,
-        hasEvents: false,
-        hasUrgentEvents: false
+  generateCalendarDays(date: Date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const days: any[] = [];
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const dayDate = new Date(year, month, d);
+      const hasEvents = this.appointments.some(app => {
+        const appDate = new Date(app.appointment_datetime_start);
+        return appDate.getFullYear() === year && appDate.getMonth() === month && appDate.getDate() === d;
       });
-    }
-    
-    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
-      const date = new Date(this.currentYear, this.currentMonthIndex, day);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      const hasEvents = this.calendarEvents.some(event => event.start.includes(dateStr));
-      const hasUrgentEvents = false;
-      
-      this.calendarDays.push({
-        date,
+      const hasUrgentEvents = this.appointments.some(app => {
+        const appDate = new Date(app.appointment_datetime_start);
+        return appDate.getFullYear() === year && appDate.getMonth() === month && appDate.getDate() === d && app.type === 'Urgence';
+      });
+      days.push({
+        date: dayDate,
         currentMonth: true,
         hasEvents,
         hasUrgentEvents
       });
     }
-    
-    const daysToAdd = 42 - this.calendarDays.length;
-    for (let day = 1; day <= daysToAdd; day++) {
-      this.calendarDays.push({
-        date: new Date(this.currentYear, this.currentMonthIndex + 1, day),
-        currentMonth: false,
-        hasEvents: false,
-        hasUrgentEvents: false
+    this.calendarDays = days;
+    this.currentMonthName = date.toLocaleString('fr-FR', { month: 'long' });
+    this.currentYear = year;
+  }
+
+  loadInitialData(): void {
+    // Récupérer les docteurs disponibles
+    this.planningService.getAvailableDoctors().subscribe({
+      next: (res) => {
+        this.doctors = Array.isArray(res.data) ? res.data.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          email: d.email,
+          phone: d.phone,
+          specialty: d.doctor?.specialty || 'Autre',
+          doctorId: d.doctor?.id,
+          doctorInfo: d.doctor,
+          color: '#6366f1',
+          selected: false
+        })) : [];
+        // Regroupement par spécialité
+        const specialtiesSet = new Set<string>();
+        this.doctors.forEach(doc => specialtiesSet.add(doc.specialty || 'Autre'));
+        this.doctorSpecialties = Array.from(specialtiesSet).sort();
+        this.doctorsBySpecialty = {};
+        this.doctorSpecialties.forEach(spec => {
+          this.doctorsBySpecialty[spec] = this.doctors.filter(doc => doc.specialty === spec);
+          this.specialtyAccordion[spec] = false; // Par défaut, tout est replié
+        });
+        // Récupérer les rendez-vous
+        this.planningService.getAppointments().subscribe({
+          next: (res2) => {
+            this.appointments = res2.data;
+            this.initCalendar();
+            this.generateCalendarDays(new Date());
+          },
+          error: (err2) => {
+            console.error('[Appointments API Error]', err2);
+          }
+        });
+        // Récupérer les patients
+        this.planningService.getPatients().subscribe({
+          next: (res3) => {
+            this.patients = Array.isArray(res3.data) ? res3.data : [];
+          },
+          error: (err3) => {
+            console.error('[Patients API Error]', err3);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('[Doctors API Error]', err);
+      }
+    });
+  }
+
+  onPatientSearch(term: string) {
+    this.patientSearchTerm = term;
+    if (term.length < 1) {
+      this.filteredPatients = [];
+      return;
+    }
+    this.searchingPatients = true;
+    this.planningService.getPatients().subscribe({
+      next: (res) => {
+        this.filteredPatients = res.data.filter((p: any) => p.name.toLowerCase().startsWith(term.toLowerCase()));
+        this.searchingPatients = false;
+      },
+      error: () => {
+        this.filteredPatients = [];
+        this.searchingPatients = false;
+      }
+    });
+  }
+
+  // ...existing code...
+
+  openAddEventModal() {
+    this.showEventModal = true;
+    this.editingEvent = {};
+    this.patientSearchTerm = '';
+    this.filteredPatients = [];
+  }
+
+  prevMonth() {}
+  nextMonth() {}
+  // Récupérer les créneaux disponibles pour un docteur et une date
+  getAvailableSlotsForDoctor(doctorId: number, date: string) {
+    this.planningService.getAvailableSlots(doctorId, date).subscribe({
+      next: (res) => {
+        console.log('[Available slots]', res.data);
+        // Utilisez res.data pour afficher les créneaux dans le template ou le composant
+      },
+      error: (err) => {
+        console.error('[Available slots API Error]', err);
+      }
+    });
+  }
+  isSelectedDate(date: Date): boolean {
+    return this.selectedDate === date.toISOString().split('T')[0];
+  }
+  selectDate(date: Date) {
+    this.selectedDate = date.toISOString().split('T')[0];
+    this.selectedDateAppointments = this.appointments.filter(app => {
+      const appDate = new Date(app.appointment_datetime_start);
+      return appDate.toISOString().split('T')[0] === this.selectedDate;
+    });
+    this.showAppointmentPanel = true;
+  }
+  selectAllDoctors() {
+    this.doctors.forEach(doc => doc.selected = true);
+  }
+  clearAllDoctors() {
+    this.doctors.forEach(doc => doc.selected = false);
+  }
+  toggleDoctor(id: number) {
+    const doctor = this.doctors.find(doc => doc.id === id);
+    if (doctor) doctor.selected = !doctor.selected;
+  }
+  prev() {
+    const current = new Date(this.currentYear, new Date().getMonth(), 1);
+    current.setMonth(current.getMonth() - 1);
+    this.generateCalendarDays(current);
+  }
+  next() {
+    const current = new Date(this.currentYear, new Date().getMonth(), 1);
+    current.setMonth(current.getMonth() + 1);
+    this.generateCalendarDays(current);
+  }
+  changeView(view: string) {
+    this.selectedView = view;
+    if (this.calendar) {
+      this.calendar.changeView(view);
+    }
+  }
+  onSearchChange() {
+    if (this.searchQuery.length > 0) {
+      this.filteredPatients = this.patients.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
+    } else {
+      this.filteredPatients = [];
+    }
+  }
+  // Ajout d'un nouveau rendez-vous
+  // ...existing code...
+
+  // Mettre à jour un rendez-vous existant
+  updateEvent() {
+    if (!this.editingEvent?.id) return;
+    const payload = {
+      appointment_datetime_start: this.editingEvent.appointment_datetime_start,
+      appointment_datetime_end: this.editingEvent.appointment_datetime_end,
+      reason: this.editingEvent.reason,
+      staff_notes: this.editingEvent.staff_notes
+    };
+    this.planningService.updateAppointment(this.editingEvent.id, payload).subscribe({
+      next: (res) => {
+        console.log('[Appointment updated]', res.data);
+        this.showEventModal = false;
+        this.loadInitialData();
+      },
+      error: (err) => {
+        console.error('[Update Appointment Error]', err);
+      }
+    });
+  }
+  closeAddEventModal() {
+    this.showEventModal = false;
+    this.editingEvent = null;
+  }
+
+  deleteEditEvent() {
+    if (this.editingEvent?.event) {
+      this.closeAddEventModal();
+    }
+  }
+
+  initCalendar(): void {
+    const calendarOptions: any = {
+      plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin, listPlugin],
+      initialView: this.selectedView,
+      events: this.formatEventsForCalendar(),
+      resources: this.formatDoctorsForCalendar(),
+      eventClick: this.handleEventClick.bind(this),
+      dateClick: this.handleDateClick.bind(this),
+      selectable: true,
+      editable: true,
+      locale: 'fr'
+    };
+    this.calendar = new Calendar(this.calendarEl.nativeElement, calendarOptions);
+    this.calendar.render();
+  }
+
+  formatEventsForCalendar(): any[] {
+    return this.appointments.map(app => {
+      let status = 'scheduled';
+      if (app.status === 'Completed' || app.completed) status = 'completed';
+      else if (app.status === 'Canceled' || app.canceled) status = 'canceled';
+      else if (app.status === 'Waiting' || app.waiting) status = 'waiting';
+      // Premium event title with badge
+      const badge = `<span class='fc-event-badge ${status}'>${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+      return {
+        id: app.id,
+        title: `<span class='fc-event-title'>${app.reason_for_visit || app.reason} - ${app.patient?.name || ''} ${badge}</span>`,
+        start: app.appointment_datetime_start,
+        end: app.appointment_datetime_end,
+        classNames: [`fc-event-${status}`],
+        resourceId: app.doctor_user_id || (app.doctor ? app.doctor.id : null)
+      };
+    });
+  }
+
+  formatDoctorsForCalendar(): any[] {
+    return this.doctors.map(doc => ({
+      id: doc.id,
+      title: doc.name,
+      eventColor: '#6366f1'
+    }));
+  }
+
+  handleEventClick(info: any): void {
+    const eventId = info.event.id;
+    this.planningService.getAppointment(eventId).subscribe(res => {
+      this.editingEvent = res.data;
+      this.showEventModal = true;
+    });
+  }
+
+  handleDateClick(info: any): void {
+    this.editingEvent = {
+      appointment_datetime_start: info.dateStr + 'T09:00:00',
+      appointment_datetime_end: info.dateStr + 'T09:30:00',
+      doctor_id: null,
+      patient_id: null,
+      type: 'consultation',
+      reason: '',
+      staff_notes: ''
+    };
+    this.showEventModal = true;
+  }
+
+  createOrUpdateAppointment(): void {
+    if (this.editingEvent.id) {
+      this.planningService.updateAppointment(this.editingEvent.id, this.editingEvent).subscribe(() => {
+        this.showEventModal = false;
+        this.loadInitialData();
+      });
+    } else {
+      // Format date to 'YYYY-MM-DD HH:mm:ss'
+      function formatDate(dt: string) {
+        if (!dt) return '';
+        // Accepts 'YYYY-MM-DDTHH:mm' or 'YYYY-MM-DD HH:mm:ss'
+        return dt.replace('T', ' ').replace(/\..*$/, '');
+      }
+      const payload = {
+        patient_id: this.editingEvent.patient_id,
+        doctor_id: this.editingEvent.doctor_id,
+        appointment_datetime_start: formatDate(this.editingEvent.appointment_datetime_start),
+        appointment_datetime_end: formatDate(this.editingEvent.appointment_datetime_end),
+        type: this.editingEvent.type,
+        reason: this.editingEvent.reason,
+        staff_notes: this.editingEvent.staff_notes
+      };
+      this.planningService.createAppointment(payload).subscribe({
+        next: () => {
+          this.showEventModal = false;
+          this.loadInitialData();
+        },
+        error: (err) => {
+          console.error('[Create Appointment Error]', err);
+        }
       });
     }
   }
 
-  prevMonth(): void {
-    this.currentMonthIndex--;
-    if (this.currentMonthIndex < 0) {
-      this.currentMonthIndex = 11;
-      this.currentYear--;
-    }
-    this.updateMonthDisplay();
-    this.generateCalendarDays();
-  }
-  
-  nextMonth(): void {
-    this.currentMonthIndex++;
-    if (this.currentMonthIndex > 11) {
-      this.currentMonthIndex = 0;
-      this.currentYear++;
-    }
-    this.updateMonthDisplay();
-    this.generateCalendarDays();
-  }
-  
-  updateMonthDisplay(): void {
-    const date = new Date(this.currentYear, this.currentMonthIndex, 1);
-    this.currentMonthName = date.toLocaleString('fr-FR', { month: 'long' });
-  }
-  
-  isSelectedDate(date: Date): boolean {
-    return date.toISOString().split('T')[0] === this.selectedDate;
-  }
-  
-  selectDate(date: Date): void {
-    this.selectedDate = date.toISOString().split('T')[0];
-    this.calendar.gotoDate(date);
-  }
-
-  // Méthodes utilitaires pour l'affichage des dates
-  updateCurrentViewDateFromInfo(info: DatesSetArg): void {
-    if (this.selectedView === 'dayGridMonth') {
-      const month = info.start.toLocaleString('fr-FR', { month: 'long' });
-      const year = info.start.getFullYear();
-      this.currentViewDate = `${month[0].toUpperCase() + month.slice(1)} ${year}`;
-    } else if (this.selectedView === 'timeGridWeek') {
-      const startDate = info.start.getDate();
-      const endDate = new Date(info.end);
-      endDate.setDate(endDate.getDate() - 1);
-      
-      const startMonth = info.start.toLocaleString('fr-FR', { month: 'long' });
-      const endMonth = endDate.toLocaleString('fr-FR', { month: 'long' });
-      
-      if (startMonth === endMonth) {
-        this.currentViewDate = `${startDate} – ${endDate.getDate()} ${startMonth} ${info.start.getFullYear()}`;
-      } else {
-        this.currentViewDate = `${startDate} ${startMonth} – ${endDate.getDate()} ${endMonth} ${info.start.getFullYear()}`;
+  cancelAppointment(): void {
+    if (this.editingEvent.id) {
+      const reason = prompt('Motif de l\'annulation ?');
+      if (reason) {
+        this.planningService.cancelAppointment(this.editingEvent.id, reason).subscribe(() => {
+          this.showEventModal = false;
+          this.loadInitialData();
+        });
       }
-    } else {
-      const dayOfWeek = info.start.toLocaleString('fr-FR', { weekday: 'long' });
-      const month = info.start.toLocaleString('fr-FR', { month: 'long' });
-      const date = info.start.getDate();
-      const year = info.start.getFullYear();
-      
-      const capitalizedDay = dayOfWeek[0].toUpperCase() + dayOfWeek.slice(1);
-      this.currentViewDate = `${capitalizedDay} ${date} ${month} ${year}`;
     }
   }
-  
-  updateCurrentViewDateFromDate(date: Date): void {
-    if (this.selectedView === 'dayGridMonth') {
-      const month = date.toLocaleString('fr-FR', { month: 'long' });
-      const year = date.getFullYear();
-      this.currentViewDate = `${month[0].toUpperCase() + month.slice(1)} ${year}`;
-    } else if (this.selectedView === 'timeGridWeek') {
-      const startOfWeek = new Date(date);
-      const day = startOfWeek.getDay();
-      const diff = day === 0 ? 6 : day - 1;
-      startOfWeek.setDate(date.getDate() - diff);
-      
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      
-      const startMonth = startOfWeek.toLocaleString('fr-FR', { month: 'long' });
-      const endMonth = endOfWeek.toLocaleString('fr-FR', { month: 'long' });
-      
-      if (startMonth === endMonth) {
-        this.currentViewDate = `${startOfWeek.getDate()} – ${endOfWeek.getDate()} ${startMonth} ${startOfWeek.getFullYear()}`;
-      } else {
-        this.currentViewDate = `${startOfWeek.getDate()} ${startMonth} – ${endOfWeek.getDate()} ${endMonth} ${startOfWeek.getFullYear()}`;
-      }
-    } else {
-      const dayOfWeek = date.toLocaleString('fr-FR', { weekday: 'long' });
-      const month = date.toLocaleString('fr-FR', { month: 'long' });
-      
-      const capitalizedDay = dayOfWeek[0].toUpperCase() + dayOfWeek.slice(1);
-      this.currentViewDate = `${capitalizedDay} ${date.getDate()} ${month} ${date.getFullYear()}`;
+
+  confirmAppointment(): void {
+    if (this.editingEvent.id) {
+      this.planningService.confirmAppointment(this.editingEvent.id).subscribe(() => {
+        this.showEventModal = false;
+        this.loadInitialData();
+      });
     }
   }
-  
-  formatDateFr(date: Date): string {
-    const month = date.toLocaleString('fr-FR', { month: 'long' });
-    return `${date.getDate()} ${month}`;
+
+  rescheduleAppointment(): void {
+    if (this.editingEvent && this.editingEvent.id) {
+      this.planningService.rescheduleAppointment(this.editingEvent.id, this.rescheduleData).subscribe(() => {
+        this.showRescheduleModal = false;
+        this.showEventModal = false;
+        this.loadInitialData();
+      });
+    }
   }
 
-  // Méthodes pour les modales de blocage de temps
-  openBlockTimeModal(): void {
-    this.isAppointmentForm.set(false);
-    this.selectedBlockToEdit.set(null);
-    this.showTimeBlockModal.set(true);
-  }
-  
-  closeBlockTimeModal(): void {
-    this.showTimeBlockModal.set(false);
+  completeAppointment(): void {
+    if (this.editingEvent && this.editingEvent.id) {
+      const notes = prompt('Notes de fin de rendez-vous ?');
+      this.planningService.completeAppointment(this.editingEvent.id, notes || '').subscribe(() => {
+        this.showEventModal = false;
+        this.loadInitialData();
+      });
+    }
   }
 
-  // Méthode de sauvegarde
-  saveAllEvents(): void {
-    // Ici vous enverriez généralement les événements vers votre backend
-    // Pour l'instant, on affiche juste un message de succès
-    alert('Tous les rendez-vous ont été sauvegardés avec succès.');
-    console.log('Events to save:', this.calendarEvents);
+  deleteAppointment(): void {
+    if (this.editingEvent && this.editingEvent.id && confirm('Supprimer ce rendez-vous ?')) {
+      this.planningService.deleteAppointment(this.editingEvent.id).subscribe(() => {
+        this.showEventModal = false;
+        this.loadInitialData();
+      });
+    }
+  }
+  toggleSpecialtyAccordion(spec: string) {
+    this.specialtyAccordion[spec] = !this.specialtyAccordion[spec];
   }
 }

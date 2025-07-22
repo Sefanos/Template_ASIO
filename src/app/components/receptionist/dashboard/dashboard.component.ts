@@ -8,6 +8,8 @@ import localeFr from '@angular/common/locales/fr';
 // Enregistrer la locale française
 registerLocaleData(localeFr);
 
+
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -16,56 +18,192 @@ registerLocaleData(localeFr);
   imports: [NgFor, NgIf, NgClass, CommonModule, FormsModule]
 })
 export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
-  todayAppointments = 12;
-  pendingPatients = 3;
-  finishedPatients = 25;
-  latePatients = 7;
+  // Méthode centrale pour garantir la cohérence de toutes les stats et listes
+  private setTodayAppointmentsList(newList: any[]) {
+    this.todayAppointmentsList = newList;
+    this.recalculateTodayAppointmentsListWithLate();
+    this.recalculateFilteredTodayAppointments();
+  }
+  isLoadingStats = true;
+  isStatsUpdating = false; // Pour afficher le skeleton sur les stats
+  private statsInterval: any = null;
+  private recalculateTodayAppointmentsListWithLate() {
+    const now = new Date();
+    this.todayAppointmentsListWithLate = this.todayAppointmentsList.map(app => {
+      if (app.status === 'finished') return app;
+      const [h, m] = app.time.split(':').map(Number);
+      const appDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+      if (app.status !== 'finished' && app.status !== 'late' && appDate < now) {
+        return { ...app, status: 'late' };
+      }
+      if (app.status === 'late' && appDate >= now) {
+        return { ...app, status: 'pending' };
+      }
+      return app;
+    });
+  }
+
+  public recalculateFilteredTodayAppointments() {
+    const search = this.appointmentSearch.trim().toLowerCase();
+    if (!search) {
+      this.filteredTodayAppointments = this.todayAppointmentsListWithLate;
+    } else {
+      this.filteredTodayAppointments = this.todayAppointmentsListWithLate.filter(a =>
+        a.name.toLowerCase().includes(search) ||
+        a.doctor.toLowerCase().includes(search) ||
+        a.type.toLowerCase().includes(search)
+      );
+    }
+  }
+
+  public setAppointmentSearch(value: string) {
+    this.appointmentSearch = value;
+    this.recalculateFilteredTodayAppointments();
+  }
+
+  private updateAppointmentsLists() {
+    this.recalculateTodayAppointmentsListWithLate();
+    this.recalculateFilteredTodayAppointments();
+  }
+
+
+  ngOnInit(): void {
+    // Simule un appel backend pour les stats (2s)
+    this.isLoadingStats = true;
+    setTimeout(() => {
+      this.updateAppointmentsLists();
+      this.isLoadingStats = false;
+    }, 2000);
+
+    // Simulation dynamique : toutes les 5s, on simule un changement dans les stats
+    this.statsInterval = setInterval(() => {
+      this.simulateStatsChange();
+    }, 5000);
+  }
+
+  ngDoCheck(): void {
+    this.recalculateFilteredTodayAppointments();
+  }
+  // Action : marquer comme terminé depuis la liste (utilisé dans le template)
+  confirmPaymentFromList(appointment: any) {
+    const newList = this.todayAppointmentsList.map(a =>
+      a === appointment ? { ...a, status: 'finished', payment: true } : a
+    );
+    this.setTodayAppointmentsList(newList);
+  }
+
+  markPending(appointment: any) {
+    const newList = this.todayAppointmentsList.map(a =>
+      a.email === appointment.email &&
+      a.time === appointment.time &&
+      a.name === appointment.name &&
+      a.doctor === appointment.doctor
+        ? { ...a, status: 'pending' }
+        : a
+    );
+    this.setTodayAppointmentsList(newList);
+  }
+  // Logique dynamique frontend pour stats et statuts
+  appointmentSearch = '';
+  selectedPendingPatient: any = null;
+  showPaymentModal = false;
+  paymentAmount = '';
+  paymentMethod = 'Espèces';
   currentDate = new Date();
   renderedCharts = false;
 
-  // Liste complète des rendez-vous du jour
+  // Liste complète des rendez-vous du jour (15 patients pour la démo)
   todayAppointmentsList = [
-    {
-      initials: 'SM', name: 'Salwa Slimani',
-      type: 'Consultation',
-      doctor: 'Dr. Kamal Berrada',
-      time: '09:00',
-      status: 'completed',
-      photo: 'assets/receptionist/images/FE.jpg'
-    },
-    {
-      initials: 'MH', name: 'Mohamed Hariri',
-      type: 'Contrôle',
-      doctor: 'Dr. Kamal Berrada',
-      time: '10:30',
-      status: 'upcoming',
-      photo: 'assets/receptionist/images/eps3.jpg'
-    },
-    {
-      initials: 'FA', name: 'Fatima Amrani',
-      type: 'Consultation',
-      doctor: 'Dr. Kamal Berrada',
-      time: '11:15',
-      status: 'late',
-      photo: 'assets/receptionist/images/eps1.jpg'
-    },
-    {
-      initials: 'AA', name: 'Adam AbouAli',
-      type: 'Consultation',
-      doctor: 'Dr. Kamal Berrada',
-      time: '12:00',
-      status: 'upcoming',
-      photo: 'assets/receptionist/images/P4.jpg'
-    }
+    { initials: 'S', name: 'Selmer Murray', email: 'selmer.murray709@example.org', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '08:30', status: 'finished', price: 300, payment: true, paymentMethod: 'Carte' },
+    { initials: 'Z', name: 'Zechariah FARIS', email: 'zechariah.fritsch379@example.org', type: 'Contrôle', doctor: 'Dr. Imane Lahlou', time: '09:00', status: 'late', price: 250, payment: false },
+    { initials: 'A', name: 'Amy Volkman', email: 'amy.volkman736@example.net', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '09:15', status: 'pending', price: 350, payment: false },
+    { initials: 'K', name: 'Kianna Schroeder', email: 'kianna.schroeder167@example.com', type: 'Consultation', doctor: 'Dr. Mehdi El Idrissi', time: '09:45', status: 'pending', price: 200, payment: false },
+    { initials: 'P', name: 'Providenci Batz', email: 'providenci.batz246@example.com', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '10:10', status: 'finished', price: 320, payment: true, paymentMethod: 'Espèces' },
+    { initials: 'D', name: 'Dedrick Hintz', email: 'dedrick.hintz975@example.org', type: 'Contrôle', doctor: 'Dr. Imane Lahlou', time: '10:30', status: 'late', price: 210, payment: false },
+    { initials: 'S', name: 'Shayna Friesen', email: 'shayna.friesen922@example.org', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '10:50', status: 'pending', price: 400, payment: false },
+    { initials: 'G', name: 'Grace Ledner', email: 'grace.ledner495@example.org', type: 'Consultation', doctor: 'Dr. Mehdi El Idrissi', time: '11:20', status: 'pending', price: 220, payment: false },
+    { initials: 'A', name: 'Amparo Hamill', email: 'amparo.hamill457@example.org', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '11:45', status: 'finished', price: 310, payment: true, paymentMethod: 'Chèque' },
+    { initials: 'E', name: 'Eudora Kshlerin', email: 'eudora.kshlerin565@example.org', type: 'Contrôle', doctor: 'Dr. Imane Lahlou', time: '12:00', status: 'pending', price: 260, payment: false },
+    { initials: 'V', name: 'Vincent Will', email: 'vincent.will807@example.org', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '12:30', status: 'pending', price: 330, payment: false },
+    { initials: 'J', name: 'Jazmin Krajcik', email: 'jazmin.krajcik@example.com', type: 'Consultation', doctor: 'Dr. Mehdi El Idrissi', time: '13:00', status: 'late', price: 210, payment: false },
+    { initials: 'M', name: 'Mina Kihn', email: 'mina.kihn@example.com', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '13:30', status: 'finished', price: 340, payment: true, paymentMethod: 'Espèces' },
+    { initials: 'C', name: 'Carmelo Koss', email: 'carmelo.koss@example.com', type: 'Contrôle', doctor: 'Dr. Imane Lahlou', time: '14:00', status: 'pending', price: 270, payment: false },
+    { initials: 'L', name: 'Laverna Kulas', email: 'laverna.kulas@example.com', type: 'Consultation', doctor: 'Dr. Kamal Berrada', time: '14:30', status: 'pending', price: 360, payment: false }
   ];
+
+  todayAppointmentsListWithLate: any[] = [];
+  filteredTodayAppointments: any[] = [];
+
+
+// Stats dynamiques
+get todayAppointments() {
+  return this.todayAppointmentsListWithLate.length;
+  // Simulation dynamique de changements dans les stats (ajout, passage en terminé, etc.)
+}
+get pendingPatients() {
+  return this.todayAppointmentsListWithLate.filter(a => a.status === 'pending').length;
+}
+get finishedPatients() {
+  return this.todayAppointmentsListWithLate.filter(a => a.status === 'finished').length;
+}
+get latePatients() {
+  return this.todayAppointmentsListWithLate.filter(a => a.status === 'late').length;
+}
+
+
+// Liste des patients terminés pour le template
+get finishedPatientsList() {
+  return this.todayAppointmentsListWithLate.filter(a => a.status === 'finished');
+}
+
+  // ...existing code...
+
+// ...existing code...
+  // Pour la modale "patients en attente"
+  get pendingPatientsList() {
+    return this.todayAppointmentsListWithLate.filter(a => a.status === 'pending');
+  }
+  get latePatientsList() {
+    return this.todayAppointmentsListWithLate.filter(a => a.status === 'late');
+  }
+
+  // Paiement : passage de pending à finished
+  openPaymentModal(patient: any) {
+    this.selectedPendingPatient = patient;
+    this.paymentAmount = patient.price ? String(patient.price) : '';
+    this.paymentMethod = 'Espèces';
+    this.showPaymentModal = true;
+  }
+  closePaymentModal() {
+    this.selectedPendingPatient = null;
+    this.paymentAmount = '';
+    this.paymentMethod = 'Espèces';
+    this.showPaymentModal = false;
+  }
+  confirmPayment() {
+    if (!this.selectedPendingPatient) return;
+    const newList = this.todayAppointmentsList.map(a =>
+      a === this.selectedPendingPatient
+        ? { ...a, status: 'finished', payment: true, price: Number(this.paymentAmount), paymentMethod: this.paymentMethod }
+        : a
+    );
+    this.setTodayAppointmentsList(newList);
+    this.closePaymentModal();
+  }
 
   get upcomingAppointments() {
     return this.todayAppointmentsList.filter(a => a.status === 'upcoming');
   }
 
   selectedStat: string | null = null;
-  openStatModal(stat: string) { this.selectedStat = stat; }
-  closeStatModal() { this.selectedStat = null; }
+  openStatModal(stat: string) {
+    this.selectedStat = stat;
+    this.appointmentSearch = '';
+  }
+  closeStatModal() {
+    this.selectedStat = null;
+    this.appointmentSearch = '';
+  }
 
   calendarEvents = [
     { title: 'Dr. Imane - Mr. Kamal', time: '10:00', photo: 'assets/images/doctor5.jpg' },
@@ -85,48 +223,103 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
   private boundHandleWindowResize: any = null;
   private resizeTimeout: any = null;
 
-  ngOnInit(): void {}
 
   ngOnDestroy(): void {
+    // Nettoyer l'intervalle de simulation
+    if (this.statsInterval) {
+      clearInterval(this.statsInterval);
+      this.statsInterval = null;
+    }
     // Safely destroy all charts with proper null checking
     if (this.demographicChart) {
       this.demographicChart.destroy();
       this.demographicChart = null;
     }
-    
     if (this.weeklyOverviewChart) {
       this.weeklyOverviewChart.destroy();
       this.weeklyOverviewChart = null;
     }
-    
     if (this.rdvChart) {
       this.rdvChart.destroy();
       this.rdvChart = null;
     }
-    
     // Clean up resize observers
     if (this.chartResizeObserver) {
       this.chartResizeObserver.disconnect();
       this.chartResizeObserver = null;
     }
-    
     if (this.weeklyChartResizeObserver) {
       this.weeklyChartResizeObserver.disconnect();
       this.weeklyChartResizeObserver = null;
     }
-    
     // Remove event listeners
     if (this.boundHandleWindowResize) {
       window.removeEventListener('resize', this.boundHandleWindowResize);
       this.boundHandleWindowResize = null;
     }
-    
     // Clear any pending resize timeout
     if (this.resizeTimeout) {
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = null;
     }
   }
+
+  // Simulation dynamique de changements dans les stats (ajout, passage en terminé, etc.)
+  simulateStatsChange() {
+    this.isStatsUpdating = true;
+    setTimeout(() => {
+      const actions = ['add', 'finish', 'late', 'pending'];
+      const action = actions[Math.floor(Math.random() * actions.length)];
+      let newList = [...this.todayAppointmentsList];
+      if (action === 'add') {
+        const names = ['Nora', 'Yassine', 'Fatima', 'Omar', 'Lina', 'Sami', 'Imane', 'Walid'];
+        const doctors = ['Dr. Kamal Berrada', 'Dr. Imane Lahlou', 'Dr. Mehdi El Idrissi'];
+        const name = names[Math.floor(Math.random() * names.length)] + ' ' + String.fromCharCode(65 + Math.floor(Math.random() * 26)) + '.';
+        const email = name.toLowerCase().replace(/ /g, '.') + Math.floor(Math.random() * 1000) + '@example.com';
+        const doctor = doctors[Math.floor(Math.random() * doctors.length)];
+        const time = (8 + Math.floor(Math.random() * 8)) + ':' + (Math.random() > 0.5 ? '30' : '00');
+        const price = 200 + Math.floor(Math.random() * 200);
+        newList.push({
+          initials: name[0],
+          name,
+          email,
+          type: 'Consultation',
+          doctor,
+          time,
+          status: 'pending',
+          price,
+          payment: false
+        });
+      } else if (action === 'finish') {
+        const candidates = newList.filter(a => a.status === 'pending' || a.status === 'late');
+        if (candidates.length > 0) {
+          const idx = newList.indexOf(candidates[Math.floor(Math.random() * candidates.length)]);
+          if (idx !== -1) {
+            newList[idx] = { ...newList[idx], status: 'finished', payment: true, paymentMethod: 'Espèces' };
+          }
+        }
+      } else if (action === 'late') {
+        const candidates = newList.filter(a => a.status === 'pending');
+        if (candidates.length > 0) {
+          const idx = newList.indexOf(candidates[Math.floor(Math.random() * candidates.length)]);
+          if (idx !== -1) {
+            newList[idx] = { ...newList[idx], status: 'late' };
+          }
+        }
+      } else if (action === 'pending') {
+        const candidates = newList.filter(a => a.status === 'late');
+        if (candidates.length > 0) {
+          const idx = newList.indexOf(candidates[Math.floor(Math.random() * candidates.length)]);
+          if (idx !== -1) {
+            newList[idx] = { ...newList[idx], status: 'pending' };
+          }
+        }
+      }
+      this.setTodayAppointmentsList(newList);
+      this.isStatsUpdating = false;
+    }, 800);
+  }
+
 
   ngAfterViewInit(): void {
     // Slight delay to ensure DOM is fully rendered
@@ -189,6 +382,15 @@ export class DashboardComponent implements AfterViewInit, OnInit, OnDestroy {
       default: return status;
     }
   }
+  getStatValue(statType: string): number {
+  switch (statType) {
+    case 'today': return this.todayAppointments;
+    case 'pending': return this.pendingPatients;
+    case 'finished': return this.finishedPatients;
+    case 'late': return this.latePatients;
+    default: return 0;
+  }
+}
 
   initRdvChart(): void {
     const ctx = document.getElementById('appointments-chart') as HTMLCanvasElement;

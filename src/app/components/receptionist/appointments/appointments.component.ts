@@ -15,6 +15,63 @@ import { Subject } from 'rxjs';
   imports: [CommonModule, FormsModule]
 })
 export class AppointmentsComponent implements OnInit, OnDestroy {
+  // For delete modal
+  appointmentToDelete: Appointment | null = null;
+
+  // Template event handlers
+  onSearch(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedStatus = '';
+    this.selectedDate = '';
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  openDetailsModal(app: Appointment): void {
+    this.selectedAppointment = app;
+  }
+
+  openDeleteModal(app: Appointment): void {
+    this.appointmentToDelete = app;
+  }
+
+  closeDetailsDialog(): void {
+    this.selectedAppointment = null;
+  }
+
+  closeDeleteModal(): void {
+    this.appointmentToDelete = null;
+  }
+
+  confirmDelete(): void {
+    if (!this.appointmentToDelete) return;
+    this.deleteAppointment(this.appointmentToDelete);
+    this.closeDeleteModal();
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'scheduled': return 'bg-blue-100 text-blue-700';
+      case 'completed': return 'bg-green-100 text-green-700';
+      case 'cancelled': return 'bg-red-100 text-red-700';
+      case 'no-show': return 'bg-yellow-100 text-yellow-700';
+      default: return 'bg-slate-100 text-slate-700';
+    }
+  }
+  // Helper for template to replace Math.min
+  getAppointmentsEnd(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.appointments.length);
+  }
   // ✅ Add destroy$ subject
   private destroy$ = new Subject<void>();
   
@@ -252,6 +309,16 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   }
 
   // Méthodes utilitaires
+  // Traduction des statuts en français pour le template
+  getStatusLabelFr(status: string): string {
+    switch (status) {
+      case 'scheduled': return 'Programmé';
+      case 'completed': return 'Terminé';
+      case 'cancelled': return 'Annulé';
+      case 'no-show': return 'Absent';
+      default: return 'Inconnu';
+    }
+  }
   resetFilters(): void {
     this.searchQuery = '';
     this.selectedStatus = '';

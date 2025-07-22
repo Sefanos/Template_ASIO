@@ -1,3 +1,48 @@
+/* Premium Calendar Event Styles */
+.fc-event {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border: none !important;
+}
+.fc-event-scheduled {
+  background: #e0f2fe !important;
+  color: #2563eb !important;
+  border-left: 5px solid #2563eb !important;
+}
+.fc-event-completed {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+  border-left: 5px solid #16a34a !important;
+}
+.fc-event-canceled {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-left: 5px solid #dc2626 !important;
+}
+.fc-event-waiting {
+  background: #fef9c3 !important;
+  color: #ca8a04 !important;
+  border-left: 5px solid #ca8a04 !important;
+}
+.fc-event-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fc-event-badge {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.fc-event-badge.scheduled { background: #2563eb; color: #fff; }
+.fc-event-badge.completed { background: #16a34a; color: #fff; }
+.fc-event-badge.canceled { background: #dc2626; color: #fff; }
+.fc-event-badge.waiting { background: #ca8a04; color: #fff; }
 .animate-fadeIn {
   animation: fadeIn 0.3s ease forwards;
 }
