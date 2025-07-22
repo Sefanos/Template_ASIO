@@ -21,6 +21,25 @@ import listPlugin from '@fullcalendar/list';
   ]
 })
 export class DoctorsPlanningComponent implements AfterViewInit {
+  specialtyAccordion: { [key: string]: boolean } = {};
+  doctorSpecialties: string[] = [];
+  doctorsBySpecialty: { [key: string]: any[] } = {};
+  rescheduleData = {
+    new_datetime_start: '',
+    new_datetime_end: '',
+    reason: '',
+    notes_by_staff: ''
+  };
+  showRescheduleModal = false;
+  openRescheduleModal() {
+    this.rescheduleData = {
+      new_datetime_start: '',
+      new_datetime_end: '',
+      reason: '',
+      notes_by_staff: ''
+    };
+    this.showRescheduleModal = true;
+  }
   @ViewChild('calendarEl') calendarEl!: ElementRef<HTMLElement>;
   calendar!: Calendar;
   appointments: any[] = [];
@@ -94,18 +113,25 @@ export class DoctorsPlanningComponent implements AfterViewInit {
           name: d.name,
           email: d.email,
           phone: d.phone,
-          specialty: d.doctor?.specialty || '',
+          specialty: d.doctor?.specialty || 'Autre',
           doctorId: d.doctor?.id,
           doctorInfo: d.doctor,
           color: '#6366f1',
           selected: false
         })) : [];
-        console.log('[Doctors loaded]', this.doctors);
+        // Regroupement par spécialité
+        const specialtiesSet = new Set<string>();
+        this.doctors.forEach(doc => specialtiesSet.add(doc.specialty || 'Autre'));
+        this.doctorSpecialties = Array.from(specialtiesSet).sort();
+        this.doctorsBySpecialty = {};
+        this.doctorSpecialties.forEach(spec => {
+          this.doctorsBySpecialty[spec] = this.doctors.filter(doc => doc.specialty === spec);
+          this.specialtyAccordion[spec] = false; // Par défaut, tout est replié
+        });
         // Récupérer les rendez-vous
         this.planningService.getAppointments().subscribe({
           next: (res2) => {
             this.appointments = res2.data;
-            console.log('[Appointments loaded]', this.appointments);
             this.initCalendar();
             this.generateCalendarDays(new Date());
           },
@@ -117,7 +143,6 @@ export class DoctorsPlanningComponent implements AfterViewInit {
         this.planningService.getPatients().subscribe({
           next: (res3) => {
             this.patients = Array.isArray(res3.data) ? res3.data : [];
-            console.log('[Patients loaded]', this.patients);
           },
           error: (err3) => {
             console.error('[Patients API Error]', err3);
@@ -224,15 +249,21 @@ export class DoctorsPlanningComponent implements AfterViewInit {
   }
   // Ajout d'un nouveau rendez-vous
   addNewEvent() {
-    // Formatage des dates si nécessaire
+    // Combine date et heure pour début et fin
+    function combineDateTime(date: string, time: string): string {
+      if (!date || !time) return '';
+      return `${date}T${time}:00`;
+    }
+    const appointment_datetime_start = combineDateTime(this.editingEvent.date, this.editingEvent.time);
+    const appointment_datetime_end = combineDateTime(this.editingEvent.endDate, this.editingEvent.endTime);
     const payload = {
       patient_id: this.editingEvent.patient_id,
       doctor_id: this.editingEvent.doctor_id,
-      appointment_datetime_start: this.editingEvent.appointment_datetime_start,
-      appointment_datetime_end: this.editingEvent.appointment_datetime_end,
+      appointment_datetime_start,
+      appointment_datetime_end,
       type: this.editingEvent.type,
-      reason: this.editingEvent.reason,
-      staff_notes: this.editingEvent.staff_notes
+      reason: this.editingEvent.reason || '',
+      staff_notes: this.editingEvent.staff_notes || '',
     };
     this.planningService.createAppointment(payload).subscribe({
       next: (res) => {
@@ -242,6 +273,14 @@ export class DoctorsPlanningComponent implements AfterViewInit {
       },
       error: (err) => {
         console.error('[Create Appointment Error]', err);
+        if (err?.error?.errors) {
+          const details = Object.entries(err.error.errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join('\n');
+          alert('Erreur de validation:\n' + details);
+        } else {
+          alert('Erreur lors de la création du rendez-vous.');
+        }
       }
     });
   }
@@ -294,15 +333,22 @@ export class DoctorsPlanningComponent implements AfterViewInit {
   }
 
   formatEventsForCalendar(): any[] {
-    return this.appointments.map(app => ({
-      id: app.id,
-      title: `[${app.type}] ${app.reason_for_visit || app.reason} - ${app.patient?.name || ''}`,
-      start: app.appointment_datetime_start,
-      end: app.appointment_datetime_end,
-      backgroundColor: '#6366f1',
-      borderColor: '#6366f1',
-      resourceId: app.doctor_user_id || (app.doctor ? app.doctor.id : null)
-    }));
+    return this.appointments.map(app => {
+      let status = 'scheduled';
+      if (app.status === 'Completed' || app.completed) status = 'completed';
+      else if (app.status === 'Canceled' || app.canceled) status = 'canceled';
+      else if (app.status === 'Waiting' || app.waiting) status = 'waiting';
+      // Premium event title with badge
+      const badge = `<span class='fc-event-badge ${status}'>${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+      return {
+        id: app.id,
+        title: `<span class='fc-event-title'>${app.reason_for_visit || app.reason} - ${app.patient?.name || ''} ${badge}</span>`,
+        start: app.appointment_datetime_start,
+        end: app.appointment_datetime_end,
+        classNames: [`fc-event-${status}`],
+        resourceId: app.doctor_user_id || (app.doctor ? app.doctor.id : null)
+      };
+    });
   }
 
   formatDoctorsForCalendar(): any[] {
@@ -390,27 +436,17 @@ export class DoctorsPlanningComponent implements AfterViewInit {
   }
 
   rescheduleAppointment(): void {
-    if (this.editingEvent.id) {
-      const newStart = prompt('Nouvelle date/heure de début (YYYY-MM-DD HH:mm:ss)');
-      const newEnd = prompt('Nouvelle date/heure de fin (YYYY-MM-DD HH:mm:ss)');
-      const reason = prompt('Motif du report ?');
-      const notes = prompt('Notes de staff ?');
-      if (newStart && newEnd) {
-        this.planningService.rescheduleAppointment(this.editingEvent.id, {
-          new_datetime_start: newStart,
-          new_datetime_end: newEnd,
-          reason,
-          notes_by_staff: notes
-        }).subscribe(() => {
-          this.showEventModal = false;
-          this.loadInitialData();
-        });
-      }
+    if (this.editingEvent && this.editingEvent.id) {
+      this.planningService.rescheduleAppointment(this.editingEvent.id, this.rescheduleData).subscribe(() => {
+        this.showRescheduleModal = false;
+        this.showEventModal = false;
+        this.loadInitialData();
+      });
     }
   }
 
   completeAppointment(): void {
-    if (this.editingEvent.id) {
+    if (this.editingEvent && this.editingEvent.id) {
       const notes = prompt('Notes de fin de rendez-vous ?');
       this.planningService.completeAppointment(this.editingEvent.id, notes || '').subscribe(() => {
         this.showEventModal = false;
@@ -420,11 +456,14 @@ export class DoctorsPlanningComponent implements AfterViewInit {
   }
 
   deleteAppointment(): void {
-    if (this.editingEvent.id && confirm('Supprimer ce rendez-vous ?')) {
+    if (this.editingEvent && this.editingEvent.id && confirm('Supprimer ce rendez-vous ?')) {
       this.planningService.deleteAppointment(this.editingEvent.id).subscribe(() => {
         this.showEventModal = false;
         this.loadInitialData();
       });
     }
+  }
+  toggleSpecialtyAccordion(spec: string) {
+    this.specialtyAccordion[spec] = !this.specialtyAccordion[spec];
   }
 }

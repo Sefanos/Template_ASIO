@@ -15,13 +15,22 @@ import { AuthService } from '../../../core/auth/auth.service';
   providers: [BillService]
 })
 export class BillsComponent implements OnInit {
+  // Statistiques calculées pour le dashboard
+  totalPaid: number = 0;
+  totalPending: number = 0;
+  totalCancelled: number = 0;
+  totalCount: number = 0;
   bills: Bill[] = [];
   pagination: Pagination | null = null;
   isLoading = false;
   selectedBill: Bill | null = null;
   showCreateModal = false;
   isCreating = false;
-  
+
+  // Modal de succès
+  showSuccessModal = false;
+  successMessage = '';
+
   // Nouvelles propriétés pour les fonctionnalités
   showEditModal = false;
   isUpdating = false;
@@ -29,7 +38,7 @@ export class BillsComponent implements OnInit {
   isAddingItem = false;
   billToEdit: Bill | null = null;
   billToAddItem: Bill | null = null;
-  
+
   // Référence à Math pour l'utilisation dans le template
   Math = Math;
   
@@ -115,23 +124,30 @@ export class BillsComponent implements OnInit {
 
   loadBills(): void {
     this.isLoading = true;
-    
     // Mettre à jour les filtres avec les valeurs du formulaire
     this.updateFilters();
-    
     this.billService.getBills(this.filters).subscribe({
       next: (response) => {
         if (response.success) {
           this.bills = response.data.items;
           this.pagination = response.data.pagination;
+          this.totalCount = this.pagination?.total || this.bills.length;
+          // Statistiques adaptées à la maquette
+          this.totalPaid = this.bills
+            .filter(bill => bill.payment_method === 'credit_card')
+            .reduce((sum, bill) => sum + (parseFloat(bill.amount) || 0), 0);
+          this.totalPending = this.bills
+            .filter(bill => bill.payment_method === 'cash')
+            .reduce((sum, bill) => sum + (parseFloat(bill.amount) || 0), 0);
+          this.totalCancelled = this.bills
+            .filter(bill => bill.payment_method === 'insurance')
+            .reduce((sum, bill) => sum + (parseFloat(bill.amount) || 0), 0);
         }
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Erreur lors du chargement des factures:', error);
         this.isLoading = false;
-        
-        // Gestion spécifique de l'erreur 401 (Unauthorized)
         if (error.status === 401) {
           console.error('Token invalide ou expiré, redirection vers la connexion');
           this.authService.logout();
@@ -493,30 +509,27 @@ export class BillsComponent implements OnInit {
   createBill(): void {
     if (this.isValidCreateForm()) {
       this.isCreating = true;
-      
       this.billService.createBill(this.newBill).subscribe({
         next: (response) => {
           if (response.success) {
-            alert('Facture créée avec succès !');
+            this.showSuccess('Facture créée avec succès !');
             this.closeCreateModal();
-            this.loadBills(); // Recharger la liste des factures
+            this.loadBills();
           } else {
-            alert('Erreur lors de la création de la facture: ' + response.message);
+            this.showSuccess('Erreur lors de la création de la facture: ' + response.message);
           }
           this.isCreating = false;
         },
         error: (error) => {
           console.error('Erreur lors de la création de la facture:', error);
           let errorMessage = 'Erreur lors de la création de la facture';
-          
           if (error.error && error.error.message) {
             errorMessage = error.error.message;
           } else if (error.status === 401) {
             errorMessage = 'Vous n\'êtes pas autorisé à créer des factures';
             this.authService.logout();
           }
-          
-          alert(errorMessage);
+          this.showSuccess(errorMessage);
           this.isCreating = false;
         }
       });
@@ -599,30 +612,27 @@ export class BillsComponent implements OnInit {
   updateBill(): void {
     if (this.billToEdit && this.isValidEditForm()) {
       this.isUpdating = true;
-      
       this.billService.updateBill(this.billToEdit.id, this.editBill).subscribe({
         next: (response) => {
           if (response.success) {
-            alert('Facture mise à jour avec succès !');
+            this.showSuccess('Facture modifiée avec succès !');
             this.closeEditModal();
-            this.loadBills(); // Recharger la liste des factures
+            this.loadBills();
           } else {
-            alert('Erreur lors de la mise à jour de la facture: ' + response.message);
+            this.showSuccess('Erreur lors de la modification de la facture: ' + response.message);
           }
           this.isUpdating = false;
         },
         error: (error) => {
-          console.error('Erreur lors de la mise à jour de la facture:', error);
-          let errorMessage = 'Erreur lors de la mise à jour de la facture';
-          
+          console.error('Erreur lors de la modification de la facture:', error);
+          let errorMessage = 'Erreur lors de la modification de la facture';
           if (error.error && error.error.message) {
             errorMessage = error.error.message;
           } else if (error.status === 401) {
             errorMessage = 'Vous n\'êtes pas autorisé à modifier des factures';
             this.authService.logout();
           }
-          
-          alert(errorMessage);
+          this.showSuccess(errorMessage);
           this.isUpdating = false;
         }
       });
@@ -696,34 +706,40 @@ export class BillsComponent implements OnInit {
   addItemToBill(): void {
     if (this.billToAddItem && this.isValidAddItemForm()) {
       this.isAddingItem = true;
-      
       this.billService.addItemToBill(this.billToAddItem.id, this.newItemToAdd).subscribe({
         next: (response) => {
           if (response.success) {
-            alert('Article ajouté avec succès !');
+            this.showSuccess('Service ajouté avec succès !');
             this.closeAddItemModal();
-            this.loadBills(); // Recharger la liste des factures
+            this.loadBills();
           } else {
-            alert('Erreur lors de l\'ajout de l\'article: ' + response.message);
+            this.showSuccess('Erreur lors de l\'ajout du service: ' + response.message);
           }
           this.isAddingItem = false;
         },
         error: (error) => {
-          console.error('Erreur lors de l\'ajout de l\'article:', error);
-          let errorMessage = 'Erreur lors de l\'ajout de l\'article';
-          
+          console.error('Erreur lors de l\'ajout du service:', error);
+          let errorMessage = 'Erreur lors de l\'ajout du service';
           if (error.error && error.error.message) {
             errorMessage = error.error.message;
           } else if (error.status === 401) {
-            errorMessage = 'Vous n\'êtes pas autorisé à ajouter des articles';
+            errorMessage = 'Vous n\'êtes pas autorisé à ajouter des services';
             this.authService.logout();
           }
-          
-          alert(errorMessage);
+          this.showSuccess(errorMessage);
           this.isAddingItem = false;
         }
       });
     }
+  }
+
+  showSuccess(message: string): void {
+    this.successMessage = message;
+    this.showSuccessModal = true;
+    setTimeout(() => {
+      this.showSuccessModal = false;
+      this.successMessage = '';
+    }, 2500);
   }
 
   isValidAddItemForm(): boolean {
@@ -731,17 +747,15 @@ export class BillsComponent implements OnInit {
       alert('Veuillez sélectionner un type de service');
       return false;
     }
-    
     if (!this.newItemToAdd.description) {
       alert('Veuillez saisir une description');
       return false;
     }
-    
     if (!this.newItemToAdd.price || this.newItemToAdd.price <= 0) {
       alert('Veuillez saisir un prix valide');
       return false;
     }
-    
     return true;
   }
+
 }
