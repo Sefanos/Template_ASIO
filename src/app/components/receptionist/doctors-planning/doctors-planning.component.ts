@@ -67,6 +67,69 @@ export class DoctorsPlanningComponent implements AfterViewInit {
   filteredPatients: any[] = [];
   searchingPatients: boolean = false;
 
+  // --- Add: Track selected patient and doctor for the modal form ---
+  selectedPatient: any = null;
+  selectedDoctorId: number | null = null;
+
+  // --- Add: Validate and build payload for new appointment ---
+  // Add new appointment (single implementation, validated)
+  addNewEvent() {
+    // Compose datetime from date and time pickers
+    const start = this.editingEvent.date && this.editingEvent.time
+      ? `${this.editingEvent.date}T${this.editingEvent.time}:00`
+      : this.editingEvent.appointment_datetime_start;
+
+    const end = this.editingEvent.endDate && this.editingEvent.endTime
+      ? `${this.editingEvent.endDate}T${this.editingEvent.endTime}:00`
+      : this.editingEvent.appointment_datetime_end;
+
+    // Use selected patient and doctor if available
+    const patient_id = this.selectedPatient?.id || this.editingEvent.patient_id;
+    const doctor_id = this.selectedDoctorId || this.editingEvent.resourceId || this.editingEvent.doctor_id;
+
+    const payload = {
+      patient_id,
+      doctor_id,
+      appointment_datetime_start: start,
+      appointment_datetime_end: end,
+      type: this.editingEvent.type,
+      reason: this.editingEvent.reason || this.editingEvent.title,
+      staff_notes: this.editingEvent.staff_notes || ''
+    };
+
+    // Validate required fields before sending
+    if (!payload.patient_id || !payload.doctor_id || !payload.appointment_datetime_start || !payload.reason) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    this.planningService.createAppointment(payload).subscribe({
+      next: (res) => {
+        this.showEventModal = false;
+        this.loadInitialData();
+      },
+      error: (err) => {
+        console.error('[Create Appointment Error]', err);
+        alert('Erreur lors de la création du rendez-vous. Vérifiez les champs obligatoires.');
+      }
+    });
+  }
+
+  // --- Add: Doctor selection logic for modal ---
+  selectDoctor(doctorId: number) {
+    this.selectedDoctorId = doctorId;
+    this.editingEvent.resourceId = doctorId;
+    this.editingEvent.doctor_id = doctorId;
+  }
+
+  // Patient selection logic for modal (must be public for template)
+  public selectPatient(patient: any) {
+    this.selectedPatient = patient;
+    this.editingEvent.patient_id = patient.id;
+    this.patientSearchTerm = patient.name;
+    this.filteredPatients = [];
+  }
+
   constructor(
     private planningService: PlanningService,
     private ngZone: NgZone
@@ -174,13 +237,7 @@ export class DoctorsPlanningComponent implements AfterViewInit {
     });
   }
 
-  selectPatient(patient: any) {
-    this.editingEvent.patient_id = patient.id;
-    this.patientSearchTerm = patient.name;
-    this.filteredPatients = [];
-    // Optionnel: stocker le nom pour affichage
-    this.editingEvent.patient_name = patient.name;
-  }
+  // ...existing code...
 
   openAddEventModal() {
     this.showEventModal = true;
@@ -248,42 +305,7 @@ export class DoctorsPlanningComponent implements AfterViewInit {
     }
   }
   // Ajout d'un nouveau rendez-vous
-  addNewEvent() {
-    // Combine date et heure pour début et fin
-    function combineDateTime(date: string, time: string): string {
-      if (!date || !time) return '';
-      return `${date}T${time}:00`;
-    }
-    const appointment_datetime_start = combineDateTime(this.editingEvent.date, this.editingEvent.time);
-    const appointment_datetime_end = combineDateTime(this.editingEvent.endDate, this.editingEvent.endTime);
-    const payload = {
-      patient_id: this.editingEvent.patient_id,
-      doctor_id: this.editingEvent.doctor_id,
-      appointment_datetime_start,
-      appointment_datetime_end,
-      type: this.editingEvent.type,
-      reason: this.editingEvent.reason || '',
-      staff_notes: this.editingEvent.staff_notes || '',
-    };
-    this.planningService.createAppointment(payload).subscribe({
-      next: (res) => {
-        console.log('[Appointment created]', res.data);
-        this.showEventModal = false;
-        this.loadInitialData();
-      },
-      error: (err) => {
-        console.error('[Create Appointment Error]', err);
-        if (err?.error?.errors) {
-          const details = Object.entries(err.error.errors)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-            .join('\n');
-          alert('Erreur de validation:\n' + details);
-        } else {
-          alert('Erreur lors de la création du rendez-vous.');
-        }
-      }
-    });
-  }
+  // ...existing code...
 
   // Mettre à jour un rendez-vous existant
   updateEvent() {
